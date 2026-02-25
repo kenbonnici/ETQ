@@ -29,7 +29,11 @@ app.innerHTML = `
     <section class="right">
       <header class="retirement-control">
         <label for="early-ret-age">Early retirement age</label>
-        <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" />
+        <div class="retirement-stepper">
+          <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease early retirement age">-</button>
+          <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" />
+          <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase early retirement age">+</button>
+        </div>
       </header>
       <article class="chart-card">
         <h2>Cash</h2>
@@ -45,6 +49,8 @@ app.innerHTML = `
 
 const inputsPanel = document.getElementById("inputs-panel") as HTMLDivElement;
 const spinner = document.getElementById("early-ret-age") as HTMLInputElement;
+const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonElement;
+const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
 const cashCanvas = document.getElementById("cash-chart") as HTMLCanvasElement;
 const nwCanvas = document.getElementById("nw-chart") as HTMLCanvasElement;
 
@@ -210,6 +216,21 @@ function getStatutoryAge(): number | null {
   return Math.round(n);
 }
 
+function updateEarlyRetirementButtons(statutory: number | null): void {
+  if (statutory === null) {
+    spinnerDown.disabled = true;
+    spinnerUp.disabled = true;
+    return;
+  }
+
+  const raw = spinner.value.trim();
+  const entered = Math.round(Number(raw));
+  const current = Number.isFinite(entered) ? entered : uiState.earlyRetirementAge;
+  const clamped = Math.max(18, Math.min(statutory, current));
+  spinnerDown.disabled = clamped <= 18;
+  spinnerUp.disabled = clamped >= statutory;
+}
+
 function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
   const statutory = getStatutoryAge();
   spinner.min = "18";
@@ -217,6 +238,7 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
     spinner.max = "100";
     spinner.disabled = true;
     spinner.value = "";
+    updateEarlyRetirementButtons(null);
     return;
   }
 
@@ -226,17 +248,36 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
   if (defaultIfEmpty && raw === "") {
     uiState.earlyRetirementAge = statutory;
     spinner.value = String(statutory);
+    updateEarlyRetirementButtons(statutory);
     return;
   }
-  if (raw === "") return;
+  if (raw === "") {
+    updateEarlyRetirementButtons(statutory);
+    return;
+  }
 
   const v = Math.round(Number(raw));
   if (!Number.isFinite(v)) {
     spinner.value = String(uiState.earlyRetirementAge);
+    updateEarlyRetirementButtons(statutory);
     return;
   }
   uiState.earlyRetirementAge = Math.max(18, Math.min(statutory, v));
   spinner.value = String(uiState.earlyRetirementAge);
+  updateEarlyRetirementButtons(statutory);
+}
+
+function adjustEarlyRetirementAge(delta: number): void {
+  const statutory = getStatutoryAge();
+  if (statutory === null) return;
+
+  const raw = spinner.value.trim();
+  const entered = Math.round(Number(raw));
+  const current = Number.isFinite(entered) ? entered : uiState.earlyRetirementAge;
+  uiState.earlyRetirementAge = Math.max(18, Math.min(statutory, current + delta));
+  spinner.value = String(uiState.earlyRetirementAge);
+  updateEarlyRetirementButtons(statutory);
+  queueRecalc();
 }
 
 function sanitizeNumericText(text: string, kind: "number" | "integer" | "percent"): string {
@@ -962,11 +1003,18 @@ spinner.addEventListener("input", () => {
   spinner.max = String(statutory);
   spinner.min = "18";
   const raw = spinner.value.trim();
-  if (raw === "") return;
+  if (raw === "") {
+    updateEarlyRetirementButtons(statutory);
+    return;
+  }
   const v = Math.round(Number(raw));
-  if (!Number.isFinite(v)) return;
+  if (!Number.isFinite(v)) {
+    updateEarlyRetirementButtons(statutory);
+    return;
+  }
   // Allow direct typing without forcing immediate clamp on each keypress.
   uiState.earlyRetirementAge = v;
+  updateEarlyRetirementButtons(statutory);
   queueRecalc();
 });
 
@@ -974,22 +1022,29 @@ spinner.addEventListener("blur", () => {
   const statutory = getStatutoryAge();
   if (statutory === null) {
     spinner.value = "";
+    updateEarlyRetirementButtons(null);
     return;
   }
   const raw = spinner.value.trim();
   if (raw === "") {
     spinner.value = String(uiState.earlyRetirementAge);
+    updateEarlyRetirementButtons(statutory);
     return;
   }
   const v = Math.round(Number(raw));
   if (!Number.isFinite(v)) {
     spinner.value = String(uiState.earlyRetirementAge);
+    updateEarlyRetirementButtons(statutory);
     return;
   }
   uiState.earlyRetirementAge = Math.max(18, Math.min(statutory, v));
   spinner.value = String(uiState.earlyRetirementAge);
+  updateEarlyRetirementButtons(statutory);
   queueRecalc();
 });
+
+spinnerDown.addEventListener("click", () => adjustEarlyRetirementAge(-1));
+spinnerUp.addEventListener("click", () => adjustEarlyRetirementAge(1));
 
 renderInputs();
 recalc();
