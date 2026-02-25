@@ -1,0 +1,44 @@
+{
+  "retirement_age_control": {
+    "spinner_link_cell": "RetEarly_Engine!$B$3",
+    "min": 18,
+    "max": 100,
+    "default": 62,
+    "statutory_ret_age_input": "Inputs!B19"
+  },
+  "defined_names": {
+    "AgeRange": "RetNorm_Engine!$C$3:INDEX(RetNorm_Engine!$C$3:$XFD$3, COUNTA(RetNorm_Engine!$C$3:$XFD$3))",
+    "buffer": "Inputs!$B$159",
+    "ChartCash_Early": "RetEarly_Engine!$C$201:INDEX(RetEarly_Engine!$C$201:$XFD$201, COUNTA(RetEarly_Engine!$C$201:$XFD$201))",
+    "ChartCash_Norm": "RetNorm_Engine!$C$201:INDEX(RetNorm_Engine!$C$201:$XFD$201, COUNTA(RetNorm_Engine!$C$201:$XFD$201))",
+    "ChartNW_Early": "RetEarly_Engine!$C$202:INDEX(RetEarly_Engine!$C$202:$XFD$202, COUNTA(RetEarly_Engine!$C$202:$XFD$202))",
+    "ChartNW_Norm": "RetNorm_Engine!$C$202:INDEX(RetNorm_Engine!$C$202:$XFD$202, COUNTA(RetNorm_Engine!$C$202:$XFD$202))",
+    "EndAge": "Inputs!$B$134",
+    "inf": "Inputs!$B$145",
+    "princ": "Inputs!$B$147",
+    "RetAge": "Inputs!$B$19",
+    "rinc": "Inputs!$B$155",
+    "sincr": "Inputs!$B$153",
+    "stinc": "Inputs!$B$151"
+  },
+  "chart_formulas": {
+    "Cash_chart_all_series_refs": [
+      "Output!$AA$2",
+      "[0]!AgeRange",
+      "RetEarly_Engine!ChartCash_Early",
+      "Output!$AA$3",
+      "[0]!AgeRange",
+      "[0]!ChartCash_Norm"
+    ],
+    "NetWorth_chart_all_series_refs": [
+      "Output!$AA$2",
+      "[0]!AgeRange",
+      "RetEarly_Engine!ChartNW_Early",
+      "Output!$AA$3",
+      "[0]!AgeRange",
+      "[0]!ChartNW_Norm"
+    ]
+  },
+  "inputs_inventory_csv": "specs/excel_prototype/analysis/step1_inputs_inventory.csv",
+  "input_count": 98
+}
