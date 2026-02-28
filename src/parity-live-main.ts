@@ -1,0 +1,68 @@
+import { readFileSync } from "node:fs";
+import { runModel } from "./model";
+
+type LiveExtract = {
+  early: number;
+  raw: Record<string, unknown>;
+  exp: {
+    ages: number[];
+    cashE: number[];
+    cashN: number[];
+    nwE: number[];
+    nwN: number[];
+  };
+};
+
+function maxAbsIndex(values: number[]): number {
+  let idx = 0;
+  let best = -1;
+  for (let i = 0; i < values.length; i += 1) {
+    const v = Math.abs(values[i]);
+    if (v > best) {
+      best = v;
+      idx = i;
+    }
+  }
+  return idx;
+}
+
+function findAgeIndex(ages: number[], age: number): number {
+  return ages.findIndex((x) => x === age);
+}
+
+const input = JSON.parse(readFileSync("/tmp/etq_live_extract.json", "utf8")) as LiveExtract;
+const model = runModel(input.raw as never, {
+  deeperDiveOpen: true,
+  finerDetailsOpen: true,
+  earlyRetirementAge: input.early
+}).outputs;
+
+const dCashE = model.cashSeriesEarly.map((v, i) => v - input.exp.cashE[i]);
+const dNwE = model.netWorthSeriesEarly.map((v, i) => v - input.exp.nwE[i]);
+const dCashN = model.cashSeriesNorm.map((v, i) => v - input.exp.cashN[i]);
+const dNwN = model.netWorthSeriesNorm.map((v, i) => v - input.exp.nwN[i]);
+
+const maxCashE = maxAbsIndex(dCashE);
+const maxNwE = maxAbsIndex(dNwE);
+const maxCashN = maxAbsIndex(dCashN);
+const maxNwN = maxAbsIndex(dNwN);
+
+const age85 = findAgeIndex(input.exp.ages, 85);
+const age95 = findAgeIndex(input.exp.ages, 95);
+
+function lineForIndex(label: string, i: number, deltas: number[]) {
+  if (i < 0) return `${label}: n/a`;
+  return `${label}: idx=${i} year=${2027 + i} age=${input.exp.ages[i]} delta=${deltas[i].toFixed(2)}`;
+}
+
+console.log(`Live workbook parity summary (early age=${input.early})`);
+console.log(lineForIndex("Age 85 cash early", age85, dCashE));
+console.log(lineForIndex("Age 85 net worth early", age85, dNwE));
+console.log(lineForIndex("Age 95 cash early", age95, dCashE));
+console.log(lineForIndex("Age 95 net worth early", age95, dNwE));
+console.log(lineForIndex("Age 95 cash norm", age95, dCashN));
+console.log(lineForIndex("Age 95 net worth norm", age95, dNwN));
+console.log(lineForIndex("Max |dCashE|", maxCashE, dCashE));
+console.log(lineForIndex("Max |dNwE|", maxNwE, dNwE));
+console.log(lineForIndex("Max |dCashN|", maxCashN, dCashN));
+console.log(lineForIndex("Max |dNwN|", maxNwN, dNwN));

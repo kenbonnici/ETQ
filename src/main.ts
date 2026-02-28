@@ -3,6 +3,7 @@ import { runModel } from "./model";
 import { FINER_DETAILS_COL_C_DEFAULTS } from "./model/inputSchema";
 import { InputDefinition, INPUT_DEFINITIONS } from "./ui/inputDefinitions";
 import { ModelUiState, RawInputs } from "./model/types";
+import { ETQ_WORKBOOK_EARLY_RETIREMENT_AGE, ETQ_WORKBOOK_PREFILL } from "./ui/etqWorkbookPrefill";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
@@ -14,10 +15,14 @@ const finerCells = new Set(INPUT_DEFINITIONS.filter((d) => d.section === "FINER 
 const rawInputs: RawInputs = {};
 for (const def of INPUT_DEFINITIONS) rawInputs[def.cell as keyof RawInputs] = null;
 
+for (const [cell, value] of Object.entries(ETQ_WORKBOOK_PREFILL)) {
+  rawInputs[cell as keyof RawInputs] = value;
+}
+
 let uiState: ModelUiState = {
-  deeperDiveOpen: false,
-  finerDetailsOpen: false,
-  earlyRetirementAge: 18
+  deeperDiveOpen: true,
+  finerDetailsOpen: true,
+  earlyRetirementAge: ETQ_WORKBOOK_EARLY_RETIREMENT_AGE
 };
 
 let debounceHandle: number | null = null;
@@ -56,8 +61,8 @@ const nwCanvas = document.getElementById("nw-chart") as HTMLCanvasElement;
 
 const sectionState = {
   quickStartOpen: true,
-  deeperOpen: false,
-  finerOpen: false
+  deeperOpen: true,
+  finerOpen: true
 };
 
 let visibleDependents = 1;
