@@ -476,9 +476,36 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     });
   }
 
+  const milestoneHints: ScenarioOutputs["milestoneHints"] = [];
+  for (let i = 0; i < n; i += 1) {
+    if (Math.abs(stockStage.disposal[i]) <= EPS) continue;
+    milestoneHints.push({
+      year: timeline.years[i],
+      age: timeline.ages[i],
+      label: "Stock sale executed"
+    });
+  }
+
+  const disposalStages = [stage1.disposal, stage2.disposal, stage3.disposal];
+  for (let s = 0; s < disposalStages.length; s += 1) {
+    const propIdx = order[s];
+    if (propIdx < 0 || propIdx >= inputs.properties.length) continue;
+    const disposal = disposalStages[s];
+    const saleIdx = disposal.findIndex((value) => Math.abs(value) > EPS);
+    if (saleIdx < 0) continue;
+    const propertyName = inputs.properties[propIdx].name.trim() || `Property ${propIdx + 1}`;
+    const saleTarget = /property/i.test(propertyName) ? propertyName : `${propertyName} Property`;
+    milestoneHints.push({
+      year: timeline.years[saleIdx],
+      age: timeline.ages[saleIdx],
+      label: `Sale of ${saleTarget}`
+    });
+  }
+
   return {
     points,
     cashSeries: points.map((p) => p.cash),
-    netWorthSeries: points.map((p) => p.netWorth)
+    netWorthSeries: points.map((p) => p.netWorth),
+    milestoneHints
   };
 }

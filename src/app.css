@@ -21,13 +21,14 @@ body {
 .layout {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(340px, 44%) 1fr;
+  grid-template-columns: minmax(340px, 44%) minmax(0, 1fr) auto;
   gap: 16px;
   padding: 16px;
 }
 
 .left,
-.right {
+.right,
+.timeline-panel {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -44,6 +45,176 @@ body {
   display: grid;
   grid-template-rows: auto 1fr 1fr;
   gap: 14px;
+}
+
+.timeline-panel {
+  width: 300px;
+  min-width: 300px;
+  padding: 10px;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+}
+
+.timeline-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.timeline-header h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1f2937;
+  letter-spacing: 0.02em;
+}
+
+.timeline-scroll {
+  overflow: auto;
+  border: 1px solid #e4ece6;
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+/* Timeline Style Guide
+   - Axis is the visual anchor; dot must sit centered on axis.
+   - Milestone layout order: age (left) -> dot on axis -> label (right).
+   - Keep age/label typography in sync: readable UI stack and modest size deltas.
+   - Preserve collision-safe spacing in renderMilestoneTimeline() (main.ts).
+   - For mobile, prefer single-line labels with ellipsis to avoid row overlap.
+*/
+.timeline-track {
+  position: relative;
+  min-height: 100%;
+}
+
+.timeline-axis {
+  position: absolute;
+  left: 42px;
+  top: 24px;
+  bottom: 24px;
+  width: 2px;
+  background: #bcd1c3;
+}
+
+.timeline-endcap {
+  position: absolute;
+  left: 42px;
+  width: calc(100% - 52px);
+  pointer-events: none;
+}
+
+.timeline-end-year {
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translate(-100%, -50%);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
+  line-height: 1.2;
+  color: #0b5d56;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.timeline-end-age {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
+  line-height: 1.2;
+  color: #0b5d56;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.timeline-endcap-top {
+  top: 24px;
+}
+
+.timeline-endcap-bottom {
+  bottom: 24px;
+}
+
+.timeline-milestone {
+  position: absolute;
+  left: 42px;
+  transform: translateY(-50%);
+  width: calc(100% - 52px);
+}
+
+.timeline-item-year {
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translate(-100%, -50%);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
+  line-height: 1.2;
+  color: #0b5d56;
+  display: inline-flex;
+  flex: 0 0 auto;
+  background: transparent;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.timeline-item-age-right {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 500;
+  font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
+  line-height: 1.2;
+  color: #0b5d56;
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.timeline-dot {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid #bcc9c2;
+  background: #f8fbf9;
+  transform: translate(-50%, -50%);
+  z-index: 2;
+}
+
+.timeline-item-label {
+  font-size: 12px;
+  font-weight: 400;
+  font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
+  color: #1f2937;
+  line-height: 1.25;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.timeline-item-title {
+  margin-left: 44px;
+  padding-right: 2px;
+}
+
+.timeline-empty {
+  margin: 0;
+  padding: 10px;
+  font-size: 12px;
+  color: #64748b;
 }
 
 .retirement-control {
@@ -201,6 +372,20 @@ small {
   font-size: 11px;
 }
 
+@media (max-width: 1280px) {
+  .layout {
+    grid-template-columns: minmax(320px, 42%) minmax(0, 1fr);
+  }
+
+  .timeline-panel {
+    grid-column: 1 / -1;
+    width: auto;
+    min-width: 0;
+    position: static;
+    max-height: 420px;
+  }
+}
+
 @media (max-width: 960px) {
   .layout {
     grid-template-columns: 1fr;
@@ -208,6 +393,43 @@ small {
 
   .left {
     max-height: none;
+  }
+
+  .timeline-panel {
+    max-height: 360px;
+  }
+
+  .timeline-end-year,
+  .timeline-end-age {
+    font-size: 11px;
+    padding: 0;
+  }
+
+  .timeline-item-year {
+    font-size: 11px;
+    left: -8px;
+  }
+
+  .timeline-item-age-right {
+    font-size: 11px;
+    left: 8px;
+  }
+
+  .timeline-dot {
+    width: 5px;
+    height: 5px;
+  }
+
+  .timeline-item-title {
+    margin-left: 12px;
+  }
+
+  .timeline-item-label {
+    font-size: 11px;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .retirement-control {

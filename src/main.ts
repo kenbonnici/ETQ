@@ -1,5 +1,6 @@
 import "./app.css";
 import { runModel } from "./model";
+import type { RunModelResult } from "./model/index";
 import { FINER_DETAILS_COL_C_DEFAULTS } from "./model/inputSchema";
 import { InputDefinition, INPUT_DEFINITIONS } from "./ui/inputDefinitions";
 import { ModelUiState, RawInputs } from "./model/types";
@@ -28,6 +29,14 @@ let uiState: ModelUiState = {
 let debounceHandle: number | null = null;
 let pendingFocusCell: string | null = null;
 
+const MILESTONE_YOY_THRESHOLD = 0.2;
+const MILESTONE_MAX_ITEMS = 12;
+const MILESTONE_MIN_DENOMINATOR = 1;
+const TIMELINE_MIN_HEIGHT = 520;
+const TIMELINE_YEAR_PIXELS = 14;
+const TIMELINE_MILESTONE_MIN_GAP = 12;
+const TIMELINE_EDGE_PADDING = 26;
+
 app.innerHTML = `
   <main class="layout">
     <section class="left" id="inputs-panel"></section>
@@ -49,6 +58,14 @@ app.innerHTML = `
         <canvas id="nw-chart" width="920" height="300"></canvas>
       </article>
     </section>
+    <aside class="timeline-panel" id="timeline-panel">
+      <header class="timeline-header">
+        <h2>Main Events</h2>
+      </header>
+      <div class="timeline-scroll" id="timeline-scroll">
+        <div class="timeline-track" id="timeline-track"></div>
+      </div>
+    </aside>
   </main>
 `;
 
@@ -58,6 +75,8 @@ const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonEleme
 const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
 const cashCanvas = document.getElementById("cash-chart") as HTMLCanvasElement;
 const nwCanvas = document.getElementById("nw-chart") as HTMLCanvasElement;
+const timelineScroll = document.getElementById("timeline-scroll") as HTMLDivElement;
+const timelineTrack = document.getElementById("timeline-track") as HTMLDivElement;
 
 const sectionState = {
   quickStartOpen: true,
@@ -105,6 +124,16 @@ interface PanelCursorState {
   activeCell: string | null;
   selectionStart: number | null;
   selectionEnd: number | null;
+}
+
+interface TimelineMilestone {
+  age: number;
+  year: number;
+  cashPct: number | null;
+  netWorthPct: number | null;
+  magnitude: number;
+  label: string;
+  notes: string[];
 }
 
 function isNonZeroNumber(v: unknown): boolean {
@@ -210,6 +239,211 @@ function asNumber(v: unknown): number {
   if (v === null || v === undefined || String(v).trim() === "") return 0;
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function safeYoYChange(nextValue: number, prevValue: number): number {
+  const denominator = Math.max(MILESTONE_MIN_DENOMINATOR, Math.abs(nextValue), Math.abs(prevValue));
+  return (nextValue - prevValue) / denominator;
+}
+
+function collectSpecificLabelsByYear(result: RunModelResult): Map<number, string[]> {
+  const labelsByYear = new Map<number, string[]>();
+
+  const pushLabel = (year: number, name: string): void => {
+    if (!name || !Number.isFinite(year) || year <= 0) return;
+    const existing = labelsByYear.get(year) ?? [];
+    if (!existing.includes(name)) existing.push(name);
+    labelsByYear.set(year, existing);
+  };
+
+  if (uiState.deeperDiveOpen) {
+    const eventCells = [
+      { nameCell: "B100", yearCell: "B102" },
+      { nameCell: "B105", yearCell: "B107" },
+      { nameCell: "B110", yearCell: "B112" },
+      { nameCell: "B117", yearCell: "B119" },
+      { nameCell: "B122", yearCell: "B124" },
+      { nameCell: "B127", yearCell: "B129" }
+    ] as const;
+
+    for (const pair of eventCells) {
+      const name = String(rawInputs[pair.nameCell] ?? "").trim();
+      const year = Math.round(asNumber(rawInputs[pair.yearCell]));
+      pushLabel(year, name);
+    }
+
+    const dependentCells = [
+      { nameCell: "B33", yearsCell: "B35" },
+      { nameCell: "B38", yearsCell: "B40" },
+      { nameCell: "B43", yearsCell: "B45" }
+    ] as const;
+
+    const firstAge = result.outputs.ages[0];
+    const firstYear = result.outputs.years[0];
+    for (const dep of dependentCells) {
+      const supportYears = Math.round(asNumber(rawInputs[dep.yearsCell]));
+      if (supportYears <= 0) continue;
+      const depName = String(rawInputs[dep.nameCell] ?? "").trim();
+      const label = depName ? `${depName} support ends` : "Dependent support ends";
+      const endAge = firstAge + supportYears;
+      const idx = result.outputs.ages.findIndex((value) => Math.round(value) === Math.round(endAge));
+      const year = idx >= 0 ? result.outputs.years[idx] : firstYear + supportYears;
+      pushLabel(year, label);
+    }
+  }
+
+  const statutory = getStatutoryAge();
+  if (statutory !== null && asNumber(rawInputs.B21) > 0) {
+    const idx = result.outputs.ages.findIndex((value) => Math.round(value) === statutory);
+    if (idx >= 0) pushLabel(result.outputs.years[idx], "State pension starts");
+  }
+
+  for (const hint of result.outputs.scenarioEarly.milestoneHints) {
+    pushLabel(hint.year, hint.label);
+  }
+
+  return labelsByYear;
+}
+
+function mergeMilestone(existing: TimelineMilestone, incoming: TimelineMilestone): TimelineMilestone {
+  const notes = [...existing.notes];
+  for (const note of incoming.notes) {
+    if (!notes.includes(note)) notes.push(note);
+  }
+  return {
+    age: existing.age,
+    year: existing.year,
+    cashPct: incoming.cashPct ?? existing.cashPct,
+    netWorthPct: incoming.netWorthPct ?? existing.netWorthPct,
+    magnitude: Math.max(existing.magnitude, incoming.magnitude),
+    label: existing.label,
+    notes
+  };
+}
+
+function buildTimelineMilestones(result: RunModelResult): TimelineMilestone[] {
+  const ages = result.outputs.ages;
+  const years = result.outputs.years;
+  const cash = result.outputs.cashSeriesEarly;
+  const netWorth = result.outputs.netWorthSeriesEarly;
+  if (ages.length === 0) return [];
+
+  const labelsByYear = collectSpecificLabelsByYear(result);
+  const byYear = new Map<number, TimelineMilestone>();
+
+  const putMilestone = (milestone: TimelineMilestone): void => {
+    const existing = byYear.get(milestone.year);
+    if (!existing) {
+      byYear.set(milestone.year, milestone);
+      return;
+    }
+    byYear.set(milestone.year, mergeMilestone(existing, milestone));
+  };
+
+  for (let i = 1; i < ages.length; i += 1) {
+    const cashPct = safeYoYChange(cash[i], cash[i - 1]);
+    const netWorthPct = safeYoYChange(netWorth[i], netWorth[i - 1]);
+    const cashAbs = Math.abs(cashPct);
+    const netWorthAbs = Math.abs(netWorthPct);
+    if (cashAbs < MILESTONE_YOY_THRESHOLD && netWorthAbs < MILESTONE_YOY_THRESHOLD) continue;
+    const year = years[i];
+    const allowedLabels = labelsByYear.get(year) ?? [];
+    const label = allowedLabels[0] ?? null;
+    if (!label) continue;
+    const extraCount = Math.max(0, allowedLabels.length - 1);
+    const notes = extraCount > 0 ? [`+${extraCount} more event${extraCount > 1 ? "s" : ""}`] : [];
+
+    putMilestone({
+      age: ages[i],
+      year,
+      cashPct,
+      netWorthPct,
+      magnitude: Math.max(cashAbs, netWorthAbs),
+      label,
+      notes
+    });
+  }
+  const allMilestones = [...byYear.values()];
+  const trimmed = allMilestones
+    .sort((a, b) => b.magnitude - a.magnitude)
+    .slice(0, MILESTONE_MAX_ITEMS);
+  trimmed.sort((a, b) => a.age - b.age);
+  return trimmed;
+}
+
+function renderMilestoneTimeline(result: RunModelResult): void {
+  const ages = result.outputs.ages;
+  const years = result.outputs.years;
+  if (ages.length === 0) {
+    timelineTrack.innerHTML = `<p class="timeline-empty">No timeline data available.</p>`;
+    return;
+  }
+  const startAge = ages[0];
+  const endAge = ages[ages.length - 1];
+  const startYear = years[0];
+  const endYear = years[years.length - 1];
+  const span = Math.max(1, endAge - startAge);
+  const viewportHeight = timelineScroll.clientHeight;
+  const trackHeight = Math.max(TIMELINE_MIN_HEIGHT, viewportHeight, Math.round(span * TIMELINE_YEAR_PIXELS));
+  timelineTrack.style.height = `${trackHeight}px`;
+
+  const milestones = buildTimelineMilestones(result);
+  const topPad = TIMELINE_EDGE_PADDING;
+  const bottomPad = TIMELINE_EDGE_PADDING;
+  const usable = Math.max(1, trackHeight - topPad - bottomPad);
+  const positioned = milestones.map((item) => {
+    const ratio = (item.age - startAge) / span;
+    const y = topPad + (1 - Math.max(0, Math.min(1, ratio))) * usable;
+    return { ...item, y };
+  });
+  const minGap = window.matchMedia("(max-width: 960px)").matches
+    ? Math.max(TIMELINE_MILESTONE_MIN_GAP, 14)
+    : TIMELINE_MILESTONE_MIN_GAP;
+  for (let i = 1; i < positioned.length; i += 1) {
+    positioned[i].y = Math.min(positioned[i].y, positioned[i - 1].y - minGap);
+  }
+  for (let i = positioned.length - 2; i >= 0; i -= 1) {
+    positioned[i].y = Math.max(positioned[i].y, positioned[i + 1].y + minGap);
+  }
+  for (const item of positioned) {
+    item.y = Math.max(topPad, Math.min(trackHeight - bottomPad, item.y));
+  }
+  const milestonesHtml = positioned
+    .map((item) => {
+      return `
+        <article class="timeline-milestone" style="top:${item.y.toFixed(2)}px">
+          <span class="timeline-item-year">${Math.round(item.age)}</span>
+          <span class="timeline-dot" aria-hidden="true"></span>
+          <span class="timeline-item-age-right">${Math.round(item.year)}</span>
+          <div class="timeline-item-title">
+            <span class="timeline-item-label">${escapeHtml(item.label)}</span>
+          </div>
+        </article>
+      `;
+    })
+    .join("");
+
+  timelineTrack.innerHTML = `
+    <div class="timeline-axis"></div>
+    <div class="timeline-endcap timeline-endcap-top">
+      <span class="timeline-end-year">${Math.round(endAge)}</span>
+      <span class="timeline-end-age">${Math.round(endYear)}</span>
+    </div>
+    <div class="timeline-endcap timeline-endcap-bottom">
+      <span class="timeline-end-year">${Math.round(startAge)}</span>
+      <span class="timeline-end-age">${Math.round(startYear)}</span>
+    </div>
+    ${milestonesHtml}
+  `;
 }
 
 function getStatutoryAge(): number | null {
@@ -992,6 +1226,7 @@ function recalc(): void {
     earlyLabel,
     statutoryLabel
   );
+  renderMilestoneTimeline(result);
 }
 
 function queueRecalc(): void {

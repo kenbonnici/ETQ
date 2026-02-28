@@ -88,10 +88,17 @@ export interface ProjectionPoint {
   netWorth: number;
 }
 
+export interface ScenarioMilestoneHint {
+  year: number;
+  age: number;
+  label: string;
+}
+
 export interface ScenarioOutputs {
   points: ProjectionPoint[];
   cashSeries: number[];
   netWorthSeries: number[];
+  milestoneHints: ScenarioMilestoneHint[];
 }
 
 export interface ModelOutputs {
