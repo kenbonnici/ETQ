@@ -17,8 +17,8 @@ for (const [cell, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
 }
 
 let uiState: ModelUiState = {
-  deeperDiveOpen: true,
-  finerDetailsOpen: true,
+  deeperDiveOpen: false,
+  finerDetailsOpen: false,
   earlyRetirementAge: 65
 };
 
@@ -109,8 +109,8 @@ const timelineTrack = document.getElementById("timeline-track") as HTMLDivElemen
 
 const sectionState = {
   quickStartOpen: true,
-  deeperOpen: true,
-  finerOpen: true
+  deeperOpen: false,
+  finerOpen: false
 };
 
 let visibleDependents = 1;
@@ -130,6 +130,8 @@ const expenseEvent1Cells = ["B117", "B118", "B119"] as const;
 const expenseEvent2Cells = ["B122", "B123", "B124"] as const;
 const expenseEvent3Cells = ["B127", "B128", "B129"] as const;
 const displayOrderOverride: Record<string, number> = {
+  // In Quick Start, place statutory retirement age before current age.
+  B19: 3.9,
   // In "Other income", show other-work controls before rental-income controls.
   B70: 66.1,
   B71: 66.2,
