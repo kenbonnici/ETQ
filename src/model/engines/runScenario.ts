@@ -482,7 +482,8 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     milestoneHints.push({
       year: timeline.years[i],
       age: timeline.ages[i],
-      label: "Stock sale executed"
+      label: "Stock sale executed",
+      amount: Math.abs(stockStage.disposal[i])
     });
   }
 
@@ -498,7 +499,8 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     milestoneHints.push({
       year: timeline.years[saleIdx],
       age: timeline.ages[saleIdx],
-      label: `Sale of ${saleTarget}`
+      label: `Sale of ${saleTarget}`,
+      amount: Math.abs(disposal[saleIdx])
     });
   }
 

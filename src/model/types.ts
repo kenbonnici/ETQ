@@ -92,6 +92,7 @@ export interface ScenarioMilestoneHint {
   year: number;
   age: number;
   label: string;
+  amount?: number;
 }
 
 export interface ScenarioOutputs {
