@@ -3,32 +3,23 @@ import { runModel } from "./model";
 import type { RunModelResult } from "./model/index";
 import { FINER_DETAILS_COL_C_DEFAULTS } from "./model/inputSchema";
 import { InputDefinition, INPUT_DEFINITIONS } from "./ui/inputDefinitions";
-import {
-  ETQ_WORKBOOK_EARLY_RETIREMENT_AGE,
-  ETQ_WORKBOOK_PREFILL
-} from "./ui/etqWorkbookPrefill";
 import { ModelUiState, RawInputs } from "./model/types";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
 
 const textCells = new Set(["B33", "B38", "B43", "B50", "B55", "B60", "B100", "B105", "B110", "B117", "B122", "B127"]);
-const deeperCells = new Set(INPUT_DEFINITIONS.filter((d) => d.section === "DEEPER DIVE").map((d) => d.cell));
-const finerCells = new Set(INPUT_DEFINITIONS.filter((d) => d.section === "FINER DETAILS").map((d) => d.cell));
 
 const rawInputs: RawInputs = {};
 for (const def of INPUT_DEFINITIONS) rawInputs[def.cell as keyof RawInputs] = null;
 for (const [cell, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
   rawInputs[cell as keyof RawInputs] = value;
 }
-for (const [cell, value] of Object.entries(ETQ_WORKBOOK_PREFILL)) {
-  rawInputs[cell as keyof RawInputs] = value as RawInputs[keyof RawInputs];
-}
 
 let uiState: ModelUiState = {
   deeperDiveOpen: true,
   finerDetailsOpen: true,
-  earlyRetirementAge: ETQ_WORKBOOK_EARLY_RETIREMENT_AGE
+  earlyRetirementAge: 65
 };
 
 let debounceHandle: number | null = null;
@@ -39,27 +30,53 @@ const MILESTONE_MAX_ITEMS = 12;
 const MILESTONE_MIN_DENOMINATOR = 1;
 const TIMELINE_MIN_HEIGHT = 520;
 const TIMELINE_YEAR_PIXELS = 14;
-const TIMELINE_MILESTONE_MIN_GAP = 12;
+const TIMELINE_MILESTONE_MIN_GAP = 16;
 const TIMELINE_EDGE_PADDING = 26;
+const RETIREMENT_CASH_FLOOR_EPSILON = 1e-6;
 
 app.innerHTML = `
   <main class="layout">
     <section class="left" id="inputs-panel"></section>
     <section class="right">
       <header class="retirement-control">
-        <label for="early-ret-age">Early retirement age</label>
+        <button id="retire-check-btn" class="retire-check-btn" type="button">Can I retire early?</button>
+        <p id="retire-check-result" class="retire-check-result" hidden></p>
         <div class="retirement-stepper">
           <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease early retirement age">-</button>
-          <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" />
+          <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Early retirement age" />
           <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase early retirement age">+</button>
         </div>
       </header>
       <article class="chart-card">
-        <h2>Cash</h2>
+        <div class="chart-header">
+          <h2>Cash</h2>
+          <div class="chart-legend" id="cash-legend" aria-hidden="true">
+            <span class="chart-legend-item">
+              <span class="chart-legend-line"></span>
+              <span id="cash-legend-a">Retire at early age</span>
+            </span>
+            <span class="chart-legend-item">
+              <span class="chart-legend-line is-dashed"></span>
+              <span id="cash-legend-b">Retire at statutory age</span>
+            </span>
+          </div>
+        </div>
         <canvas id="cash-chart" width="920" height="300"></canvas>
       </article>
       <article class="chart-card">
-        <h2>Net Worth</h2>
+        <div class="chart-header">
+          <h2>Net Worth</h2>
+          <div class="chart-legend" id="nw-legend" aria-hidden="true">
+            <span class="chart-legend-item">
+              <span class="chart-legend-line"></span>
+              <span id="nw-legend-a">Retire at early age</span>
+            </span>
+            <span class="chart-legend-item">
+              <span class="chart-legend-line is-dashed"></span>
+              <span id="nw-legend-b">Retire at statutory age</span>
+            </span>
+          </div>
+        </div>
         <canvas id="nw-chart" width="920" height="300"></canvas>
       </article>
     </section>
@@ -78,8 +95,14 @@ const inputsPanel = document.getElementById("inputs-panel") as HTMLDivElement;
 const spinner = document.getElementById("early-ret-age") as HTMLInputElement;
 const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonElement;
 const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
+const retireCheckResult = document.getElementById("retire-check-result") as HTMLParagraphElement;
+const retireCheckButton = document.getElementById("retire-check-btn") as HTMLButtonElement;
 const cashCanvas = document.getElementById("cash-chart") as HTMLCanvasElement;
 const nwCanvas = document.getElementById("nw-chart") as HTMLCanvasElement;
+const cashLegendA = document.getElementById("cash-legend-a") as HTMLSpanElement;
+const cashLegendB = document.getElementById("cash-legend-b") as HTMLSpanElement;
+const nwLegendA = document.getElementById("nw-legend-a") as HTMLSpanElement;
+const nwLegendB = document.getElementById("nw-legend-b") as HTMLSpanElement;
 const timelinePanel = document.getElementById("timeline-panel") as HTMLDivElement;
 const timelineScroll = document.getElementById("timeline-scroll") as HTMLDivElement;
 const timelineTrack = document.getElementById("timeline-track") as HTMLDivElement;
@@ -140,6 +163,11 @@ interface TimelineMilestone {
   magnitude: number;
   label: string;
   notes: string[];
+}
+
+interface TimelineYearEvent {
+  label: string;
+  amount: number | null;
 }
 
 function isNonZeroNumber(v: unknown): boolean {
@@ -256,65 +284,146 @@ function escapeHtml(text: string): string {
     .replace(/'/g, "&#39;");
 }
 
+function syncTimelineLabelTooltipState(): void {
+  const labels = timelineTrack.querySelectorAll<HTMLElement>(".timeline-item-label");
+  labels.forEach((label) => {
+    const truncated = label.scrollWidth > label.clientWidth + 1;
+    const title = label.closest<HTMLElement>(".timeline-item-title");
+    if (!title) return;
+    if (truncated) title.dataset.tooltipActive = "true";
+    else delete title.dataset.tooltipActive;
+  });
+}
+
 function safeYoYChange(nextValue: number, prevValue: number): number {
   const denominator = Math.max(MILESTONE_MIN_DENOMINATOR, Math.abs(nextValue), Math.abs(prevValue));
   return (nextValue - prevValue) / denominator;
 }
 
-function collectSpecificLabelsByYear(result: RunModelResult): Map<number, string[]> {
-  const labelsByYear = new Map<number, string[]>();
+function normalizeTimelineLabel(label: string): string {
+  const trimmed = label.trim();
+  if (!trimmed) return trimmed;
 
-  const pushLabel = (year: number, name: string): void => {
+  if (/^stock sale executed$/i.test(trimmed)) return "Sell stocks";
+
+  const saleMatch = /^sale of (.+?) property$/i.exec(trimmed);
+  if (saleMatch) {
+    return `Sell ${saleMatch[1]} property`;
+  }
+
+  return trimmed;
+}
+
+function formatImpact(amount: number | null): string {
+  if (amount === null || !Number.isFinite(amount)) return "";
+  const k = Math.round(amount / 1000);
+  const sign = k < 0 ? "-" : "";
+  return `${sign}${Math.abs(k).toLocaleString("en-US")}k`;
+}
+
+function composeTimelineLabel(events: TimelineYearEvent[]): string {
+  const unique = events.filter((event, idx, arr) =>
+    arr.findIndex((x) => x.label === event.label && x.amount === event.amount) === idx
+  );
+  const propertySales: Array<{ name: string; amount: number | null }> = [];
+  const others: TimelineYearEvent[] = [];
+  let hasStockSale = false;
+  let stockSaleAmount = 0;
+
+  for (const event of unique) {
+    if (/^sell stocks$/i.test(event.label)) {
+      hasStockSale = true;
+      stockSaleAmount += event.amount ?? 0;
+      continue;
+    }
+    const propMatch = /^sell (.+) property$/i.exec(event.label);
+    if (propMatch) {
+      propertySales.push({ name: propMatch[1], amount: event.amount });
+      continue;
+    }
+    others.push(event);
+  }
+
+  const parts: string[] = [];
+  if (hasStockSale) {
+    const amountText = formatImpact(stockSaleAmount);
+    parts.push(amountText ? `Sell stocks (${amountText})` : "Sell stocks");
+  }
+  if (propertySales.length === 1) {
+    const sale = propertySales[0];
+    const amountText = formatImpact(sale.amount);
+    parts.push(amountText ? `Sell ${sale.name} (${amountText})` : `Sell ${sale.name}`);
+  } else if (propertySales.length > 1) {
+    const grouped = propertySales
+      .map((sale) => {
+        const amountText = formatImpact(sale.amount);
+        return amountText ? `${sale.name} (${amountText})` : sale.name;
+      })
+      .join(" & ");
+    parts.push(`Sell ${grouped}`);
+  }
+  for (const other of others) {
+    const amountText = formatImpact(other.amount);
+    parts.push(amountText ? `${other.label} (${amountText})` : other.label);
+  }
+
+  return parts.join(" + ");
+}
+
+function collectSpecificLabelsByYear(result: RunModelResult): Map<number, TimelineYearEvent[]> {
+  const labelsByYear = new Map<number, TimelineYearEvent[]>();
+
+  const pushLabel = (year: number, name: string, amount: number | null = null): void => {
     if (!name || !Number.isFinite(year) || year <= 0) return;
     const existing = labelsByYear.get(year) ?? [];
-    if (!existing.includes(name)) existing.push(name);
+    existing.push({ label: name, amount });
     labelsByYear.set(year, existing);
   };
 
-  if (uiState.deeperDiveOpen) {
-    const eventCells = [
-      { nameCell: "B100", yearCell: "B102" },
-      { nameCell: "B105", yearCell: "B107" },
-      { nameCell: "B110", yearCell: "B112" },
-      { nameCell: "B117", yearCell: "B119" },
-      { nameCell: "B122", yearCell: "B124" },
-      { nameCell: "B127", yearCell: "B129" }
-    ] as const;
+  const eventCells = [
+    { nameCell: "B100", amountCell: "B101", yearCell: "B102", kind: "income" },
+    { nameCell: "B105", amountCell: "B106", yearCell: "B107", kind: "income" },
+    { nameCell: "B110", amountCell: "B111", yearCell: "B112", kind: "income" },
+    { nameCell: "B117", amountCell: "B118", yearCell: "B119", kind: "expense" },
+    { nameCell: "B122", amountCell: "B123", yearCell: "B124", kind: "expense" },
+    { nameCell: "B127", amountCell: "B128", yearCell: "B129", kind: "expense" }
+  ] as const;
 
-    for (const pair of eventCells) {
-      const name = String(rawInputs[pair.nameCell] ?? "").trim();
-      const year = Math.round(asNumber(rawInputs[pair.yearCell]));
-      pushLabel(year, name);
-    }
+  for (const pair of eventCells) {
+    const name = String(rawInputs[pair.nameCell] ?? "").trim();
+    const year = Math.round(asNumber(rawInputs[pair.yearCell]));
+    const amount = Math.abs(asNumber(rawInputs[pair.amountCell]));
+    const signedAmount = pair.kind === "expense" ? -amount : amount;
+    pushLabel(year, name, signedAmount);
+  }
 
-    const dependentCells = [
-      { nameCell: "B33", yearsCell: "B35" },
-      { nameCell: "B38", yearsCell: "B40" },
-      { nameCell: "B43", yearsCell: "B45" }
-    ] as const;
+  const dependentCells = [
+    { nameCell: "B33", annualCostCell: "B34", yearsCell: "B35" },
+    { nameCell: "B38", annualCostCell: "B39", yearsCell: "B40" },
+    { nameCell: "B43", annualCostCell: "B44", yearsCell: "B45" }
+  ] as const;
 
-    const firstAge = result.outputs.ages[0];
-    const firstYear = result.outputs.years[0];
-    for (const dep of dependentCells) {
-      const supportYears = Math.round(asNumber(rawInputs[dep.yearsCell]));
-      if (supportYears <= 0) continue;
-      const depName = String(rawInputs[dep.nameCell] ?? "").trim();
-      const label = depName ? `${depName} support ends` : "Dependent support ends";
-      const endAge = firstAge + supportYears;
-      const idx = result.outputs.ages.findIndex((value) => Math.round(value) === Math.round(endAge));
-      const year = idx >= 0 ? result.outputs.years[idx] : firstYear + supportYears;
-      pushLabel(year, label);
-    }
+  const firstAge = result.outputs.ages[0];
+  const firstYear = result.outputs.years[0];
+  for (const dep of dependentCells) {
+    const supportYears = Math.round(asNumber(rawInputs[dep.yearsCell]));
+    if (supportYears <= 0) continue;
+    const depName = String(rawInputs[dep.nameCell] ?? "").trim();
+    const label = depName ? `${depName} support ends` : "Dependent support ends";
+    const endAge = firstAge + supportYears;
+    const idx = result.outputs.ages.findIndex((value) => Math.round(value) === Math.round(endAge));
+    const year = idx >= 0 ? result.outputs.years[idx] : firstYear + supportYears;
+    pushLabel(year, label, Math.abs(asNumber(rawInputs[dep.annualCostCell])));
   }
 
   const statutory = getStatutoryAge();
   if (statutory !== null && asNumber(rawInputs.B21) > 0) {
     const idx = result.outputs.ages.findIndex((value) => Math.round(value) === statutory);
-    if (idx >= 0) pushLabel(result.outputs.years[idx], "State pension starts");
+    if (idx >= 0) pushLabel(result.outputs.years[idx], "State pension starts", Math.abs(asNumber(rawInputs.B21)));
   }
 
   for (const hint of result.outputs.scenarioEarly.milestoneHints) {
-    pushLabel(hint.year, hint.label);
+    pushLabel(hint.year, hint.label, hint.amount ?? null);
   }
 
   return labelsByYear;
@@ -362,11 +471,14 @@ function buildTimelineMilestones(result: RunModelResult): TimelineMilestone[] {
     const netWorthAbs = Math.abs(netWorthPct);
     if (cashAbs < MILESTONE_YOY_THRESHOLD && netWorthAbs < MILESTONE_YOY_THRESHOLD) continue;
     const year = years[i];
-    const allowedLabels = labelsByYear.get(year) ?? [];
-    const label = allowedLabels[0] ?? null;
+    const allowedEvents = labelsByYear.get(year) ?? [];
+    if (allowedEvents.length === 0) continue;
+    const normalized = allowedEvents
+      .map((event) => ({ ...event, label: normalizeTimelineLabel(event.label) }))
+      .filter((event) => event.label.length > 0);
+    if (normalized.length === 0) continue;
+    const label = composeTimelineLabel(normalized);
     if (!label) continue;
-    const extraCount = Math.max(0, allowedLabels.length - 1);
-    const notes = extraCount > 0 ? [`+${extraCount} more event${extraCount > 1 ? "s" : ""}`] : [];
 
     putMilestone({
       age: ages[i],
@@ -375,7 +487,7 @@ function buildTimelineMilestones(result: RunModelResult): TimelineMilestone[] {
       netWorthPct,
       magnitude: Math.max(cashAbs, netWorthAbs),
       label,
-      notes
+      notes: []
     });
   }
   const allMilestones = [...byYear.values()];
@@ -421,7 +533,7 @@ function renderMilestoneTimeline(result: RunModelResult): void {
     return { ...item, y };
   });
   const minGap = window.matchMedia("(max-width: 960px)").matches
-    ? Math.max(TIMELINE_MILESTONE_MIN_GAP, 14)
+    ? Math.max(TIMELINE_MILESTONE_MIN_GAP, 18)
     : TIMELINE_MILESTONE_MIN_GAP;
   for (let i = 1; i < positioned.length; i += 1) {
     positioned[i].y = Math.min(positioned[i].y, positioned[i - 1].y - minGap);
@@ -438,8 +550,7 @@ function renderMilestoneTimeline(result: RunModelResult): void {
         <article class="timeline-milestone" style="top:${item.y.toFixed(2)}px">
           <span class="timeline-item-year">${Math.round(item.age)}</span>
           <span class="timeline-dot" aria-hidden="true"></span>
-          <span class="timeline-item-age-right">${Math.round(item.year)}</span>
-          <div class="timeline-item-title">
+          <div class="timeline-item-title" data-full-label="${escapeHtml(item.label)}">
             <span class="timeline-item-label">${escapeHtml(item.label)}</span>
           </div>
         </article>
@@ -459,6 +570,8 @@ function renderMilestoneTimeline(result: RunModelResult): void {
     </div>
     ${milestonesHtml}
   `;
+  syncTimelineLabelTooltipState();
+  requestAnimationFrame(syncTimelineLabelTooltipState);
 }
 
 function getStatutoryAge(): number | null {
@@ -485,6 +598,45 @@ function updateEarlyRetirementButtons(statutory: number | null): void {
   spinnerUp.disabled = clamped >= statutory;
 }
 
+function setRetireCheckMessage(message: string | null, tone: "positive" | "neutral" = "neutral"): void {
+  if (message === null) {
+    retireCheckResult.textContent = "";
+    retireCheckResult.hidden = true;
+    retireCheckResult.classList.remove("is-positive", "is-neutral");
+    return;
+  }
+  retireCheckResult.textContent = message;
+  retireCheckResult.classList.toggle("is-positive", tone === "positive");
+  retireCheckResult.classList.toggle("is-neutral", tone === "neutral");
+  retireCheckResult.hidden = false;
+}
+
+function updateRetireCheckButton(statutory: number | null): void {
+  retireCheckButton.disabled = statutory === null || statutory <= 18;
+}
+
+function findEarliestRetirementAgeBeforeStatutory(statutory: number): number | null {
+  const baseline = runModel(rawInputs, uiState);
+  const firstProjectedAge = baseline.outputs.ages[0];
+  if (!Number.isFinite(firstProjectedAge)) return null;
+
+  const candidateStartAge = Math.max(18, Math.round(firstProjectedAge));
+  const candidateEndAge = statutory - 1;
+  if (candidateStartAge > candidateEndAge) return null;
+
+  for (let candidateAge = candidateStartAge; candidateAge <= candidateEndAge; candidateAge += 1) {
+    const candidateResult = runModel(rawInputs, { ...uiState, earlyRetirementAge: candidateAge });
+    const startIndex = candidateResult.outputs.ages.findIndex((age) => Math.round(age) >= candidateAge);
+    if (startIndex < 0) continue;
+    const staysNonNegative = candidateResult.outputs.cashSeriesEarly
+      .slice(startIndex)
+      .every((cash) => cash >= -RETIREMENT_CASH_FLOOR_EPSILON);
+    if (staysNonNegative) return candidateAge;
+  }
+
+  return null;
+}
+
 function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
   const statutory = getStatutoryAge();
   spinner.min = "18";
@@ -493,6 +645,8 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
     spinner.disabled = true;
     spinner.value = "";
     updateEarlyRetirementButtons(null);
+    updateRetireCheckButton(null);
+    setRetireCheckMessage(null);
     return;
   }
 
@@ -503,10 +657,12 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
     uiState.earlyRetirementAge = statutory;
     spinner.value = String(statutory);
     updateEarlyRetirementButtons(statutory);
+    updateRetireCheckButton(statutory);
     return;
   }
   if (raw === "") {
     updateEarlyRetirementButtons(statutory);
+    updateRetireCheckButton(statutory);
     return;
   }
 
@@ -514,11 +670,13 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
   if (!Number.isFinite(v)) {
     spinner.value = String(uiState.earlyRetirementAge);
     updateEarlyRetirementButtons(statutory);
+    updateRetireCheckButton(statutory);
     return;
   }
   uiState.earlyRetirementAge = Math.max(18, Math.min(statutory, v));
   spinner.value = String(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
+  updateRetireCheckButton(statutory);
 }
 
 function adjustEarlyRetirementAge(delta: number): void {
@@ -531,6 +689,7 @@ function adjustEarlyRetirementAge(delta: number): void {
   uiState.earlyRetirementAge = Math.max(18, Math.min(statutory, current + delta));
   spinner.value = String(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
+  setRetireCheckMessage(null);
   queueRecalc();
 }
 
@@ -765,14 +924,6 @@ function dynamicGroupTail(def: InputDefinition): string[] {
   return tail;
 }
 
-function sectionHasValues(cells: Set<string>): boolean {
-  for (const c of cells) {
-    const v = rawInputs[c as keyof RawInputs];
-    if (!isBlank(v)) return true;
-  }
-  return false;
-}
-
 function applyFinerDefaultsIfNeeded(): void {
   for (const [cell, val] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
     const key = cell as keyof RawInputs;
@@ -780,12 +931,6 @@ function applyFinerDefaultsIfNeeded(): void {
     if (isBlank(current) && val !== null && val !== undefined) {
       rawInputs[key] = val;
     }
-  }
-}
-
-function clearSection(cells: Set<string>): void {
-  for (const cell of cells) {
-    rawInputs[cell as keyof RawInputs] = null;
   }
 }
 
@@ -937,7 +1082,13 @@ function renderInputs(): void {
       } else {
         rawInputs[cell] = nextValue as number | null;
       }
+      setRetireCheckMessage(null);
       if (String(cell) === "B19") {
+        const statutory = getStatutoryAge();
+        if (statutory !== null) {
+          uiState.earlyRetirementAge = statutory;
+          spinner.value = String(statutory);
+        }
         syncEarlyRetirementControl(true);
       }
       queueRecalc();
@@ -1025,6 +1176,7 @@ function renderInputs(): void {
           applyFinerDefaultsIfNeeded();
         }
       }
+      setRetireCheckMessage(null);
       queueRecalc();
       renderInputs();
     });
@@ -1082,7 +1234,7 @@ function drawChart(
 
   const w = canvas.width;
   const h = canvas.height;
-  const pad = { l: 50, r: 20, t: 30, b: 30 };
+  const pad = { l: 64, r: 24, t: 26, b: 34 };
   const allY = [...a, ...b];
   const rawMinY = Math.min(...allY);
   const rawMaxY = Math.max(...allY);
@@ -1101,12 +1253,25 @@ function drawChart(
     return niceF * base;
   };
 
-  const formatKLabel = (value: number): string => {
-    const k = value / 1000;
-    const absK = Math.abs(k);
-    if (Number.isInteger(k) || absK >= 100) return `${Math.round(k).toLocaleString("en-US")}k`;
-    if (absK >= 10) return `${Number(k.toFixed(1)).toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}k`;
-    return `${Number(k.toFixed(2)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}k`;
+  const formatEuroAbbrev = (value: number): string => {
+    const abs = Math.abs(value);
+    const sign = value < 0 ? "-" : "";
+    if (abs >= 1_000_000_000) {
+      const scaled = abs / 1_000_000_000;
+      const digits = scaled >= 10 ? 1 : 2;
+      return `${sign}€${Number(scaled.toFixed(digits)).toLocaleString("en-US")}b`;
+    }
+    if (abs >= 1_000_000) {
+      const scaled = abs / 1_000_000;
+      const digits = scaled >= 10 ? 1 : 2;
+      return `${sign}€${Number(scaled.toFixed(digits)).toLocaleString("en-US")}m`;
+    }
+    if (abs >= 1_000) {
+      const scaled = abs / 1_000;
+      const digits = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
+      return `${sign}€${Number(scaled.toFixed(digits)).toLocaleString("en-US")}k`;
+    }
+    return `${sign}€${Math.round(abs).toLocaleString("en-US")}`;
   };
 
   let tickStep = niceStep(effectiveSpan / targetTicks);
@@ -1121,13 +1286,40 @@ function drawChart(
   const minY = yMinTick;
   const maxY = yMaxTick;
   const ySpan = maxY - minY || 1;
+  const xp = (i: number) => pad.l + (i / Math.max(1, x.length - 1)) * (w - pad.l - pad.r);
+  const yp = (v: number) => h - pad.b - ((v - minY) / ySpan) * (h - pad.t - pad.b);
 
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, w, h);
 
-  ctx.strokeStyle = "#d0d7de";
-  ctx.lineWidth = 1;
+  const primaryColor = "#0284c7";
+  const comparisonColor = "#ea580c";
+
+  if (rawMinY < 0) {
+    const yZero = yp(0);
+    const yBottom = h - pad.b;
+    if (yBottom > yZero) {
+      ctx.fillStyle = "rgba(239, 68, 68, 0.045)";
+      ctx.fillRect(pad.l, yZero, w - pad.l - pad.r, yBottom - yZero);
+    }
+  }
+
+  if (axisHasMeaningfulRange) {
+    for (let yv = yMinTick; yv <= yMaxTick + 0.5; yv += tickStep) {
+      const yy = yp(yv);
+      if (Math.abs(yv) < tickStep * 0.001) continue;
+      ctx.strokeStyle = "rgba(100, 116, 139, 0.18)";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(pad.l, yy);
+      ctx.lineTo(w - pad.r, yy);
+      ctx.stroke();
+    }
+  }
+
+  ctx.strokeStyle = "#cfd8e3";
+  ctx.lineWidth = 1.1;
   ctx.beginPath();
   ctx.moveTo(pad.l, h - pad.b);
   ctx.lineTo(w - pad.r, h - pad.b);
@@ -1135,12 +1327,11 @@ function drawChart(
   ctx.lineTo(pad.l, h - pad.b);
   ctx.stroke();
 
-  const xp = (i: number) => pad.l + (i / Math.max(1, x.length - 1)) * (w - pad.l - pad.r);
-  const yp = (v: number) => h - pad.b - ((v - minY) / ySpan) * (h - pad.t - pad.b);
-
   const plot = (series: number[], color: string, dash: number[] = []) => {
     ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 2.6;
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
     ctx.setLineDash(dash);
     ctx.beginPath();
     series.forEach((v, i) => {
@@ -1155,15 +1346,15 @@ function drawChart(
 
   // Draw early as solid and statutory as dashed so both remain visible
   // even when they overlap closely.
-  plot(a, "#0ea5e9");
-  plot(b, "#f97316", [6, 4]);
+  plot(a, primaryColor);
+  plot(b, comparisonColor, [10, 6]);
 
   if (rawMinY < 0 && rawMaxY > 0) {
     const y0 = yp(0);
     ctx.save();
-    ctx.strokeStyle = "#6b7280";
-    ctx.lineWidth = 1;
-    ctx.setLineDash([4, 4]);
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = 1.6;
+    ctx.setLineDash([]);
     ctx.beginPath();
     ctx.moveTo(pad.l, y0);
     ctx.lineTo(w - pad.r, y0);
@@ -1171,33 +1362,13 @@ function drawChart(
     ctx.restore();
   }
 
-  ctx.font = "12px sans-serif";
-  const drawLegendItem = (xPos: number, yPos: number, color: string, text: string) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
-    if (color === "#f97316") ctx.setLineDash([6, 4]);
-    ctx.beginPath();
-    ctx.moveTo(xPos, yPos - 4);
-    ctx.lineTo(xPos + 18, yPos - 4);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.fillStyle = "#111827";
-    ctx.fillText(text, xPos + 24, yPos);
-  };
-  const legendY = 14;
-  const gap = 20;
-  const itemAWidth = 24 + ctx.measureText(labelA).width;
-  const itemBWidth = 24 + ctx.measureText(labelB).width;
-  const totalLegendWidth = itemAWidth + gap + itemBWidth;
-  const legendStartX = Math.max(pad.l + 120, w - pad.r - totalLegendWidth);
-  drawLegendItem(legendStartX, legendY, "#0ea5e9", labelA);
-  drawLegendItem(legendStartX + itemAWidth + gap, legendY, "#f97316", labelB);
+  ctx.font = '600 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
 
   if (axisHasMeaningfulRange) {
     for (let yv = yMinTick; yv <= yMaxTick + 0.5; yv += tickStep) {
       const yy = yp(yv);
-      ctx.fillStyle = "#6b7280";
-      ctx.fillText(formatKLabel(yv), 4, yy + 4);
+      ctx.fillStyle = "#334155";
+      ctx.fillText(formatEuroAbbrev(yv), 4, yy + 4);
     }
   }
 
@@ -1207,12 +1378,12 @@ function drawChart(
       const age = Math.round(x[i]);
       if ((age - startAge) % 2 !== 0) continue;
       const xx = xp(i);
-      ctx.strokeStyle = "#d0d7de";
+      ctx.strokeStyle = "#cfd8e3";
       ctx.beginPath();
       ctx.moveTo(xx, h - pad.b);
-      ctx.lineTo(xx, h - pad.b + 4);
+      ctx.lineTo(xx, h - pad.b + 5);
       ctx.stroke();
-      ctx.fillStyle = "#6b7280";
+      ctx.fillStyle = "#334155";
       ctx.fillText(String(age), xx - 8, h - 8);
     }
   }
@@ -1225,6 +1396,10 @@ function recalc(): void {
   const statutory = getStatutoryAge();
   const earlyLabel = spinner.value.trim() === "" ? "Retire at early age" : `Retire at ${uiState.earlyRetirementAge}`;
   const statutoryLabel = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
+  cashLegendA.textContent = earlyLabel;
+  cashLegendB.textContent = statutoryLabel;
+  nwLegendA.textContent = earlyLabel;
+  nwLegendB.textContent = statutoryLabel;
   drawChart(
     cashCanvas,
     result.outputs.ages,
@@ -1257,6 +1432,7 @@ spinner.addEventListener("input", () => {
   if (statutory === null) return;
   spinner.max = String(statutory);
   spinner.min = "18";
+  setRetireCheckMessage(null);
   const raw = spinner.value.trim();
   if (raw === "") {
     updateEarlyRetirementButtons(statutory);
@@ -1295,11 +1471,37 @@ spinner.addEventListener("blur", () => {
   uiState.earlyRetirementAge = Math.max(18, Math.min(statutory, v));
   spinner.value = String(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
+  setRetireCheckMessage(null);
   queueRecalc();
 });
 
 spinnerDown.addEventListener("click", () => adjustEarlyRetirementAge(-1));
 spinnerUp.addEventListener("click", () => adjustEarlyRetirementAge(1));
+
+retireCheckButton.addEventListener("click", () => {
+  const statutory = getStatutoryAge();
+  if (statutory === null) {
+    updateRetireCheckButton(null);
+    setRetireCheckMessage(null);
+    return;
+  }
+
+  const canRetAge = findEarliestRetirementAgeBeforeStatutory(statutory);
+  if (canRetAge === null) {
+    uiState.earlyRetirementAge = statutory;
+    spinner.value = String(statutory);
+    updateEarlyRetirementButtons(statutory);
+    setRetireCheckMessage("No. Update your inputs and try again.", "neutral");
+    queueRecalc();
+    return;
+  }
+
+  uiState.earlyRetirementAge = canRetAge;
+  spinner.value = String(canRetAge);
+  updateEarlyRetirementButtons(statutory);
+  setRetireCheckMessage(`Yes. You can retire at ${canRetAge}.`, "positive");
+  queueRecalc();
+});
 
 renderInputs();
 recalc();
