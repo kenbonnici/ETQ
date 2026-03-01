@@ -3,8 +3,11 @@ import { runModel } from "./model";
 import type { RunModelResult } from "./model/index";
 import { FINER_DETAILS_COL_C_DEFAULTS } from "./model/inputSchema";
 import { InputDefinition, INPUT_DEFINITIONS } from "./ui/inputDefinitions";
+import {
+  ETQ_WORKBOOK_EARLY_RETIREMENT_AGE,
+  ETQ_WORKBOOK_PREFILL
+} from "./ui/etqWorkbookPrefill";
 import { ModelUiState, RawInputs } from "./model/types";
-import { ETQ_WORKBOOK_EARLY_RETIREMENT_AGE, ETQ_WORKBOOK_PREFILL } from "./ui/etqWorkbookPrefill";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
@@ -15,9 +18,11 @@ const finerCells = new Set(INPUT_DEFINITIONS.filter((d) => d.section === "FINER 
 
 const rawInputs: RawInputs = {};
 for (const def of INPUT_DEFINITIONS) rawInputs[def.cell as keyof RawInputs] = null;
-
-for (const [cell, value] of Object.entries(ETQ_WORKBOOK_PREFILL)) {
+for (const [cell, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
   rawInputs[cell as keyof RawInputs] = value;
+}
+for (const [cell, value] of Object.entries(ETQ_WORKBOOK_PREFILL)) {
+  rawInputs[cell as keyof RawInputs] = value as RawInputs[keyof RawInputs];
 }
 
 let uiState: ModelUiState = {
@@ -75,6 +80,7 @@ const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonEleme
 const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
 const cashCanvas = document.getElementById("cash-chart") as HTMLCanvasElement;
 const nwCanvas = document.getElementById("nw-chart") as HTMLCanvasElement;
+const timelinePanel = document.getElementById("timeline-panel") as HTMLDivElement;
 const timelineScroll = document.getElementById("timeline-scroll") as HTMLDivElement;
 const timelineTrack = document.getElementById("timeline-track") as HTMLDivElement;
 
@@ -381,6 +387,15 @@ function buildTimelineMilestones(result: RunModelResult): TimelineMilestone[] {
 }
 
 function renderMilestoneTimeline(result: RunModelResult): void {
+  const enteredAge = Number(rawInputs.B4);
+  const hasValidEnteredAge = !isBlank(rawInputs.B4) && Number.isFinite(enteredAge) && enteredAge >= 18 && enteredAge <= 100;
+  timelinePanel.hidden = !hasValidEnteredAge;
+  if (!hasValidEnteredAge) {
+    timelineTrack.style.height = "";
+    timelineTrack.innerHTML = "";
+    return;
+  }
+
   const ages = result.outputs.ages;
   const years = result.outputs.years;
   if (ages.length === 0) {
