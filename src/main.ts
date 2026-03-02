@@ -24,15 +24,43 @@ let uiState: ModelUiState = {
 
 let debounceHandle: number | null = null;
 let pendingFocusCell: string | null = null;
+let selectedCurrency = "EUR";
+let stepperHoldTimeout: number | null = null;
+let stepperHoldInterval: number | null = null;
+let stepperHoldListenersBound = false;
 
 const MILESTONE_YOY_THRESHOLD = 0.2;
 const MILESTONE_MAX_ITEMS = 12;
 const MILESTONE_MIN_DENOMINATOR = 1;
-const TIMELINE_MIN_HEIGHT = 520;
-const TIMELINE_YEAR_PIXELS = 14;
 const TIMELINE_MILESTONE_MIN_GAP = 16;
 const TIMELINE_EDGE_PADDING = 26;
 const RETIREMENT_CASH_FLOOR_EPSILON = 1e-6;
+const TOP_CURRENCIES = [
+  { code: "USD", label: "US Dollar", symbol: "$" },
+  { code: "EUR", label: "Euro", symbol: "€" },
+  { code: "JPY", label: "Japanese Yen", symbol: "¥" },
+  { code: "GBP", label: "British Pound", symbol: "£" },
+  { code: "CNY", label: "Chinese Yuan", symbol: "¥" },
+  { code: "AUD", label: "Australian Dollar", symbol: "A$" },
+  { code: "CAD", label: "Canadian Dollar", symbol: "C$" },
+  { code: "CHF", label: "Swiss Franc", symbol: "CHF" },
+  { code: "HKD", label: "Hong Kong Dollar", symbol: "HK$" },
+  { code: "SGD", label: "Singapore Dollar", symbol: "S$" }
+] as const;
+const STEPPER_CONFIG: Record<string, number> = {
+  B4: 1,
+  B19: 1,
+  B25: 100,
+  B145: 0.002,
+  B151: 0.002
+};
+const STEP_DECIMALS: Record<string, number> = {
+  B4: 0,
+  B19: 0,
+  B25: 0,
+  B145: 3,
+  B151: 3
+};
 
 app.innerHTML = `
   <main class="layout">
@@ -277,6 +305,10 @@ function asNumber(v: unknown): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+function currentCurrencySymbol(): string {
+  return TOP_CURRENCIES.find((currency) => currency.code === selectedCurrency)?.symbol ?? "€";
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -320,7 +352,7 @@ function formatImpact(amount: number | null): string {
   if (amount === null || !Number.isFinite(amount)) return "";
   const k = Math.round(amount / 1000);
   const sign = k < 0 ? "-" : "";
-  return `${sign}${Math.abs(k).toLocaleString("en-US")}k`;
+  return `${sign}${currentCurrencySymbol()}${Math.abs(k).toLocaleString("en-US")}k`;
 }
 
 function composeTimelineLabel(events: TimelineYearEvent[]): string {
@@ -506,6 +538,8 @@ function renderMilestoneTimeline(result: RunModelResult): void {
   timelinePanel.hidden = !hasValidEnteredAge;
   if (!hasValidEnteredAge) {
     timelineTrack.style.height = "";
+    timelineScroll.style.overflowY = "hidden";
+    timelineScroll.style.overflowX = "hidden";
     timelineTrack.innerHTML = "";
     return;
   }
@@ -521,22 +555,28 @@ function renderMilestoneTimeline(result: RunModelResult): void {
   const startYear = years[0];
   const endYear = years[years.length - 1];
   const span = Math.max(1, endAge - startAge);
-  const viewportHeight = timelineScroll.clientHeight;
-  const trackHeight = Math.max(TIMELINE_MIN_HEIGHT, viewportHeight, Math.round(span * TIMELINE_YEAR_PIXELS));
-  timelineTrack.style.height = `${trackHeight}px`;
-
   const milestones = buildTimelineMilestones(result);
   const topPad = TIMELINE_EDGE_PADDING;
   const bottomPad = TIMELINE_EDGE_PADDING;
+  const viewportHeight = Math.max(320, timelineScroll.clientHeight);
+  const minGap = window.matchMedia("(max-width: 960px)").matches
+    ? Math.max(TIMELINE_MILESTONE_MIN_GAP, 18)
+    : TIMELINE_MILESTONE_MIN_GAP;
+  // Keep timeline unscrolled by default; only grow beyond viewport when needed
+  // to preserve minimum visual gap between milestones.
+  const minTrackForMilestones = topPad + bottomPad + Math.max(0, milestones.length - 1) * minGap;
+  const trackHeight = Math.max(viewportHeight, minTrackForMilestones);
+  timelineTrack.style.height = `${trackHeight}px`;
+  const needsScroll = trackHeight > viewportHeight + 1;
+  timelineScroll.style.overflowY = needsScroll ? "auto" : "hidden";
+  timelineScroll.style.overflowX = "hidden";
+
   const usable = Math.max(1, trackHeight - topPad - bottomPad);
   const positioned = milestones.map((item) => {
     const ratio = (item.age - startAge) / span;
     const y = topPad + (1 - Math.max(0, Math.min(1, ratio))) * usable;
     return { ...item, y };
   });
-  const minGap = window.matchMedia("(max-width: 960px)").matches
-    ? Math.max(TIMELINE_MILESTONE_MIN_GAP, 18)
-    : TIMELINE_MILESTONE_MIN_GAP;
   for (let i = 1; i < positioned.length; i += 1) {
     positioned[i].y = Math.min(positioned[i].y, positioned[i - 1].y - minGap);
   }
@@ -775,6 +815,58 @@ function formatFieldValue(def: InputDefinition, value: unknown): string {
   return String(value);
 }
 
+function fieldHasCurrencyAdornment(def: InputDefinition): boolean {
+  return def.type === "number";
+}
+
+function fieldHasPercentAdornment(def: InputDefinition): boolean {
+  return def.type === "percent";
+}
+
+function stopStepperHold(): void {
+  if (stepperHoldTimeout !== null) {
+    window.clearTimeout(stepperHoldTimeout);
+    stepperHoldTimeout = null;
+  }
+  if (stepperHoldInterval !== null) {
+    window.clearInterval(stepperHoldInterval);
+    stepperHoldInterval = null;
+  }
+}
+
+function applyStepperDelta(cell: keyof RawInputs, dir: number): void {
+  if (!Number.isFinite(dir) || (dir !== -1 && dir !== 1)) return;
+  const step = STEPPER_CONFIG[cell];
+  const def = INPUT_DEFINITIONS.find((d) => d.cell === cell);
+  if (!Number.isFinite(step) || !def) return;
+
+  const currentRaw = rawInputs[cell];
+  const current = typeof currentRaw === "number" && Number.isFinite(currentRaw) ? currentRaw : 0;
+  const next = current + dir * step;
+  const decimals = STEP_DECIMALS[cell] ?? 0;
+  const rounded = Number(next.toFixed(decimals));
+  if (isOutOfRangeLiquidationRank(String(cell), rounded) || isDuplicateLiquidationRank(String(cell), rounded)) return;
+
+  rawInputs[cell] = rounded;
+  if (String(cell) === "B4") {
+    rawInputs.B4 = Math.max(18, Math.min(100, Math.round(asNumber(rawInputs.B4))));
+  }
+  if (String(cell) === "B19") {
+    const statutory = getStatutoryAge();
+    if (statutory !== null) {
+      uiState.earlyRetirementAge = statutory;
+      spinner.value = String(statutory);
+    }
+    syncEarlyRetirementControl(true);
+  }
+
+  const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-cell="${cell}"]`);
+  if (input) input.value = formatFieldValue(def, rawInputs[cell]);
+
+  setRetireCheckMessage(null);
+  queueRecalc();
+}
+
 function fieldVisible(cell: string): boolean {
   const v = (c: string) => rawInputs[c as keyof RawInputs];
   switch (cell) {
@@ -961,9 +1053,9 @@ function renderInputs(): void {
     "FINER DETAILS": INPUT_DEFINITIONS.filter((d) => d.section === "FINER DETAILS")
   } as const;
 
-  const block = (title: string, open: boolean, canToggle: boolean, controlsHtml: string) => {
-    if (!canToggle) return `<section class="input-section"><h2>${title}</h2>${controlsHtml}</section>`;
-    return `<section class="input-section"><button type="button" class="section-toggle" data-section="${title}">${open ? `Hide ${title}` : title}</button>${open ? controlsHtml : ""}</section>`;
+  const block = (title: string, open: boolean, canToggle: boolean, controlsHtml: string, sectionClass: string) => {
+    if (!canToggle) return `<section class="input-section ${sectionClass}"><h2>${title}</h2>${controlsHtml}</section>`;
+    return `<section class="input-section ${sectionClass}"><button type="button" class="section-toggle" data-section="${title}">${open ? `Hide ${title}` : title}</button>${open ? controlsHtml : ""}</section>`;
   };
 
   const controls = (defs: InputDefinition[]) => {
@@ -1003,10 +1095,30 @@ function renderInputs(): void {
       const inputType = "text";
       const inputMode = def.type === "text" ? "text" : (def.type === "integer" ? "numeric" : "decimal");
       const showTooltip = !["B4", "B23"].includes(def.cell) && !!def.tooltip;
+      const hasPrefix = fieldHasCurrencyAdornment(def);
+      const hasSuffix = fieldHasPercentAdornment(def);
+      const stepSize = STEPPER_CONFIG[def.cell];
+      const hasStepper = Number.isFinite(stepSize);
+      const inputShellClass = [
+        "input-shell",
+        hasPrefix ? "has-prefix" : "",
+        hasSuffix ? "has-suffix" : "",
+        hasStepper ? "has-stepper" : ""
+      ].join(" ").trim();
       html += `
         <label class="field" data-cell="${def.cell}">
           <span>${label}</span>
-          <input data-cell="${def.cell}" type="${inputType}" inputmode="${inputMode}" value="${valStr}" placeholder="" />
+          <div class="${inputShellClass}">
+            ${hasPrefix ? `<span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>` : ""}
+            <input data-cell="${def.cell}" type="${inputType}" inputmode="${inputMode}" value="${valStr}" placeholder="" />
+            ${hasSuffix ? `<span class="input-suffix" aria-hidden="true">%</span>` : ""}
+            ${hasStepper ? `
+              <div class="field-stepper">
+                <button type="button" class="field-step-btn" data-step-cell="${def.cell}" data-step-dir="-1" tabindex="-1" aria-label="Decrease ${escapeHtml(label)}">-</button>
+                <button type="button" class="field-step-btn" data-step-cell="${def.cell}" data-step-dir="1" tabindex="-1" aria-label="Increase ${escapeHtml(label)}">+</button>
+              </div>
+            ` : ""}
+          </div>
           ${showTooltip ? `<small>${def.tooltip}</small>` : ""}
         </label>
       `;
@@ -1042,14 +1154,37 @@ function renderInputs(): void {
   const quickHtml = controls(grouped["QUICK START"]);
   const deeperHtml = controls(grouped["DEEPER DIVE"]);
   const finerHtml = controls(grouped["FINER DETAILS"]);
+  const currencySelectHtml = `
+    <label class="field currency-selector">
+      <span>Currency</span>
+      <select id="currency-selector" aria-label="Currency selector">
+        ${TOP_CURRENCIES.map((currency) => `<option value="${currency.code}" ${currency.code === selectedCurrency ? "selected" : ""}>${currency.code} - ${currency.label}</option>`).join("")}
+      </select>
+    </label>
+  `;
 
   inputsPanel.innerHTML =
-    block("QUICK START", true, false, quickHtml) +
-    block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml) +
-    block("FINER DETAILS", sectionState.finerOpen, true, finerHtml);
+    block("QUICK START", true, false, currencySelectHtml + quickHtml, "section-quick-start") +
+    block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml, "section-deeper-dive") +
+    block("FINER DETAILS", sectionState.finerOpen, true, finerHtml, "section-finer-details");
+
+  const currencySelector = inputsPanel.querySelector<HTMLSelectElement>("#currency-selector");
+  if (currencySelector) {
+    currencySelector.addEventListener("change", () => {
+      selectedCurrency = currencySelector.value;
+      renderInputs();
+      queueRecalc();
+    });
+  }
 
   inputsPanel.querySelectorAll<HTMLInputElement>("input[data-cell]").forEach((el) => {
     el.addEventListener("keydown", (ev) => {
+      const stepCell = el.dataset.cell as keyof RawInputs;
+      if ((ev.key === "ArrowUp" || ev.key === "ArrowDown") && Number.isFinite(STEPPER_CONFIG[stepCell])) {
+        ev.preventDefault();
+        applyStepperDelta(stepCell, ev.key === "ArrowUp" ? 1 : -1);
+        return;
+      }
       if (ev.key !== "Tab" || ev.shiftKey) return;
       const cell = el.dataset.cell;
       if (cell !== "B15") return;
@@ -1165,6 +1300,30 @@ function renderInputs(): void {
     });
   });
 
+  inputsPanel.querySelectorAll<HTMLButtonElement>(".field-step-btn").forEach((btn) => {
+    btn.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      stopStepperHold();
+      const cell = btn.dataset.stepCell as keyof RawInputs;
+      if (!cell) return;
+      const dir = Number(btn.dataset.stepDir);
+      if (!Number.isFinite(dir) || (dir !== -1 && dir !== 1)) return;
+      applyStepperDelta(cell, dir);
+      stepperHoldTimeout = window.setTimeout(() => {
+        stepperHoldInterval = window.setInterval(() => applyStepperDelta(cell, dir), 80);
+      }, 320);
+    });
+  });
+
+  if (!stepperHoldListenersBound) {
+    const stopHoldEvents = ["pointerup", "pointercancel", "pointerleave"] as const;
+    for (const eventName of stopHoldEvents) {
+      inputsPanel.addEventListener(eventName, stopStepperHold);
+    }
+    window.addEventListener("blur", stopStepperHold);
+    stepperHoldListenersBound = true;
+  }
+
   inputsPanel.querySelectorAll<HTMLButtonElement>(".section-toggle").forEach((btn) => {
     btn.addEventListener("click", () => {
       const section = btn.dataset.section;
@@ -1264,25 +1423,26 @@ function drawChart(
     return niceF * base;
   };
 
-  const formatEuroAbbrev = (value: number): string => {
+  const formatCurrencyAbbrev = (value: number): string => {
     const abs = Math.abs(value);
     const sign = value < 0 ? "-" : "";
+    const symbol = currentCurrencySymbol();
     if (abs >= 1_000_000_000) {
       const scaled = abs / 1_000_000_000;
       const digits = scaled >= 10 ? 1 : 2;
-      return `${sign}€${Number(scaled.toFixed(digits)).toLocaleString("en-US")}b`;
+      return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}b`;
     }
     if (abs >= 1_000_000) {
       const scaled = abs / 1_000_000;
       const digits = scaled >= 10 ? 1 : 2;
-      return `${sign}€${Number(scaled.toFixed(digits)).toLocaleString("en-US")}m`;
+      return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}m`;
     }
     if (abs >= 1_000) {
       const scaled = abs / 1_000;
       const digits = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
-      return `${sign}€${Number(scaled.toFixed(digits)).toLocaleString("en-US")}k`;
+      return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}k`;
     }
-    return `${sign}€${Math.round(abs).toLocaleString("en-US")}`;
+    return `${sign}${symbol}${Math.round(abs).toLocaleString("en-US")}`;
   };
 
   let tickStep = niceStep(effectiveSpan / targetTicks);
@@ -1379,7 +1539,7 @@ function drawChart(
     for (let yv = yMinTick; yv <= yMaxTick + 0.5; yv += tickStep) {
       const yy = yp(yv);
       ctx.fillStyle = "#334155";
-      ctx.fillText(formatEuroAbbrev(yv), 4, yy + 4);
+      ctx.fillText(formatCurrencyAbbrev(yv), 4, yy + 4);
     }
   }
 

@@ -50,34 +50,43 @@ body {
 .timeline-panel {
   width: 352px;
   min-width: 352px;
-  padding: 10px;
+  padding: 12px;
   position: sticky;
   top: 16px;
   max-height: calc(100vh - 32px);
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
+  border-color: #d6e1db;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #f9fcfa 0%, #ffffff 85%);
+  box-shadow: 0 3px 10px rgb(15 23 42 / 0.03);
 }
 
 .timeline-header {
   display: flex;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f1f6f3;
+  border: 1px solid #dbe6e0;
 }
 
 .timeline-header h2 {
   margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: #1f2937;
-  letter-spacing: 0.02em;
+  font-size: 13px;
+  font-weight: 800;
+  color: #35564d;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .timeline-scroll {
   overflow: auto;
-  border: 1px solid #e4ece6;
-  border-radius: 10px;
-  background: var(--panel);
+  border: 1px solid #e2ebe6;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fbfdfc 0%, #ffffff 100%);
 }
 
 /* Timeline Style Guide
@@ -98,7 +107,7 @@ body {
   top: 24px;
   bottom: 24px;
   width: 2px;
-  background: #bcd1c3;
+  background: #c3d2cb;
 }
 
 .timeline-endcap {
@@ -117,7 +126,7 @@ body {
   font-weight: 700;
   font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
   line-height: 1.2;
-  color: #0b5d56;
+  color: #4f6c63;
   padding: 0;
   white-space: nowrap;
 }
@@ -131,7 +140,7 @@ body {
   font-weight: 500;
   font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
   line-height: 1.2;
-  color: #0b5d56;
+  color: #4f6c63;
   padding: 0;
   white-space: nowrap;
 }
@@ -160,7 +169,7 @@ body {
   font-weight: 700;
   font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
   line-height: 1.2;
-  color: #0b5d56;
+  color: #4f6c63;
   display: inline-flex;
   flex: 0 0 auto;
   background: transparent;
@@ -175,8 +184,8 @@ body {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  border: 1px solid #bcc9c2;
-  background: #f8fbf9;
+  border: 1px solid #bed0c7;
+  background: #f3f8f5;
   transform: translate(-50%, -50%);
   z-index: 2;
 }
@@ -184,9 +193,9 @@ body {
 .timeline-item-label {
   position: relative;
   font-size: 12px;
-  font-weight: 400;
+  font-weight: 500;
   font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
-  color: #1f2937;
+  color: #304d45;
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -216,8 +225,11 @@ body {
 
 .timeline-item-title {
   position: relative;
-  margin-left: 12px;
-  padding-right: 8px;
+  margin-left: 14px;
+  padding: 3px 8px;
+  border: 1px solid #e2ebe6;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.78);
   overflow: visible;
 }
 
@@ -225,7 +237,7 @@ body {
   margin: 0;
   padding: 10px;
   font-size: 12px;
-  color: #64748b;
+  color: #6a7f78;
 }
 
 .retirement-control {
@@ -400,15 +412,61 @@ body {
 
 .input-section {
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 8px;
-  margin-bottom: 10px;
+  border-radius: 14px;
+  padding: 12px;
+  margin-bottom: 18px;
+  box-shadow: 0 6px 16px rgb(15 23 42 / 0.04);
+}
+
+.input-section:last-child {
+  margin-bottom: 6px;
+}
+
+.section-quick-start {
+  border-color: #95cfbe;
+  border-left: 4px solid #3f9f8a;
+  background: linear-gradient(180deg, #edf8f4 0%, #ffffff 78%);
+}
+
+.section-deeper-dive {
+  border-color: #c8d4e5;
+  border-left: 4px solid #4b72a7;
+  background: linear-gradient(180deg, #f2f7ff 0%, #ffffff 78%);
+}
+
+.section-finer-details {
+  border-color: #d6cde8;
+  border-left: 4px solid #7c57a6;
+  background: linear-gradient(180deg, #f7f2ff 0%, #ffffff 78%);
 }
 
 .input-section h2 {
-  margin: 2px 0 10px;
-  font-size: 14px;
-  letter-spacing: 0.06em;
+  margin: 0 0 14px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+
+.section-quick-start h2 {
+  color: #0b4f49;
+  background: #d8ede6;
+  border-bottom: 1px solid #b7d8cd;
+}
+
+.section-deeper-dive h2 {
+  color: #1d3f6c;
+  background: #dfeaf7;
+  border-bottom: 1px solid #bfd0e5;
+}
+
+.section-finer-details h2 {
+  color: #4f3277;
+  background: #e8def5;
+  border-bottom: 1px solid #cebee4;
 }
 
 .input-section h3 {
@@ -420,6 +478,16 @@ body {
   letter-spacing: 0.04em;
   padding-bottom: 4px;
   border-bottom: 1px solid #dce8e0;
+}
+
+.section-deeper-dive h3 {
+  color: #1d4f8f;
+  border-bottom-color: #d6e1ef;
+}
+
+.section-finer-details h3 {
+  color: #5b3b89;
+  border-bottom-color: #dfd4ec;
 }
 
 .input-section h4 {
@@ -435,11 +503,26 @@ body {
   text-align: left;
   background: #f8faf9;
   border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 8px 10px;
-  font-weight: 700;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   cursor: pointer;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
+}
+
+.section-deeper-dive .section-toggle {
+  color: #1d3f6c;
+  background: #dde9f8;
+  border-color: #bfd0e5;
+}
+
+.section-finer-details .section-toggle {
+  color: #4f3277;
+  background: #e7ddf4;
+  border-color: #cebee4;
 }
 
 .add-dependent-btn,
@@ -472,6 +555,87 @@ input {
   padding: 8px;
   font-size: 14px;
   width: 100%;
+}
+
+.input-shell {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-shell input {
+  width: 100%;
+}
+
+.input-prefix,
+.input-suffix {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #475569;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+.input-prefix {
+  left: 10px;
+}
+
+.input-suffix {
+  right: 10px;
+}
+
+.input-shell.has-prefix input {
+  padding-left: 28px;
+}
+
+.input-shell.has-suffix input {
+  padding-right: 24px;
+}
+
+.input-shell.has-stepper input {
+  padding-right: 56px;
+}
+
+.input-shell.has-suffix.has-stepper input {
+  padding-right: 70px;
+}
+
+.field-stepper {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  gap: 4px;
+}
+
+.field-step-btn {
+  width: 20px;
+  height: 20px;
+  border: 1px solid #cad8ce;
+  border-radius: 5px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 12px;
+  line-height: 1;
+  font-weight: 700;
+  padding: 0;
+  cursor: pointer;
+}
+
+.field-step-btn:hover {
+  background: #f1f5f9;
+}
+
+.currency-selector select {
+  border: 1px solid #c5d4c8;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 14px;
+  width: 100%;
+  background: #ffffff;
 }
 
 small {
