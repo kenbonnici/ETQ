@@ -259,8 +259,17 @@ body {
   margin-left: auto;
 }
 
+.retirement-stepper-label {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: #2b405f;
+  margin-right: 2px;
+  white-space: nowrap;
+}
+
 .retirement-control input {
-  width: 82px;
+  width: 56px;
   font-size: 20px;
   font-weight: 700;
   padding: 8px 6px;

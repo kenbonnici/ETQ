@@ -76,6 +76,7 @@ app.innerHTML = `
         <button id="retire-check-btn" class="retire-check-btn" type="button">Enough to quit?</button>
         <p id="retire-check-result" class="retire-check-result" hidden></p>
         <div class="retirement-stepper">
+          <span class="retirement-stepper-label">Retire at</span>
           <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease early retirement age">-</button>
           <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Early retirement age" />
           <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase early retirement age">+</button>
@@ -1184,15 +1185,18 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
       }
     }
 
-    const fromPayload = Number(payload.early_retirement_age);
-    if (Number.isFinite(fromPayload) && fromPayload >= 18) {
-      uiState.earlyRetirementAge = Math.round(fromPayload);
+    const statutory = getStatutoryAge();
+    if (statutory !== null) {
+      uiState.earlyRetirementAge = statutory;
     } else {
-      const statutory = getStatutoryAge();
-      if (statutory !== null) uiState.earlyRetirementAge = statutory;
+      const fromPayload = Number(payload.early_retirement_age);
+      if (Number.isFinite(fromPayload) && fromPayload >= 18) {
+        uiState.earlyRetirementAge = Math.round(fromPayload);
+      }
     }
 
     setRetireCheckMessage(null);
+    syncEarlyRetirementControl(true);
     renderInputs();
     queueRecalc();
   } catch (error) {
@@ -1215,6 +1219,7 @@ function clearAllInputsPreservingFinerDefaults(): void {
   if (statutory !== null) {
     uiState.earlyRetirementAge = statutory;
   }
+  syncEarlyRetirementControl(true);
   renderInputs();
   queueRecalc();
 }
@@ -1691,7 +1696,7 @@ function renderChartTooltip(
   tooltip.innerHTML = `
     <div class="chart-tooltip-age">Age ${age} · ${year}</div>
     <div class="chart-tooltip-row">
-      <span class="chart-tooltip-key">Retire Now (${retireNowAge === null ? "—" : String(retireNowAge)})</span>
+      <span class="chart-tooltip-key">Retire Early (${retireNowAge === null ? "—" : String(retireNowAge)})</span>
       <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(primary, valueMode, compactUnit))}</span>
     </div>
     <div class="chart-tooltip-row">
