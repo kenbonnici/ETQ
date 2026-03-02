@@ -21,7 +21,7 @@ body {
 .layout {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(300px, 35.2%) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(300px, 28.2%) minmax(0, 1fr) minmax(300px, 28.2%);
   gap: 16px;
   padding: 16px;
 }
@@ -48,8 +48,8 @@ body {
 }
 
 .timeline-panel {
-  width: 352px;
-  min-width: 352px;
+  width: auto;
+  min-width: 0;
   padding: 12px;
   position: sticky;
   top: 16px;
@@ -355,6 +355,7 @@ body {
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 10px 6px;
+  position: relative;
 }
 
 .chart-card h2 {
@@ -408,6 +409,85 @@ body {
   height: 296px;
   border: 1px solid #e4e9e5;
   border-radius: 8px;
+  touch-action: none;
+}
+
+.chart-tooltip {
+  position: absolute;
+  z-index: 30;
+  width: max-content;
+  max-width: min(460px, calc(100% - 20px));
+  border: 1px solid #cfdce8;
+  border-radius: 10px;
+  background: rgb(255 255 255 / 0.96);
+  box-shadow: 0 8px 20px rgb(15 23 42 / 0.14);
+  padding: 10px 12px;
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+.chart-tooltip-age {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+  margin-bottom: 8px;
+}
+
+.chart-tooltip-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  padding: 3px 0;
+}
+
+.chart-tooltip-key {
+  color: #334155;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chart-tooltip-value {
+  font-weight: 700;
+  color: #0f172a;
+  text-align: right;
+  justify-self: end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-tooltip-row.is-delta {
+  margin-top: 8px;
+  padding-top: 9px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.chart-tooltip-row.is-delta .chart-tooltip-key,
+.chart-tooltip-row.is-delta .chart-tooltip-value {
+  font-weight: 800;
+}
+
+.chart-tooltip-context {
+  margin-top: 7px;
+  padding-top: 6px;
+  border-top: 1px dashed #e2e8f0;
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.25;
+}
+
+.chart-tooltip-context-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chart-tooltip-context-list li + li {
+  margin-top: 3px;
 }
 
 .input-section {
@@ -449,6 +529,65 @@ body {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   border: 1px solid transparent;
+}
+
+.section-header-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.section-header-row h2 {
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.section-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.quickstart-load-btn {
+  flex: 0 0 auto;
+  height: 35px;
+  border: 1px solid #9ebeb3;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1f4f44;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.quickstart-load-btn:hover {
+  background: #f4f9f7;
+}
+
+.quickstart-load-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.quickstart-clear-btn {
+  flex: 0 0 auto;
+  height: 35px;
+  border: 1px solid #d4dbd7;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #4a5e57;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 0 10px;
+  cursor: pointer;
+}
+
+.quickstart-clear-btn:hover {
+  background: #f7faf8;
 }
 
 .section-quick-start h2 {
@@ -645,7 +784,7 @@ small {
 
 @media (max-width: 1280px) {
   .layout {
-    grid-template-columns: minmax(300px, 33.6%) minmax(0, 1fr);
+    grid-template-columns: minmax(300px, 26.9%) minmax(0, 1fr);
   }
 
   .timeline-panel {

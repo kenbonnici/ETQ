@@ -2,6 +2,7 @@ import "./app.css";
 import { runModel } from "./model";
 import type { RunModelResult } from "./model/index";
 import { FINER_DETAILS_COL_C_DEFAULTS } from "./model/inputSchema";
+import { EXCEL_BASELINE_SPECIMEN } from "./model/parity/excelBaselineSpecimen";
 import { InputDefinition, INPUT_DEFINITIONS } from "./ui/inputDefinitions";
 import { ModelUiState, RawInputs } from "./model/types";
 
@@ -28,6 +29,7 @@ let selectedCurrency = "EUR";
 let stepperHoldTimeout: number | null = null;
 let stepperHoldInterval: number | null = null;
 let stepperHoldListenersBound = false;
+let excelLoadBusy = false;
 
 const MILESTONE_YOY_THRESHOLD = 0.2;
 const MILESTONE_MAX_ITEMS = 12;
@@ -35,6 +37,10 @@ const MILESTONE_MIN_DENOMINATOR = 1;
 const TIMELINE_MILESTONE_MIN_GAP = 16;
 const TIMELINE_EDGE_PADDING = 26;
 const RETIREMENT_CASH_FLOOR_EPSILON = 1e-6;
+const CHART_PAD = { l: 64, r: 24, t: 26, b: 34 } as const;
+const CHART_PRIMARY_COLOR = "#0284c7";
+const CHART_COMPARISON_COLOR = "#ea580c";
+const CHART_TOOLTIP_DELAY_MS = 60;
 const TOP_CURRENCIES = [
   { code: "USD", label: "US Dollar", symbol: "$" },
   { code: "EUR", label: "Euro", symbol: "€" },
@@ -200,6 +206,28 @@ interface TimelineYearEvent {
   amount: number | null;
 }
 
+interface ExcelSpecimenPayload {
+  early_retirement_age?: number;
+  raw_inputs?: Partial<Record<string, unknown>>;
+}
+
+interface ChartHoverData {
+  ages: number[];
+  years: number[];
+  seriesPrimary: number[];
+  seriesComparison: number[];
+  retireNowAge: number | null;
+  statutoryAge: number | null;
+  metricLabel: string;
+  contextByYear: Map<number, TimelineYearEvent[]>;
+}
+
+const chartHoverData = new Map<HTMLCanvasElement, ChartHoverData>();
+const chartTooltips = new Map<HTMLCanvasElement, HTMLDivElement>();
+const chartHoverIndex = new Map<HTMLCanvasElement, number | null>();
+const chartHoverDelayHandle = new Map<HTMLCanvasElement, number | null>();
+const chartHoverPending = new Map<HTMLCanvasElement, { idx: number; clientX: number; clientY: number } | null>();
+
 function isNonZeroNumber(v: unknown): boolean {
   return !isBlank(v) && asNumber(v) !== 0;
 }
@@ -353,6 +381,95 @@ function formatImpact(amount: number | null): string {
   const k = Math.round(amount / 1000);
   const sign = k < 0 ? "-" : "";
   return `${sign}${currentCurrencySymbol()}${Math.abs(k).toLocaleString("en-US")}k`;
+}
+
+function formatCurrencyCompact(value: number): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  const symbol = currentCurrencySymbol();
+  if (abs >= 1_000_000_000) {
+    const scaled = abs / 1_000_000_000;
+    const digits = scaled >= 10 ? 1 : 2;
+    return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}b`;
+  }
+  if (abs >= 1_000_000) {
+    const scaled = abs / 1_000_000;
+    const digits = scaled >= 10 ? 1 : 2;
+    return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}m`;
+  }
+  if (abs >= 1_000) {
+    const scaled = abs / 1_000;
+    const digits = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
+    return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}k`;
+  }
+  return `${sign}${symbol}${Math.round(abs).toLocaleString("en-US")}`;
+}
+
+function formatCurrencyPrecise(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  const symbol = currentCurrencySymbol();
+  const maxFractionDigits = abs >= 1000 ? 0 : 2;
+  return `${sign}${symbol}${abs.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxFractionDigits
+  })}`;
+}
+
+type TooltipValueMode = "full" | "compact";
+type TooltipCompactUnit = "k" | "m" | "b";
+
+function formatCurrencyCompactTooltip(value: number, unit: TooltipCompactUnit): string {
+  if (!Number.isFinite(value)) return "—";
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  const symbol = currentCurrencySymbol();
+  if (unit === "b") {
+    return `${sign}${symbol}${Number((abs / 1_000_000_000).toFixed(2)).toLocaleString("en-US")}b`;
+  }
+  if (unit === "m") {
+    return `${sign}${symbol}${Number((abs / 1_000_000).toFixed(2)).toLocaleString("en-US")}m`;
+  }
+  return `${sign}${symbol}${Math.round(abs / 1_000).toLocaleString("en-US")}k`;
+}
+
+function formatTooltipCurrency(value: number, mode: TooltipValueMode, compactUnit: TooltipCompactUnit): string {
+  if (!Number.isFinite(value)) return "—";
+  return mode === "compact" ? formatCurrencyCompactTooltip(value, compactUnit) : formatCurrencyPrecise(value);
+}
+
+function chooseTooltipValueMode(values: number[]): TooltipValueMode {
+  return values.some((value) => Number.isFinite(value) && Math.abs(value) >= 1_000_000) ? "compact" : "full";
+}
+
+function chooseTooltipCompactUnit(values: number[]): TooltipCompactUnit {
+  const maxAbs = values.reduce((max, value) => {
+    if (!Number.isFinite(value)) return max;
+    return Math.max(max, Math.abs(value));
+  }, 0);
+  if (maxAbs >= 1_000_000_000) return "b";
+  if (maxAbs >= 1_000_000) return "m";
+  return "k";
+}
+
+function buildChartContextByYear(result: RunModelResult): Map<number, TimelineYearEvent[]> {
+  const labelsByYear = collectSpecificLabelsByYear(result);
+  const contextByYear = new Map<number, TimelineYearEvent[]>();
+  for (const [year, events] of labelsByYear.entries()) {
+    const normalized = events
+      .map((event) => ({
+        label: normalizeTimelineLabel(event.label).trim(),
+        amount: event.amount
+      }))
+      .filter((event) => event.label.length > 0);
+    if (normalized.length === 0) continue;
+    const deduped = normalized.filter((event, idx, arr) =>
+      arr.findIndex((candidate) => candidate.label === event.label && candidate.amount === event.amount) === idx
+    );
+    contextByYear.set(year, deduped);
+  }
+  return contextByYear;
 }
 
 function composeTimelineLabel(events: TimelineYearEvent[]): string {
@@ -1037,6 +1154,71 @@ function applyFinerDefaultsIfNeeded(): void {
   }
 }
 
+async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
+  if (excelLoadBusy) return;
+  excelLoadBusy = true;
+  renderInputs();
+  try {
+    const payload = EXCEL_BASELINE_SPECIMEN as unknown as ExcelSpecimenPayload;
+    const incoming = payload.raw_inputs ?? {};
+
+    for (const def of INPUT_DEFINITIONS) {
+      const key = def.cell as keyof RawInputs;
+      rawInputs[key] = null;
+    }
+
+    for (const def of INPUT_DEFINITIONS) {
+      const cell = def.cell;
+      if (!(cell in incoming)) continue;
+      const nextRaw = incoming[cell];
+      const key = cell as keyof RawInputs;
+      if (nextRaw === null || nextRaw === undefined || String(nextRaw).trim() === "") {
+        rawInputs[key] = null;
+        continue;
+      }
+      if (def.type === "text") {
+        rawInputs[key] = String(nextRaw);
+      } else {
+        const n = Number(nextRaw);
+        rawInputs[key] = Number.isFinite(n) ? n : null;
+      }
+    }
+
+    const fromPayload = Number(payload.early_retirement_age);
+    if (Number.isFinite(fromPayload) && fromPayload >= 18) {
+      uiState.earlyRetirementAge = Math.round(fromPayload);
+    } else {
+      const statutory = getStatutoryAge();
+      if (statutory !== null) uiState.earlyRetirementAge = statutory;
+    }
+
+    setRetireCheckMessage(null);
+    renderInputs();
+    queueRecalc();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unable to load ETQ workbook snapshot";
+    window.alert(message);
+  } finally {
+    excelLoadBusy = false;
+    renderInputs();
+  }
+}
+
+function clearAllInputsPreservingFinerDefaults(): void {
+  for (const def of INPUT_DEFINITIONS) {
+    const key = def.cell as keyof RawInputs;
+    rawInputs[key] = null;
+  }
+  applyFinerDefaultsIfNeeded();
+  setRetireCheckMessage(null);
+  const statutory = getStatutoryAge();
+  if (statutory !== null) {
+    uiState.earlyRetirementAge = statutory;
+  }
+  renderInputs();
+  queueRecalc();
+}
+
 function renderInputs(): void {
   const cursorState = capturePanelCursorState();
   if (anyValue(dependent3Cells)) visibleDependents = Math.max(visibleDependents, 3);
@@ -1054,7 +1236,25 @@ function renderInputs(): void {
   } as const;
 
   const block = (title: string, open: boolean, canToggle: boolean, controlsHtml: string, sectionClass: string) => {
-    if (!canToggle) return `<section class="input-section ${sectionClass}"><h2>${title}</h2>${controlsHtml}</section>`;
+    if (!canToggle) {
+      const quickStartAction = title === "QUICK START"
+        ? `
+          <div class="section-header-actions">
+            <button type="button" class="quickstart-clear-btn" id="clear-inputs-btn">Clear inputs</button>
+            <button type="button" class="quickstart-load-btn" id="load-etq-excel-btn" ${excelLoadBusy ? "disabled" : ""}>${excelLoadBusy ? "Loading..." : "Load sample data"}</button>
+          </div>
+        `
+        : "";
+      return `
+        <section class="input-section ${sectionClass}">
+          <div class="section-header-row">
+            <h2>${title}</h2>
+            ${quickStartAction}
+          </div>
+          ${controlsHtml}
+        </section>
+      `;
+    }
     return `<section class="input-section ${sectionClass}"><button type="button" class="section-toggle" data-section="${title}">${open ? `Hide ${title}` : title}</button>${open ? controlsHtml : ""}</section>`;
   };
 
@@ -1174,6 +1374,20 @@ function renderInputs(): void {
       selectedCurrency = currencySelector.value;
       renderInputs();
       queueRecalc();
+    });
+  }
+
+  const loadEtqExcelBtn = inputsPanel.querySelector<HTMLButtonElement>("#load-etq-excel-btn");
+  if (loadEtqExcelBtn) {
+    loadEtqExcelBtn.addEventListener("click", () => {
+      void loadInputsFromEtqExcelSnapshot();
+    });
+  }
+
+  const clearInputsBtn = inputsPanel.querySelector<HTMLButtonElement>("#clear-inputs-btn");
+  if (clearInputsBtn) {
+    clearInputsBtn.addEventListener("click", () => {
+      clearAllInputsPreservingFinerDefaults();
     });
   }
 
@@ -1391,20 +1605,199 @@ function renderInputs(): void {
   restorePanelCursorState(cursorState);
 }
 
+function getOrCreateChartTooltip(canvas: HTMLCanvasElement): HTMLDivElement | null {
+  const existing = chartTooltips.get(canvas);
+  if (existing) return existing;
+  const card = canvas.closest<HTMLElement>(".chart-card");
+  if (!card) return null;
+  const tooltip = document.createElement("div");
+  tooltip.className = "chart-tooltip";
+  tooltip.hidden = true;
+  card.appendChild(tooltip);
+  chartTooltips.set(canvas, tooltip);
+  return tooltip;
+}
+
+function hideChartTooltip(canvas: HTMLCanvasElement): void {
+  const tooltip = chartTooltips.get(canvas);
+  if (!tooltip) return;
+  tooltip.hidden = true;
+}
+
+function clearChartHoverDelay(canvas: HTMLCanvasElement): void {
+  const handle = chartHoverDelayHandle.get(canvas);
+  if (handle !== null && handle !== undefined) {
+    window.clearTimeout(handle);
+  }
+  chartHoverDelayHandle.set(canvas, null);
+  chartHoverPending.set(canvas, null);
+}
+
+function positionChartTooltip(canvas: HTMLCanvasElement, tooltip: HTMLDivElement, clientX: number, clientY: number): void {
+  const card = canvas.closest<HTMLElement>(".chart-card");
+  if (!card) return;
+  const cardRect = card.getBoundingClientRect();
+  const tooltipRect = tooltip.getBoundingClientRect();
+  const pad = 10;
+  const offset = 14;
+
+  let left = clientX - cardRect.left + offset;
+  let top = clientY - cardRect.top + offset;
+
+  if (left + tooltipRect.width > cardRect.width - pad) {
+    left = clientX - cardRect.left - tooltipRect.width - offset;
+  }
+  if (left < pad) left = pad;
+  if (top + tooltipRect.height > cardRect.height - pad) {
+    top = cardRect.height - tooltipRect.height - pad;
+  }
+  if (top < pad) top = pad;
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+
+function renderChartTooltip(
+  canvas: HTMLCanvasElement,
+  data: ChartHoverData,
+  tooltip: HTMLDivElement,
+  idx: number,
+  clientX: number,
+  clientY: number
+): void {
+  const age = Math.round(data.ages[idx] ?? 0);
+  const year = Math.round(data.years[idx] ?? 0);
+  const primary = data.seriesPrimary[idx];
+  const comparison = data.seriesComparison[idx];
+  const delta = Number.isFinite(primary) && Number.isFinite(comparison)
+    ? Math.abs(primary - comparison)
+    : Number.NaN;
+  const retireNowAge = data.retireNowAge !== null ? Math.round(data.retireNowAge) : null;
+  const statutoryAge = data.statutoryAge !== null ? Math.round(data.statutoryAge) : null;
+  const contextEvents = data.contextByYear.get(year) ?? [];
+  const contextAmounts = contextEvents
+    .map((event) => event.amount)
+    .filter((amount): amount is number => Number.isFinite(amount));
+  const valueMode = chooseTooltipValueMode([primary, comparison, delta, ...contextAmounts]);
+  const compactUnit = chooseTooltipCompactUnit([primary, comparison, delta, ...contextAmounts]);
+  const contextItemsHtml = contextEvents
+    .map((event) => {
+      const amount = event.amount;
+      const amountText = amount !== null && Number.isFinite(amount) ? ` (${formatTooltipCurrency(amount, valueMode, compactUnit)})` : "";
+      return `<li>${escapeHtml(`${event.label}${amountText}`)}</li>`;
+    })
+    .join("");
+
+  tooltip.innerHTML = `
+    <div class="chart-tooltip-age">Age ${age} · ${year}</div>
+    <div class="chart-tooltip-row">
+      <span class="chart-tooltip-key">Retire Now (${retireNowAge === null ? "—" : String(retireNowAge)})</span>
+      <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(primary, valueMode, compactUnit))}</span>
+    </div>
+    <div class="chart-tooltip-row">
+      <span class="chart-tooltip-key">Retire at Statutory (${statutoryAge === null ? "—" : String(statutoryAge)})</span>
+      <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(comparison, valueMode, compactUnit))}</span>
+    </div>
+    <div class="chart-tooltip-row is-delta">
+      <span class="chart-tooltip-key">Difference</span>
+      <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(delta, valueMode, compactUnit))}</span>
+    </div>
+    ${contextItemsHtml ? `<div class="chart-tooltip-context"><ul class="chart-tooltip-context-list">${contextItemsHtml}</ul></div>` : ""}
+  `;
+  tooltip.hidden = false;
+  positionChartTooltip(canvas, tooltip, clientX, clientY);
+}
+
+function setupChartHover(canvas: HTMLCanvasElement): void {
+  canvas.addEventListener("pointermove", (ev) => {
+    const data = chartHoverData.get(canvas);
+    const tooltip = getOrCreateChartTooltip(canvas);
+    if (!data || !tooltip || data.ages.length === 0 || data.years.length === 0) {
+      clearChartHoverDelay(canvas);
+      chartHoverIndex.set(canvas, null);
+      hideChartTooltip(canvas);
+      return;
+    }
+
+    const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) {
+      clearChartHoverDelay(canvas);
+      hideChartTooltip(canvas);
+      return;
+    }
+
+    const cx = ((ev.clientX - rect.left) / rect.width) * canvas.width;
+    const cy = ((ev.clientY - rect.top) / rect.height) * canvas.height;
+    const plotLeft = CHART_PAD.l;
+    const plotRight = canvas.width - CHART_PAD.r;
+    const plotTop = CHART_PAD.t;
+    const plotBottom = canvas.height - CHART_PAD.b;
+    if (cx < plotLeft || cx > plotRight || cy < plotTop || cy > plotBottom) {
+      clearChartHoverDelay(canvas);
+      if ((chartHoverIndex.get(canvas) ?? null) !== null) {
+        chartHoverIndex.set(canvas, null);
+        drawChart(canvas, data.ages, data.seriesPrimary, data.seriesComparison);
+      }
+      hideChartTooltip(canvas);
+      return;
+    }
+
+    const maxIndex = Math.max(0, data.ages.length - 1);
+    const ratio = maxIndex === 0 ? 0 : (cx - plotLeft) / Math.max(1, plotRight - plotLeft);
+    const idx = Math.max(0, Math.min(maxIndex, Math.round(ratio * maxIndex)));
+    if ((chartHoverIndex.get(canvas) ?? null) !== idx) {
+      chartHoverIndex.set(canvas, idx);
+      drawChart(canvas, data.ages, data.seriesPrimary, data.seriesComparison, idx);
+    }
+    const pending = { idx, clientX: ev.clientX, clientY: ev.clientY };
+    chartHoverPending.set(canvas, pending);
+
+    if (tooltip.hidden) {
+      const existingHandle = chartHoverDelayHandle.get(canvas);
+      if (existingHandle !== null && existingHandle !== undefined) {
+        window.clearTimeout(existingHandle);
+      }
+      const nextHandle = window.setTimeout(() => {
+        const latest = chartHoverPending.get(canvas);
+        const latestData = chartHoverData.get(canvas);
+        const latestTooltip = getOrCreateChartTooltip(canvas);
+        chartHoverDelayHandle.set(canvas, null);
+        if (!latest || !latestData || !latestTooltip) return;
+        renderChartTooltip(canvas, latestData, latestTooltip, latest.idx, latest.clientX, latest.clientY);
+      }, CHART_TOOLTIP_DELAY_MS);
+      chartHoverDelayHandle.set(canvas, nextHandle);
+    } else {
+      clearChartHoverDelay(canvas);
+      renderChartTooltip(canvas, data, tooltip, idx, ev.clientX, ev.clientY);
+    }
+  });
+
+  const dismiss = () => {
+    clearChartHoverDelay(canvas);
+    const data = chartHoverData.get(canvas);
+    if (data && (chartHoverIndex.get(canvas) ?? null) !== null) {
+      chartHoverIndex.set(canvas, null);
+      drawChart(canvas, data.ages, data.seriesPrimary, data.seriesComparison);
+    }
+    hideChartTooltip(canvas);
+  };
+  canvas.addEventListener("pointerleave", dismiss);
+  canvas.addEventListener("blur", dismiss);
+}
+
 function drawChart(
   canvas: HTMLCanvasElement,
   x: number[],
   a: number[],
   b: number[],
-  labelA: string,
-  labelB: string
+  hoverIdx: number | null = null
 ): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
 
   const w = canvas.width;
   const h = canvas.height;
-  const pad = { l: 64, r: 24, t: 26, b: 34 };
+  const pad = CHART_PAD;
   const allY = [...a, ...b];
   const rawMinY = Math.min(...allY);
   const rawMaxY = Math.max(...allY);
@@ -1421,28 +1814,6 @@ function drawChart(
     const f = safe / base;
     const niceF = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
     return niceF * base;
-  };
-
-  const formatCurrencyAbbrev = (value: number): string => {
-    const abs = Math.abs(value);
-    const sign = value < 0 ? "-" : "";
-    const symbol = currentCurrencySymbol();
-    if (abs >= 1_000_000_000) {
-      const scaled = abs / 1_000_000_000;
-      const digits = scaled >= 10 ? 1 : 2;
-      return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}b`;
-    }
-    if (abs >= 1_000_000) {
-      const scaled = abs / 1_000_000;
-      const digits = scaled >= 10 ? 1 : 2;
-      return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}m`;
-    }
-    if (abs >= 1_000) {
-      const scaled = abs / 1_000;
-      const digits = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
-      return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}k`;
-    }
-    return `${sign}${symbol}${Math.round(abs).toLocaleString("en-US")}`;
   };
 
   let tickStep = niceStep(effectiveSpan / targetTicks);
@@ -1464,8 +1835,8 @@ function drawChart(
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, w, h);
 
-  const primaryColor = "#0284c7";
-  const comparisonColor = "#ea580c";
+  const primaryColor = CHART_PRIMARY_COLOR;
+  const comparisonColor = CHART_COMPARISON_COLOR;
 
   if (rawMinY < 0) {
     const yZero = yp(0);
@@ -1520,6 +1891,19 @@ function drawChart(
   plot(a, primaryColor);
   plot(b, comparisonColor, [10, 6]);
 
+  if (hoverIdx !== null && hoverIdx >= 0 && hoverIdx < x.length) {
+    const hoverX = xp(hoverIdx);
+    ctx.save();
+    ctx.strokeStyle = "rgba(71, 85, 105, 0.34)";
+    ctx.lineWidth = 1.1;
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.moveTo(hoverX, pad.t);
+    ctx.lineTo(hoverX, h - pad.b);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   if (rawMinY < 0 && rawMaxY > 0) {
     const y0 = yp(0);
     ctx.save();
@@ -1539,7 +1923,7 @@ function drawChart(
     for (let yv = yMinTick; yv <= yMaxTick + 0.5; yv += tickStep) {
       const yy = yp(yv);
       ctx.fillStyle = "#334155";
-      ctx.fillText(formatCurrencyAbbrev(yv), 4, yy + 4);
+      ctx.fillText(formatCurrencyCompact(yv), 4, yy + 4);
     }
   }
 
@@ -1562,9 +1946,16 @@ function drawChart(
 
 function recalc(): void {
   syncEarlyRetirementControl(false);
+  clearChartHoverDelay(cashCanvas);
+  clearChartHoverDelay(nwCanvas);
+  chartHoverIndex.set(cashCanvas, null);
+  chartHoverIndex.set(nwCanvas, null);
+  hideChartTooltip(cashCanvas);
+  hideChartTooltip(nwCanvas);
 
   const result = runModel(rawInputs, uiState);
   const statutory = getStatutoryAge();
+  const contextByYear = buildChartContextByYear(result);
   const earlyLabel = spinner.value.trim() === "" ? "Retire at early age" : `Retire at ${uiState.earlyRetirementAge}`;
   const statutoryLabel = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
   cashLegendA.textContent = earlyLabel;
@@ -1575,18 +1966,34 @@ function recalc(): void {
     cashCanvas,
     result.outputs.ages,
     result.outputs.cashSeriesEarly,
-    result.outputs.cashSeriesNorm,
-    earlyLabel,
-    statutoryLabel
+    result.outputs.cashSeriesNorm
   );
+  chartHoverData.set(cashCanvas, {
+    ages: result.outputs.ages,
+    years: result.outputs.years,
+    seriesPrimary: result.outputs.cashSeriesEarly,
+    seriesComparison: result.outputs.cashSeriesNorm,
+    retireNowAge: uiState.earlyRetirementAge,
+    statutoryAge: statutory,
+    metricLabel: "Cash",
+    contextByYear
+  });
   drawChart(
     nwCanvas,
     result.outputs.ages,
     result.outputs.netWorthSeriesEarly,
-    result.outputs.netWorthSeriesNorm,
-    earlyLabel,
-    statutoryLabel
+    result.outputs.netWorthSeriesNorm
   );
+  chartHoverData.set(nwCanvas, {
+    ages: result.outputs.ages,
+    years: result.outputs.years,
+    seriesPrimary: result.outputs.netWorthSeriesEarly,
+    seriesComparison: result.outputs.netWorthSeriesNorm,
+    retireNowAge: uiState.earlyRetirementAge,
+    statutoryAge: statutory,
+    metricLabel: "Net worth",
+    contextByYear
+  });
   renderMilestoneTimeline(result);
 }
 
@@ -1677,6 +2084,9 @@ retireCheckButton.addEventListener("click", () => {
   setRetireCheckMessage(positiveMessage, "positive");
   queueRecalc();
 });
+
+setupChartHover(cashCanvas);
+setupChartHover(nwCanvas);
 
 renderInputs();
 recalc();
