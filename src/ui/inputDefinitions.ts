@@ -45,7 +45,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "QUICK START",
     groupPath: "QUICK START",
     groupTail: [],
-    tooltip: "current and savings accounts, bonds, term deposits",
+    tooltip: "Current and savings accounts, bonds, and term deposits",
     uiNote: "",
     sampleValue: "50000",
     type: "number"
@@ -381,7 +381,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
     groupTail: ["Other income"],
-    tooltip: "net annual after all costs and tax",
+    tooltip: "Net annual after all costs and tax",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "12000",
     type: "number"
@@ -393,7 +393,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
     groupTail: ["Other income"],
-    tooltip: "net annual after all costs and tax",
+    tooltip: "Net annual after all costs and tax",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "10000",
     type: "number"
@@ -405,7 +405,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
     groupTail: ["Other income"],
-    tooltip: "net annual after all costs and tax",
+    tooltip: "Net annual after all costs and tax",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "8000",
     type: "number"
@@ -821,11 +821,11 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
   {
     row: 137,
     cell: "B137",
-    label: "from now to 65",
+    label: "From now to 65",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
     groupTail: ["Spending adjustment (at today's euros)"],
-    tooltip: "more / less than current",
+    tooltip: "More / less than current",
     uiNote: "",
     sampleValue: "0",
     type: "percent"
@@ -833,11 +833,11 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
   {
     row: 138,
     cell: "B138",
-    label: "from 66-75",
+    label: "From 66 to 75",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
     groupTail: ["Spending adjustment (at today's euros)"],
-    tooltip: "more / less than current",
+    tooltip: "More / less than current",
     uiNote: "",
     sampleValue: "-0.1",
     type: "percent"
@@ -845,11 +845,11 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
   {
     row: 139,
     cell: "B139",
-    label: "from age 76",
+    label: "From age 76",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
     groupTail: ["Spending adjustment (at today's euros)"],
-    tooltip: "more / less than current",
+    tooltip: "More / less than current",
     uiNote: "",
     sampleValue: "-0.2",
     type: "percent"
@@ -893,7 +893,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
   {
     row: 145,
     cell: "B145",
-    label: "General inflatiion",
+    label: "General inflation",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
@@ -909,7 +909,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "including inflation",
+    tooltip: "Including inflation",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
@@ -921,7 +921,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "including inflation",
+    tooltip: "Including inflation",
     uiNote: "",
     sampleValue: "2.5000000000000001E-2",
     type: "percent"
@@ -933,7 +933,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "including inflation",
+    tooltip: "Including inflation",
     uiNote: "",
     sampleValue: "0.08",
     type: "percent"
@@ -945,7 +945,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "including inflation",
+    tooltip: "Including inflation",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
@@ -969,7 +969,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "reduction in pension for each year retired early",
+    tooltip: "Reduction in pension for each year retired early",
     uiNote: "",
     sampleValue: "300",
     type: "number"
@@ -981,7 +981,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "emergency reserve",
+    tooltip: "Emergency reserve",
     uiNote: "",
     sampleValue: "40000",
     type: "number"
@@ -993,7 +993,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "tax, broker and other fees",
+    tooltip: "Tax, broker, and other fees",
     uiNote: "",
     sampleValue: "0.05",
     type: "percent"
@@ -1005,7 +1005,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "agency, tax, legal fees",
+    tooltip: "Agency, tax, and legal fees",
     uiNote: "",
     sampleValue: "0.15",
     type: "percent"
