@@ -39,7 +39,7 @@ app.innerHTML = `
     <section class="left" id="inputs-panel"></section>
     <section class="right">
       <header class="retirement-control">
-        <button id="retire-check-btn" class="retire-check-btn" type="button">Can I retire early?</button>
+        <button id="retire-check-btn" class="retire-check-btn" type="button">Enough to quit?</button>
         <p id="retire-check-result" class="retire-check-result" hidden></p>
         <div class="retirement-stepper">
           <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease early retirement age">-</button>
@@ -637,6 +637,15 @@ function findEarliestRetirementAgeBeforeStatutory(statutory: number): number | n
   }
 
   return null;
+}
+
+function getCurrentAge(): number | null {
+  const raw = rawInputs.B4;
+  if (isBlank(raw)) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  if (n < 18 || n > 100) return null;
+  return Math.round(n);
 }
 
 function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
@@ -1501,7 +1510,11 @@ retireCheckButton.addEventListener("click", () => {
   uiState.earlyRetirementAge = canRetAge;
   spinner.value = String(canRetAge);
   updateEarlyRetirementButtons(statutory);
-  setRetireCheckMessage(`Yes. You can retire at ${canRetAge}.`, "positive");
+  const currentAge = getCurrentAge();
+  const positiveMessage = currentAge !== null && canRetAge === currentAge + 1
+    ? "Yes! You can retire next year!"
+    : `Not quite, but you can retire at ${canRetAge}`;
+  setRetireCheckMessage(positiveMessage, "positive");
   queueRecalc();
 });
 
