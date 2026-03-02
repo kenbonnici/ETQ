@@ -117,7 +117,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "QUICK START",
     groupPath: "QUICK START",
     groupTail: [],
-    tooltip: "Year at which pension starts",
+    tooltip: "Age at which pension starts",
     uiNote: "",
     sampleValue: "65",
     type: "integer"
@@ -141,7 +141,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "QUICK START",
     groupPath: "QUICK START",
     groupTail: [],
-    tooltip: "if not a home owner",
+    tooltip: "If not a home owner",
     uiNote: "show only if not a home owner (B12=\"\")",
     sampleValue: "",
     type: "number"
@@ -1005,7 +1005,7 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "agency, tax, legal fees ",
+    tooltip: "agency, tax, legal fees",
     uiNote: "",
     sampleValue: "0.15",
     type: "percent"
