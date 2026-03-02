@@ -427,12 +427,15 @@ function formatCurrencyCompactTooltip(value: number, unit: TooltipCompactUnit): 
   const sign = value < 0 ? "-" : "";
   const symbol = currentCurrencySymbol();
   if (unit === "b") {
-    return `${sign}${symbol}${Number((abs / 1_000_000_000).toFixed(2)).toLocaleString("en-US")}b`;
+    const scaled = abs / 1_000_000_000;
+    return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}b`;
   }
   if (unit === "m") {
-    return `${sign}${symbol}${Number((abs / 1_000_000).toFixed(2)).toLocaleString("en-US")}m`;
+    const scaled = abs / 1_000_000;
+    return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}m`;
   }
-  return `${sign}${symbol}${Math.round(abs / 1_000).toLocaleString("en-US")}k`;
+  const scaled = abs / 1_000;
+  return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}k`;
 }
 
 function formatTooltipCurrency(value: number, mode: TooltipValueMode, compactUnit: TooltipCompactUnit): string {
