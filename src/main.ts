@@ -31,11 +31,9 @@ let stepperHoldInterval: number | null = null;
 let stepperHoldListenersBound = false;
 let excelLoadBusy = false;
 
-const MILESTONE_YOY_THRESHOLD = 0.2;
-const MILESTONE_MAX_ITEMS = 12;
-const MILESTONE_MIN_DENOMINATOR = 1;
 const TIMELINE_MILESTONE_MIN_GAP = 16;
 const TIMELINE_EDGE_PADDING = 26;
+const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
 const RETIREMENT_CASH_FLOOR_EPSILON = 1e-6;
 const CHART_PAD = { l: 64, r: 24, t: 26, b: 34 } as const;
 const CHART_PRIMARY_COLOR = "#0284c7";
@@ -156,6 +154,12 @@ let visibleProperties = 1;
 const property1Cells = ["B50", "B51", "B52"] as const;
 const property2Cells = ["B55", "B56", "B57"] as const;
 const property3Cells = ["B60", "B61", "B62"] as const;
+const PROPERTY_LIQUIDATION_CONFIG: readonly PropertyLiquidationConfig[] = [
+  { idx: 0, rankCell: "B166", nameCell: "B50", valueCell: "B51", cells: property1Cells },
+  { idx: 1, rankCell: "B167", nameCell: "B55", valueCell: "B56", cells: property2Cells },
+  { idx: 2, rankCell: "B168", nameCell: "B60", valueCell: "B61", cells: property3Cells }
+] as const;
+const PROPERTY_LIQUIDATION_CELLS = new Set<string>(["B166", "B167", "B168"]);
 let visibleIncomeEvents = 1;
 const incomeEvent1Cells = ["B100", "B101", "B102"] as const;
 const incomeEvent2Cells = ["B105", "B106", "B107"] as const;
@@ -190,6 +194,14 @@ interface PanelCursorState {
   activeCell: string | null;
   selectionStart: number | null;
   selectionEnd: number | null;
+}
+
+interface PropertyLiquidationConfig {
+  idx: 0 | 1 | 2;
+  rankCell: "B166" | "B167" | "B168";
+  nameCell: "B50" | "B55" | "B60";
+  valueCell: "B51" | "B56" | "B61";
+  cells: readonly string[];
 }
 
 interface TimelineMilestone {
@@ -358,11 +370,6 @@ function syncTimelineLabelTooltipState(): void {
   });
 }
 
-function safeYoYChange(nextValue: number, prevValue: number): number {
-  const denominator = Math.max(MILESTONE_MIN_DENOMINATOR, Math.abs(nextValue), Math.abs(prevValue));
-  return (nextValue - prevValue) / denominator;
-}
-
 function normalizeTimelineLabel(label: string): string {
   const trimmed = label.trim();
   if (!trimmed) return trimmed;
@@ -502,27 +509,27 @@ function composeTimelineLabel(events: TimelineYearEvent[]): string {
   const parts: string[] = [];
   if (hasStockSale) {
     const amountText = formatImpact(stockSaleAmount);
-    parts.push(amountText ? `Sell stocks (${amountText})` : "Sell stocks");
+    parts.push(amountText ? `Sell stocks ${amountText}` : "Sell stocks");
   }
   if (propertySales.length === 1) {
     const sale = propertySales[0];
     const amountText = formatImpact(sale.amount);
-    parts.push(amountText ? `Sell ${sale.name} (${amountText})` : `Sell ${sale.name}`);
+    parts.push(amountText ? `Sell ${sale.name} ${amountText}` : `Sell ${sale.name}`);
   } else if (propertySales.length > 1) {
     const grouped = propertySales
       .map((sale) => {
         const amountText = formatImpact(sale.amount);
-        return amountText ? `${sale.name} (${amountText})` : sale.name;
+        return amountText ? `${sale.name} ${amountText}` : sale.name;
       })
       .join(" & ");
     parts.push(`Sell ${grouped}`);
   }
   for (const other of others) {
     const amountText = formatImpact(other.amount);
-    parts.push(amountText ? `${other.label} (${amountText})` : other.label);
+    parts.push(amountText ? `${other.label} ${amountText}` : other.label);
   }
 
-  return parts.join(" + ");
+  return parts.join(", ");
 }
 
 function collectSpecificLabelsByYear(result: RunModelResult): Map<number, TimelineYearEvent[]> {
@@ -530,9 +537,15 @@ function collectSpecificLabelsByYear(result: RunModelResult): Map<number, Timeli
 
   const pushLabel = (year: number, name: string, amount: number | null = null): void => {
     if (!name || !Number.isFinite(year) || year <= 0) return;
+    if (amount !== null && Number.isFinite(amount) && Math.abs(amount) < MILESTONE_EVENT_MIN_ABS_AMOUNT) return;
     const existing = labelsByYear.get(year) ?? [];
     existing.push({ label: name, amount });
     labelsByYear.set(year, existing);
+  };
+  const findYearForAge = (targetAge: number): number | null => {
+    const idx = result.outputs.ages.findIndex((age) => Math.round(age) === Math.round(targetAge));
+    if (idx < 0) return null;
+    return result.outputs.years[idx] ?? null;
   };
 
   const eventCells = [
@@ -577,6 +590,29 @@ function collectSpecificLabelsByYear(result: RunModelResult): Map<number, Timeli
     if (idx >= 0) pushLabel(result.outputs.years[idx], "State pension starts", Math.abs(asNumber(rawInputs.B21)));
   }
 
+  const otherWorkIncomeAnnual = asNumber(rawInputs.B70);
+  const otherWorkUntilAge = Math.round(asNumber(rawInputs.B71));
+  if (otherWorkIncomeAnnual !== 0 && otherWorkUntilAge > 0) {
+    const endYear = findYearForAge(otherWorkUntilAge + 1);
+    if (endYear !== null) {
+      pushLabel(endYear, "Other income ends", -Math.abs(otherWorkIncomeAnnual));
+    }
+  }
+
+  const postRetIncomeAnnual = asNumber(rawInputs.B141);
+  const postRetIncomeFromAge = Math.round(asNumber(rawInputs.B142));
+  const postRetIncomeToAge = Math.round(asNumber(rawInputs.B143));
+  if (postRetIncomeAnnual > 0) {
+    if (postRetIncomeFromAge > 0) {
+      const startYear = findYearForAge(postRetIncomeFromAge);
+      if (startYear !== null) pushLabel(startYear, "Other post-retirement income starts", Math.abs(postRetIncomeAnnual));
+    }
+    if (postRetIncomeToAge > 0 && postRetIncomeToAge >= postRetIncomeFromAge) {
+      const endYear = findYearForAge(postRetIncomeToAge + 1);
+      if (endYear !== null) pushLabel(endYear, "Other post-retirement income ends", -Math.abs(postRetIncomeAnnual));
+    }
+  }
+
   for (const hint of result.outputs.scenarioEarly.milestoneHints) {
     pushLabel(hint.year, hint.label, hint.amount ?? null);
   }
@@ -584,47 +620,15 @@ function collectSpecificLabelsByYear(result: RunModelResult): Map<number, Timeli
   return labelsByYear;
 }
 
-function mergeMilestone(existing: TimelineMilestone, incoming: TimelineMilestone): TimelineMilestone {
-  const notes = [...existing.notes];
-  for (const note of incoming.notes) {
-    if (!notes.includes(note)) notes.push(note);
-  }
-  return {
-    age: existing.age,
-    year: existing.year,
-    cashPct: incoming.cashPct ?? existing.cashPct,
-    netWorthPct: incoming.netWorthPct ?? existing.netWorthPct,
-    magnitude: Math.max(existing.magnitude, incoming.magnitude),
-    label: existing.label,
-    notes
-  };
-}
-
 function buildTimelineMilestones(result: RunModelResult): TimelineMilestone[] {
   const ages = result.outputs.ages;
   const years = result.outputs.years;
-  const cash = result.outputs.cashSeriesEarly;
-  const netWorth = result.outputs.netWorthSeriesEarly;
   if (ages.length === 0) return [];
 
   const labelsByYear = collectSpecificLabelsByYear(result);
-  const byYear = new Map<number, TimelineMilestone>();
+  const milestones: TimelineMilestone[] = [];
 
-  const putMilestone = (milestone: TimelineMilestone): void => {
-    const existing = byYear.get(milestone.year);
-    if (!existing) {
-      byYear.set(milestone.year, milestone);
-      return;
-    }
-    byYear.set(milestone.year, mergeMilestone(existing, milestone));
-  };
-
-  for (let i = 1; i < ages.length; i += 1) {
-    const cashPct = safeYoYChange(cash[i], cash[i - 1]);
-    const netWorthPct = safeYoYChange(netWorth[i], netWorth[i - 1]);
-    const cashAbs = Math.abs(cashPct);
-    const netWorthAbs = Math.abs(netWorthPct);
-    if (cashAbs < MILESTONE_YOY_THRESHOLD && netWorthAbs < MILESTONE_YOY_THRESHOLD) continue;
+  for (let i = 0; i < ages.length; i += 1) {
     const year = years[i];
     const allowedEvents = labelsByYear.get(year) ?? [];
     if (allowedEvents.length === 0) continue;
@@ -635,22 +639,18 @@ function buildTimelineMilestones(result: RunModelResult): TimelineMilestone[] {
     const label = composeTimelineLabel(normalized);
     if (!label) continue;
 
-    putMilestone({
+    milestones.push({
       age: ages[i],
       year,
-      cashPct,
-      netWorthPct,
-      magnitude: Math.max(cashAbs, netWorthAbs),
+      cashPct: null,
+      netWorthPct: null,
+      magnitude: 0,
       label,
       notes: []
     });
   }
-  const allMilestones = [...byYear.values()];
-  const trimmed = allMilestones
-    .sort((a, b) => b.magnitude - a.magnitude)
-    .slice(0, MILESTONE_MAX_ITEMS);
-  trimmed.sort((a, b) => a.age - b.age);
-  return trimmed;
+  milestones.sort((a, b) => a.age - b.age);
+  return milestones;
 }
 
 function renderMilestoneTimeline(result: RunModelResult): void {
@@ -680,9 +680,9 @@ function renderMilestoneTimeline(result: RunModelResult): void {
   const topPad = TIMELINE_EDGE_PADDING;
   const bottomPad = TIMELINE_EDGE_PADDING;
   const viewportHeight = Math.max(320, timelineScroll.clientHeight);
-  const minGap = window.matchMedia("(max-width: 960px)").matches
-    ? Math.max(TIMELINE_MILESTONE_MIN_GAP, 18)
-    : TIMELINE_MILESTONE_MIN_GAP;
+  const baseGap = window.matchMedia("(max-width: 960px)").matches ? 12 : TIMELINE_MILESTONE_MIN_GAP;
+  const densityCompaction = Math.max(0, milestones.length - 8);
+  const minGap = Math.max(6, baseGap - densityCompaction);
   // Keep timeline unscrolled by default; only grow beyond viewport when needed
   // to preserve minimum visual gap between milestones.
   const minTrackForMilestones = topPad + bottomPad + Math.max(0, milestones.length - 1) * minGap;
@@ -1148,6 +1148,102 @@ function dynamicGroupTail(def: InputDefinition): string[] {
   return tail;
 }
 
+function activePropertyConfigs(): PropertyLiquidationConfig[] {
+  return PROPERTY_LIQUIDATION_CONFIG.filter((cfg) => anyValue(cfg.cells)) as PropertyLiquidationConfig[];
+}
+
+function parseRankCellValue(cell: "B166" | "B167" | "B168"): number | null {
+  const raw = rawInputs[cell];
+  if (isBlank(raw)) return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  return Math.trunc(n);
+}
+
+function defaultPropertyOrder(active: PropertyLiquidationConfig[]): PropertyLiquidationConfig[] {
+  const indexed = active.map((cfg) => ({ cfg, value: asNumber(rawInputs[cfg.valueCell]) }));
+  indexed.sort((a, b) => (a.value - b.value) || (a.cfg.idx - b.cfg.idx));
+  return indexed.map((item) => item.cfg);
+}
+
+function buildPropertyLiquidationOrder(active: PropertyLiquidationConfig[]): PropertyLiquidationConfig[] {
+  if (active.length <= 1) return [...active];
+
+  const hasManual = active.some((cfg) => !isBlank(rawInputs[cfg.rankCell]));
+  if (!hasManual) return defaultPropertyOrder(active);
+
+  const ranked = active
+    .filter((cfg) => {
+      const rank = parseRankCellValue(cfg.rankCell);
+      return rank !== null && rank > 0;
+    })
+    .sort((a, b) => {
+      const ra = parseRankCellValue(a.rankCell) ?? 0;
+      const rb = parseRankCellValue(b.rankCell) ?? 0;
+      return (ra - rb) || (a.idx - b.idx);
+    });
+  const unranked = active.filter((cfg) => !ranked.includes(cfg));
+  return [...ranked, ...unranked];
+}
+
+function syncManualPropertyOrderForNewProperties(): boolean {
+  const active = activePropertyConfigs();
+  if (active.length <= 1) return false;
+  const hasManual = active.some((cfg) => !isBlank(rawInputs[cfg.rankCell]));
+  if (!hasManual) return false;
+
+  const ranked = active
+    .map((cfg) => ({ cfg, rank: parseRankCellValue(cfg.rankCell) }))
+    .filter((item) => item.rank !== null && item.rank > 0)
+    .sort((a, b) => ((a.rank ?? 0) - (b.rank ?? 0)) || (a.cfg.idx - b.cfg.idx));
+
+  let nextRank = ranked.length > 0 ? (ranked[ranked.length - 1].rank ?? 0) : 0;
+  let changed = false;
+  for (const cfg of active) {
+    if (!isBlank(rawInputs[cfg.rankCell])) continue;
+    nextRank += 1;
+    rawInputs[cfg.rankCell] = nextRank;
+    changed = true;
+  }
+  return changed;
+}
+
+function persistPropertyLiquidationOrder(order: PropertyLiquidationConfig[], active: PropertyLiquidationConfig[]): void {
+  const activeSet = new Set(active.map((cfg) => cfg.idx));
+  for (const cfg of PROPERTY_LIQUIDATION_CONFIG) {
+    if (activeSet.has(cfg.idx)) rawInputs[cfg.rankCell] = null;
+  }
+  order.forEach((cfg, idx) => {
+    rawInputs[cfg.rankCell] = idx + 1;
+  });
+}
+
+function renderPropertyLiquidationOrderControl(): string {
+  const active = activePropertyConfigs();
+  if (active.length === 0) return "";
+  const ordered = buildPropertyLiquidationOrder(active);
+  const canDrag = ordered.length > 1;
+  const rows = ordered.map((cfg, idx) => {
+    const name = String(rawInputs[cfg.nameCell] ?? "").trim() || `Property ${cfg.idx + 1}`;
+    const value = asNumber(rawInputs[cfg.valueCell]);
+    const valueText = `${currentCurrencySymbol()}${Math.round(value).toLocaleString("en-US")}`;
+    return `
+      <li class="liquidation-item ${canDrag ? "" : "is-disabled"}" data-liquidation-idx="${cfg.idx}" draggable="${canDrag ? "true" : "false"}">
+        <span class="liquidation-rank">${idx + 1}</span>
+        <span class="liquidation-name">${escapeHtml(name)}</span>
+        <span class="liquidation-value">${escapeHtml(valueText)}</span>
+      </li>
+    `;
+  }).join("");
+  return `
+    <div class="liquidation-reorder" data-liquidation-reorder="true" data-drag-enabled="${canDrag ? "true" : "false"}">
+      <div class="liquidation-title">Property liquidation order</div>
+      <small class="liquidation-help">${canDrag ? "Drag to reorder. Top sells first." : "Add at least two properties to reorder."}</small>
+      <ul class="liquidation-list">${rows}</ul>
+    </div>
+  `;
+}
+
 function applyFinerDefaultsIfNeeded(): void {
   for (const [cell, val] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
     const key = cell as keyof RawInputs;
@@ -1237,6 +1333,8 @@ function renderInputs(): void {
   else if (anyValue(incomeEvent2Cells)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 2);
   if (anyValue(expenseEvent3Cells)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 3);
   else if (anyValue(expenseEvent2Cells)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 2);
+  const appendedOrder = syncManualPropertyOrderForNewProperties();
+  if (appendedOrder) queueRecalc();
   const grouped = {
     "QUICK START": INPUT_DEFINITIONS.filter((d) => d.section === "QUICK START"),
     "DEEPER DIVE": INPUT_DEFINITIONS.filter((d) => d.section === "DEEPER DIVE"),
@@ -1275,8 +1373,19 @@ function renderInputs(): void {
     let html = "";
     let prevTop = "";
     let prevSub = "";
+    let liquidationRendered = false;
     for (const def of orderedDefs) {
       if (!fieldVisible(def.cell)) continue;
+      if (PROPERTY_LIQUIDATION_CELLS.has(def.cell)) {
+        if (!liquidationRendered) {
+          const controlHtml = renderPropertyLiquidationOrderControl();
+          if (controlHtml) {
+            html += controlHtml;
+          }
+          liquidationRendered = true;
+        }
+        continue;
+      }
       const tail = dynamicGroupTail(def).map((s) => s.trim()).filter((s) => s.length > 0);
       if (tail.length === 0) {
         prevTop = "";
@@ -1610,6 +1719,70 @@ function renderInputs(): void {
     });
   });
 
+  const liquidationRoot = inputsPanel.querySelector<HTMLElement>('[data-liquidation-reorder="true"]');
+  if (liquidationRoot && liquidationRoot.dataset.dragEnabled === "true") {
+    let draggingIdx: number | null = null;
+    const items = Array.from(liquidationRoot.querySelectorAll<HTMLElement>(".liquidation-item"));
+
+    const clearDropMarkers = () => {
+      items.forEach((item) => item.classList.remove("is-drop-target"));
+    };
+
+    items.forEach((item) => {
+      item.addEventListener("dragstart", (ev) => {
+        draggingIdx = Number(item.dataset.liquidationIdx);
+        item.classList.add("is-dragging");
+        if (ev.dataTransfer) {
+          ev.dataTransfer.effectAllowed = "move";
+          ev.dataTransfer.setData("text/plain", String(draggingIdx));
+        }
+      });
+
+      item.addEventListener("dragend", () => {
+        item.classList.remove("is-dragging");
+        clearDropMarkers();
+        draggingIdx = null;
+      });
+
+      item.addEventListener("dragover", (ev) => {
+        if (draggingIdx === null) return;
+        ev.preventDefault();
+        clearDropMarkers();
+        item.classList.add("is-drop-target");
+      });
+
+      item.addEventListener("dragleave", () => {
+        item.classList.remove("is-drop-target");
+      });
+
+      item.addEventListener("drop", (ev) => {
+        ev.preventDefault();
+        item.classList.remove("is-drop-target");
+        if (draggingIdx === null) return;
+        const targetIdx = Number(item.dataset.liquidationIdx);
+        if (!Number.isFinite(targetIdx) || targetIdx === draggingIdx) return;
+
+        const active = activePropertyConfigs();
+        const order = buildPropertyLiquidationOrder(active);
+        const fromPos = order.findIndex((cfg) => cfg.idx === draggingIdx);
+        const toBasePos = order.findIndex((cfg) => cfg.idx === targetIdx);
+        if (fromPos < 0 || toBasePos < 0) return;
+
+        const rect = item.getBoundingClientRect();
+        const insertAfter = ev.clientY > rect.top + rect.height / 2;
+        const toPos = toBasePos + (insertAfter ? 1 : 0);
+        const [moved] = order.splice(fromPos, 1);
+        const normalizedToPos = toPos > fromPos ? toPos - 1 : toPos;
+        order.splice(Math.max(0, Math.min(order.length, normalizedToPos)), 0, moved);
+
+        persistPropertyLiquidationOrder(order, active);
+        setRetireCheckMessage(null);
+        queueRecalc();
+        renderInputs();
+      });
+    });
+  }
+
   restorePanelCursorState(cursorState);
 }
 
@@ -1698,13 +1871,14 @@ function renderChartTooltip(
 
   tooltip.innerHTML = `
     <div class="chart-tooltip-age">Age ${age} · ${year}</div>
+    <div class="chart-tooltip-metric-right">${escapeHtml(data.metricLabel)}</div>
     <div class="chart-tooltip-row">
-      <span class="chart-tooltip-key">Retire Early (${retireNowAge === null ? "—" : String(retireNowAge)})</span>
-      <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(primary, valueMode, compactUnit))}</span>
+      <span class="chart-tooltip-key">Retire normal (${statutoryAge === null ? "—" : String(statutoryAge)})</span>
+      <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(comparison, valueMode, compactUnit))}</span>
     </div>
     <div class="chart-tooltip-row">
-      <span class="chart-tooltip-key">Retire at Statutory (${statutoryAge === null ? "—" : String(statutoryAge)})</span>
-      <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(comparison, valueMode, compactUnit))}</span>
+      <span class="chart-tooltip-key">Retire early (${retireNowAge === null ? "—" : String(retireNowAge)})</span>
+      <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(primary, valueMode, compactUnit))}</span>
     </div>
     <div class="chart-tooltip-row is-delta">
       <span class="chart-tooltip-key">Difference</span>

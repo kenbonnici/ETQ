@@ -487,6 +487,49 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     });
   }
 
+  const firstPayoffIndex = (series: number[]): number => {
+    for (let i = 0; i < series.length; i += 1) {
+      const curr = series[i];
+      const prev = i === 0 ? Number.POSITIVE_INFINITY : series[i - 1];
+      if (curr <= EPS && prev > EPS) return i;
+    }
+    return -1;
+  };
+
+  if (inputs.homeLoanBalance > EPS) {
+    const idx = firstPayoffIndex(homeLoanSeries);
+    if (idx >= 0) {
+      milestoneHints.push({
+        year: timeline.years[idx],
+        age: timeline.ages[idx],
+        label: "Home loan fully repaid"
+      });
+    }
+  }
+
+  if (inputs.otherLoanBalance > EPS) {
+    const idx = firstPayoffIndex(otherLoanSeries);
+    if (idx >= 0) {
+      milestoneHints.push({
+        year: timeline.years[idx],
+        age: timeline.ages[idx],
+        label: "Other loan fully repaid"
+      });
+    }
+  }
+
+  for (let p = 0; p < adjustedPropertyLoans.length; p += 1) {
+    if (inputs.properties[p].loanBalance <= EPS) continue;
+    const idx = firstPayoffIndex(adjustedPropertyLoans[p]);
+    if (idx < 0) continue;
+    const propertyName = inputs.properties[p].name.trim() || `Property ${p + 1}`;
+    milestoneHints.push({
+      year: timeline.years[idx],
+      age: timeline.ages[idx],
+      label: `${propertyName} loan fully repaid`
+    });
+  }
+
   const disposalStages = [stage1.disposal, stage2.disposal, stage3.disposal];
   for (let s = 0; s < disposalStages.length; s += 1) {
     const propIdx = order[s];
