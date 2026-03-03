@@ -31,10 +31,13 @@ let stepperHoldInterval: number | null = null;
 let stepperHoldListenersBound = false;
 let excelLoadBusy = false;
 
-const TIMELINE_MILESTONE_MIN_GAP = 16;
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
 const RETIREMENT_CASH_FLOOR_EPSILON = 1e-6;
+const TIMELINE_ROW_HEIGHT_DEFAULT = 20;
+const TIMELINE_ROW_HEIGHT_MIN = 14;
+const TIMELINE_ROW_GAP_EXTRA = 2;
+const TIMELINE_ENDCAP_CLEARANCE = 18;
 const CHART_PAD = { l: 72, r: 24, t: 26, b: 34 } as const;
 const CHART_PRIMARY_COLOR = "#0284c7";
 const CHART_COMPARISON_COLOR = "#d97706";
@@ -673,26 +676,26 @@ function renderMilestoneTimeline(result: RunModelResult): void {
   }
   const startAge = ages[0];
   const endAge = ages[ages.length - 1];
-  const startYear = years[0];
-  const endYear = years[years.length - 1];
+  const startLabelAge = Math.round(enteredAge);
   const span = Math.max(1, endAge - startAge);
   const milestones = buildTimelineMilestones(result);
-  const topPad = TIMELINE_EDGE_PADDING;
-  const bottomPad = TIMELINE_EDGE_PADDING;
+  const topPad = TIMELINE_EDGE_PADDING + TIMELINE_ENDCAP_CLEARANCE;
+  const bottomPad = TIMELINE_EDGE_PADDING + TIMELINE_ENDCAP_CLEARANCE;
   const viewportHeight = Math.max(320, timelineScroll.clientHeight);
-  const baseGap = window.matchMedia("(max-width: 960px)").matches ? 12 : TIMELINE_MILESTONE_MIN_GAP;
-  const densityCompaction = Math.max(0, milestones.length - 8);
-  const minGap = Math.max(6, baseGap - densityCompaction);
-  // Keep timeline unscrolled by default; only grow beyond viewport when needed
-  // to preserve minimum visual gap between milestones.
-  const minTrackForMilestones = topPad + bottomPad + Math.max(0, milestones.length - 1) * minGap;
-  const trackHeight = Math.max(viewportHeight, minTrackForMilestones);
+  const trackHeight = viewportHeight;
   timelineTrack.style.height = `${trackHeight}px`;
-  const needsScroll = trackHeight > viewportHeight + 1;
-  timelineScroll.style.overflowY = needsScroll ? "auto" : "hidden";
+  timelineScroll.style.overflowY = "hidden";
   timelineScroll.style.overflowX = "hidden";
 
   const usable = Math.max(1, trackHeight - topPad - bottomPad);
+  const segmentCount = Math.max(1, milestones.length - 1);
+  const maxGapFromViewport = usable / segmentCount;
+  const rowHeight = Math.max(
+    TIMELINE_ROW_HEIGHT_MIN,
+    Math.min(TIMELINE_ROW_HEIGHT_DEFAULT, Math.floor(maxGapFromViewport - TIMELINE_ROW_GAP_EXTRA))
+  );
+  const minGap = Math.max(6, rowHeight + TIMELINE_ROW_GAP_EXTRA);
+  timelineTrack.style.setProperty("--timeline-row-height", `${rowHeight}px`);
   const positioned = milestones.map((item) => {
     const ratio = (item.age - startAge) / span;
     const y = topPad + (1 - Math.max(0, Math.min(1, ratio))) * usable;
@@ -725,11 +728,9 @@ function renderMilestoneTimeline(result: RunModelResult): void {
     <div class="timeline-axis"></div>
     <div class="timeline-endcap timeline-endcap-top">
       <span class="timeline-end-year">${Math.round(endAge)}</span>
-      <span class="timeline-end-age">${Math.round(endYear)}</span>
     </div>
     <div class="timeline-endcap timeline-endcap-bottom">
-      <span class="timeline-end-year">${Math.round(startAge)}</span>
-      <span class="timeline-end-age">${Math.round(startYear)}</span>
+      <span class="timeline-end-year">${startLabelAge}</span>
     </div>
     ${milestonesHtml}
   `;

@@ -99,6 +99,7 @@ body {
 .timeline-track {
   position: relative;
   min-height: 100%;
+  --timeline-row-height: 20px;
 }
 
 .timeline-axis {
@@ -117,16 +118,31 @@ body {
   pointer-events: none;
 }
 
+.timeline-endcap::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid #8fb3a3;
+  background: #eaf4ef;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+}
+
 .timeline-end-year {
   position: absolute;
   left: -10px;
   top: 50%;
   transform: translate(-100%, -50%);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
   font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
-  line-height: 1.2;
-  color: #4f6c63;
+  line-height: 1.15;
+  color: #2b5b50;
+  letter-spacing: 0.01em;
   padding: 0;
   white-space: nowrap;
 }
@@ -158,7 +174,7 @@ body {
   left: 42px;
   transform: translateY(-50%);
   width: calc(100% - 52px);
-  height: 20px;
+  height: var(--timeline-row-height);
 }
 
 .timeline-item-year {
@@ -197,7 +213,7 @@ body {
   font-weight: 500;
   font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
   color: #304d45;
-  line-height: 20px;
+  line-height: var(--timeline-row-height);
   white-space: nowrap;
   overflow: hidden;
   display: block;
@@ -241,7 +257,7 @@ body {
   border: 1px solid transparent;
   border-radius: 4px;
   background: transparent;
-  height: 20px;
+  height: var(--timeline-row-height);
   display: block;
   overflow: visible;
   transition: background-color 120ms ease;
@@ -936,11 +952,7 @@ small {
     max-height: 360px;
   }
 
-  .timeline-end-year,
-  .timeline-end-age {
-    font-size: 11px;
-    padding: 0;
-  }
+  .timeline-end-year { font-size: 12px; padding: 0; }
 
   .timeline-item-year {
     font-size: 11px;
@@ -954,13 +966,11 @@ small {
 
   .timeline-item-title {
     margin-left: 12px;
-    height: 18px;
     padding: 0 3px;
   }
 
   .timeline-item-label {
     font-size: 11px;
-    line-height: 18px;
     white-space: nowrap;
     overflow: hidden;
   }
