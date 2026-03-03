@@ -611,6 +611,12 @@ body {
   gap: 8px;
 }
 
+.finer-default-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 10px;
+}
+
 .quickstart-load-btn {
   flex: 0 0 auto;
   height: 35px;

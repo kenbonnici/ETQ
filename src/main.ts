@@ -56,16 +56,74 @@ const TOP_CURRENCIES = [
 const STEPPER_CONFIG: Record<string, number> = {
   B4: 1,
   B19: 1,
+  B134: 1,
+  B102: 1,
+  B107: 1,
+  B112: 1,
+  B119: 1,
+  B124: 1,
+  B129: 1,
+  B137: 0.001,
+  B138: 0.001,
+  B139: 0.001,
+  B142: 1,
+  B143: 1,
+  B35: 1,
+  B40: 1,
+  B45: 1,
+  B71: 1,
   B25: 100,
+  B16: 0.001,
+  B79: 0.001,
+  B84: 0.001,
+  B89: 0.001,
+  B94: 0.001,
   B145: 0.002,
-  B151: 0.002
+  B147: 0.001,
+  B149: 0.001,
+  B151: 0.002,
+  B153: 0.001,
+  B155: 0.001,
+  B157: 10,
+  B159: 1000,
+  B161: 0.001,
+  B163: 0.001
 };
 const STEP_DECIMALS: Record<string, number> = {
   B4: 0,
   B19: 0,
+  B134: 0,
+  B102: 0,
+  B107: 0,
+  B112: 0,
+  B119: 0,
+  B124: 0,
+  B129: 0,
+  B137: 3,
+  B138: 3,
+  B139: 3,
+  B142: 0,
+  B143: 0,
+  B35: 0,
+  B40: 0,
+  B45: 0,
+  B71: 0,
   B25: 0,
+  B16: 3,
+  B79: 3,
+  B84: 3,
+  B89: 3,
+  B94: 3,
   B145: 3,
-  B151: 3
+  B147: 3,
+  B149: 3,
+  B151: 3,
+  B153: 3,
+  B155: 3,
+  B157: 0,
+  B159: 0,
+  B161: 3,
+  B163: 3
 };
 
 app.innerHTML = `
@@ -162,6 +220,9 @@ const PROPERTY_LIQUIDATION_CONFIG: readonly PropertyLiquidationConfig[] = [
   { idx: 2, rankCell: "B168", nameCell: "B60", valueCell: "B61", cells: property3Cells }
 ] as const;
 const PROPERTY_LIQUIDATION_CELLS = new Set<string>(["B166", "B167", "B168"]);
+const FINER_DETAILS_CELLS = INPUT_DEFINITIONS
+  .filter((def) => def.section === "FINER DETAILS")
+  .map((def) => def.cell as keyof RawInputs);
 let visibleIncomeEvents = 1;
 const incomeEvent1Cells = ["B100", "B101", "B102"] as const;
 const incomeEvent2Cells = ["B105", "B106", "B107"] as const;
@@ -1346,6 +1407,27 @@ function clearAllInputsPreservingFinerDefaults(): void {
   queueRecalc();
 }
 
+function clearFinerDetailsInputs(): void {
+  for (const cell of FINER_DETAILS_CELLS) {
+    rawInputs[cell] = null;
+  }
+  setRetireCheckMessage(null);
+  renderInputs();
+  queueRecalc();
+}
+
+function loadFinerDetailsDefaults(): void {
+  for (const cell of FINER_DETAILS_CELLS) {
+    rawInputs[cell] = null;
+  }
+  for (const [cell, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
+    rawInputs[cell as keyof RawInputs] = value;
+  }
+  setRetireCheckMessage(null);
+  renderInputs();
+  queueRecalc();
+}
+
 function renderInputs(): void {
   const cursorState = capturePanelCursorState();
   if (anyValue(dependent3Cells)) visibleDependents = Math.max(visibleDependents, 3);
@@ -1494,6 +1576,12 @@ function renderInputs(): void {
   const quickHtml = controls(grouped["QUICK START"]);
   const deeperHtml = controls(grouped["DEEPER DIVE"]);
   const finerHtml = controls(grouped["FINER DETAILS"]);
+  const finerActionsHtml = `
+    <div class="finer-default-actions section-header-actions">
+      <button type="button" class="quickstart-clear-btn" id="clear-finer-defaults-btn">Clear Defaults</button>
+      <button type="button" class="quickstart-load-btn" id="load-finer-defaults-btn">Load Defaults</button>
+    </div>
+  `;
   const currencySelectHtml = `
     <label class="field currency-selector">
       <span>Currency</span>
@@ -1506,7 +1594,7 @@ function renderInputs(): void {
   inputsPanel.innerHTML =
     block("QUICK START", true, false, currencySelectHtml + quickHtml, "section-quick-start") +
     block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml, "section-deeper-dive") +
-    block("FINER DETAILS", sectionState.finerOpen, true, finerHtml, "section-finer-details");
+    block("FINER DETAILS", sectionState.finerOpen, true, finerActionsHtml + finerHtml, "section-finer-details");
 
   const currencySelector = inputsPanel.querySelector<HTMLSelectElement>("#currency-selector");
   if (currencySelector) {
@@ -1528,6 +1616,20 @@ function renderInputs(): void {
   if (clearInputsBtn) {
     clearInputsBtn.addEventListener("click", () => {
       clearAllInputsPreservingFinerDefaults();
+    });
+  }
+
+  const clearFinerDefaultsBtn = inputsPanel.querySelector<HTMLButtonElement>("#clear-finer-defaults-btn");
+  if (clearFinerDefaultsBtn) {
+    clearFinerDefaultsBtn.addEventListener("click", () => {
+      clearFinerDetailsInputs();
+    });
+  }
+
+  const loadFinerDefaultsBtn = inputsPanel.querySelector<HTMLButtonElement>("#load-finer-defaults-btn");
+  if (loadFinerDefaultsBtn) {
+    loadFinerDefaultsBtn.addEventListener("click", () => {
+      loadFinerDetailsDefaults();
     });
   }
 
