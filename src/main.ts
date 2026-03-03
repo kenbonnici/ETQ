@@ -118,7 +118,7 @@ app.innerHTML = `
     </section>
     <aside class="timeline-panel" id="timeline-panel">
       <header class="timeline-header">
-        <h2>Main Events</h2>
+        <h2>Events Timeline</h2>
       </header>
       <div class="timeline-scroll" id="timeline-scroll">
         <div class="timeline-track" id="timeline-track"></div>
@@ -389,9 +389,16 @@ function normalizeTimelineLabel(label: string): string {
 
 function formatImpact(amount: number | null): string {
   if (amount === null || !Number.isFinite(amount)) return "";
-  const k = Math.round(amount / 1000);
-  const sign = k < 0 ? "-" : "";
-  return `${sign}${currentCurrencySymbol()}${Math.abs(k).toLocaleString("en-US")}k`;
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? "-" : "";
+  const symbol = currentCurrencySymbol();
+  if (abs >= 1_000_000) {
+    const scaled = abs / 1_000_000;
+    const digits = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
+    return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}m`;
+  }
+  const k = Math.round(abs / 1000);
+  return `${sign}${symbol}${k.toLocaleString("en-US")}k`;
 }
 
 function formatCurrencyCompact(value: number): string {
@@ -754,11 +761,12 @@ function updateEarlyRetirementButtons(statutory: number | null): void {
     return;
   }
 
+  const minRetirementAge = getMinEarlyRetirementAge();
   const raw = spinner.value.trim();
   const entered = Math.round(Number(raw));
   const current = Number.isFinite(entered) ? entered : uiState.earlyRetirementAge;
-  const clamped = Math.max(18, Math.min(statutory, current));
-  spinnerDown.disabled = clamped <= 18;
+  const clamped = Math.max(minRetirementAge, Math.min(statutory, current));
+  spinnerDown.disabled = clamped <= minRetirementAge;
   spinnerUp.disabled = clamped >= statutory;
 }
 
@@ -776,7 +784,7 @@ function setRetireCheckMessage(message: string | null, tone: "positive" | "neutr
 }
 
 function updateRetireCheckButton(statutory: number | null): void {
-  retireCheckButton.disabled = statutory === null || statutory <= 18;
+  retireCheckButton.disabled = statutory === null || statutory <= getMinEarlyRetirementAge();
 }
 
 function findEarliestRetirementAgeBeforeStatutory(statutory: number): number | null {
@@ -810,9 +818,15 @@ function getCurrentAge(): number | null {
   return Math.round(n);
 }
 
+function getMinEarlyRetirementAge(): number {
+  const currentAge = getCurrentAge();
+  return currentAge === null ? 18 : Math.max(18, currentAge);
+}
+
 function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
   const statutory = getStatutoryAge();
-  spinner.min = "18";
+  const minRetirementAge = getMinEarlyRetirementAge();
+  spinner.min = String(minRetirementAge);
   if (statutory === null) {
     spinner.max = "100";
     spinner.disabled = true;
@@ -846,7 +860,7 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
     updateRetireCheckButton(statutory);
     return;
   }
-  uiState.earlyRetirementAge = Math.max(18, Math.min(statutory, v));
+  uiState.earlyRetirementAge = Math.max(minRetirementAge, Math.min(statutory, v));
   spinner.value = String(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
   updateRetireCheckButton(statutory);
@@ -855,11 +869,12 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
 function adjustEarlyRetirementAge(delta: number): void {
   const statutory = getStatutoryAge();
   if (statutory === null) return;
+  const minRetirementAge = getMinEarlyRetirementAge();
 
   const raw = spinner.value.trim();
   const entered = Math.round(Number(raw));
   const current = Number.isFinite(entered) ? entered : uiState.earlyRetirementAge;
-  uiState.earlyRetirementAge = Math.max(18, Math.min(statutory, current + delta));
+  uiState.earlyRetirementAge = Math.max(minRetirementAge, Math.min(statutory, current + delta));
   spinner.value = String(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
   setRetireCheckMessage(null);
@@ -1865,7 +1880,7 @@ function renderChartTooltip(
   const contextItemsHtml = contextEvents
     .map((event) => {
       const amount = event.amount;
-      const amountText = amount !== null && Number.isFinite(amount) ? ` (${formatTooltipCurrency(amount, valueMode, compactUnit)})` : "";
+      const amountText = amount !== null && Number.isFinite(amount) ? ` (${formatImpact(amount)})` : "";
       return `<li>${escapeHtml(`${event.label}${amountText}`)}</li>`;
     })
     .join("");
@@ -2223,7 +2238,7 @@ spinner.addEventListener("input", () => {
   const statutory = getStatutoryAge();
   if (statutory === null) return;
   spinner.max = String(statutory);
-  spinner.min = "18";
+  spinner.min = String(getMinEarlyRetirementAge());
   setRetireCheckMessage(null);
   const raw = spinner.value.trim();
   if (raw === "") {
@@ -2260,7 +2275,7 @@ spinner.addEventListener("blur", () => {
     updateEarlyRetirementButtons(statutory);
     return;
   }
-  uiState.earlyRetirementAge = Math.max(18, Math.min(statutory, v));
+  uiState.earlyRetirementAge = Math.max(getMinEarlyRetirementAge(), Math.min(statutory, v));
   spinner.value = String(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
   setRetireCheckMessage(null);
