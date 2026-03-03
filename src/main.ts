@@ -35,9 +35,9 @@ const TIMELINE_MILESTONE_MIN_GAP = 16;
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
 const RETIREMENT_CASH_FLOOR_EPSILON = 1e-6;
-const CHART_PAD = { l: 64, r: 24, t: 26, b: 34 } as const;
+const CHART_PAD = { l: 72, r: 24, t: 26, b: 34 } as const;
 const CHART_PRIMARY_COLOR = "#0284c7";
-const CHART_COMPARISON_COLOR = "#ea580c";
+const CHART_COMPARISON_COLOR = "#d97706";
 const CHART_TOOLTIP_DELAY_MS = 60;
 const TOP_CURRENCIES = [
   { code: "USD", label: "US Dollar", symbol: "$" },
@@ -442,7 +442,7 @@ function formatCurrencyCompactTooltip(value: number, unit: TooltipCompactUnit): 
     return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}m`;
   }
   const scaled = abs / 1_000;
-  return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}k`;
+  return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}k`;
 }
 
 function formatTooltipCurrency(value: number, mode: TooltipValueMode, compactUnit: TooltipCompactUnit): string {
@@ -1870,14 +1870,16 @@ function renderChartTooltip(
     .join("");
 
   tooltip.innerHTML = `
-    <div class="chart-tooltip-age">Age ${age} · ${year}</div>
-    <div class="chart-tooltip-metric-right">${escapeHtml(data.metricLabel)}</div>
+    <div class="chart-tooltip-head">
+      <div class="chart-tooltip-age">Age ${age} · ${year}</div>
+      <div class="chart-tooltip-metric-chip">${escapeHtml(data.metricLabel)}</div>
+    </div>
     <div class="chart-tooltip-row">
-      <span class="chart-tooltip-key">Retire normal (${statutoryAge === null ? "—" : String(statutoryAge)})</span>
+      <span class="chart-tooltip-key">Normal (${statutoryAge === null ? "—" : String(statutoryAge)})</span>
       <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(comparison, valueMode, compactUnit))}</span>
     </div>
     <div class="chart-tooltip-row">
-      <span class="chart-tooltip-key">Retire early (${retireNowAge === null ? "—" : String(retireNowAge)})</span>
+      <span class="chart-tooltip-key">Early (${retireNowAge === null ? "—" : String(retireNowAge)})</span>
       <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(primary, valueMode, compactUnit))}</span>
     </div>
     <div class="chart-tooltip-row is-delta">
@@ -1984,6 +1986,7 @@ function drawChart(
   const rawMinY = Math.min(...allY);
   const rawMaxY = Math.max(...allY);
   const axisHasMeaningfulRange = Math.abs(rawMaxY - rawMinY) > 1e-6 || Math.abs(rawMaxY) > 1e-6 || Math.abs(rawMinY) > 1e-6;
+  const axisLabelInset = 10;
 
   const targetTicks = 6;
   const rawSpan = rawMaxY - rawMinY;
@@ -2006,6 +2009,26 @@ function drawChart(
     yMinTick = Math.floor(rawMinY / tickStep) * tickStep;
     yMaxTick = Math.ceil(rawMaxY / tickStep) * tickStep;
   }
+
+  const axisAbsMax = Math.max(Math.abs(yMinTick), Math.abs(yMaxTick));
+  const axisUnit: { div: number; suffix: "" | "k" | "m" | "b" } =
+    axisAbsMax >= 1_000_000_000 ? { div: 1_000_000_000, suffix: "b" } :
+    axisAbsMax >= 1_000_000 ? { div: 1_000_000, suffix: "m" } :
+    axisAbsMax >= 1_000 ? { div: 1_000, suffix: "k" } :
+    { div: 1, suffix: "" };
+  const axisStepScaled = tickStep / axisUnit.div;
+  const axisDecimals = axisStepScaled < 1 ? 1 : 0;
+  const formatAxisCurrency = (value: number): string => {
+    const sign = value < 0 ? "-" : "";
+    const symbol = currentCurrencySymbol();
+    if (axisUnit.div === 1) return `${sign}${symbol}${Math.round(Math.abs(value)).toLocaleString("en-US")}`;
+    const scaled = Math.abs(value) / axisUnit.div;
+    const rounded = Number(scaled.toFixed(axisDecimals));
+    return `${sign}${symbol}${rounded.toLocaleString("en-US", {
+      minimumFractionDigits: axisDecimals,
+      maximumFractionDigits: axisDecimals
+    })}${axisUnit.suffix}`;
+  };
 
   const minY = yMinTick;
   const maxY = yMaxTick;
@@ -2033,7 +2056,7 @@ function drawChart(
     for (let yv = yMinTick; yv <= yMaxTick + 0.5; yv += tickStep) {
       const yy = yp(yv);
       if (Math.abs(yv) < tickStep * 0.001) continue;
-      ctx.strokeStyle = "rgba(100, 116, 139, 0.18)";
+      ctx.strokeStyle = "rgba(100, 116, 139, 0.14)";
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(pad.l, yy);
@@ -2042,7 +2065,7 @@ function drawChart(
     }
   }
 
-  ctx.strokeStyle = "#cfd8e3";
+  ctx.strokeStyle = "#c8d3df";
   ctx.lineWidth = 1.1;
   ctx.beginPath();
   ctx.moveTo(pad.l, h - pad.b);
@@ -2100,28 +2123,36 @@ function drawChart(
   }
 
   ctx.font = '600 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  ctx.textAlign = "start";
+  ctx.textBaseline = "alphabetic";
 
   if (axisHasMeaningfulRange) {
     for (let yv = yMinTick; yv <= yMaxTick + 0.5; yv += tickStep) {
       const yy = yp(yv);
-      ctx.fillStyle = "#334155";
-      ctx.fillText(formatCurrencyCompact(yv), 4, yy + 4);
+      ctx.fillStyle = "#1f2937";
+      ctx.fillText(formatAxisCurrency(yv), axisLabelInset, yy + 4);
     }
   }
 
   if (x.length > 0) {
     const startAge = Math.round(x[0]);
+    const endAge = Math.round(x[x.length - 1]);
+    const ageSpan = Math.max(0, endAge - startAge);
+    const majorTickStep = ageSpan > 28 ? 4 : 2;
     for (let i = 0; i < x.length; i += 1) {
       const age = Math.round(x[i]);
-      if ((age - startAge) % 2 !== 0) continue;
       const xx = xp(i);
       ctx.strokeStyle = "#cfd8e3";
       ctx.beginPath();
       ctx.moveTo(xx, h - pad.b);
-      ctx.lineTo(xx, h - pad.b + 5);
+      const isMajorTick = (age - startAge) % majorTickStep === 0;
+      ctx.lineTo(xx, h - pad.b + (isMajorTick ? 5 : 3));
       ctx.stroke();
-      ctx.fillStyle = "#334155";
-      ctx.fillText(String(age), xx - 8, h - 8);
+      if (!isMajorTick) continue;
+      ctx.fillStyle = "#1f2937";
+      const label = String(age);
+      const labelWidth = ctx.measureText(label).width;
+      ctx.fillText(label, xx - labelWidth / 2, h - 8);
     }
   }
 }

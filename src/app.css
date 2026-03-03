@@ -427,7 +427,7 @@ body {
 }
 
 .chart-legend-line.is-dashed {
-  border-top-color: #ea580c;
+  border-top-color: #d97706;
   border-top-style: dashed;
 }
 
@@ -448,9 +448,17 @@ body {
   border-radius: 10px;
   background: rgb(255 255 255 / 0.96);
   box-shadow: 0 8px 20px rgb(15 23 42 / 0.14);
-  padding: 10px 12px;
+  padding: 12px 14px;
   pointer-events: none;
   backdrop-filter: blur(2px);
+}
+
+.chart-tooltip-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 
 .chart-tooltip-age {
@@ -458,15 +466,17 @@ body {
   font-weight: 800;
   color: #0f172a;
   line-height: 1.2;
-  margin-bottom: 2px;
 }
 
-.chart-tooltip-metric-right {
+.chart-tooltip-metric-chip {
   font-size: 11px;
   font-weight: 500;
   color: #64748b;
-  text-align: right;
-  margin-bottom: 8px;
+  line-height: 1;
+  padding: 4px 7px;
+  border: 1px solid #d8e1eb;
+  border-radius: 999px;
+  background: #f8fafc;
 }
 
 .chart-tooltip-row {
@@ -475,11 +485,12 @@ body {
   align-items: center;
   gap: 10px;
   font-size: 12px;
-  padding: 3px 0;
+  padding: 2px 0;
 }
 
 .chart-tooltip-key {
-  color: #334155;
+  color: #475569;
+  font-weight: 500;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
