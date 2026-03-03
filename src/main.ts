@@ -35,7 +35,6 @@ const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
 const RETIREMENT_CASH_FLOOR_EPSILON = 1e-6;
 const TIMELINE_ROW_HEIGHT_DEFAULT = 20;
-const TIMELINE_ROW_HEIGHT_MIN = 14;
 const TIMELINE_ROW_GAP_EXTRA = 2;
 const TIMELINE_ENDCAP_CLEARANCE = 18;
 const CHART_PAD = { l: 72, r: 24, t: 26, b: 34 } as const;
@@ -698,24 +697,32 @@ function renderMilestoneTimeline(result: RunModelResult): void {
   const segmentCount = Math.max(1, milestones.length - 1);
   const maxGapFromViewport = usable / segmentCount;
   const rowHeight = Math.max(
-    TIMELINE_ROW_HEIGHT_MIN,
+    4,
     Math.min(TIMELINE_ROW_HEIGHT_DEFAULT, Math.floor(maxGapFromViewport - TIMELINE_ROW_GAP_EXTRA))
   );
-  const minGap = Math.max(6, rowHeight + TIMELINE_ROW_GAP_EXTRA);
+  const preferredGap = Math.max(6, rowHeight + TIMELINE_ROW_GAP_EXTRA);
+  const minGap = milestones.length > 1
+    ? Math.max(1, Math.min(preferredGap, maxGapFromViewport))
+    : 0;
   timelineTrack.style.setProperty("--timeline-row-height", `${rowHeight}px`);
   const positioned = milestones.map((item) => {
     const ratio = (item.age - startAge) / span;
     const y = topPad + (1 - Math.max(0, Math.min(1, ratio))) * usable;
     return { ...item, y };
   });
-  for (let i = 1; i < positioned.length; i += 1) {
-    positioned[i].y = Math.min(positioned[i].y, positioned[i - 1].y - minGap);
-  }
-  for (let i = positioned.length - 2; i >= 0; i -= 1) {
-    positioned[i].y = Math.max(positioned[i].y, positioned[i + 1].y + minGap);
-  }
-  for (const item of positioned) {
-    item.y = Math.max(topPad, Math.min(trackHeight - bottomPad, item.y));
+  const topLimit = topPad;
+  const bottomLimit = trackHeight - bottomPad;
+  if (positioned.length === 1) {
+    positioned[0].y = Math.max(topLimit, Math.min(bottomLimit, positioned[0].y));
+  } else if (positioned.length > 1) {
+    const topIdx = positioned.length - 1;
+    const topUpper = bottomLimit - topIdx * minGap;
+    positioned[topIdx].y = Math.max(topLimit, Math.min(topUpper, positioned[topIdx].y));
+    for (let i = topIdx - 1; i >= 0; i -= 1) {
+      const upper = bottomLimit - i * minGap;
+      const lower = positioned[i + 1].y + minGap;
+      positioned[i].y = Math.max(lower, Math.min(upper, positioned[i].y));
+    }
   }
   const milestonesHtml = positioned
     .map((item) => {
