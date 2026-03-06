@@ -1,5 +1,7 @@
 import { readFileSync } from "node:fs";
 import { runModel } from "./model";
+import { rawInputsToFieldState } from "./model/excelAdapter";
+import type { RawInputs } from "./model/types";
 
 type LiveExtract = {
   early: number;
@@ -14,7 +16,7 @@ type LiveExtract = {
 };
 
 const input = JSON.parse(readFileSync("/tmp/etq_live_extract.json", "utf8")) as LiveExtract;
-const outputs = runModel(input.raw as never, {
+const outputs = runModel(rawInputsToFieldState(input.raw as RawInputs), {
   deeperDiveOpen: true,
   finerDetailsOpen: true,
   earlyRetirementAge: input.early

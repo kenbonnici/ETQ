@@ -1,20 +1,49 @@
 import "./app.css";
+import { pruneInactiveFieldState } from "./model/activation";
 import { runModel } from "./model";
+import { CELL_TO_FIELD_ID } from "./model/fieldRegistry";
+import { createEmptyFieldState, rawInputsToFieldState } from "./model/excelAdapter";
 import type { RunModelResult } from "./model/index";
-import { FINER_DETAILS_COL_C_DEFAULTS } from "./model/inputSchema";
+import {
+  INPUT_DEFINITION_BY_FIELD_ID,
+  ALLOW_NEGATIVE_INPUT_CELLS,
+  COERCED_NUMERIC_BOUNDS,
+  FINER_DETAILS_COL_C_DEFAULTS,
+  InputDefinition,
+  INPUT_DEFINITIONS,
+  SKIP_REVEAL_CRITICAL_CELLS,
+  ValidationMessage
+} from "./model/inputSchema";
 import { EXCEL_BASELINE_SPECIMEN } from "./model/parity/excelBaselineSpecimen";
-import { InputDefinition, INPUT_DEFINITIONS } from "./ui/inputDefinitions";
-import { ModelUiState, RawInputs } from "./model/types";
+import { FieldId, InputCell, ModelUiState, RawInputValue, RawInputs } from "./model/types";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
 
-const textCells = new Set(["B33", "B38", "B43", "B50", "B55", "B60", "B100", "B105", "B110", "B117", "B122", "B127"]);
+type WorkingInputs = Record<string, RawInputValue>;
 
-const rawInputs: RawInputs = {};
-for (const def of INPUT_DEFINITIONS) rawInputs[def.cell as keyof RawInputs] = null;
-for (const [cell, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
-  rawInputs[cell as keyof RawInputs] = value;
+const fieldState = createEmptyFieldState();
+for (const [fieldId, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
+  fieldState[fieldId as FieldId] = value;
+}
+
+const rawInputs = new Proxy(fieldState as WorkingInputs, {
+  get(target, prop, receiver) {
+    if (typeof prop === "string" && prop in CELL_TO_FIELD_ID) {
+      return Reflect.get(target, CELL_TO_FIELD_ID[prop as InputCell], receiver);
+    }
+    return Reflect.get(target, prop, receiver);
+  },
+  set(target, prop, value, receiver) {
+    if (typeof prop === "string" && prop in CELL_TO_FIELD_ID) {
+      return Reflect.set(target, CELL_TO_FIELD_ID[prop as InputCell], value, receiver);
+    }
+    return Reflect.set(target, prop, value, receiver);
+  }
+}) as RawInputs & WorkingInputs;
+
+function fieldIdForCell(cell: InputCell): FieldId {
+  return CELL_TO_FIELD_ID[cell];
 }
 
 let uiState: ModelUiState = {
@@ -30,6 +59,10 @@ let stepperHoldTimeout: number | null = null;
 let stepperHoldInterval: number | null = null;
 let stepperHoldListenersBound = false;
 let excelLoadBusy = false;
+let latestValidationMessages: ValidationMessage[] = [];
+let validationRevealAll = false;
+const touchedCells = new Set<FieldId>();
+const attemptedFieldMessages = new Map<FieldId, ValidationMessage>();
 
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
@@ -41,6 +74,7 @@ const CHART_PAD = { l: 72, r: 24, t: 26, b: 34 } as const;
 const CHART_PRIMARY_COLOR = "#0284c7";
 const CHART_COMPARISON_COLOR = "#d97706";
 const CHART_TOOLTIP_DELAY_MS = 60;
+const PROJECTION_EMPTY_GUIDANCE = "Enter statutory retirement age, your age and other relevant info to start seeing projections.";
 const TOP_CURRENCIES = [
   { code: "USD", label: "US Dollar", symbol: "$" },
   { code: "EUR", label: "Euro", symbol: "€" },
@@ -55,8 +89,44 @@ const TOP_CURRENCIES = [
 ] as const;
 const STEPPER_CONFIG: Record<string, number> = {
   B4: 1,
+  B6: 100,
+  B8: 100,
+  B10: 100,
+  B12: 1000,
+  B15: 100,
+  B17: 10,
   B19: 1,
+  B21: 100,
+  B23: 100,
+  B34: 100,
+  B39: 100,
+  B44: 100,
+  B51: 1000,
+  B52: 100,
+  B56: 1000,
+  B57: 100,
+  B61: 1000,
+  B62: 100,
+  B66: 100,
+  B67: 100,
+  B68: 100,
+  B70: 100,
+  B75: 100,
+  B78: 100,
+  B80: 10,
+  B83: 100,
+  B85: 10,
+  B88: 100,
+  B90: 10,
+  B93: 100,
+  B95: 10,
+  B101: 100,
   B134: 1,
+  B106: 100,
+  B111: 100,
+  B118: 100,
+  B123: 100,
+  B128: 100,
   B102: 1,
   B107: 1,
   B112: 1,
@@ -66,6 +136,7 @@ const STEPPER_CONFIG: Record<string, number> = {
   B137: 0.001,
   B138: 0.001,
   B139: 0.001,
+  B141: 100,
   B142: 1,
   B143: 1,
   B35: 1,
@@ -91,8 +162,44 @@ const STEPPER_CONFIG: Record<string, number> = {
 };
 const STEP_DECIMALS: Record<string, number> = {
   B4: 0,
+  B6: 0,
+  B8: 0,
+  B10: 0,
+  B12: 0,
+  B15: 0,
+  B17: 0,
   B19: 0,
+  B21: 0,
+  B23: 0,
+  B34: 0,
+  B39: 0,
+  B44: 0,
+  B51: 0,
+  B52: 0,
+  B56: 0,
+  B57: 0,
+  B61: 0,
+  B62: 0,
+  B66: 0,
+  B67: 0,
+  B68: 0,
+  B70: 0,
+  B75: 0,
+  B78: 0,
+  B80: 0,
+  B83: 0,
+  B85: 0,
+  B88: 0,
+  B90: 0,
+  B93: 0,
+  B95: 0,
+  B101: 0,
   B134: 0,
+  B106: 0,
+  B111: 0,
+  B118: 0,
+  B123: 0,
+  B128: 0,
   B102: 0,
   B107: 0,
   B112: 0,
@@ -102,6 +209,7 @@ const STEP_DECIMALS: Record<string, number> = {
   B137: 3,
   B138: 3,
   B139: 3,
+  B141: 0,
   B142: 0,
   B143: 0,
   B35: 0,
@@ -125,6 +233,45 @@ const STEP_DECIMALS: Record<string, number> = {
   B161: 3,
   B163: 3
 };
+function resolveFieldId(key: string): FieldId {
+  return (key in CELL_TO_FIELD_ID ? CELL_TO_FIELD_ID[key as InputCell] : key) as FieldId;
+}
+
+function getDynamicMinConstraint(key: string): number | null {
+  if (resolveFieldId(key) !== "planning.lifeExpectancyAge") return null;
+  const currentAge = getCurrentAge();
+  if (currentAge === null) return null;
+  return currentAge + 1;
+}
+
+function applyFieldNumericConstraint(key: string, value: number | null): number | null {
+  if (value === null || !Number.isFinite(value)) return value;
+  let bounded = value;
+  const cfg = COERCED_NUMERIC_BOUNDS[resolveFieldId(key)];
+  if (cfg) {
+    if (Number.isFinite(cfg.min)) bounded = Math.max(cfg.min as number, bounded);
+    if (Number.isFinite(cfg.max)) bounded = Math.min(cfg.max as number, bounded);
+  }
+  const dynamicMin = getDynamicMinConstraint(key);
+  if (Number.isFinite(dynamicMin)) bounded = Math.max(dynamicMin as number, bounded);
+  return bounded;
+}
+
+function enforceLiveUntilAgeConstraint(syncVisibleInput: boolean): boolean {
+  const current = rawInputs.B134;
+  const numericCurrent = typeof current === "number" && Number.isFinite(current) ? current : null;
+  const constrained = applyFieldNumericConstraint("B134", numericCurrent);
+  if (constrained === numericCurrent) return false;
+  rawInputs.B134 = constrained;
+  if (syncVisibleInput) {
+    const input = inputsPanel.querySelector<HTMLInputElement>('input[data-cell="B134"]');
+    const def = INPUT_DEFINITIONS.find((d) => d.cell === "B134");
+    if (input && def && document.activeElement !== input) {
+      input.value = formatFieldValue(def, constrained);
+    }
+  }
+  return true;
+}
 
 app.innerHTML = `
   <main class="layout">
@@ -251,6 +398,11 @@ const displayOrderOverride: Record<string, number> = {
   B89: 74.8,
   B90: 74.9
 };
+const STRUCTURAL_RERENDER_CELLS = new Set<string>([
+  "B12", "B15", "B33", "B38", "B43", "B50", "B55", "B60",
+  "B70", "B78", "B83", "B88", "B93", "B100", "B105", "B110",
+  "B117", "B122", "B127", "B141"
+]);
 
 interface PanelCursorState {
   scrollTop: number;
@@ -420,6 +572,202 @@ function escapeHtml(text: string): string {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+}
+
+function validationPriority(severity: ValidationMessage["severity"]): number {
+  return severity === "error" ? 2 : 1;
+}
+
+function markFieldTouched(cell: InputCell): void {
+  touchedCells.add(fieldIdForCell(cell));
+}
+
+function clearTouchedFields(cells?: readonly InputCell[]): void {
+  if (!cells) {
+    touchedCells.clear();
+    return;
+  }
+  for (const cell of cells) touchedCells.delete(fieldIdForCell(cell));
+}
+
+function clearAttemptedFieldMessage(cell: InputCell): void {
+  attemptedFieldMessages.delete(fieldIdForCell(cell));
+}
+
+function clearAllAttemptedFieldMessages(): void {
+  attemptedFieldMessages.clear();
+}
+
+function clearAgeConstraintAttemptMessages(): void {
+  clearAttemptedFieldMessage("B4");
+  clearAttemptedFieldMessage("B19");
+}
+
+function setAttemptedFieldMessage(cell: InputCell, message: string): void {
+  attemptedFieldMessages.set(fieldIdForCell(cell), {
+    fieldId: fieldIdForCell(cell),
+    severity: "error",
+    message,
+    blocksProjection: true
+  });
+}
+
+function getOrderedDefinitions(defs: InputDefinition[]): InputDefinition[] {
+  return [...defs].sort((a, b) => {
+    const ra = displayOrderOverride[a.cell] ?? a.row;
+    const rb = displayOrderOverride[b.cell] ?? b.row;
+    return ra - rb;
+  });
+}
+
+function getVisibleInputOrder(): InputCell[] {
+  const ordered = [
+    ...getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === "QUICK START")),
+    ...getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === "DEEPER DIVE")),
+    ...getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === "FINER DETAILS"))
+  ];
+  return ordered
+    .filter((def) => fieldVisible(def.cell) && !PROPERTY_LIQUIDATION_CELLS.has(def.cell))
+    .map((def) => def.cell as InputCell);
+}
+
+function hasUserEnteredValue(cell: InputCell): boolean {
+  return touchedCells.has(fieldIdForCell(cell)) && !isBlank(rawInputs[cell]);
+}
+
+function getSkippedCriticalCells(): Set<InputCell> {
+  const skipped = new Set<InputCell>();
+  const criticalCells = new Set<InputCell>(SKIP_REVEAL_CRITICAL_CELLS);
+  const orderedCells = getVisibleInputOrder();
+  let laterUserEnteredValueExists = false;
+  for (let idx = orderedCells.length - 1; idx >= 0; idx -= 1) {
+    const cell = orderedCells[idx];
+    if (criticalCells.has(cell) && isBlank(rawInputs[cell as keyof RawInputs]) && laterUserEnteredValueExists) {
+      skipped.add(cell);
+    }
+    if (hasUserEnteredValue(cell as keyof RawInputs)) {
+      laterUserEnteredValueExists = true;
+    }
+  }
+  return skipped;
+}
+
+function getVisibleValidationMessages(messages: ValidationMessage[]): ValidationMessage[] {
+  if (validationRevealAll) return messages;
+  const skippedCriticalCells = getSkippedCriticalCells();
+  return messages.filter((message) => (
+    touchedCells.has(message.fieldId)
+    || (message.severity === "error" && message.blocksProjection && skippedCriticalCells.has(INPUT_DEFINITION_BY_FIELD_ID[message.fieldId].cell))
+  ));
+}
+
+function hasProjectionBlockingValidation(messages: ValidationMessage[]): boolean {
+  return messages.some((message) => message.severity === "error" && message.blocksProjection);
+}
+
+function formatBlockingFieldLabel(cell: InputCell): string {
+  if (cell === "B134") return "end age";
+  const label = INPUT_DEFINITION_BY_FIELD_ID[fieldIdForCell(cell)].label.trim();
+  return label.length > 0 ? `${label.charAt(0).toLowerCase()}${label.slice(1)}` : cell;
+}
+
+function joinHumanLabels(labels: string[]): string {
+  if (labels.length === 0) return "";
+  if (labels.length === 1) return labels[0];
+  if (labels.length === 2) return `${labels[0]} and ${labels[1]}`;
+  return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
+}
+
+function getProjectionBlockingLines(messages: ValidationMessage[]): string[] {
+  const blockingErrors = messages.filter((message) => message.severity === "error" && message.blocksProjection);
+  if (blockingErrors.length === 0) {
+    return [PROJECTION_EMPTY_GUIDANCE];
+  }
+  const missingCells = Array.from(new Set(
+    blockingErrors
+      .filter((message) => isBlank(rawInputs[INPUT_DEFINITION_BY_FIELD_ID[message.fieldId].cell]))
+      .map((message) => INPUT_DEFINITION_BY_FIELD_ID[message.fieldId].cell)
+  ));
+  if (missingCells.length > 0 && missingCells.length === new Set(blockingErrors.map((message) => INPUT_DEFINITION_BY_FIELD_ID[message.fieldId].cell)).size) {
+    const labels = missingCells.map((cell) => formatBlockingFieldLabel(cell));
+    return [`Enter ${joinHumanLabels(labels)} to see projections.`];
+  }
+  return ["Fix highlighted inputs to see projections."];
+}
+
+function applyRetireCheckReadiness(messages: ValidationMessage[], statutory: number | null): void {
+  const hasEssentialErrors = messages.some((message) => (
+    message.severity === "error"
+    && (message.fieldId === fieldIdForCell("B4")
+      || message.fieldId === fieldIdForCell("B19")
+      || message.fieldId === fieldIdForCell("B25")
+      || message.fieldId === fieldIdForCell("B134"))
+  ));
+  retireCheckButton.disabled = hasEssentialErrors || statutory === null || statutory <= getMinEarlyRetirementAge();
+  if (retireCheckButton.disabled) {
+    setRetireCheckMessage(null);
+  }
+}
+
+function renderValidationState(messages: ValidationMessage[]): void {
+  latestValidationMessages = messages;
+  const fields = inputsPanel.querySelectorAll<HTMLElement>(".field[data-field-id]");
+  fields.forEach((field) => {
+    field.classList.remove("has-error", "has-warning");
+    field.querySelectorAll<HTMLElement>(".field-feedback").forEach((node) => node.remove());
+  });
+
+  const visibleMessages = getVisibleValidationMessages(messages);
+  const byFieldId = new Map<string, ValidationMessage[]>();
+  for (const message of visibleMessages) {
+    const arr = byFieldId.get(message.fieldId) ?? [];
+    arr.push(message);
+    byFieldId.set(message.fieldId, arr);
+  }
+  for (const [fieldId, message] of attemptedFieldMessages) {
+    const arr = byFieldId.get(fieldId) ?? [];
+    arr.push(message);
+    byFieldId.set(fieldId, arr);
+  }
+
+  for (const field of fields) {
+    const fieldId = field.dataset.fieldId;
+    if (!fieldId) continue;
+    const fieldMessages = byFieldId.get(fieldId);
+    if (!fieldMessages || fieldMessages.length === 0) continue;
+    fieldMessages.sort((a, b) => validationPriority(b.severity) - validationPriority(a.severity));
+    const primary = fieldMessages[0];
+    field.classList.add(primary.severity === "error" ? "has-error" : "has-warning");
+    const feedback = document.createElement("small");
+    feedback.className = `field-feedback ${primary.severity === "error" ? "is-error" : "is-warning"}`;
+    feedback.textContent = primary.message;
+    field.appendChild(feedback);
+  }
+}
+
+function drawEmptyChart(canvas: HTMLCanvasElement, lines: string[]): void {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = "#f8fafc";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const messageLines = lines.length > 0 ? lines : [PROJECTION_EMPTY_GUIDANCE];
+  const titleY = canvas.height / 2 - (messageLines.length > 1 ? 18 : 0);
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle = "#475569";
+  ctx.font = '500 15px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  ctx.fillText(messageLines[0], canvas.width / 2, titleY);
+  if (messageLines.length === 1) return;
+  ctx.fillStyle = "#64748b";
+  ctx.font = '400 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  messageLines.slice(1, 4).forEach((line, idx) => {
+    ctx.fillText(line, canvas.width / 2, titleY + 26 + (idx * 18));
+  });
+}
+
+function clearTimeline(message: string): void {
+  timelineTrack.innerHTML = `<div class="timeline-empty">${escapeHtml(message)}</div>`;
 }
 
 function syncTimelineLabelTooltipState(): void {
@@ -818,8 +1166,9 @@ function getStatutoryAge(): number | null {
   if (isBlank(raw)) return null;
   const n = Number(raw);
   if (!Number.isFinite(n)) return null;
-  if (n < 18) return null;
-  return Math.round(n);
+  const capped = applyFieldNumericConstraint("B19", n);
+  if (capped === null || capped < 50) return null;
+  return Math.round(capped);
 }
 
 function updateEarlyRetirementButtons(statutory: number | null): void {
@@ -852,11 +1201,12 @@ function setRetireCheckMessage(message: string | null, tone: "positive" | "neutr
 }
 
 function updateRetireCheckButton(statutory: number | null): void {
-  retireCheckButton.disabled = statutory === null || statutory <= getMinEarlyRetirementAge();
+  const isReady = statutory !== null && statutory > getMinEarlyRetirementAge();
+  retireCheckButton.disabled = !isReady;
 }
 
 function findEarliestRetirementAgeBeforeStatutory(statutory: number): number | null {
-  const baseline = runModel(rawInputs, uiState);
+  const baseline = runModel(fieldState, uiState);
   const firstProjectedAge = baseline.outputs.ages[0];
   if (!Number.isFinite(firstProjectedAge)) return null;
 
@@ -865,7 +1215,7 @@ function findEarliestRetirementAgeBeforeStatutory(statutory: number): number | n
   if (candidateStartAge > candidateEndAge) return null;
 
   for (let candidateAge = candidateStartAge; candidateAge <= candidateEndAge; candidateAge += 1) {
-    const candidateResult = runModel(rawInputs, { ...uiState, earlyRetirementAge: candidateAge });
+    const candidateResult = runModel(fieldState, { ...uiState, earlyRetirementAge: candidateAge });
     const startIndex = candidateResult.outputs.ages.findIndex((age) => Math.round(age) >= candidateAge);
     if (startIndex < 0) continue;
     const staysNonNegative = candidateResult.outputs.cashSeriesEarly
@@ -949,7 +1299,7 @@ function adjustEarlyRetirementAge(delta: number): void {
   queueRecalc();
 }
 
-function sanitizeNumericText(text: string, kind: "number" | "integer" | "percent"): string {
+function sanitizeNumericText(text: string, kind: "number" | "integer" | "percent", allowNegative: boolean): string {
   const base = text.replace(/,/g, "").replace(/\s+/g, "");
   const src = kind === "percent" ? base.replace(/%/g, "") : base;
   let out = "";
@@ -960,7 +1310,7 @@ function sanitizeNumericText(text: string, kind: "number" | "integer" | "percent
       out += ch;
       continue;
     }
-    if (ch === "-" && !hasMinus && out.length === 0) {
+    if (allowNegative && ch === "-" && !hasMinus && out.length === 0) {
       out += ch;
       hasMinus = true;
       continue;
@@ -973,24 +1323,29 @@ function sanitizeNumericText(text: string, kind: "number" | "integer" | "percent
   return out;
 }
 
-function parseIntegerInput(text: string): number | null {
-  const cleaned = sanitizeNumericText(text, "integer");
+function fieldAllowsNegative(key: string): boolean {
+  const cell = key in CELL_TO_FIELD_ID ? key as InputCell : INPUT_DEFINITION_BY_FIELD_ID[key as FieldId]?.cell;
+  return !!cell && ALLOW_NEGATIVE_INPUT_CELLS.has(cell);
+}
+
+function parseIntegerInput(text: string, allowNegative: boolean): number | null {
+  const cleaned = sanitizeNumericText(text, "integer", allowNegative);
   if (cleaned === "" || cleaned === "-") return null;
   if (!/^-?\d+$/.test(cleaned)) return null;
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
 }
 
-function parseNumberInput(text: string): number | null {
-  const cleaned = sanitizeNumericText(text, "number");
+function parseNumberInput(text: string, allowNegative: boolean): number | null {
+  const cleaned = sanitizeNumericText(text, "number", allowNegative);
   if (cleaned === "" || cleaned === "-" || cleaned === "." || cleaned === "-.") return null;
   if (!/^-?(?:\d+\.?\d*|\.\d+)$/.test(cleaned)) return null;
   const n = Number(cleaned);
   return Number.isFinite(n) ? n : null;
 }
 
-function parsePercentInput(text: string): number | null {
-  const cleaned = sanitizeNumericText(text, "percent");
+function parsePercentInput(text: string, allowNegative: boolean): number | null {
+  const cleaned = sanitizeNumericText(text, "percent", allowNegative);
   if (cleaned === "" || cleaned === "-" || cleaned === "." || cleaned === "-.") return null;
   if (!/^-?(?:\d+\.?\d*|\.\d+)$/.test(cleaned)) return null;
   const n = Number(cleaned);
@@ -1039,22 +1394,51 @@ function stopStepperHold(): void {
   }
 }
 
+function getAgeStepperLimitMessage(cell: keyof RawInputs, dir: number, nextValue: number): string | null {
+  if (cell === "B4" && dir > 0) {
+    const statutory = getStatutoryAge();
+    if (statutory !== null && nextValue >= statutory) {
+      return "Your age must be less than statutory retirement age.";
+    }
+  }
+  if (cell === "B19" && dir < 0) {
+    const currentAge = getCurrentAge();
+    if (currentAge !== null && nextValue <= currentAge) {
+      return "Statutory retirement age must be greater than your current age.";
+    }
+  }
+  return null;
+}
+
 function applyStepperDelta(cell: keyof RawInputs, dir: number): void {
   if (!Number.isFinite(dir) || (dir !== -1 && dir !== 1)) return;
   const step = STEPPER_CONFIG[cell];
   const def = INPUT_DEFINITIONS.find((d) => d.cell === cell);
   if (!Number.isFinite(step) || !def) return;
+  markFieldTouched(cell);
 
   const currentRaw = rawInputs[cell];
   const current = typeof currentRaw === "number" && Number.isFinite(currentRaw) ? currentRaw : 0;
   const next = current + dir * step;
+  const ageLimitMessage = getAgeStepperLimitMessage(cell, dir, next);
+  if (ageLimitMessage !== null) {
+    setAttemptedFieldMessage(cell as InputCell, ageLimitMessage);
+    renderValidationState(latestValidationMessages);
+    return;
+  }
   const decimals = STEP_DECIMALS[cell] ?? 0;
   const rounded = Number(next.toFixed(decimals));
-  if (isOutOfRangeLiquidationRank(String(cell), rounded) || isDuplicateLiquidationRank(String(cell), rounded)) return;
+  const constrained = applyFieldNumericConstraint(cell, rounded);
+  if (constrained === null) return;
+  if (isOutOfRangeLiquidationRank(String(cell), constrained) || isDuplicateLiquidationRank(String(cell), constrained)) return;
 
-  rawInputs[cell] = rounded;
+  if (cell === "B4" || cell === "B19") {
+    clearAgeConstraintAttemptMessages();
+  }
+  rawInputs[cell] = constrained;
   if (String(cell) === "B4") {
     rawInputs.B4 = Math.max(18, Math.min(100, Math.round(asNumber(rawInputs.B4))));
+    enforceLiveUntilAgeConstraint(true);
   }
   if (String(cell) === "B19") {
     const statutory = getStatutoryAge();
@@ -1333,7 +1717,7 @@ function applyFinerDefaultsIfNeeded(): void {
     const key = cell as keyof RawInputs;
     const current = rawInputs[key];
     if (isBlank(current) && val !== null && val !== undefined) {
-      rawInputs[key] = val;
+      rawInputs[key] = applyFieldNumericConstraint(key, Number(val));
     }
   }
 }
@@ -1341,6 +1725,9 @@ function applyFinerDefaultsIfNeeded(): void {
 async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
   if (excelLoadBusy) return;
   excelLoadBusy = true;
+  validationRevealAll = false;
+  clearTouchedFields();
+  clearAllAttemptedFieldMessages();
   renderInputs();
   try {
     const payload = EXCEL_BASELINE_SPECIMEN as unknown as ExcelSpecimenPayload;
@@ -1364,7 +1751,7 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
         rawInputs[key] = String(nextRaw);
       } else {
         const n = Number(nextRaw);
-        rawInputs[key] = Number.isFinite(n) ? n : null;
+        rawInputs[key] = Number.isFinite(n) ? applyFieldNumericConstraint(key, n) : null;
       }
     }
 
@@ -1396,6 +1783,9 @@ function clearAllInputsPreservingFinerDefaults(): void {
     const key = def.cell as keyof RawInputs;
     rawInputs[key] = null;
   }
+  validationRevealAll = false;
+  clearTouchedFields();
+  clearAllAttemptedFieldMessages();
   applyFinerDefaultsIfNeeded();
   setRetireCheckMessage(null);
   const statutory = getStatutoryAge();
@@ -1411,6 +1801,9 @@ function clearFinerDetailsInputs(): void {
   for (const cell of FINER_DETAILS_CELLS) {
     rawInputs[cell] = null;
   }
+  validationRevealAll = false;
+  clearTouchedFields(FINER_DETAILS_CELLS);
+  clearAllAttemptedFieldMessages();
   setRetireCheckMessage(null);
   renderInputs();
   queueRecalc();
@@ -1423,6 +1816,9 @@ function loadFinerDetailsDefaults(): void {
   for (const [cell, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
     rawInputs[cell as keyof RawInputs] = value;
   }
+  validationRevealAll = false;
+  clearTouchedFields(FINER_DETAILS_CELLS);
+  clearAllAttemptedFieldMessages();
   setRetireCheckMessage(null);
   renderInputs();
   queueRecalc();
@@ -1470,11 +1866,7 @@ function renderInputs(): void {
   };
 
   const controls = (defs: InputDefinition[]) => {
-    const orderedDefs = [...defs].sort((a, b) => {
-      const ra = displayOrderOverride[a.cell] ?? a.row;
-      const rb = displayOrderOverride[b.cell] ?? b.row;
-      return ra - rb;
-    });
+    const orderedDefs = getOrderedDefinitions(defs);
     let html = "";
     let prevTop = "";
     let prevSub = "";
@@ -1528,11 +1920,11 @@ function renderInputs(): void {
         hasStepper ? "has-stepper" : ""
       ].join(" ").trim();
       html += `
-        <label class="field" data-cell="${def.cell}">
+        <label class="field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
           <span>${label}</span>
           <div class="${inputShellClass}">
             ${hasPrefix ? `<span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>` : ""}
-            <input data-cell="${def.cell}" type="${inputType}" inputmode="${inputMode}" value="${valStr}" placeholder="" />
+            <input data-cell="${def.cell}" data-field-id="${def.fieldId}" type="${inputType}" inputmode="${inputMode}" value="${valStr}" placeholder="" />
             ${hasSuffix ? `<span class="input-suffix" aria-hidden="true">%</span>` : ""}
             ${hasStepper ? `
               <div class="field-stepper">
@@ -1590,7 +1982,6 @@ function renderInputs(): void {
       </select>
     </label>
   `;
-
   inputsPanel.innerHTML =
     block("QUICK START", true, false, currencySelectHtml + quickHtml, "section-quick-start") +
     block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml, "section-deeper-dive") +
@@ -1653,26 +2044,35 @@ function renderInputs(): void {
 
     el.addEventListener("input", () => {
       const cell = el.dataset.cell as keyof RawInputs;
+      markFieldTouched(cell);
+      if (cell === "B4" || cell === "B19") {
+        clearAgeConstraintAttemptMessages();
+      }
       const def = INPUT_DEFINITIONS.find((d) => d.cell === cell)!;
       const prevValue = rawInputs[cell];
+      const allowNegative = fieldAllowsNegative(cell);
       if (def.type === "integer") {
-        const sanitized = sanitizeNumericText(el.value, "integer");
+        const sanitized = sanitizeNumericText(el.value, "integer", allowNegative);
         if (sanitized !== el.value) el.value = sanitized;
       } else if (def.type === "number") {
-        const sanitized = sanitizeNumericText(el.value, "number");
+        const sanitized = sanitizeNumericText(el.value, "number", allowNegative);
         if (sanitized !== el.value) el.value = sanitized;
       } else if (def.type === "percent") {
-        const sanitized = sanitizeNumericText(el.value, "percent");
+        const sanitized = sanitizeNumericText(el.value, "percent", allowNegative);
         if (sanitized !== el.value) el.value = sanitized;
       }
 
-      const nextValue = def.type === "text"
+      let nextValue = def.type === "text"
         ? el.value
         : def.type === "percent"
-          ? parsePercentInput(el.value)
+          ? parsePercentInput(el.value, allowNegative)
           : def.type === "integer"
-            ? parseIntegerInput(el.value)
-            : parseNumberInput(el.value);
+            ? parseIntegerInput(el.value, allowNegative)
+            : parseNumberInput(el.value, allowNegative);
+
+      if (def.type !== "text") {
+        nextValue = applyFieldNumericConstraint(cell, nextValue as number | null);
+      }
 
       if (isOutOfRangeLiquidationRank(String(cell), nextValue) || isDuplicateLiquidationRank(String(cell), nextValue)) {
         el.value = prevValue === null || prevValue === undefined ? "" : String(prevValue);
@@ -1692,6 +2092,9 @@ function renderInputs(): void {
           spinner.value = String(statutory);
         }
         syncEarlyRetirementControl(true);
+      }
+      if (String(cell) === "B4") {
+        enforceLiveUntilAgeConstraint(true);
       }
       queueRecalc();
       // For numeric dependency-driver fields, defer UI structural rerender to blur
@@ -1724,19 +2127,45 @@ function renderInputs(): void {
     });
     el.addEventListener("blur", (ev) => {
       const cell = el.dataset.cell as keyof RawInputs;
+      markFieldTouched(cell);
+      if (cell === "B4" || cell === "B19") {
+        clearAgeConstraintAttemptMessages();
+      }
       const def = INPUT_DEFINITIONS.find((d) => d.cell === cell)!;
+      if (def.type !== "text") {
+        const current = rawInputs[cell];
+        const numericCurrent = typeof current === "number" && Number.isFinite(current) ? current : null;
+        const constrained = applyFieldNumericConstraint(cell, numericCurrent);
+        if (constrained !== numericCurrent) {
+          rawInputs[cell] = constrained;
+          queueRecalc();
+        }
+      }
+      const pruned = pruneInactiveFieldState(fieldState);
+      let changedByPrune = false;
+      for (const key of Object.keys(pruned) as Array<FieldId>) {
+        if (fieldState[key] !== pruned[key]) changedByPrune = true;
+        fieldState[key] = pruned[key];
+      }
+      if (changedByPrune) queueRecalc();
       if (String(cell) === "B4" && rawInputs.B4 !== null && rawInputs.B4 !== undefined) {
         const age = Number(rawInputs.B4);
         if (Number.isFinite(age)) {
           rawInputs.B4 = Math.max(18, Math.min(100, Math.round(age)));
+          enforceLiveUntilAgeConstraint(true);
           queueRecalc();
         }
       }
       if (def.type === "percent" || def.type === "integer" || def.type === "number") {
         el.value = formatFieldValue(def, rawInputs[cell]);
       }
-      if (def.type === "text") return;
-      if (["B12", "B15", "B70", "B141"].includes(String(cell))) {
+      if (def.type === "text") {
+        if (STRUCTURAL_RERENDER_CELLS.has(String(cell)) || changedByPrune) {
+          renderInputs();
+        }
+        return;
+      }
+      if (STRUCTURAL_RERENDER_CELLS.has(String(cell)) || changedByPrune) {
         const next = ev.relatedTarget as HTMLElement | null;
         const nextCell = next?.getAttribute?.("data-cell");
         renderInputs();
@@ -1909,6 +2338,7 @@ function renderInputs(): void {
   }
 
   restorePanelCursorState(cursorState);
+  renderValidationState(latestValidationMessages);
 }
 
 function getOrCreateChartTooltip(canvas: HTMLCanvasElement): HTMLDivElement | null {
@@ -2291,8 +2721,32 @@ function recalc(): void {
   hideChartTooltip(cashCanvas);
   hideChartTooltip(nwCanvas);
 
-  const result = runModel(rawInputs, uiState);
+  const result = runModel(fieldState, uiState);
+  renderValidationState(result.validationMessages);
+  const visibleValidationMessages = getVisibleValidationMessages(result.validationMessages);
+  const hasBlockingErrors = hasProjectionBlockingValidation(result.validationMessages);
+  const hasVisibleBlockingErrors = hasProjectionBlockingValidation(visibleValidationMessages);
   const statutory = getStatutoryAge();
+  applyRetireCheckReadiness(result.validationMessages, statutory);
+  if (hasBlockingErrors) {
+    cashLegendA.textContent = "Retire at early age";
+    cashLegendB.textContent = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
+    nwLegendA.textContent = "Retire at early age";
+    nwLegendB.textContent = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
+    chartHoverData.delete(cashCanvas);
+    chartHoverData.delete(nwCanvas);
+    const chartLines = hasVisibleBlockingErrors
+      ? getProjectionBlockingLines(visibleValidationMessages)
+      : [PROJECTION_EMPTY_GUIDANCE];
+    const timelineMessage = hasVisibleBlockingErrors
+      ? chartLines[0]
+      : PROJECTION_EMPTY_GUIDANCE;
+    drawEmptyChart(cashCanvas, chartLines);
+    drawEmptyChart(nwCanvas, chartLines);
+    clearTimeline(timelineMessage);
+    return;
+  }
+
   const contextByYear = buildChartContextByYear(result);
   const earlyLabel = spinner.value.trim() === "" ? "Retire at early age" : `Retire at ${uiState.earlyRetirementAge}`;
   const statutoryLabel = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
@@ -2395,10 +2849,12 @@ spinnerDown.addEventListener("click", () => adjustEarlyRetirementAge(-1));
 spinnerUp.addEventListener("click", () => adjustEarlyRetirementAge(1));
 
 retireCheckButton.addEventListener("click", () => {
+  validationRevealAll = true;
   const statutory = getStatutoryAge();
   if (statutory === null) {
     updateRetireCheckButton(null);
     setRetireCheckMessage(null);
+    renderValidationState(latestValidationMessages);
     return;
   }
 

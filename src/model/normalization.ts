@@ -23,6 +23,12 @@ function toNullableNumber(v: RawInputValue): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
+function toBoundedNumber(v: RawInputValue, min: number, max: number): number {
+  const n = toNumber(v);
+  if (n === 0) return 0;
+  return Math.min(max, Math.max(min, n));
+}
+
 function liquidationPriority(raw: RawInputs): number[] {
   const p1 = toNullableNumber(raw.B166);
   const p2 = toNullableNumber(raw.B167);
@@ -46,8 +52,13 @@ function liquidationPriority(raw: RawInputs): number[] {
 }
 
 export function normalizeInputs(raw: RawInputs): EffectiveInputs {
+  const ageNow = toNumber(raw.B4);
+  const statutoryRetirementAge = toBoundedNumber(raw.B19, 50, 70);
+  const liveUntilMinimum = ageNow > 0 ? ageNow + 1 : 19;
+  const liveUntilAge = toBoundedNumber(raw.B134, liveUntilMinimum, 120);
+
   return {
-    ageNow: toNumber(raw.B4),
+    ageNow,
     netIncomeAnnual: toNumber(raw.B6),
     cashBalance: toNumber(raw.B8),
     stocksBalance: toNumber(raw.B10),
@@ -55,7 +66,7 @@ export function normalizeInputs(raw: RawInputs): EffectiveInputs {
     homeLoanBalance: toNumber(raw.B15),
     homeLoanRate: toNumber(raw.B16),
     homeLoanRepaymentMonthly: toNumber(raw.B17),
-    statutoryRetirementAge: toNumber(raw.B19),
+    statutoryRetirementAge,
     pensionAnnual: toNumber(raw.B21),
     housingRentAnnual: toNumber(raw.B23),
     livingExpensesAnnual: toNumber(raw.B25),
@@ -114,7 +125,7 @@ export function normalizeInputs(raw: RawInputs): EffectiveInputs {
       { name: toTrimmedString(raw.B127), amount: toNumber(raw.B128), year: toNumber(raw.B129) }
     ],
 
-    liveUntilAge: toNumber(raw.B134),
+    liveUntilAge,
     spendAdjustTo65: toNumber(raw.B137),
     spendAdjust66To75: toNumber(raw.B138),
     spendAdjustFrom76: toNumber(raw.B139),

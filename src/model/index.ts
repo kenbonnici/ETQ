@@ -1,27 +1,34 @@
 import { applySectionActivation } from "./activation";
+import { fieldStateToRawInputs } from "./excelAdapter";
 import { runScenarioEarly } from "./engines/runScenarioEarly";
 import { runScenarioNorm } from "./engines/runScenarioNorm";
+import { INPUT_DEFINITION_BY_CELL, ValidationMessage } from "./inputSchema";
 import { normalizeInputs } from "./normalization";
-import { ModelOutputs, ModelUiState, RawInputs } from "./types";
+import { ModelOutputs, ModelUiState, FieldState } from "./types";
 import { clamp } from "./components/finance";
-import { validateRawInputs, ValidationIssue } from "./validate";
+import { validateRawInputs } from "./validate";
 
 export interface RunModelResult {
   outputs: ModelOutputs;
-  validationIssues: ValidationIssue[];
+  validationMessages: ValidationMessage[];
   canCollapseDeeperDive: boolean;
   canCollapseFinerDetails: boolean;
 }
 
-export function runModel(rawInputs: RawInputs, uiState: ModelUiState): RunModelResult {
-  const validationIssues = validateRawInputs(rawInputs);
-
+export function runModel(fields: FieldState, uiState: ModelUiState): RunModelResult {
   const earlyRetirementAge = clamp(Math.round(uiState.earlyRetirementAge), 18, 100);
+  const rawInputs = fieldStateToRawInputs(fields);
 
   const activation = applySectionActivation(rawInputs, {
     ...uiState,
     earlyRetirementAge
   });
+  const validationMessages: ValidationMessage[] = validateRawInputs(activation.activatedInputs).map((message) => ({
+    fieldId: INPUT_DEFINITION_BY_CELL[message.cell].fieldId,
+    severity: message.severity,
+    message: message.message,
+    blocksProjection: message.blocksProjection
+  }));
 
   const normalized = normalizeInputs(activation.activatedInputs);
 
@@ -41,7 +48,7 @@ export function runModel(rawInputs: RawInputs, uiState: ModelUiState): RunModelR
 
   return {
     outputs,
-    validationIssues,
+    validationMessages,
     canCollapseDeeperDive: activation.canCollapseDeeperDive,
     canCollapseFinerDetails: activation.canCollapseFinerDetails
   };

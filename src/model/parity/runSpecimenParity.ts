@@ -1,5 +1,5 @@
 import { runModel } from "../index";
-import { RawInputs } from "../types";
+import { rawInputsToFieldState } from "../excelAdapter";
 import { compareSeries, compileReport } from "./compare";
 import { EXCEL_BASELINE_SPECIMEN } from "./excelBaselineSpecimen";
 import { ParityReport } from "./types";
@@ -7,9 +7,9 @@ import { ParityReport } from "./types";
 export const CURRENCY_TOLERANCE = 0.01;
 
 export function runSpecimenParity(): ParityReport {
-  const rawInputs = { ...EXCEL_BASELINE_SPECIMEN.raw_inputs } as unknown as RawInputs;
+  const fields = rawInputsToFieldState(EXCEL_BASELINE_SPECIMEN.raw_inputs);
 
-  const result = runModel(rawInputs, {
+  const result = runModel(fields, {
     deeperDiveOpen: true,
     finerDetailsOpen: true,
     earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age

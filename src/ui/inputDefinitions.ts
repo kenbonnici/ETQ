@@ -1,8 +1,11 @@
+import { CELL_TO_FIELD_ID, FieldId, InputCell } from "../model/fieldRegistry";
+
 export type InputType = "number" | "integer" | "percent" | "text";
 
 export interface InputDefinition {
   row: number;
-  cell: string;
+  fieldId: FieldId;
+  cell: InputCell;
   label: string;
   section: string;
   groupPath: string;
@@ -13,7 +16,7 @@ export interface InputDefinition {
   type: InputType;
 }
 
-export const INPUT_DEFINITIONS: InputDefinition[] = [
+const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   {
     row: 4,
     cell: "B4",
@@ -1047,3 +1050,8 @@ export const INPUT_DEFINITIONS: InputDefinition[] = [
     type: "integer"
   },
 ];
+
+export const INPUT_DEFINITIONS: InputDefinition[] = RAW_INPUT_DEFINITIONS.map((def) => ({
+  ...def,
+  fieldId: CELL_TO_FIELD_ID[def.cell]
+}));

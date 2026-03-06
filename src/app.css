@@ -341,15 +341,17 @@ body {
 
 .retire-check-result {
   margin: 0;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 600;
   color: #334155;
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 8px 12px;
-  line-height: 1.2;
-  white-space: nowrap;
+  padding: 4px 8px;
+  line-height: 1.15;
+  white-space: normal;
+  max-width: min(420px, 44vw);
+  flex: 0 1 auto;
 }
 
 .retire-check-result.is-positive {
@@ -833,6 +835,18 @@ body {
   margin-bottom: 8px;
 }
 
+.field.has-error .input-shell input,
+.field.has-error select {
+  border-color: #b91c1c;
+  background: #fff7f7;
+}
+
+.field.has-warning .input-shell input,
+.field.has-warning select {
+  border-color: #c2410c;
+  background: #fffaf5;
+}
+
 .field span {
   font-size: 13px;
 }
@@ -926,6 +940,54 @@ input {
   background: #ffffff;
 }
 
+.validation-summary {
+  margin: 8px 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid #f59e0b;
+  background: #fffaf0;
+  color: #7c2d12;
+}
+
+.validation-summary.is-helper {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+  color: #475569;
+  padding: 8px 10px;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.validation-summary.has-errors {
+  border-color: #dc2626;
+  background: #fff5f5;
+  color: #991b1b;
+}
+
+.validation-summary strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+
+.validation-summary ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+}
+
+.field-feedback {
+  display: block;
+}
+
+.field-feedback.is-error {
+  color: #b91c1c;
+}
+
+.field-feedback.is-warning {
+  color: #c2410c;
+}
+
 small {
   color: var(--muted);
   font-size: 11px;
@@ -991,6 +1053,7 @@ small {
 
   .retire-check-result {
     white-space: normal;
+    max-width: 100%;
   }
 
   .retire-check-result.is-positive {
