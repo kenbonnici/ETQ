@@ -8,6 +8,8 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.is-hidden { display: none !important; }
 body {
   margin: 0;
   font-family: "Aptos", "Segoe UI", sans-serif;
@@ -286,6 +288,12 @@ body {
   border-radius: 8px;
 }
 
+.retirement-control-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .retirement-stepper {
   display: inline-flex;
   align-items: center;
@@ -396,6 +404,472 @@ body {
   box-shadow: none;
 }
 
+.cashflow-nav-btn,
+.cashflow-back-btn,
+.cashflow-control-btn,
+.cashflow-scenario-btn {
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid #cfdad2;
+  background: #fff;
+  color: #15342f;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cashflow-nav-btn,
+.cashflow-back-btn,
+.cashflow-control-btn {
+  padding: 0 14px;
+}
+
+.cashflow-nav-btn {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border-color: #d7e3dc;
+  background: #f7faf8;
+  color: #365850;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.cashflow-nav-btn.is-active,
+.cashflow-scenario-btn.is-active {
+  border-color: #0f766e;
+  background: #e8f5f1;
+  color: #0f5d57;
+}
+
+.cashflow-page {
+  min-height: 100vh;
+  padding: 18px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+}
+
+.cashflow-page-header,
+.cashflow-table-panel {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.cashflow-page-header {
+  position: sticky;
+  top: 16px;
+  z-index: 20;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 16px 18px 18px;
+  border-bottom-color: #dbe5df;
+  box-shadow: 0 8px 24px rgb(15 23 42 / 0.04), 0 1px 0 rgb(219 229 223 / 0.9);
+}
+
+.cashflow-page-heading {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 11px;
+  flex-wrap: nowrap;
+}
+
+.cashflow-page-heading h1 {
+  margin: 0;
+  font-size: 29px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: #17322d;
+}
+
+.cashflow-back-btn {
+  height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #72817d;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.2;
+  text-decoration: none;
+  transition: color 150ms ease, text-decoration-color 150ms ease;
+}
+
+.cashflow-back-btn::before {
+  content: "\2190";
+  margin-right: 6px;
+  color: currentColor;
+}
+
+.cashflow-back-btn:hover {
+  color: #2a7b69;
+  text-decoration: underline;
+}
+
+.cashflow-page-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+}
+
+.cashflow-scenario-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid #d6dfda;
+  border-radius: 999px;
+  background: #f8fbf9;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
+}
+
+.cashflow-scenario-btn {
+  min-width: 118px;
+  padding: 0 16px;
+  border-color: transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: #5c746d;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+}
+
+.cashflow-scenario-toggle .cashflow-scenario-btn.is-active {
+  border-color: #2f8572;
+  background: #7ec2b6;
+  color: #ffffff;
+  box-shadow: 0 1px 2px rgb(21 52 47 / 0.12);
+}
+
+.cashflow-page-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 14px;
+  border-left: 1px solid #dce5e0;
+}
+
+.cashflow-control-btn {
+  border-color: #8fbfaf;
+  border-radius: 999px;
+  background: #ffffff;
+  color: #2f7a69;
+  box-shadow: none;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+}
+
+.cashflow-control-btn:hover {
+  border-color: #5fa18d;
+  background: #ffffff;
+  color: #275f52;
+}
+
+.cashflow-table-panel {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.cashflow-table-scroll {
+  height: calc(100vh - 156px);
+  overflow: auto;
+}
+
+.cashflow-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: max-content;
+  width: 100%;
+}
+
+.cashflow-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 12;
+  background: #f7fbf9;
+  border-bottom: 1px solid #d7e3dc;
+}
+
+.cashflow-corner-cell,
+.cashflow-label-cell {
+  position: sticky;
+  left: 0;
+  z-index: 11;
+  min-width: 320px;
+  max-width: 320px;
+  text-align: left;
+  background: #fcfefd;
+}
+
+.cashflow-corner-cell {
+  z-index: 14;
+  padding: 13px 18px 10px;
+}
+
+.cashflow-corner-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.cashflow-corner-year,
+.cashflow-corner-age {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cashflow-corner-year {
+  color: #59736d;
+}
+
+.cashflow-corner-age {
+  color: #8ea59e;
+}
+
+.cashflow-year-cell {
+  min-width: 108px;
+  padding: 0;
+}
+
+.cashflow-year-button {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 12px 8px 9px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.cashflow-year-label {
+  font-size: 15px;
+  font-weight: 800;
+  color: #18332f;
+  line-height: 1.1;
+}
+
+.cashflow-age-label {
+  font-size: 10px;
+  font-weight: 500;
+  color: #94aaa3;
+  line-height: 1.1;
+}
+
+.cashflow-row th,
+.cashflow-row td {
+  border-bottom: 1px solid #edf2ee;
+}
+
+.cashflow-section-row th {
+  border-bottom: 0;
+}
+
+.cashflow-section-cell {
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  padding: 18px 18px 10px;
+  background: #fff;
+  text-align: left;
+  border-top: 1px solid #dde7e1;
+}
+
+.cashflow-section-label {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6e8981;
+}
+
+.cashflow-label-cell {
+  padding: 0;
+}
+
+.cashflow-label-inner {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 18px 10px calc(18px + (var(--cashflow-indent) * 16px));
+}
+
+.cashflow-row-toggle,
+.cashflow-row-label-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #15342f;
+}
+
+.cashflow-row-toggle-gutter {
+  width: 24px;
+  min-width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.cashflow-row.is-major-group .cashflow-row-toggle-text {
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  color: #143630;
+}
+
+.cashflow-row.is-subgroup .cashflow-row-toggle-text {
+  font-weight: 600;
+  font-size: 14px;
+  color: #244741;
+}
+
+.cashflow-row.is-child .cashflow-row-label-text,
+.cashflow-row.is-child .cashflow-row-toggle-text {
+  color: #54706a;
+  font-size: 13px;
+}
+
+.cashflow-row-toggle {
+  border: 0;
+  background: transparent;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.cashflow-row-toggle-icon {
+  width: 18px;
+  height: 18px;
+  border: 1px solid #d8e2dc;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  line-height: 1;
+  color: #6b857e;
+  background: #fbfdfc;
+}
+
+.cashflow-value-cell {
+  min-width: 108px;
+  padding: 11px 8px 11px 8px;
+  text-align: right;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  color: #1f2937;
+  background: #fff;
+  white-space: nowrap;
+}
+
+.cashflow-row.is-total .cashflow-label-cell,
+.cashflow-row.is-total .cashflow-value-cell {
+  background: #f7faf8;
+  font-weight: 720;
+}
+
+.cashflow-row.is-bridge .cashflow-label-cell,
+.cashflow-row.is-bridge .cashflow-value-cell {
+  background: #f7fbf9;
+  font-weight: 740;
+}
+
+.cashflow-row.is-total .cashflow-label-cell,
+.cashflow-row.is-total .cashflow-value-cell,
+.cashflow-row.is-key-total .cashflow-label-cell,
+.cashflow-row.is-key-total .cashflow-value-cell {
+  border-top: 1px solid #d6e2db;
+}
+
+.cashflow-row.is-key-total .cashflow-label-cell,
+.cashflow-row.is-key-total .cashflow-value-cell {
+  background: #f4faf7;
+  font-weight: 800;
+}
+
+.cashflow-value-cell.has-year-divider,
+.cashflow-year-cell.has-year-divider {
+  border-left: 1px solid #e3ebe6;
+}
+
+.cashflow-row.is-major-group .cashflow-label-cell,
+.cashflow-row.is-major-group .cashflow-value-cell {
+  border-top: 16px solid #fff;
+  background: #f4f9f6;
+}
+
+.cashflow-row.is-subgroup .cashflow-label-cell,
+.cashflow-row.is-subgroup .cashflow-value-cell {
+  border-top: 6px solid #fff;
+  background: #fbfdfc;
+}
+
+.cashflow-row.is-major-group .cashflow-label-inner {
+  min-height: 58px;
+}
+
+.cashflow-row[data-row-id="cash"] .cashflow-label-cell,
+.cashflow-row[data-row-id="cash"] .cashflow-value-cell {
+  border-top: 18px solid #fff;
+}
+
+.cashflow-row[data-row-id="net-cash-flow"] .cashflow-value-cell.is-negative,
+.cashflow-row[data-row-id="closing-cash"] .cashflow-value-cell.is-negative,
+.cashflow-row[data-row-id="inflows-liquidations"] .cashflow-value-cell.is-negative {
+  color: #9f3d3d;
+  background: #fdf3f2;
+}
+
+.cashflow-row[data-row-id="closing-cash"] .cashflow-label-cell,
+.cashflow-row[data-row-id="closing-cash"] .cashflow-value-cell {
+  background: #edf7f2;
+  font-weight: 800;
+  border-top: 1px solid #cfddd6;
+}
+
+.cashflow-row[data-row-id="closing-cash"] .cashflow-label-inner {
+  min-height: 58px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.cashflow-row[data-row-id="net-cash-flow"] .cashflow-label-cell,
+.cashflow-row[data-row-id="net-cash-flow"] .cashflow-value-cell {
+  background: #f7faf8;
+}
+
+.cashflow-row[data-row-id="inflows-total-footer"] .cashflow-label-cell,
+.cashflow-row[data-row-id="inflows-total-footer"] .cashflow-value-cell,
+.cashflow-row[data-row-id="outflows-total-footer"] .cashflow-label-cell,
+.cashflow-row[data-row-id="outflows-total-footer"] .cashflow-value-cell {
+  background: #f8fbf9;
+}
+
+.cashflow-row[data-row-id="outflows"] .cashflow-label-cell,
+.cashflow-row[data-row-id="outflows"] .cashflow-value-cell {
+  border-top: 20px solid #fff;
+}
+
+.cashflow-empty {
+  padding: 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #60736d;
+}
+
 .chart-card {
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -415,6 +889,41 @@ body {
   justify-content: space-between;
   gap: 14px;
   margin: 2px 2px 10px;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
+.chart-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: nowrap;
+  gap: 10px;
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.chart-actions .cashflow-nav-btn {
+  flex: 0 0 auto;
+}
+
+.chart-actions .chart-legend {
+  flex: 0 1 auto;
+  justify-content: flex-end;
+  min-width: 0;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.chart-actions .chart-legend-item {
+  gap: 6px;
+}
+
+.chart-actions .cashflow-nav-btn {
+  height: 28px;
+  padding: 0 9px;
+  font-size: 11px;
 }
 
 .chart-legend {
@@ -1047,6 +1556,10 @@ small {
     align-items: flex-start;
   }
 
+  .retirement-control-actions {
+    width: 100%;
+  }
+
   .retirement-stepper {
     margin-left: 0;
   }
@@ -1058,5 +1571,24 @@ small {
 
   .retire-check-result.is-positive {
     font-size: 16px;
+  }
+
+  .cashflow-page {
+    padding: 12px;
+  }
+
+  .cashflow-page-header {
+    position: static;
+  }
+
+  .cashflow-table-scroll {
+    height: auto;
+    max-height: calc(100vh - 260px);
+  }
+
+  .cashflow-corner-cell,
+  .cashflow-label-cell {
+    min-width: 250px;
+    max-width: 250px;
   }
 }

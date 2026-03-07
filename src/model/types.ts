@@ -87,11 +87,44 @@ export interface ScenarioMilestoneHint {
   amount?: number;
 }
 
+export interface NamedProjectionSeries {
+  key: string;
+  label: string;
+  values: number[];
+}
+
+export interface ScenarioCashFlowRows {
+  openingCash: number[];
+  employmentIncome: number[];
+  otherWorkIncome: number[];
+  rentalIncomeByProperty: NamedProjectionSeries[];
+  statutoryPension: number[];
+  otherPostRetirementIncome: number[];
+  incomeEvents: NamedProjectionSeries[];
+  liquidationsStocks: number[];
+  liquidationsByProperty: NamedProjectionSeries[];
+  interestOnCash: number[];
+  creditCardsCleared: number[];
+  homeLoanRepayment: number[];
+  propertyLoanRepayments: NamedProjectionSeries[];
+  otherLoanRepayment: number[];
+  dependentsCost: NamedProjectionSeries[];
+  housingRent: number[];
+  propertyCosts: NamedProjectionSeries[];
+  livingExpenses: number[];
+  expenseEvents: NamedProjectionSeries[];
+  totalInflows: number[];
+  totalOutflows: number[];
+  netCashFlow: number[];
+  closingCash: number[];
+}
+
 export interface ScenarioOutputs {
   points: ProjectionPoint[];
   cashSeries: number[];
   netWorthSeries: number[];
   milestoneHints: ScenarioMilestoneHint[];
+  cashFlow: ScenarioCashFlowRows;
 }
 
 export interface ModelOutputs {

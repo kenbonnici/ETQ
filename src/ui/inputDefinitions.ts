@@ -1,4 +1,4 @@
-import { CELL_TO_FIELD_ID, FieldId, InputCell } from "../model/fieldRegistry";
+import { FIELD_ID_TO_CELL, FieldId, InputCell } from "../model/fieldRegistry";
 
 export type InputType = "number" | "integer" | "percent" | "text";
 
@@ -16,10 +16,12 @@ export interface InputDefinition {
   type: InputType;
 }
 
-const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
+type AuthoredInputDefinition = Omit<InputDefinition, "cell">;
+
+const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 4,
-    cell: "B4",
+    fieldId: "profile.currentAge",
     label: "Your age",
     section: "QUICK START",
     groupPath: "QUICK START",
@@ -31,7 +33,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 6,
-    cell: "B6",
+    fieldId: "income.employment.netAnnual",
     label: "Current net annual income",
     section: "QUICK START",
     groupPath: "QUICK START",
@@ -43,7 +45,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 8,
-    cell: "B8",
+    fieldId: "assets.cash.totalBalance",
     label: "Total cash balances",
     section: "QUICK START",
     groupPath: "QUICK START",
@@ -55,7 +57,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 10,
-    cell: "B10",
+    fieldId: "assets.equities.marketValue",
     label: "Stock market investments",
     section: "QUICK START",
     groupPath: "QUICK START",
@@ -67,7 +69,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 12,
-    cell: "B12",
+    fieldId: "housing.primaryResidence.marketValue",
     label: "Home current market value",
     section: "QUICK START",
     groupPath: "QUICK START",
@@ -79,7 +81,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 15,
-    cell: "B15",
+    fieldId: "housing.primaryResidence.mortgage.balance",
     label: "Balance",
     section: "QUICK START",
     groupPath: "QUICK START > Home loan (mortgage)",
@@ -91,7 +93,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 16,
-    cell: "B16",
+    fieldId: "housing.primaryResidence.mortgage.interestRateAnnual",
     label: "Interest rate",
     section: "QUICK START",
     groupPath: "QUICK START > Home loan (mortgage)",
@@ -103,7 +105,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 17,
-    cell: "B17",
+    fieldId: "housing.primaryResidence.mortgage.monthlyRepayment",
     label: "Monthly repayment",
     section: "QUICK START",
     groupPath: "QUICK START > Home loan (mortgage)",
@@ -115,7 +117,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 19,
-    cell: "B19",
+    fieldId: "retirement.statutoryAge",
     label: "Statutory retirement age",
     section: "QUICK START",
     groupPath: "QUICK START",
@@ -127,7 +129,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 21,
-    cell: "B21",
+    fieldId: "retirement.statePension.netAnnualAtStart",
     label: "Annual pension at retirement",
     section: "QUICK START",
     groupPath: "QUICK START",
@@ -139,7 +141,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 23,
-    cell: "B23",
+    fieldId: "housing.rentAnnual",
     label: "Housing rent",
     section: "QUICK START",
     groupPath: "QUICK START",
@@ -151,7 +153,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 25,
-    cell: "B25",
+    fieldId: "spending.livingExpenses.annual",
     label: "Annual living expenses",
     section: "QUICK START",
     groupPath: "QUICK START",
@@ -163,7 +165,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 33,
-    cell: "B33",
+    fieldId: "dependents.primary.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 1",
@@ -175,7 +177,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 34,
-    cell: "B34",
+    fieldId: "dependents.primary.annualCost",
     label: "Annual cost",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 1",
@@ -187,7 +189,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 35,
-    cell: "B35",
+    fieldId: "dependents.primary.supportYearsRemaining",
     label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 1",
@@ -199,7 +201,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 38,
-    cell: "B38",
+    fieldId: "dependents.secondary.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 2",
@@ -211,7 +213,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 39,
-    cell: "B39",
+    fieldId: "dependents.secondary.annualCost",
     label: "Annual cost",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 2",
@@ -223,7 +225,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 40,
-    cell: "B40",
+    fieldId: "dependents.secondary.supportYearsRemaining",
     label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 2",
@@ -235,7 +237,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 43,
-    cell: "B43",
+    fieldId: "dependents.tertiary.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 3",
@@ -247,7 +249,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 44,
-    cell: "B44",
+    fieldId: "dependents.tertiary.annualCost",
     label: "Annual cost",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 3",
@@ -259,7 +261,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 45,
-    cell: "B45",
+    fieldId: "dependents.tertiary.supportYearsRemaining",
     label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 3",
@@ -271,7 +273,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 50,
-    cell: "B50",
+    fieldId: "properties.primary.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 1",
@@ -283,7 +285,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 51,
-    cell: "B51",
+    fieldId: "properties.primary.marketValue",
     label: "Market value",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 1",
@@ -295,7 +297,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 52,
-    cell: "B52",
+    fieldId: "properties.primary.annualOperatingCost",
     label: "Annual costs",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 1",
@@ -307,7 +309,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 55,
-    cell: "B55",
+    fieldId: "properties.secondary.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 2",
@@ -319,7 +321,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 56,
-    cell: "B56",
+    fieldId: "properties.secondary.marketValue",
     label: "Market value",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 2",
@@ -331,7 +333,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 57,
-    cell: "B57",
+    fieldId: "properties.secondary.annualOperatingCost",
     label: "Annual costs",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 2",
@@ -343,7 +345,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 60,
-    cell: "B60",
+    fieldId: "properties.tertiary.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 3",
@@ -355,7 +357,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 61,
-    cell: "B61",
+    fieldId: "properties.tertiary.marketValue",
     label: "Market value",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 3",
@@ -367,7 +369,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 62,
-    cell: "B62",
+    fieldId: "properties.tertiary.annualOperatingCost",
     label: "Annual costs",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 3",
@@ -379,7 +381,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 66,
-    cell: "B66",
+    fieldId: "properties.primary.rentalIncomeNetAnnual",
     label: "Rental income: Sliema",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
@@ -391,7 +393,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 67,
-    cell: "B67",
+    fieldId: "properties.secondary.rentalIncomeNetAnnual",
     label: "Rental income: Gzira",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
@@ -403,7 +405,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 68,
-    cell: "B68",
+    fieldId: "properties.tertiary.rentalIncomeNetAnnual",
     label: "Rental income: Qormi",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
@@ -415,7 +417,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 70,
-    cell: "B70",
+    fieldId: "income.otherWork.netAnnual",
     label: "Other work income (net annual)",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
@@ -427,7 +429,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 71,
-    cell: "B71",
+    fieldId: "income.otherWork.endAge",
     label: "Continue other work until age",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
@@ -439,7 +441,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 75,
-    cell: "B75",
+    fieldId: "debts.creditCards.balance",
     label: "Credit card balances",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans",
@@ -451,7 +453,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 78,
-    cell: "B78",
+    fieldId: "properties.primary.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Sliema Property",
@@ -463,7 +465,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 79,
-    cell: "B79",
+    fieldId: "properties.primary.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Sliema Property",
@@ -475,7 +477,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 80,
-    cell: "B80",
+    fieldId: "properties.primary.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Sliema Property",
@@ -487,7 +489,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 83,
-    cell: "B83",
+    fieldId: "properties.secondary.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Gzira Property",
@@ -499,7 +501,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 84,
-    cell: "B84",
+    fieldId: "properties.secondary.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Gzira Property",
@@ -511,7 +513,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 85,
-    cell: "B85",
+    fieldId: "properties.secondary.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Gzira Property",
@@ -523,7 +525,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 88,
-    cell: "B88",
+    fieldId: "properties.tertiary.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Qormi Property",
@@ -535,7 +537,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 89,
-    cell: "B89",
+    fieldId: "properties.tertiary.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Qormi Property",
@@ -547,7 +549,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 90,
-    cell: "B90",
+    fieldId: "properties.tertiary.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Qormi Property",
@@ -559,7 +561,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 93,
-    cell: "B93",
+    fieldId: "debts.other.balance",
     label: "Balance",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Other loan",
@@ -571,7 +573,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 94,
-    cell: "B94",
+    fieldId: "debts.other.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Other loan",
@@ -583,7 +585,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 95,
-    cell: "B95",
+    fieldId: "debts.other.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Other loan",
@@ -595,7 +597,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 100,
-    cell: "B100",
+    fieldId: "cashflowEvents.income.primary.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 1",
@@ -607,7 +609,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 101,
-    cell: "B101",
+    fieldId: "cashflowEvents.income.primary.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 1",
@@ -619,7 +621,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 102,
-    cell: "B102",
+    fieldId: "cashflowEvents.income.primary.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 1",
@@ -631,7 +633,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 105,
-    cell: "B105",
+    fieldId: "cashflowEvents.income.secondary.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 2",
@@ -643,7 +645,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 106,
-    cell: "B106",
+    fieldId: "cashflowEvents.income.secondary.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 2",
@@ -655,7 +657,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 107,
-    cell: "B107",
+    fieldId: "cashflowEvents.income.secondary.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 2",
@@ -667,7 +669,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 110,
-    cell: "B110",
+    fieldId: "cashflowEvents.income.tertiary.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 3",
@@ -679,7 +681,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 111,
-    cell: "B111",
+    fieldId: "cashflowEvents.income.tertiary.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 3",
@@ -691,7 +693,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 112,
-    cell: "B112",
+    fieldId: "cashflowEvents.income.tertiary.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 3",
@@ -703,7 +705,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 117,
-    cell: "B117",
+    fieldId: "cashflowEvents.expense.primary.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 1",
@@ -715,7 +717,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 118,
-    cell: "B118",
+    fieldId: "cashflowEvents.expense.primary.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 1",
@@ -727,7 +729,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 119,
-    cell: "B119",
+    fieldId: "cashflowEvents.expense.primary.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 1",
@@ -739,7 +741,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 122,
-    cell: "B122",
+    fieldId: "cashflowEvents.expense.secondary.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 2",
@@ -751,7 +753,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 123,
-    cell: "B123",
+    fieldId: "cashflowEvents.expense.secondary.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 2",
@@ -763,7 +765,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 124,
-    cell: "B124",
+    fieldId: "cashflowEvents.expense.secondary.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 2",
@@ -775,7 +777,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 127,
-    cell: "B127",
+    fieldId: "cashflowEvents.expense.tertiary.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 3",
@@ -787,7 +789,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 128,
-    cell: "B128",
+    fieldId: "cashflowEvents.expense.tertiary.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 3",
@@ -799,7 +801,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 129,
-    cell: "B129",
+    fieldId: "cashflowEvents.expense.tertiary.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 3",
@@ -811,7 +813,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 134,
-    cell: "B134",
+    fieldId: "planning.lifeExpectancyAge",
     label: "Plan to live until age",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -823,7 +825,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 137,
-    cell: "B137",
+    fieldId: "spending.adjustments.pre65.deltaRate",
     label: "From now to 65",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
@@ -835,7 +837,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 138,
-    cell: "B138",
+    fieldId: "spending.adjustments.age66To75.deltaRate",
     label: "From 66 to 75",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
@@ -847,7 +849,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 139,
-    cell: "B139",
+    fieldId: "spending.adjustments.age76Plus.deltaRate",
     label: "From age 76",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
@@ -859,7 +861,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 141,
-    cell: "B141",
+    fieldId: "income.postRetirementSupplement.annual",
     label: "Other post-retirement income",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Other post-retirement income",
@@ -871,7 +873,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 142,
-    cell: "B142",
+    fieldId: "income.postRetirementSupplement.startAge",
     label: "From age",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Other post-retirement income",
@@ -883,7 +885,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 143,
-    cell: "B143",
+    fieldId: "income.postRetirementSupplement.endAge",
     label: "To age",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Other post-retirement income",
@@ -895,7 +897,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 145,
-    cell: "B145",
+    fieldId: "assumptions.generalInflationRateAnnual",
     label: "General inflation",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -907,7 +909,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 147,
-    cell: "B147",
+    fieldId: "assumptions.propertyAppreciationRateAnnual",
     label: "Property annual appreciation",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -919,7 +921,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 149,
-    cell: "B149",
+    fieldId: "assumptions.cashYieldRateAnnual",
     label: "Cash interest rate",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -931,7 +933,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 151,
-    cell: "B151",
+    fieldId: "assumptions.equityReturnRateAnnual",
     label: "Stock market return",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -943,7 +945,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 153,
-    cell: "B153",
+    fieldId: "assumptions.salaryGrowthRateAnnual",
     label: "Salary annual growth rate",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -955,7 +957,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 155,
-    cell: "B155",
+    fieldId: "assumptions.rentalIncomeGrowthRateAnnual",
     label: "Rental income annual increase",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -967,7 +969,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 157,
-    cell: "B157",
+    fieldId: "retirement.earlyPensionReductionPerYear",
     label: "Pension reduction per year early",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -979,7 +981,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 159,
-    cell: "B159",
+    fieldId: "liquidity.minimumCashBuffer",
     label: "Cash buffer at any time",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -991,7 +993,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 161,
-    cell: "B161",
+    fieldId: "liquidation.stockSellingCostRate",
     label: "Stock market selling costs",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -1003,7 +1005,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 163,
-    cell: "B163",
+    fieldId: "liquidation.propertyDisposalCostRate",
     label: "Property disposal costs",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
@@ -1015,7 +1017,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 166,
-    cell: "B166",
+    fieldId: "properties.primary.liquidationPriority",
     label: "Sliema",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Property liquidation order",
@@ -1027,7 +1029,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 167,
-    cell: "B167",
+    fieldId: "properties.secondary.liquidationPriority",
     label: "Gzira",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Property liquidation order",
@@ -1039,7 +1041,7 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
   },
   {
     row: 168,
-    cell: "B168",
+    fieldId: "properties.tertiary.liquidationPriority",
     label: "Qormi",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Property liquidation order",
@@ -1048,10 +1050,10 @@ const RAW_INPUT_DEFINITIONS: Omit<InputDefinition, "fieldId">[] = [
     uiNote: "",
     sampleValue: "2",
     type: "integer"
-  },
+  }
 ];
 
-export const INPUT_DEFINITIONS: InputDefinition[] = RAW_INPUT_DEFINITIONS.map((def) => ({
+export const INPUT_DEFINITIONS: InputDefinition[] = AUTHORED_INPUT_DEFINITIONS.map((def) => ({
   ...def,
-  fieldId: CELL_TO_FIELD_ID[def.cell]
+  cell: FIELD_ID_TO_CELL[def.fieldId]
 }));

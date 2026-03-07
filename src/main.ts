@@ -1,49 +1,64 @@
 import "./app.css";
 import { pruneInactiveFieldState } from "./model/activation";
 import { runModel } from "./model";
-import { CELL_TO_FIELD_ID } from "./model/fieldRegistry";
-import { createEmptyFieldState, rawInputsToFieldState } from "./model/excelAdapter";
+import { createEmptyFieldState } from "./model/excelAdapter";
 import type { RunModelResult } from "./model/index";
 import {
   INPUT_DEFINITION_BY_FIELD_ID,
-  ALLOW_NEGATIVE_INPUT_CELLS,
+  ALLOW_NEGATIVE_FIELDS,
   COERCED_NUMERIC_BOUNDS,
   FINER_DETAILS_COL_C_DEFAULTS,
+  FINER_DETAILS_FIELDS,
   InputDefinition,
   INPUT_DEFINITIONS,
-  SKIP_REVEAL_CRITICAL_CELLS,
+  SKIP_REVEAL_CRITICAL_FIELDS,
   ValidationMessage
 } from "./model/inputSchema";
 import { EXCEL_BASELINE_SPECIMEN } from "./model/parity/excelBaselineSpecimen";
-import { FieldId, InputCell, ModelUiState, RawInputValue, RawInputs } from "./model/types";
+import { FieldId, ModelUiState, RawInputValue, ScenarioOutputs } from "./model/types";
+import {
+  DEPENDENT_RUNTIME_GROUPS,
+  EXPENSE_EVENT_RUNTIME_GROUPS,
+  HOME_FIELDS,
+  INCOME_EVENT_RUNTIME_GROUPS,
+  OTHER_LOAN_FIELDS,
+  OTHER_WORK_FIELDS,
+  POST_RETIREMENT_INCOME_FIELDS,
+  PROPERTY_RUNTIME_GROUPS,
+  RUNTIME_FIELDS
+} from "./ui/runtimeFields";
+import {
+  activePropertyConfigs,
+  anyValue,
+  asNumber,
+  buildPropertyLiquidationAssignments,
+  buildPropertyLiquidationOrder,
+  buildTimelineMilestones,
+  collectSpecificLabelsByYear,
+  FIELD_DISPLAY_ORDER_OVERRIDE,
+  FIELD_STEPPER_DECIMALS,
+  FIELD_STEPPER_STEPS,
+  fieldVisible,
+  getDynamicFieldLabel,
+  getDynamicGroupTail,
+  hasRetireCheckEssentialErrors,
+  isBlank,
+  isDuplicateLiquidationRank,
+  isOutOfRangeLiquidationRank,
+  normalizeTimelineLabel,
+  parsePropertyRank,
+  PROPERTY_LIQUIDATION_FIELDS,
+  shouldRerenderOnInput,
+  STRUCTURAL_RERENDER_FIELDS,
+  syncManualPropertyOrderForNewProperties
+} from "./ui/runtimeRules";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
 
-type WorkingInputs = Record<string, RawInputValue>;
-
 const fieldState = createEmptyFieldState();
 for (const [fieldId, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
   fieldState[fieldId as FieldId] = value;
-}
-
-const rawInputs = new Proxy(fieldState as WorkingInputs, {
-  get(target, prop, receiver) {
-    if (typeof prop === "string" && prop in CELL_TO_FIELD_ID) {
-      return Reflect.get(target, CELL_TO_FIELD_ID[prop as InputCell], receiver);
-    }
-    return Reflect.get(target, prop, receiver);
-  },
-  set(target, prop, value, receiver) {
-    if (typeof prop === "string" && prop in CELL_TO_FIELD_ID) {
-      return Reflect.set(target, CELL_TO_FIELD_ID[prop as InputCell], value, receiver);
-    }
-    return Reflect.set(target, prop, value, receiver);
-  }
-}) as RawInputs & WorkingInputs;
-
-function fieldIdForCell(cell: InputCell): FieldId {
-  return CELL_TO_FIELD_ID[cell];
 }
 
 let uiState: ModelUiState = {
@@ -53,7 +68,7 @@ let uiState: ModelUiState = {
 };
 
 let debounceHandle: number | null = null;
-let pendingFocusCell: string | null = null;
+let pendingFocusFieldId: FieldId | null = null;
 let selectedCurrency = "EUR";
 let stepperHoldTimeout: number | null = null;
 let stepperHoldInterval: number | null = null;
@@ -63,6 +78,10 @@ let latestValidationMessages: ValidationMessage[] = [];
 let validationRevealAll = false;
 const touchedCells = new Set<FieldId>();
 const attemptedFieldMessages = new Map<FieldId, ValidationMessage>();
+let latestRunResult: RunModelResult | null = null;
+let currentView: "dashboard" | "cashflow" = "dashboard";
+let cashflowScenario: "early" | "norm" = "early";
+const cashflowExpandedGroups = new Set<string>(["cash-bridge", "inflows", "outflows"]);
 
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
@@ -87,185 +106,37 @@ const TOP_CURRENCIES = [
   { code: "HKD", label: "Hong Kong Dollar", symbol: "HK$" },
   { code: "SGD", label: "Singapore Dollar", symbol: "S$" }
 ] as const;
-const STEPPER_CONFIG: Record<string, number> = {
-  B4: 1,
-  B6: 100,
-  B8: 100,
-  B10: 100,
-  B12: 1000,
-  B15: 100,
-  B17: 10,
-  B19: 1,
-  B21: 100,
-  B23: 100,
-  B34: 100,
-  B39: 100,
-  B44: 100,
-  B51: 1000,
-  B52: 100,
-  B56: 1000,
-  B57: 100,
-  B61: 1000,
-  B62: 100,
-  B66: 100,
-  B67: 100,
-  B68: 100,
-  B70: 100,
-  B75: 100,
-  B78: 100,
-  B80: 10,
-  B83: 100,
-  B85: 10,
-  B88: 100,
-  B90: 10,
-  B93: 100,
-  B95: 10,
-  B101: 100,
-  B134: 1,
-  B106: 100,
-  B111: 100,
-  B118: 100,
-  B123: 100,
-  B128: 100,
-  B102: 1,
-  B107: 1,
-  B112: 1,
-  B119: 1,
-  B124: 1,
-  B129: 1,
-  B137: 0.001,
-  B138: 0.001,
-  B139: 0.001,
-  B141: 100,
-  B142: 1,
-  B143: 1,
-  B35: 1,
-  B40: 1,
-  B45: 1,
-  B71: 1,
-  B25: 100,
-  B16: 0.001,
-  B79: 0.001,
-  B84: 0.001,
-  B89: 0.001,
-  B94: 0.001,
-  B145: 0.002,
-  B147: 0.001,
-  B149: 0.001,
-  B151: 0.002,
-  B153: 0.001,
-  B155: 0.001,
-  B157: 10,
-  B159: 1000,
-  B161: 0.001,
-  B163: 0.001
-};
-const STEP_DECIMALS: Record<string, number> = {
-  B4: 0,
-  B6: 0,
-  B8: 0,
-  B10: 0,
-  B12: 0,
-  B15: 0,
-  B17: 0,
-  B19: 0,
-  B21: 0,
-  B23: 0,
-  B34: 0,
-  B39: 0,
-  B44: 0,
-  B51: 0,
-  B52: 0,
-  B56: 0,
-  B57: 0,
-  B61: 0,
-  B62: 0,
-  B66: 0,
-  B67: 0,
-  B68: 0,
-  B70: 0,
-  B75: 0,
-  B78: 0,
-  B80: 0,
-  B83: 0,
-  B85: 0,
-  B88: 0,
-  B90: 0,
-  B93: 0,
-  B95: 0,
-  B101: 0,
-  B134: 0,
-  B106: 0,
-  B111: 0,
-  B118: 0,
-  B123: 0,
-  B128: 0,
-  B102: 0,
-  B107: 0,
-  B112: 0,
-  B119: 0,
-  B124: 0,
-  B129: 0,
-  B137: 3,
-  B138: 3,
-  B139: 3,
-  B141: 0,
-  B142: 0,
-  B143: 0,
-  B35: 0,
-  B40: 0,
-  B45: 0,
-  B71: 0,
-  B25: 0,
-  B16: 3,
-  B79: 3,
-  B84: 3,
-  B89: 3,
-  B94: 3,
-  B145: 3,
-  B147: 3,
-  B149: 3,
-  B151: 3,
-  B153: 3,
-  B155: 3,
-  B157: 0,
-  B159: 0,
-  B161: 3,
-  B163: 3
-};
-function resolveFieldId(key: string): FieldId {
-  return (key in CELL_TO_FIELD_ID ? CELL_TO_FIELD_ID[key as InputCell] : key) as FieldId;
-}
-
-function getDynamicMinConstraint(key: string): number | null {
-  if (resolveFieldId(key) !== "planning.lifeExpectancyAge") return null;
+const STEPPER_CONFIG = FIELD_STEPPER_STEPS;
+const STEP_DECIMALS = FIELD_STEPPER_DECIMALS;
+function getDynamicMinConstraint(fieldId: FieldId): number | null {
+  if (fieldId !== RUNTIME_FIELDS.lifeExpectancyAge) return null;
   const currentAge = getCurrentAge();
   if (currentAge === null) return null;
   return currentAge + 1;
 }
 
-function applyFieldNumericConstraint(key: string, value: number | null): number | null {
+function applyFieldNumericConstraint(fieldId: FieldId, value: number | null): number | null {
   if (value === null || !Number.isFinite(value)) return value;
   let bounded = value;
-  const cfg = COERCED_NUMERIC_BOUNDS[resolveFieldId(key)];
+  const cfg = COERCED_NUMERIC_BOUNDS[fieldId];
   if (cfg) {
     if (Number.isFinite(cfg.min)) bounded = Math.max(cfg.min as number, bounded);
     if (Number.isFinite(cfg.max)) bounded = Math.min(cfg.max as number, bounded);
   }
-  const dynamicMin = getDynamicMinConstraint(key);
+  const dynamicMin = getDynamicMinConstraint(fieldId);
   if (Number.isFinite(dynamicMin)) bounded = Math.max(dynamicMin as number, bounded);
   return bounded;
 }
 
 function enforceLiveUntilAgeConstraint(syncVisibleInput: boolean): boolean {
-  const current = rawInputs.B134;
+  const current = fieldState[RUNTIME_FIELDS.lifeExpectancyAge];
   const numericCurrent = typeof current === "number" && Number.isFinite(current) ? current : null;
-  const constrained = applyFieldNumericConstraint("B134", numericCurrent);
+  const constrained = applyFieldNumericConstraint(RUNTIME_FIELDS.lifeExpectancyAge, numericCurrent);
   if (constrained === numericCurrent) return false;
-  rawInputs.B134 = constrained;
+  fieldState[RUNTIME_FIELDS.lifeExpectancyAge] = constrained;
   if (syncVisibleInput) {
-    const input = inputsPanel.querySelector<HTMLInputElement>('input[data-cell="B134"]');
-    const def = INPUT_DEFINITIONS.find((d) => d.cell === "B134");
+    const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${RUNTIME_FIELDS.lifeExpectancyAge}"]`);
+    const def = INPUT_DEFINITION_BY_FIELD_ID[RUNTIME_FIELDS.lifeExpectancyAge];
     if (input && def && document.activeElement !== input) {
       input.value = formatFieldValue(def, constrained);
     }
@@ -274,11 +145,13 @@ function enforceLiveUntilAgeConstraint(syncVisibleInput: boolean): boolean {
 }
 
 app.innerHTML = `
-  <main class="layout">
+  <main class="layout" id="dashboard-view">
     <section class="left" id="inputs-panel"></section>
     <section class="right">
       <header class="retirement-control">
-        <button id="retire-check-btn" class="retire-check-btn" type="button">Enough to quit?</button>
+        <div class="retirement-control-actions">
+          <button id="retire-check-btn" class="retire-check-btn" type="button">Enough to quit?</button>
+        </div>
         <p id="retire-check-result" class="retire-check-result" hidden></p>
         <div class="retirement-stepper">
           <span class="retirement-stepper-label">Retire at</span>
@@ -290,15 +163,18 @@ app.innerHTML = `
       <article class="chart-card">
         <div class="chart-header">
           <h2>Cash</h2>
-          <div class="chart-legend" id="cash-legend" aria-hidden="true">
-            <span class="chart-legend-item">
-              <span class="chart-legend-line"></span>
-              <span id="cash-legend-a">Retire at early age</span>
-            </span>
-            <span class="chart-legend-item">
-              <span class="chart-legend-line is-dashed"></span>
-              <span id="cash-legend-b">Retire at statutory age</span>
-            </span>
+          <div class="chart-actions" id="cash-chart-actions">
+            <button id="open-cashflow-btn" class="cashflow-nav-btn" type="button">See cash flow</button>
+            <div class="chart-legend" id="cash-legend" aria-hidden="true">
+              <span class="chart-legend-item">
+                <span class="chart-legend-line"></span>
+                <span id="cash-legend-a">Retire at early age</span>
+              </span>
+              <span class="chart-legend-item">
+                <span class="chart-legend-line is-dashed"></span>
+                <span id="cash-legend-b">Retire at statutory age</span>
+              </span>
+            </div>
           </div>
         </div>
         <canvas id="cash-chart" width="920" height="300"></canvas>
@@ -329,23 +205,56 @@ app.innerHTML = `
       </div>
     </aside>
   </main>
+  <section class="cashflow-page" id="cashflow-page" hidden>
+    <header class="cashflow-page-header">
+      <div class="cashflow-page-heading">
+        <button id="cashflow-back-btn" class="cashflow-back-btn" type="button">Back to Overview</button>
+        <div>
+          <h1>Cash Flow Projection</h1>
+        </div>
+      </div>
+      <div class="cashflow-page-controls">
+        <div class="cashflow-scenario-toggle" role="tablist" aria-label="Projection scenario">
+          <button id="cashflow-scenario-early" class="cashflow-scenario-btn" type="button">Early</button>
+          <button id="cashflow-scenario-norm" class="cashflow-scenario-btn" type="button">Statutory</button>
+        </div>
+        <div class="cashflow-page-actions" aria-label="Cash flow table controls">
+          <button id="cashflow-expand-all" class="cashflow-control-btn" type="button">Expand all</button>
+          <button id="cashflow-collapse-all" class="cashflow-control-btn" type="button">Collapse all</button>
+        </div>
+      </div>
+    </header>
+    <section class="cashflow-table-panel" id="cashflow-table-panel"></section>
+  </section>
 `;
 
+const dashboardView = document.getElementById("dashboard-view") as HTMLElement;
 const inputsPanel = document.getElementById("inputs-panel") as HTMLDivElement;
 const spinner = document.getElementById("early-ret-age") as HTMLInputElement;
 const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonElement;
 const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
 const retireCheckResult = document.getElementById("retire-check-result") as HTMLParagraphElement;
 const retireCheckButton = document.getElementById("retire-check-btn") as HTMLButtonElement;
+const openCashflowButton = document.getElementById("open-cashflow-btn") as HTMLButtonElement;
 const cashCanvas = document.getElementById("cash-chart") as HTMLCanvasElement;
 const nwCanvas = document.getElementById("nw-chart") as HTMLCanvasElement;
+const cashChartActions = document.getElementById("cash-chart-actions") as HTMLDivElement;
+const cashLegend = document.getElementById("cash-legend") as HTMLDivElement;
 const cashLegendA = document.getElementById("cash-legend-a") as HTMLSpanElement;
 const cashLegendB = document.getElementById("cash-legend-b") as HTMLSpanElement;
+const nwLegend = document.getElementById("nw-legend") as HTMLDivElement;
 const nwLegendA = document.getElementById("nw-legend-a") as HTMLSpanElement;
 const nwLegendB = document.getElementById("nw-legend-b") as HTMLSpanElement;
 const timelinePanel = document.getElementById("timeline-panel") as HTMLDivElement;
 const timelineScroll = document.getElementById("timeline-scroll") as HTMLDivElement;
 const timelineTrack = document.getElementById("timeline-track") as HTMLDivElement;
+const cashflowPage = document.getElementById("cashflow-page") as HTMLElement;
+const cashflowBackButton = document.getElementById("cashflow-back-btn") as HTMLButtonElement;
+const cashflowScenarioEarlyButton = document.getElementById("cashflow-scenario-early") as HTMLButtonElement;
+const cashflowScenarioNormButton = document.getElementById("cashflow-scenario-norm") as HTMLButtonElement;
+const cashflowExpandAllButton = document.getElementById("cashflow-expand-all") as HTMLButtonElement;
+const cashflowCollapseAllButton = document.getElementById("cashflow-collapse-all") as HTMLButtonElement;
+const cashflowTablePanel = document.getElementById("cashflow-table-panel") as HTMLDivElement;
 
 const sectionState = {
   quickStartOpen: true,
@@ -354,69 +263,38 @@ const sectionState = {
 };
 
 let visibleDependents = 1;
-const dependent1Cells = ["B33", "B34", "B35"] as const;
-const dependent2Cells = ["B38", "B39", "B40"] as const;
-const dependent3Cells = ["B43", "B44", "B45"] as const;
+const dependent1Fields = DEPENDENT_RUNTIME_GROUPS[0].fields;
+const dependent2Fields = DEPENDENT_RUNTIME_GROUPS[1].fields;
+const dependent3Fields = DEPENDENT_RUNTIME_GROUPS[2].fields;
 let visibleProperties = 1;
-const property1Cells = ["B50", "B51", "B52"] as const;
-const property2Cells = ["B55", "B56", "B57"] as const;
-const property3Cells = ["B60", "B61", "B62"] as const;
-const PROPERTY_LIQUIDATION_CONFIG: readonly PropertyLiquidationConfig[] = [
-  { idx: 0, rankCell: "B166", nameCell: "B50", valueCell: "B51", cells: property1Cells },
-  { idx: 1, rankCell: "B167", nameCell: "B55", valueCell: "B56", cells: property2Cells },
-  { idx: 2, rankCell: "B168", nameCell: "B60", valueCell: "B61", cells: property3Cells }
-] as const;
-const PROPERTY_LIQUIDATION_CELLS = new Set<string>(["B166", "B167", "B168"]);
-const FINER_DETAILS_CELLS = INPUT_DEFINITIONS
-  .filter((def) => def.section === "FINER DETAILS")
-  .map((def) => def.cell as keyof RawInputs);
+const property1Fields = PROPERTY_RUNTIME_GROUPS[0].coreFields;
+const property2Fields = PROPERTY_RUNTIME_GROUPS[1].coreFields;
+const property3Fields = PROPERTY_RUNTIME_GROUPS[2].coreFields;
+const PROPERTY_LIQUIDATION_CELLS = PROPERTY_LIQUIDATION_FIELDS;
+const FINER_DETAILS_FIELD_IDS = FINER_DETAILS_FIELDS;
 let visibleIncomeEvents = 1;
-const incomeEvent1Cells = ["B100", "B101", "B102"] as const;
-const incomeEvent2Cells = ["B105", "B106", "B107"] as const;
-const incomeEvent3Cells = ["B110", "B111", "B112"] as const;
+const incomeEvent1Fields = INCOME_EVENT_RUNTIME_GROUPS[0].fields;
+const incomeEvent2Fields = INCOME_EVENT_RUNTIME_GROUPS[1].fields;
+const incomeEvent3Fields = INCOME_EVENT_RUNTIME_GROUPS[2].fields;
 let visibleExpenseEvents = 1;
-const expenseEvent1Cells = ["B117", "B118", "B119"] as const;
-const expenseEvent2Cells = ["B122", "B123", "B124"] as const;
-const expenseEvent3Cells = ["B127", "B128", "B129"] as const;
-const displayOrderOverride: Record<string, number> = {
-  // In Quick Start, place statutory retirement age before current age.
-  B19: 3.9,
-  // In "Other income", show other-work controls before rental-income controls.
-  B70: 66.1,
-  B71: 66.2,
-  B66: 66.3,
-  B67: 66.4,
-  B68: 66.5,
-  // In loans, show property loans before generic other loans.
-  B78: 74.1,
-  B79: 74.2,
-  B80: 74.3,
-  B83: 74.4,
-  B84: 74.5,
-  B85: 74.6,
-  B88: 74.7,
-  B89: 74.8,
-  B90: 74.9
-};
-const STRUCTURAL_RERENDER_CELLS = new Set<string>([
-  "B12", "B15", "B33", "B38", "B43", "B50", "B55", "B60",
-  "B70", "B78", "B83", "B88", "B93", "B100", "B105", "B110",
-  "B117", "B122", "B127", "B141"
-]);
+const expenseEvent1Fields = EXPENSE_EVENT_RUNTIME_GROUPS[0].fields;
+const expenseEvent2Fields = EXPENSE_EVENT_RUNTIME_GROUPS[1].fields;
+const expenseEvent3Fields = EXPENSE_EVENT_RUNTIME_GROUPS[2].fields;
+const displayOrderOverride = FIELD_DISPLAY_ORDER_OVERRIDE;
+const STRUCTURAL_RERENDER_CELLS = STRUCTURAL_RERENDER_FIELDS;
 
 interface PanelCursorState {
   scrollTop: number;
-  activeCell: string | null;
+  activeFieldId: FieldId | null;
   selectionStart: number | null;
   selectionEnd: number | null;
 }
 
-interface PropertyLiquidationConfig {
-  idx: 0 | 1 | 2;
-  rankCell: "B166" | "B167" | "B168";
-  nameCell: "B50" | "B55" | "B60";
-  valueCell: "B51" | "B56" | "B61";
-  cells: readonly string[];
+interface CashflowScrollAnchor {
+  rowId: string | null;
+  offsetTop: number;
+  scrollLeft: number;
+  scrollTop: number;
 }
 
 interface TimelineMilestone {
@@ -455,76 +333,15 @@ const chartTooltips = new Map<HTMLCanvasElement, HTMLDivElement>();
 const chartHoverIndex = new Map<HTMLCanvasElement, number | null>();
 const chartHoverDelayHandle = new Map<HTMLCanvasElement, number | null>();
 const chartHoverPending = new Map<HTMLCanvasElement, { idx: number; clientX: number; clientY: number } | null>();
-
-function isNonZeroNumber(v: unknown): boolean {
-  return !isBlank(v) && asNumber(v) !== 0;
-}
-
-function isPositiveNumber(v: unknown): boolean {
-  return asNumber(v) > 0;
-}
-
-function shouldRerenderOnInput(cell: string, prevValue: unknown, nextValue: unknown): boolean {
-  switch (cell) {
-    case "B12":
-      return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
-    case "B15":
-    case "B78":
-    case "B83":
-    case "B88":
-    case "B93":
-    case "B33":
-    case "B38":
-    case "B43":
-    case "B100":
-    case "B105":
-    case "B110":
-    case "B117":
-    case "B122":
-    case "B127":
-      return isBlank(prevValue) !== isBlank(nextValue);
-    case "B50":
-    case "B55":
-    case "B60":
-      return String(prevValue ?? "") !== String(nextValue ?? "");
-    case "B70":
-      return isNonZeroNumber(prevValue) !== isNonZeroNumber(nextValue);
-    case "B141":
-      return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
-    default:
-      return false;
-  }
-}
-
-function isDuplicateLiquidationRank(cell: string, nextValue: unknown): boolean {
-  if (!["B166", "B167", "B168"].includes(cell)) return false;
-  const rank = Number(nextValue);
-  if (!Number.isInteger(rank) || rank <= 0) return false;
-  for (const c of ["B166", "B167", "B168"] as const) {
-    if (c === cell) continue;
-    const existing = Number(rawInputs[c]);
-    if (Number.isInteger(existing) && existing > 0 && existing === rank) {
-      return true;
-    }
-  }
-  return false;
-}
-
-function isOutOfRangeLiquidationRank(cell: string, nextValue: unknown): boolean {
-  if (!["B166", "B167", "B168"].includes(cell)) return false;
-  if (nextValue === null || nextValue === undefined || String(nextValue).trim() === "") return false;
-  const rank = Number(nextValue);
-  if (!Number.isInteger(rank)) return true;
-  return rank < 0 || rank > 3;
-}
+let pendingCashflowScrollAnchor: CashflowScrollAnchor | null = null;
 
 function capturePanelCursorState(): PanelCursorState {
   const active = document.activeElement as HTMLInputElement | null;
-  const inPanel = !!active && inputsPanel.contains(active) && active.matches("input[data-cell]");
+  const inPanel = !!active && inputsPanel.contains(active) && active.matches("input[data-field-id]");
   const supportsSelection = inPanel && active!.type !== "number";
   return {
     scrollTop: inputsPanel.scrollTop,
-    activeCell: inPanel ? active!.dataset.cell ?? null : null,
+    activeFieldId: inPanel ? (active!.dataset.fieldId as FieldId | undefined) ?? null : null,
     selectionStart: supportsSelection ? active!.selectionStart : null,
     selectionEnd: supportsSelection ? active!.selectionEnd : null
   };
@@ -532,8 +349,8 @@ function capturePanelCursorState(): PanelCursorState {
 
 function restorePanelCursorState(state: PanelCursorState): void {
   inputsPanel.scrollTop = state.scrollTop;
-  if (!state.activeCell) return;
-  const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-cell="${state.activeCell}"]`);
+  if (!state.activeFieldId) return;
+  const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${state.activeFieldId}"]`);
   if (!input) return;
   input.focus({ preventScroll: true });
   if (input.type !== "number" && state.selectionStart !== null && state.selectionEnd !== null) {
@@ -541,24 +358,49 @@ function restorePanelCursorState(state: PanelCursorState): void {
   }
 }
 
-function isBlank(v: unknown): boolean {
-  if (v === null || v === undefined) return true;
-  const s = String(v).trim();
-  return s === "";
-}
-
-function anyValue(cells: readonly string[]): boolean {
-  for (const cell of cells) {
-    const v = rawInputs[cell as keyof RawInputs];
-    if (!isBlank(v)) return true;
+function captureCashflowScrollAnchor(rowId: string | null = null): CashflowScrollAnchor | null {
+  const scrollEl = cashflowTablePanel.querySelector<HTMLElement>(".cashflow-table-scroll");
+  if (!scrollEl) return null;
+  if (!rowId) {
+    return {
+      rowId: null,
+      offsetTop: 0,
+      scrollLeft: scrollEl.scrollLeft,
+      scrollTop: scrollEl.scrollTop
+    };
   }
-  return false;
+  const rowEl = scrollEl.querySelector<HTMLElement>(`tr[data-row-id="${rowId}"]`);
+  if (!rowEl) {
+    return {
+      rowId: null,
+      offsetTop: 0,
+      scrollLeft: scrollEl.scrollLeft,
+      scrollTop: scrollEl.scrollTop
+    };
+  }
+  return {
+    rowId,
+    offsetTop: rowEl.offsetTop - scrollEl.scrollTop,
+    scrollLeft: scrollEl.scrollLeft,
+    scrollTop: scrollEl.scrollTop
+  };
 }
 
-function asNumber(v: unknown): number {
-  if (v === null || v === undefined || String(v).trim() === "") return 0;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
+function restoreCashflowScrollAnchor(anchor: CashflowScrollAnchor | null): void {
+  if (!anchor) return;
+  const scrollEl = cashflowTablePanel.querySelector<HTMLElement>(".cashflow-table-scroll");
+  if (!scrollEl) return;
+  scrollEl.scrollLeft = anchor.scrollLeft;
+  if (!anchor.rowId) {
+    scrollEl.scrollTop = anchor.scrollTop;
+    return;
+  }
+  const rowEl = scrollEl.querySelector<HTMLElement>(`tr[data-row-id="${anchor.rowId}"]`);
+  if (!rowEl) {
+    scrollEl.scrollTop = anchor.scrollTop;
+    return;
+  }
+  scrollEl.scrollTop = Math.max(0, rowEl.offsetTop - anchor.offsetTop);
 }
 
 function currentCurrencySymbol(): string {
@@ -578,20 +420,20 @@ function validationPriority(severity: ValidationMessage["severity"]): number {
   return severity === "error" ? 2 : 1;
 }
 
-function markFieldTouched(cell: InputCell): void {
-  touchedCells.add(fieldIdForCell(cell));
+function markFieldTouched(fieldId: FieldId): void {
+  touchedCells.add(fieldId);
 }
 
-function clearTouchedFields(cells?: readonly InputCell[]): void {
-  if (!cells) {
+function clearTouchedFields(fieldIds?: readonly FieldId[]): void {
+  if (!fieldIds) {
     touchedCells.clear();
     return;
   }
-  for (const cell of cells) touchedCells.delete(fieldIdForCell(cell));
+  for (const fieldId of fieldIds) touchedCells.delete(fieldId);
 }
 
-function clearAttemptedFieldMessage(cell: InputCell): void {
-  attemptedFieldMessages.delete(fieldIdForCell(cell));
+function clearAttemptedFieldMessage(fieldId: FieldId): void {
+  attemptedFieldMessages.delete(fieldId);
 }
 
 function clearAllAttemptedFieldMessages(): void {
@@ -599,13 +441,13 @@ function clearAllAttemptedFieldMessages(): void {
 }
 
 function clearAgeConstraintAttemptMessages(): void {
-  clearAttemptedFieldMessage("B4");
-  clearAttemptedFieldMessage("B19");
+  clearAttemptedFieldMessage(RUNTIME_FIELDS.currentAge);
+  clearAttemptedFieldMessage(RUNTIME_FIELDS.statutoryRetirementAge);
 }
 
-function setAttemptedFieldMessage(cell: InputCell, message: string): void {
-  attemptedFieldMessages.set(fieldIdForCell(cell), {
-    fieldId: fieldIdForCell(cell),
+function setAttemptedFieldMessage(fieldId: FieldId, message: string): void {
+  attemptedFieldMessages.set(fieldId, {
+    fieldId,
     severity: "error",
     message,
     blocksProjection: true
@@ -614,38 +456,38 @@ function setAttemptedFieldMessage(cell: InputCell, message: string): void {
 
 function getOrderedDefinitions(defs: InputDefinition[]): InputDefinition[] {
   return [...defs].sort((a, b) => {
-    const ra = displayOrderOverride[a.cell] ?? a.row;
-    const rb = displayOrderOverride[b.cell] ?? b.row;
+    const ra = displayOrderOverride[a.fieldId] ?? a.row;
+    const rb = displayOrderOverride[b.fieldId] ?? b.row;
     return ra - rb;
   });
 }
 
-function getVisibleInputOrder(): InputCell[] {
+function getVisibleInputOrder(): FieldId[] {
   const ordered = [
     ...getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === "QUICK START")),
     ...getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === "DEEPER DIVE")),
     ...getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === "FINER DETAILS"))
   ];
   return ordered
-    .filter((def) => fieldVisible(def.cell) && !PROPERTY_LIQUIDATION_CELLS.has(def.cell))
-    .map((def) => def.cell as InputCell);
+    .filter((def) => fieldVisible(fieldState, def.fieldId, { visibleDependents, visibleProperties, visibleIncomeEvents, visibleExpenseEvents }) && !PROPERTY_LIQUIDATION_CELLS.has(def.fieldId))
+    .map((def) => def.fieldId);
 }
 
-function hasUserEnteredValue(cell: InputCell): boolean {
-  return touchedCells.has(fieldIdForCell(cell)) && !isBlank(rawInputs[cell]);
+function hasUserEnteredValue(fieldId: FieldId): boolean {
+  return touchedCells.has(fieldId) && !isBlank(fieldState[fieldId]);
 }
 
-function getSkippedCriticalCells(): Set<InputCell> {
-  const skipped = new Set<InputCell>();
-  const criticalCells = new Set<InputCell>(SKIP_REVEAL_CRITICAL_CELLS);
-  const orderedCells = getVisibleInputOrder();
+function getSkippedCriticalFields(): Set<FieldId> {
+  const skipped = new Set<FieldId>();
+  const criticalFields = new Set<FieldId>(SKIP_REVEAL_CRITICAL_FIELDS);
+  const orderedFields = getVisibleInputOrder();
   let laterUserEnteredValueExists = false;
-  for (let idx = orderedCells.length - 1; idx >= 0; idx -= 1) {
-    const cell = orderedCells[idx];
-    if (criticalCells.has(cell) && isBlank(rawInputs[cell as keyof RawInputs]) && laterUserEnteredValueExists) {
-      skipped.add(cell);
+  for (let idx = orderedFields.length - 1; idx >= 0; idx -= 1) {
+    const fieldId = orderedFields[idx];
+    if (criticalFields.has(fieldId) && isBlank(fieldState[fieldId]) && laterUserEnteredValueExists) {
+      skipped.add(fieldId);
     }
-    if (hasUserEnteredValue(cell as keyof RawInputs)) {
+    if (hasUserEnteredValue(fieldId)) {
       laterUserEnteredValueExists = true;
     }
   }
@@ -654,10 +496,10 @@ function getSkippedCriticalCells(): Set<InputCell> {
 
 function getVisibleValidationMessages(messages: ValidationMessage[]): ValidationMessage[] {
   if (validationRevealAll) return messages;
-  const skippedCriticalCells = getSkippedCriticalCells();
+  const skippedCriticalFields = getSkippedCriticalFields();
   return messages.filter((message) => (
     touchedCells.has(message.fieldId)
-    || (message.severity === "error" && message.blocksProjection && skippedCriticalCells.has(INPUT_DEFINITION_BY_FIELD_ID[message.fieldId].cell))
+    || (message.severity === "error" && message.blocksProjection && skippedCriticalFields.has(message.fieldId))
   ));
 }
 
@@ -665,10 +507,10 @@ function hasProjectionBlockingValidation(messages: ValidationMessage[]): boolean
   return messages.some((message) => message.severity === "error" && message.blocksProjection);
 }
 
-function formatBlockingFieldLabel(cell: InputCell): string {
-  if (cell === "B134") return "end age";
-  const label = INPUT_DEFINITION_BY_FIELD_ID[fieldIdForCell(cell)].label.trim();
-  return label.length > 0 ? `${label.charAt(0).toLowerCase()}${label.slice(1)}` : cell;
+function formatBlockingFieldLabel(fieldId: FieldId): string {
+  if (fieldId === RUNTIME_FIELDS.lifeExpectancyAge) return "end age";
+  const label = INPUT_DEFINITION_BY_FIELD_ID[fieldId].label.trim();
+  return label.length > 0 ? `${label.charAt(0).toLowerCase()}${label.slice(1)}` : fieldId;
 }
 
 function joinHumanLabels(labels: string[]): string {
@@ -683,26 +525,20 @@ function getProjectionBlockingLines(messages: ValidationMessage[]): string[] {
   if (blockingErrors.length === 0) {
     return [PROJECTION_EMPTY_GUIDANCE];
   }
-  const missingCells = Array.from(new Set(
+  const missingFields = Array.from(new Set(
     blockingErrors
-      .filter((message) => isBlank(rawInputs[INPUT_DEFINITION_BY_FIELD_ID[message.fieldId].cell]))
-      .map((message) => INPUT_DEFINITION_BY_FIELD_ID[message.fieldId].cell)
+      .filter((message) => isBlank(fieldState[message.fieldId]))
+      .map((message) => message.fieldId)
   ));
-  if (missingCells.length > 0 && missingCells.length === new Set(blockingErrors.map((message) => INPUT_DEFINITION_BY_FIELD_ID[message.fieldId].cell)).size) {
-    const labels = missingCells.map((cell) => formatBlockingFieldLabel(cell));
+  if (missingFields.length > 0 && missingFields.length === new Set(blockingErrors.map((message) => message.fieldId)).size) {
+    const labels = missingFields.map((fieldId) => formatBlockingFieldLabel(fieldId));
     return [`Enter ${joinHumanLabels(labels)} to see projections.`];
   }
   return ["Fix highlighted inputs to see projections."];
 }
 
 function applyRetireCheckReadiness(messages: ValidationMessage[], statutory: number | null): void {
-  const hasEssentialErrors = messages.some((message) => (
-    message.severity === "error"
-    && (message.fieldId === fieldIdForCell("B4")
-      || message.fieldId === fieldIdForCell("B19")
-      || message.fieldId === fieldIdForCell("B25")
-      || message.fieldId === fieldIdForCell("B134"))
-  ));
+  const hasEssentialErrors = hasRetireCheckEssentialErrors(messages);
   retireCheckButton.disabled = hasEssentialErrors || statutory === null || statutory <= getMinEarlyRetirementAge();
   if (retireCheckButton.disabled) {
     setRetireCheckMessage(null);
@@ -779,20 +615,6 @@ function syncTimelineLabelTooltipState(): void {
     if (truncated) title.dataset.tooltipActive = "true";
     else delete title.dataset.tooltipActive;
   });
-}
-
-function normalizeTimelineLabel(label: string): string {
-  const trimmed = label.trim();
-  if (!trimmed) return trimmed;
-
-  if (/^stock sale executed$/i.test(trimmed)) return "Sell stocks";
-
-  const saleMatch = /^sale of (.+?) property$/i.exec(trimmed);
-  if (saleMatch) {
-    return `Sell ${saleMatch[1]} property`;
-  }
-
-  return trimmed;
 }
 
 function formatImpact(amount: number | null): string {
@@ -882,8 +704,317 @@ function chooseTooltipCompactUnit(values: number[]): TooltipCompactUnit {
   return "k";
 }
 
+function isCashflowDisplayZero(value: number): boolean {
+  return Number.isFinite(value) && Math.abs(value) < 1e-9;
+}
+
+function formatCashflowCellValue(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  if (isCashflowDisplayZero(value)) return "-";
+  return formatCurrencyPrecise(value);
+}
+
+interface CashflowLeafRow {
+  type: "row";
+  id: string;
+  label: string;
+  values: number[];
+  level: number;
+  tone?: "default" | "total" | "bridge";
+  alwaysVisible?: boolean;
+}
+
+interface CashflowGroupRow {
+  type: "group";
+  id: string;
+  label: string;
+  values: number[];
+  level: number;
+  tone?: "default" | "total" | "bridge";
+  children: CashflowNode[];
+  alwaysVisible?: boolean;
+}
+
+interface CashflowSectionRow {
+  type: "section";
+  id: string;
+  label: string;
+}
+
+type CashflowNode = CashflowLeafRow | CashflowGroupRow | CashflowSectionRow;
+
+const CASHFLOW_DETAIL_GROUP_IDS = [
+  "cash",
+  "inflows-rental",
+  "inflows-income-events",
+  "inflows-liquidations",
+  "outflows-property-loans",
+  "outflows-dependents",
+  "outflows-property-costs",
+  "outflows-expense-events"
+] as const;
+
+function sumCashflowSeries(seriesList: number[][], length = seriesList[0]?.length ?? 0): number[] {
+  const total = Array.from({ length }, () => 0);
+  for (const series of seriesList) {
+    for (let i = 0; i < length; i += 1) total[i] += series[i] ?? 0;
+  }
+  return total;
+}
+
+function hasVisibleCashflowValue(values: number[]): boolean {
+  return values.some((value) => Number.isFinite(value) && Math.abs(value) > 1e-6);
+}
+
+function cashflowLeaf(
+  id: string,
+  label: string,
+  values: number[],
+  level: number,
+  tone: CashflowLeafRow["tone"] = "default",
+  alwaysVisible = false
+): CashflowLeafRow {
+  return { type: "row", id, label, values, level, tone, alwaysVisible };
+}
+
+function cashflowGroup(
+  id: string,
+  label: string,
+  values: number[],
+  level: number,
+  children: CashflowNode[],
+  tone: CashflowGroupRow["tone"] = "default",
+  alwaysVisible = false
+): CashflowGroupRow {
+  return { type: "group", id, label, values, level, children, tone, alwaysVisible };
+}
+
+function cashflowSection(id: string, label: string): CashflowSectionRow {
+  return { type: "section", id, label };
+}
+
+function filterCashflowNodes(nodes: CashflowNode[]): CashflowNode[] {
+  const filtered: CashflowNode[] = [];
+  for (const node of nodes) {
+    if (node.type === "section") {
+      filtered.push(node);
+      continue;
+    }
+    if (node.type === "row") {
+      if (node.alwaysVisible || hasVisibleCashflowValue(node.values)) {
+        filtered.push(node);
+      }
+      continue;
+    }
+    const children = filterCashflowNodes(node.children);
+    if (node.alwaysVisible || hasVisibleCashflowValue(node.values) || children.length > 0) {
+      filtered.push({ ...node, children });
+    }
+  }
+  return filtered;
+}
+
+function buildCashflowNodes(scenario: ScenarioOutputs): CashflowNode[] {
+  const cashFlow = scenario.cashFlow;
+  const yearCount = scenario.points.length;
+  const displayInflowsTotal = cashFlow.totalInflows.map((value, idx) => value + cashFlow.interestOnCash[idx]);
+  const displayNetCashFlow = cashFlow.netCashFlow.map((value, idx) => value + cashFlow.interestOnCash[idx]);
+  const rentalChildren = cashFlow.rentalIncomeByProperty.map((series) =>
+    cashflowLeaf(series.key, series.label, series.values, 2)
+  );
+  const incomeEventChildren = cashFlow.incomeEvents.map((series) =>
+    cashflowLeaf(series.key, series.label, series.values, 2)
+  );
+  const liquidationChildren = [
+    cashflowLeaf("liquidation-stocks", "Stocks", cashFlow.liquidationsStocks, 2),
+    ...cashFlow.liquidationsByProperty.map((series) =>
+      cashflowLeaf(series.key, series.label, series.values, 2)
+    )
+  ];
+  const propertyLoanChildren = cashFlow.propertyLoanRepayments.map((series) =>
+    cashflowLeaf(series.key, series.label, series.values, 2)
+  );
+  const dependentChildren = cashFlow.dependentsCost.map((series) =>
+    cashflowLeaf(series.key, series.label, series.values, 2)
+  );
+  const propertyCostChildren = cashFlow.propertyCosts.map((series) =>
+    cashflowLeaf(series.key, series.label, series.values, 2)
+  );
+  const expenseEventChildren = cashFlow.expenseEvents.map((series) =>
+    cashflowLeaf(series.key, series.label, series.values, 2)
+  );
+
+  const nodes: CashflowNode[] = filterCashflowNodes([
+    cashflowGroup("inflows", "Inflows", displayInflowsTotal, 0, [
+      cashflowLeaf("employment-income", "Employment income", cashFlow.employmentIncome, 1),
+      cashflowLeaf("other-work-income", "Other work income", cashFlow.otherWorkIncome, 1),
+      cashflowGroup("inflows-rental", "Rental income", sumCashflowSeries(cashFlow.rentalIncomeByProperty.map((row) => row.values), yearCount), 1, rentalChildren),
+      cashflowLeaf("statutory-pension", "Statutory pension", cashFlow.statutoryPension, 1),
+      cashflowLeaf("other-post-retirement-income", "Other post-retirement income", cashFlow.otherPostRetirementIncome, 1),
+      cashflowGroup("inflows-income-events", "One-off income events", sumCashflowSeries(cashFlow.incomeEvents.map((row) => row.values), yearCount), 1, incomeEventChildren),
+      cashflowGroup("inflows-liquidations", "Liquidations", sumCashflowSeries([
+        cashFlow.liquidationsStocks,
+        ...cashFlow.liquidationsByProperty.map((row) => row.values)
+      ], yearCount), 1, liquidationChildren),
+      cashflowLeaf("interest-cash", "Interest on cash", cashFlow.interestOnCash, 1),
+      cashflowLeaf("inflows-total-footer", "Inflows total", displayInflowsTotal, 1, "total", true)
+    ], "total", true),
+    cashflowGroup("outflows", "Outflows", cashFlow.totalOutflows, 0, [
+      cashflowLeaf("credit-cards-cleared", "Credit cards cleared", cashFlow.creditCardsCleared, 1),
+      cashflowLeaf("home-loan-repayment", "Home loan repayment", cashFlow.homeLoanRepayment, 1),
+      cashflowGroup("outflows-property-loans", "Property loan repayments", sumCashflowSeries(cashFlow.propertyLoanRepayments.map((row) => row.values), yearCount), 1, propertyLoanChildren),
+      cashflowLeaf("other-loan-repayment", "Other loan repayment", cashFlow.otherLoanRepayment, 1),
+      cashflowGroup("outflows-dependents", "Dependents cost", sumCashflowSeries(cashFlow.dependentsCost.map((row) => row.values), yearCount), 1, dependentChildren),
+      cashflowLeaf("housing-rent", "Housing rent", cashFlow.housingRent, 1),
+      cashflowGroup("outflows-property-costs", "Other property costs", sumCashflowSeries(cashFlow.propertyCosts.map((row) => row.values), yearCount), 1, propertyCostChildren),
+      cashflowLeaf("living-expenses", "Living expenses", cashFlow.livingExpenses, 1),
+      cashflowGroup("outflows-expense-events", "One-off expense events", sumCashflowSeries(cashFlow.expenseEvents.map((row) => row.values), yearCount), 1, expenseEventChildren),
+      cashflowLeaf("outflows-total-footer", "Outflows total", cashFlow.totalOutflows, 1, "total", true)
+    ], "total", true),
+    cashflowGroup("cash", "Cash", cashFlow.closingCash, 0, [
+      cashflowLeaf("opening-cash", "Opening cash balance", cashFlow.openingCash, 1, "default", true),
+      cashflowLeaf("net-cash-flow", "Net cash flow", displayNetCashFlow, 1, "bridge", true),
+      cashflowLeaf("closing-cash", "Closing cash balance", cashFlow.closingCash, 1, "bridge", true)
+    ], "total", true)
+  ]);
+
+  return nodes;
+}
+
+function renderCashflowRows(nodes: CashflowNode[], years: number[], ages: number[]): string {
+  const rows: string[] = [];
+  const renderNode = (node: CashflowNode): void => {
+    if (node.type === "section") {
+      rows.push(`
+        <tr class="cashflow-section-row" data-row-id="${escapeHtml(node.id)}">
+          <th class="cashflow-section-cell" scope="rowgroup" colspan="${years.length + 1}">
+            <span class="cashflow-section-label">${escapeHtml(node.label)}</span>
+          </th>
+        </tr>
+      `);
+      return;
+    }
+    const isGroup = node.type === "group";
+    const expanded = isGroup ? cashflowExpandedGroups.has(node.id) : false;
+    const toneClass = node.tone === "bridge"
+      ? "is-bridge"
+      : node.tone === "total"
+        ? "is-total"
+        : "";
+    const rowClass = [
+      "cashflow-row",
+      toneClass,
+      isGroup ? "is-group-header" : "is-line-item",
+      isGroup && node.level === 0 ? "is-major-group" : "",
+      isGroup && node.level > 0 ? "is-subgroup" : "",
+      node.level >= 2 ? "is-child" : "",
+      node.id === "net-cash-flow" || node.id === "closing-cash" ? "is-key-total" : "",
+      node.id === "inflows-liquidations" ? "is-liquidation-group" : ""
+    ].filter(Boolean).join(" ");
+    const labelHtml = isGroup
+      ? `<button class="cashflow-row-toggle" type="button" data-cashflow-toggle="${escapeHtml(node.id)}" aria-expanded="${expanded ? "true" : "false"}"><span class="cashflow-row-toggle-gutter"><span class="cashflow-row-toggle-icon">${expanded ? "−" : "+"}</span></span><span class="cashflow-row-toggle-text">${escapeHtml(node.label)}</span></button>`
+      : `<span class="cashflow-row-label-text"><span class="cashflow-row-toggle-gutter" aria-hidden="true"></span><span class="cashflow-row-label-copy">${escapeHtml(node.label)}</span></span>`;
+    const negativeSensitive = node.id === "net-cash-flow" || node.id === "closing-cash" || node.id === "inflows-liquidations";
+    const showSectionValues = !(isGroup && expanded);
+    const valueCells = node.values.map((value, idx) => {
+      const classes = [
+        "cashflow-value-cell",
+        years[idx] % 5 === 0 ? "has-year-divider" : "",
+        negativeSensitive && value < 0 && !isCashflowDisplayZero(value) ? "is-negative" : ""
+      ].filter(Boolean).join(" ");
+      return `<td class="${classes}">${showSectionValues ? escapeHtml(formatCashflowCellValue(value)) : ""}</td>`;
+    }).join("");
+    rows.push(`
+      <tr class="${rowClass}" data-level="${node.level}" data-row-id="${escapeHtml(node.id)}">
+        <th class="cashflow-label-cell" scope="row">
+          <div class="cashflow-label-inner" style="--cashflow-indent:${node.level}">
+            ${labelHtml}
+          </div>
+        </th>
+        ${valueCells}
+      </tr>
+    `);
+    if (isGroup && expanded) {
+      for (const child of node.children) renderNode(child);
+    }
+  };
+  for (const node of nodes) renderNode(node);
+  const headerCells = years.map((year, idx) => `
+    <th class="cashflow-year-cell${year % 5 === 0 ? " has-year-divider" : ""}" scope="col">
+      <div class="cashflow-year-button">
+        <span class="cashflow-year-label">${year}</span>
+        <span class="cashflow-age-label">Age ${ages[idx]}</span>
+      </div>
+    </th>
+  `).join("");
+  return `
+    <div class="cashflow-table-scroll">
+      <table class="cashflow-table">
+        <thead>
+          <tr>
+            <th class="cashflow-corner-cell" scope="col"></th>
+            ${headerCells}
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.join("")}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function updateCashflowView(): void {
+  const showDashboard = currentView === "dashboard";
+  dashboardView.hidden = !showDashboard;
+  cashflowPage.hidden = showDashboard;
+  dashboardView.classList.toggle("is-hidden", !showDashboard);
+  cashflowPage.classList.toggle("is-hidden", showDashboard);
+  openCashflowButton.classList.toggle("is-active", currentView === "cashflow");
+}
+
+function setChartLegendsVisible(visible: boolean): void {
+  if (visible) {
+    cashChartActions.removeAttribute("hidden");
+    cashLegend.removeAttribute("hidden");
+    nwLegend.removeAttribute("hidden");
+    return;
+  }
+  cashChartActions.setAttribute("hidden", "");
+  cashLegend.setAttribute("hidden", "");
+  nwLegend.setAttribute("hidden", "");
+}
+
+function resetCashflowExpandedGroups(mode: "expanded" | "collapsed" | "top-level"): void {
+  cashflowExpandedGroups.clear();
+  if (mode === "collapsed") return;
+  cashflowExpandedGroups.add("cash");
+  cashflowExpandedGroups.add("inflows");
+  cashflowExpandedGroups.add("outflows");
+  if (mode === "top-level") return;
+  for (const groupId of CASHFLOW_DETAIL_GROUP_IDS) cashflowExpandedGroups.add(groupId);
+}
+
+function renderCashflowPage(result: RunModelResult | null, blockingLines: string[] = []): void {
+  cashflowScenarioEarlyButton.classList.toggle("is-active", cashflowScenario === "early");
+  cashflowScenarioNormButton.classList.toggle("is-active", cashflowScenario === "norm");
+  cashflowScenarioEarlyButton.setAttribute("aria-selected", cashflowScenario === "early" ? "true" : "false");
+  cashflowScenarioNormButton.setAttribute("aria-selected", cashflowScenario === "norm" ? "true" : "false");
+
+  if (!result) {
+    const lines = blockingLines.length > 0 ? blockingLines : [PROJECTION_EMPTY_GUIDANCE];
+    cashflowTablePanel.innerHTML = `<div class="cashflow-empty">${escapeHtml(lines[0])}</div>`;
+    return;
+  }
+
+  const scenario = cashflowScenario === "early" ? result.outputs.scenarioEarly : result.outputs.scenarioNorm;
+  cashflowTablePanel.innerHTML = renderCashflowRows(buildCashflowNodes(scenario), result.outputs.years, result.outputs.ages);
+  restoreCashflowScrollAnchor(pendingCashflowScrollAnchor);
+  pendingCashflowScrollAnchor = null;
+}
+
 function buildChartContextByYear(result: RunModelResult): Map<number, TimelineYearEvent[]> {
-  const labelsByYear = collectSpecificLabelsByYear(result);
+  const labelsByYear = collectSpecificLabelsByYear(fieldState, result, getStatutoryAge(), MILESTONE_EVENT_MIN_ABS_AMOUNT);
   const contextByYear = new Map<number, TimelineYearEvent[]>();
   for (const [year, events] of labelsByYear.entries()) {
     const normalized = events
@@ -901,179 +1032,9 @@ function buildChartContextByYear(result: RunModelResult): Map<number, TimelineYe
   return contextByYear;
 }
 
-function composeTimelineLabel(events: TimelineYearEvent[]): string {
-  const unique = events.filter((event, idx, arr) =>
-    arr.findIndex((x) => x.label === event.label && x.amount === event.amount) === idx
-  );
-  const propertySales: Array<{ name: string; amount: number | null }> = [];
-  const others: TimelineYearEvent[] = [];
-  let hasStockSale = false;
-  let stockSaleAmount = 0;
-
-  for (const event of unique) {
-    if (/^sell stocks$/i.test(event.label)) {
-      hasStockSale = true;
-      stockSaleAmount += event.amount ?? 0;
-      continue;
-    }
-    const propMatch = /^sell (.+) property$/i.exec(event.label);
-    if (propMatch) {
-      propertySales.push({ name: propMatch[1], amount: event.amount });
-      continue;
-    }
-    others.push(event);
-  }
-
-  const parts: string[] = [];
-  if (hasStockSale) {
-    const amountText = formatImpact(stockSaleAmount);
-    parts.push(amountText ? `Sell stocks ${amountText}` : "Sell stocks");
-  }
-  if (propertySales.length === 1) {
-    const sale = propertySales[0];
-    const amountText = formatImpact(sale.amount);
-    parts.push(amountText ? `Sell ${sale.name} ${amountText}` : `Sell ${sale.name}`);
-  } else if (propertySales.length > 1) {
-    const grouped = propertySales
-      .map((sale) => {
-        const amountText = formatImpact(sale.amount);
-        return amountText ? `${sale.name} ${amountText}` : sale.name;
-      })
-      .join(" & ");
-    parts.push(`Sell ${grouped}`);
-  }
-  for (const other of others) {
-    const amountText = formatImpact(other.amount);
-    parts.push(amountText ? `${other.label} ${amountText}` : other.label);
-  }
-
-  return parts.join(", ");
-}
-
-function collectSpecificLabelsByYear(result: RunModelResult): Map<number, TimelineYearEvent[]> {
-  const labelsByYear = new Map<number, TimelineYearEvent[]>();
-
-  const pushLabel = (year: number, name: string, amount: number | null = null): void => {
-    if (!name || !Number.isFinite(year) || year <= 0) return;
-    if (amount !== null && Number.isFinite(amount) && Math.abs(amount) < MILESTONE_EVENT_MIN_ABS_AMOUNT) return;
-    const existing = labelsByYear.get(year) ?? [];
-    existing.push({ label: name, amount });
-    labelsByYear.set(year, existing);
-  };
-  const findYearForAge = (targetAge: number): number | null => {
-    const idx = result.outputs.ages.findIndex((age) => Math.round(age) === Math.round(targetAge));
-    if (idx < 0) return null;
-    return result.outputs.years[idx] ?? null;
-  };
-
-  const eventCells = [
-    { nameCell: "B100", amountCell: "B101", yearCell: "B102", kind: "income" },
-    { nameCell: "B105", amountCell: "B106", yearCell: "B107", kind: "income" },
-    { nameCell: "B110", amountCell: "B111", yearCell: "B112", kind: "income" },
-    { nameCell: "B117", amountCell: "B118", yearCell: "B119", kind: "expense" },
-    { nameCell: "B122", amountCell: "B123", yearCell: "B124", kind: "expense" },
-    { nameCell: "B127", amountCell: "B128", yearCell: "B129", kind: "expense" }
-  ] as const;
-
-  for (const pair of eventCells) {
-    const name = String(rawInputs[pair.nameCell] ?? "").trim();
-    const year = Math.round(asNumber(rawInputs[pair.yearCell]));
-    const amount = Math.abs(asNumber(rawInputs[pair.amountCell]));
-    const signedAmount = pair.kind === "expense" ? -amount : amount;
-    pushLabel(year, name, signedAmount);
-  }
-
-  const dependentCells = [
-    { nameCell: "B33", annualCostCell: "B34", yearsCell: "B35" },
-    { nameCell: "B38", annualCostCell: "B39", yearsCell: "B40" },
-    { nameCell: "B43", annualCostCell: "B44", yearsCell: "B45" }
-  ] as const;
-
-  const firstAge = result.outputs.ages[0];
-  const firstYear = result.outputs.years[0];
-  for (const dep of dependentCells) {
-    const supportYears = Math.round(asNumber(rawInputs[dep.yearsCell]));
-    if (supportYears <= 0) continue;
-    const depName = String(rawInputs[dep.nameCell] ?? "").trim();
-    const label = depName ? `${depName} support ends` : "Dependent support ends";
-    const endAge = firstAge + supportYears;
-    const idx = result.outputs.ages.findIndex((value) => Math.round(value) === Math.round(endAge));
-    const year = idx >= 0 ? result.outputs.years[idx] : firstYear + supportYears;
-    pushLabel(year, label, Math.abs(asNumber(rawInputs[dep.annualCostCell])));
-  }
-
-  const statutory = getStatutoryAge();
-  if (statutory !== null && asNumber(rawInputs.B21) > 0) {
-    const idx = result.outputs.ages.findIndex((value) => Math.round(value) === statutory);
-    if (idx >= 0) pushLabel(result.outputs.years[idx], "State pension starts", Math.abs(asNumber(rawInputs.B21)));
-  }
-
-  const otherWorkIncomeAnnual = asNumber(rawInputs.B70);
-  const otherWorkUntilAge = Math.round(asNumber(rawInputs.B71));
-  if (otherWorkIncomeAnnual !== 0 && otherWorkUntilAge > 0) {
-    const endYear = findYearForAge(otherWorkUntilAge + 1);
-    if (endYear !== null) {
-      pushLabel(endYear, "Other income ends", -Math.abs(otherWorkIncomeAnnual));
-    }
-  }
-
-  const postRetIncomeAnnual = asNumber(rawInputs.B141);
-  const postRetIncomeFromAge = Math.round(asNumber(rawInputs.B142));
-  const postRetIncomeToAge = Math.round(asNumber(rawInputs.B143));
-  if (postRetIncomeAnnual > 0) {
-    if (postRetIncomeFromAge > 0) {
-      const startYear = findYearForAge(postRetIncomeFromAge);
-      if (startYear !== null) pushLabel(startYear, "Other post-retirement income starts", Math.abs(postRetIncomeAnnual));
-    }
-    if (postRetIncomeToAge > 0 && postRetIncomeToAge >= postRetIncomeFromAge) {
-      const endYear = findYearForAge(postRetIncomeToAge + 1);
-      if (endYear !== null) pushLabel(endYear, "Other post-retirement income ends", -Math.abs(postRetIncomeAnnual));
-    }
-  }
-
-  for (const hint of result.outputs.scenarioEarly.milestoneHints) {
-    pushLabel(hint.year, hint.label, hint.amount ?? null);
-  }
-
-  return labelsByYear;
-}
-
-function buildTimelineMilestones(result: RunModelResult): TimelineMilestone[] {
-  const ages = result.outputs.ages;
-  const years = result.outputs.years;
-  if (ages.length === 0) return [];
-
-  const labelsByYear = collectSpecificLabelsByYear(result);
-  const milestones: TimelineMilestone[] = [];
-
-  for (let i = 0; i < ages.length; i += 1) {
-    const year = years[i];
-    const allowedEvents = labelsByYear.get(year) ?? [];
-    if (allowedEvents.length === 0) continue;
-    const normalized = allowedEvents
-      .map((event) => ({ ...event, label: normalizeTimelineLabel(event.label) }))
-      .filter((event) => event.label.length > 0);
-    if (normalized.length === 0) continue;
-    const label = composeTimelineLabel(normalized);
-    if (!label) continue;
-
-    milestones.push({
-      age: ages[i],
-      year,
-      cashPct: null,
-      netWorthPct: null,
-      magnitude: 0,
-      label,
-      notes: []
-    });
-  }
-  milestones.sort((a, b) => a.age - b.age);
-  return milestones;
-}
-
 function renderMilestoneTimeline(result: RunModelResult): void {
-  const enteredAge = Number(rawInputs.B4);
-  const hasValidEnteredAge = !isBlank(rawInputs.B4) && Number.isFinite(enteredAge) && enteredAge >= 18 && enteredAge <= 100;
+  const enteredAge = Number(fieldState[RUNTIME_FIELDS.currentAge]);
+  const hasValidEnteredAge = !isBlank(fieldState[RUNTIME_FIELDS.currentAge]) && Number.isFinite(enteredAge) && enteredAge >= 18 && enteredAge <= 100;
   timelinePanel.hidden = !hasValidEnteredAge;
   if (!hasValidEnteredAge) {
     timelineTrack.style.height = "";
@@ -1093,7 +1054,13 @@ function renderMilestoneTimeline(result: RunModelResult): void {
   const endAge = ages[ages.length - 1];
   const startLabelAge = Math.round(enteredAge);
   const span = Math.max(1, endAge - startAge);
-  const milestones = buildTimelineMilestones(result);
+  const milestones = buildTimelineMilestones(
+    fieldState,
+    result,
+    getStatutoryAge(),
+    MILESTONE_EVENT_MIN_ABS_AMOUNT,
+    formatImpact
+  );
   const topPad = TIMELINE_EDGE_PADDING + TIMELINE_ENDCAP_CLEARANCE;
   const bottomPad = TIMELINE_EDGE_PADDING + TIMELINE_ENDCAP_CLEARANCE;
   const viewportHeight = Math.max(320, timelineScroll.clientHeight);
@@ -1162,11 +1129,11 @@ function renderMilestoneTimeline(result: RunModelResult): void {
 }
 
 function getStatutoryAge(): number | null {
-  const raw = rawInputs.B19;
+  const raw = fieldState[RUNTIME_FIELDS.statutoryRetirementAge];
   if (isBlank(raw)) return null;
   const n = Number(raw);
   if (!Number.isFinite(n)) return null;
-  const capped = applyFieldNumericConstraint("B19", n);
+  const capped = applyFieldNumericConstraint(RUNTIME_FIELDS.statutoryRetirementAge, n);
   if (capped === null || capped < 50) return null;
   return Math.round(capped);
 }
@@ -1228,7 +1195,7 @@ function findEarliestRetirementAgeBeforeStatutory(statutory: number): number | n
 }
 
 function getCurrentAge(): number | null {
-  const raw = rawInputs.B4;
+  const raw = fieldState[RUNTIME_FIELDS.currentAge];
   if (isBlank(raw)) return null;
   const n = Number(raw);
   if (!Number.isFinite(n)) return null;
@@ -1323,9 +1290,8 @@ function sanitizeNumericText(text: string, kind: "number" | "integer" | "percent
   return out;
 }
 
-function fieldAllowsNegative(key: string): boolean {
-  const cell = key in CELL_TO_FIELD_ID ? key as InputCell : INPUT_DEFINITION_BY_FIELD_ID[key as FieldId]?.cell;
-  return !!cell && ALLOW_NEGATIVE_INPUT_CELLS.has(cell);
+function fieldAllowsNegative(fieldId: FieldId): boolean {
+  return ALLOW_NEGATIVE_FIELDS.has(fieldId);
 }
 
 function parseIntegerInput(text: string, allowNegative: boolean): number | null {
@@ -1394,14 +1360,14 @@ function stopStepperHold(): void {
   }
 }
 
-function getAgeStepperLimitMessage(cell: keyof RawInputs, dir: number, nextValue: number): string | null {
-  if (cell === "B4" && dir > 0) {
+function getAgeStepperLimitMessage(fieldId: FieldId, dir: number, nextValue: number): string | null {
+  if (fieldId === RUNTIME_FIELDS.currentAge && dir > 0) {
     const statutory = getStatutoryAge();
     if (statutory !== null && nextValue >= statutory) {
       return "Your age must be less than statutory retirement age.";
     }
   }
-  if (cell === "B19" && dir < 0) {
+  if (fieldId === RUNTIME_FIELDS.statutoryRetirementAge && dir < 0) {
     const currentAge = getCurrentAge();
     if (currentAge !== null && nextValue <= currentAge) {
       return "Statutory retirement age must be greater than your current age.";
@@ -1410,37 +1376,37 @@ function getAgeStepperLimitMessage(cell: keyof RawInputs, dir: number, nextValue
   return null;
 }
 
-function applyStepperDelta(cell: keyof RawInputs, dir: number): void {
+function applyStepperDelta(fieldId: FieldId, dir: number): void {
   if (!Number.isFinite(dir) || (dir !== -1 && dir !== 1)) return;
-  const step = STEPPER_CONFIG[cell];
-  const def = INPUT_DEFINITIONS.find((d) => d.cell === cell);
+  const step = STEPPER_CONFIG[fieldId];
+  const def = INPUT_DEFINITION_BY_FIELD_ID[fieldId];
   if (!Number.isFinite(step) || !def) return;
-  markFieldTouched(cell);
+  markFieldTouched(fieldId);
 
-  const currentRaw = rawInputs[cell];
+  const currentRaw = fieldState[fieldId];
   const current = typeof currentRaw === "number" && Number.isFinite(currentRaw) ? currentRaw : 0;
-  const next = current + dir * step;
-  const ageLimitMessage = getAgeStepperLimitMessage(cell, dir, next);
+  const next = current + dir * (step ?? 0);
+  const ageLimitMessage = getAgeStepperLimitMessage(fieldId, dir, next);
   if (ageLimitMessage !== null) {
-    setAttemptedFieldMessage(cell as InputCell, ageLimitMessage);
+    setAttemptedFieldMessage(fieldId, ageLimitMessage);
     renderValidationState(latestValidationMessages);
     return;
   }
-  const decimals = STEP_DECIMALS[cell] ?? 0;
+  const decimals = STEP_DECIMALS[fieldId] ?? 0;
   const rounded = Number(next.toFixed(decimals));
-  const constrained = applyFieldNumericConstraint(cell, rounded);
+  const constrained = applyFieldNumericConstraint(fieldId, rounded);
   if (constrained === null) return;
-  if (isOutOfRangeLiquidationRank(String(cell), constrained) || isDuplicateLiquidationRank(String(cell), constrained)) return;
+  if (isOutOfRangeLiquidationRank(constrained) || isDuplicateLiquidationRank(fieldState, fieldId, constrained)) return;
 
-  if (cell === "B4" || cell === "B19") {
+  if (fieldId === RUNTIME_FIELDS.currentAge || fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
     clearAgeConstraintAttemptMessages();
   }
-  rawInputs[cell] = constrained;
-  if (String(cell) === "B4") {
-    rawInputs.B4 = Math.max(18, Math.min(100, Math.round(asNumber(rawInputs.B4))));
+  fieldState[fieldId] = constrained;
+  if (fieldId === RUNTIME_FIELDS.currentAge) {
+    fieldState[RUNTIME_FIELDS.currentAge] = Math.max(18, Math.min(100, Math.round(asNumber(fieldState[RUNTIME_FIELDS.currentAge]))));
     enforceLiveUntilAgeConstraint(true);
   }
-  if (String(cell) === "B19") {
+  if (fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
     const statutory = getStatutoryAge();
     if (statutory !== null) {
       uiState.earlyRetirementAge = statutory;
@@ -1449,251 +1415,27 @@ function applyStepperDelta(cell: keyof RawInputs, dir: number): void {
     syncEarlyRetirementControl(true);
   }
 
-  const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-cell="${cell}"]`);
-  if (input) input.value = formatFieldValue(def, rawInputs[cell]);
+  const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${fieldId}"]`);
+  if (input) input.value = formatFieldValue(def, fieldState[fieldId]);
 
   setRetireCheckMessage(null);
   queueRecalc();
 }
 
-function fieldVisible(cell: string): boolean {
-  const v = (c: string) => rawInputs[c as keyof RawInputs];
-  switch (cell) {
-    case "B15":
-      return asNumber(v("B12")) > 0;
-    case "B16":
-    case "B17":
-      return asNumber(v("B12")) > 0 && !isBlank(v("B15"));
-    case "B23":
-      return isBlank(v("B12")) || asNumber(v("B12")) === 0;
-    case "B34":
-    case "B35":
-      return !isBlank(v("B33"));
-    case "B38":
-      return visibleDependents >= 2 || anyValue(dependent2Cells);
-    case "B39":
-    case "B40":
-      return (visibleDependents >= 2 || anyValue(dependent2Cells)) && !isBlank(v("B38"));
-    case "B43":
-      return visibleDependents >= 3 || anyValue(dependent3Cells);
-    case "B44":
-    case "B45":
-      return (visibleDependents >= 3 || anyValue(dependent3Cells)) && !isBlank(v("B43"));
-    case "B51":
-    case "B52":
-      return !isBlank(v("B50"));
-    case "B66":
-      return !isBlank(v("B50")) || !isBlank(v("B66"));
-    case "B55":
-      return visibleProperties >= 2 || anyValue(property2Cells);
-    case "B56":
-    case "B57":
-      return (visibleProperties >= 2 || anyValue(property2Cells)) && !isBlank(v("B55"));
-    case "B67":
-      return ((visibleProperties >= 2 || anyValue(property2Cells)) && !isBlank(v("B55"))) || !isBlank(v("B67"));
-    case "B60":
-      return visibleProperties >= 3 || anyValue(property3Cells);
-    case "B61":
-    case "B62":
-      return (visibleProperties >= 3 || anyValue(property3Cells)) && !isBlank(v("B60"));
-    case "B68":
-      return ((visibleProperties >= 3 || anyValue(property3Cells)) && !isBlank(v("B60"))) || !isBlank(v("B68"));
-    case "B78":
-      return !isBlank(v("B50"));
-    case "B79":
-    case "B80":
-      return !isBlank(v("B50")) && !isBlank(v("B78"));
-    case "B83":
-      return !isBlank(v("B55"));
-    case "B84":
-    case "B85":
-      return !isBlank(v("B55")) && !isBlank(v("B83"));
-    case "B88":
-      return !isBlank(v("B60"));
-    case "B89":
-    case "B90":
-      return !isBlank(v("B60")) && !isBlank(v("B88"));
-    case "B94":
-    case "B95":
-      return !isBlank(v("B93"));
-    case "B166":
-      return anyValue(property1Cells);
-    case "B167":
-      return anyValue(property2Cells);
-    case "B168":
-      return anyValue(property3Cells);
-    case "B163":
-      return asNumber(v("B12")) > 0 || anyValue(property1Cells) || anyValue(property2Cells) || anyValue(property3Cells);
-    case "B147":
-      return asNumber(v("B12")) > 0 || asNumber(v("B51")) > 0 || asNumber(v("B56")) > 0 || asNumber(v("B61")) > 0;
-    case "B155":
-      return asNumber(v("B66")) !== 0 || asNumber(v("B67")) !== 0 || asNumber(v("B68")) !== 0;
-    case "B101":
-    case "B102":
-      return !isBlank(v("B100"));
-    case "B105":
-      return visibleIncomeEvents >= 2 || anyValue(incomeEvent2Cells);
-    case "B106":
-    case "B107":
-      return (visibleIncomeEvents >= 2 || anyValue(incomeEvent2Cells)) && !isBlank(v("B105"));
-    case "B110":
-      return visibleIncomeEvents >= 3 || anyValue(incomeEvent3Cells);
-    case "B111":
-    case "B112":
-      return (visibleIncomeEvents >= 3 || anyValue(incomeEvent3Cells)) && !isBlank(v("B110"));
-    case "B118":
-    case "B119":
-      return !isBlank(v("B117"));
-    case "B122":
-      return visibleExpenseEvents >= 2 || anyValue(expenseEvent2Cells);
-    case "B123":
-    case "B124":
-      return (visibleExpenseEvents >= 2 || anyValue(expenseEvent2Cells)) && !isBlank(v("B122"));
-    case "B127":
-      return visibleExpenseEvents >= 3 || anyValue(expenseEvent3Cells);
-    case "B128":
-    case "B129":
-      return (visibleExpenseEvents >= 3 || anyValue(expenseEvent3Cells)) && !isBlank(v("B127"));
-    case "B71":
-      return !isBlank(v("B70")) && asNumber(v("B70")) !== 0;
-    case "B142":
-    case "B143":
-      return asNumber(v("B141")) > 0;
-    default:
-      return true;
+function persistPropertyLiquidationOrder(order: ReturnType<typeof activePropertyConfigs>, active: ReturnType<typeof activePropertyConfigs>): void {
+  for (const assignment of buildPropertyLiquidationAssignments(order, active)) {
+    fieldState[assignment.fieldId] = assignment.value;
   }
-}
-
-function dynamicLabel(def: InputDefinition): string {
-  if (def.cell === "B66") {
-    const name = String(rawInputs.B50 ?? "").trim();
-    return name ? `Rental income: ${name}` : "Rental income:";
-  }
-  if (def.cell === "B67") {
-    const name = String(rawInputs.B55 ?? "").trim();
-    return name ? `Rental income: ${name}` : "Rental income:";
-  }
-  if (def.cell === "B68") {
-    const name = String(rawInputs.B60 ?? "").trim();
-    return name ? `Rental income: ${name}` : "Rental income:";
-  }
-  if (def.cell === "B145") return "General inflation";
-  if (def.cell === "B166") {
-    const name = String(rawInputs.B50 ?? "").trim();
-    return name || "Property 1";
-  }
-  if (def.cell === "B167") {
-    const name = String(rawInputs.B55 ?? "").trim();
-    return name || "Property 2";
-  }
-  if (def.cell === "B168") {
-    const name = String(rawInputs.B60 ?? "").trim();
-    return name || "Property 3";
-  }
-  return def.label;
-}
-
-function dynamicGroupTail(def: InputDefinition): string[] {
-  const tail = [...def.groupTail];
-  const property1LoanCells = new Set(["B78", "B79", "B80"]);
-  const property2LoanCells = new Set(["B83", "B84", "B85"]);
-  const property3LoanCells = new Set(["B88", "B89", "B90"]);
-
-  if (property1LoanCells.has(def.cell)) {
-    const name = String(rawInputs.B50 ?? "").trim();
-    tail[0] = "Other property loans";
-    tail[1] = name ? `${name} Property` : "Property 1";
-  } else if (property2LoanCells.has(def.cell)) {
-    const name = String(rawInputs.B55 ?? "").trim();
-    tail[0] = "Other property loans";
-    tail[1] = name ? `${name} Property` : "Property 2";
-  } else if (property3LoanCells.has(def.cell)) {
-    const name = String(rawInputs.B60 ?? "").trim();
-    tail[0] = "Other property loans";
-    tail[1] = name ? `${name} Property` : "Property 3";
-  }
-
-  return tail;
-}
-
-function activePropertyConfigs(): PropertyLiquidationConfig[] {
-  return PROPERTY_LIQUIDATION_CONFIG.filter((cfg) => anyValue(cfg.cells)) as PropertyLiquidationConfig[];
-}
-
-function parseRankCellValue(cell: "B166" | "B167" | "B168"): number | null {
-  const raw = rawInputs[cell];
-  if (isBlank(raw)) return null;
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return null;
-  return Math.trunc(n);
-}
-
-function defaultPropertyOrder(active: PropertyLiquidationConfig[]): PropertyLiquidationConfig[] {
-  const indexed = active.map((cfg) => ({ cfg, value: asNumber(rawInputs[cfg.valueCell]) }));
-  indexed.sort((a, b) => (a.value - b.value) || (a.cfg.idx - b.cfg.idx));
-  return indexed.map((item) => item.cfg);
-}
-
-function buildPropertyLiquidationOrder(active: PropertyLiquidationConfig[]): PropertyLiquidationConfig[] {
-  if (active.length <= 1) return [...active];
-
-  const hasManual = active.some((cfg) => !isBlank(rawInputs[cfg.rankCell]));
-  if (!hasManual) return defaultPropertyOrder(active);
-
-  const ranked = active
-    .filter((cfg) => {
-      const rank = parseRankCellValue(cfg.rankCell);
-      return rank !== null && rank > 0;
-    })
-    .sort((a, b) => {
-      const ra = parseRankCellValue(a.rankCell) ?? 0;
-      const rb = parseRankCellValue(b.rankCell) ?? 0;
-      return (ra - rb) || (a.idx - b.idx);
-    });
-  const unranked = active.filter((cfg) => !ranked.includes(cfg));
-  return [...ranked, ...unranked];
-}
-
-function syncManualPropertyOrderForNewProperties(): boolean {
-  const active = activePropertyConfigs();
-  if (active.length <= 1) return false;
-  const hasManual = active.some((cfg) => !isBlank(rawInputs[cfg.rankCell]));
-  if (!hasManual) return false;
-
-  const ranked = active
-    .map((cfg) => ({ cfg, rank: parseRankCellValue(cfg.rankCell) }))
-    .filter((item) => item.rank !== null && item.rank > 0)
-    .sort((a, b) => ((a.rank ?? 0) - (b.rank ?? 0)) || (a.cfg.idx - b.cfg.idx));
-
-  let nextRank = ranked.length > 0 ? (ranked[ranked.length - 1].rank ?? 0) : 0;
-  let changed = false;
-  for (const cfg of active) {
-    if (!isBlank(rawInputs[cfg.rankCell])) continue;
-    nextRank += 1;
-    rawInputs[cfg.rankCell] = nextRank;
-    changed = true;
-  }
-  return changed;
-}
-
-function persistPropertyLiquidationOrder(order: PropertyLiquidationConfig[], active: PropertyLiquidationConfig[]): void {
-  const activeSet = new Set(active.map((cfg) => cfg.idx));
-  for (const cfg of PROPERTY_LIQUIDATION_CONFIG) {
-    if (activeSet.has(cfg.idx)) rawInputs[cfg.rankCell] = null;
-  }
-  order.forEach((cfg, idx) => {
-    rawInputs[cfg.rankCell] = idx + 1;
-  });
 }
 
 function renderPropertyLiquidationOrderControl(): string {
-  const active = activePropertyConfigs();
+  const active = activePropertyConfigs(fieldState);
   if (active.length === 0) return "";
-  const ordered = buildPropertyLiquidationOrder(active);
+  const ordered = buildPropertyLiquidationOrder(fieldState, active);
   const canDrag = ordered.length > 1;
   const rows = ordered.map((cfg, idx) => {
-    const name = String(rawInputs[cfg.nameCell] ?? "").trim() || `Property ${cfg.idx + 1}`;
-    const value = asNumber(rawInputs[cfg.valueCell]);
+    const name = String(fieldState[cfg.nameField] ?? "").trim() || cfg.fallbackName;
+    const value = asNumber(fieldState[cfg.valueField]);
     const valueText = `${currentCurrencySymbol()}${Math.round(value).toLocaleString("en-US")}`;
     return `
       <li class="liquidation-item ${canDrag ? "" : "is-disabled"}" data-liquidation-idx="${cfg.idx}" draggable="${canDrag ? "true" : "false"}">
@@ -1713,11 +1455,10 @@ function renderPropertyLiquidationOrderControl(): string {
 }
 
 function applyFinerDefaultsIfNeeded(): void {
-  for (const [cell, val] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
-    const key = cell as keyof RawInputs;
-    const current = rawInputs[key];
+  for (const [fieldId, val] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS) as Array<[FieldId, number | null]>) {
+    const current = fieldState[fieldId];
     if (isBlank(current) && val !== null && val !== undefined) {
-      rawInputs[key] = applyFieldNumericConstraint(key, Number(val));
+      fieldState[fieldId] = applyFieldNumericConstraint(fieldId, Number(val));
     }
   }
 }
@@ -1734,24 +1475,22 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
     const incoming = payload.raw_inputs ?? {};
 
     for (const def of INPUT_DEFINITIONS) {
-      const key = def.cell as keyof RawInputs;
-      rawInputs[key] = null;
+      fieldState[def.fieldId] = null;
     }
 
     for (const def of INPUT_DEFINITIONS) {
       const cell = def.cell;
       if (!(cell in incoming)) continue;
       const nextRaw = incoming[cell];
-      const key = cell as keyof RawInputs;
       if (nextRaw === null || nextRaw === undefined || String(nextRaw).trim() === "") {
-        rawInputs[key] = null;
+        fieldState[def.fieldId] = null;
         continue;
       }
       if (def.type === "text") {
-        rawInputs[key] = String(nextRaw);
+        fieldState[def.fieldId] = String(nextRaw);
       } else {
         const n = Number(nextRaw);
-        rawInputs[key] = Number.isFinite(n) ? applyFieldNumericConstraint(key, n) : null;
+        fieldState[def.fieldId] = Number.isFinite(n) ? applyFieldNumericConstraint(def.fieldId, n) : null;
       }
     }
 
@@ -1780,8 +1519,7 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
 
 function clearAllInputsPreservingFinerDefaults(): void {
   for (const def of INPUT_DEFINITIONS) {
-    const key = def.cell as keyof RawInputs;
-    rawInputs[key] = null;
+    fieldState[def.fieldId] = null;
   }
   validationRevealAll = false;
   clearTouchedFields();
@@ -1798,11 +1536,11 @@ function clearAllInputsPreservingFinerDefaults(): void {
 }
 
 function clearFinerDetailsInputs(): void {
-  for (const cell of FINER_DETAILS_CELLS) {
-    rawInputs[cell] = null;
+  for (const fieldId of FINER_DETAILS_FIELD_IDS) {
+    fieldState[fieldId] = null;
   }
   validationRevealAll = false;
-  clearTouchedFields(FINER_DETAILS_CELLS);
+  clearTouchedFields(FINER_DETAILS_FIELD_IDS);
   clearAllAttemptedFieldMessages();
   setRetireCheckMessage(null);
   renderInputs();
@@ -1810,14 +1548,14 @@ function clearFinerDetailsInputs(): void {
 }
 
 function loadFinerDetailsDefaults(): void {
-  for (const cell of FINER_DETAILS_CELLS) {
-    rawInputs[cell] = null;
+  for (const fieldId of FINER_DETAILS_FIELD_IDS) {
+    fieldState[fieldId] = null;
   }
-  for (const [cell, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
-    rawInputs[cell as keyof RawInputs] = value;
+  for (const [fieldId, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS) as Array<[FieldId, RawInputValue]>) {
+    fieldState[fieldId] = value;
   }
   validationRevealAll = false;
-  clearTouchedFields(FINER_DETAILS_CELLS);
+  clearTouchedFields(FINER_DETAILS_FIELD_IDS);
   clearAllAttemptedFieldMessages();
   setRetireCheckMessage(null);
   renderInputs();
@@ -1826,16 +1564,21 @@ function loadFinerDetailsDefaults(): void {
 
 function renderInputs(): void {
   const cursorState = capturePanelCursorState();
-  if (anyValue(dependent3Cells)) visibleDependents = Math.max(visibleDependents, 3);
-  else if (anyValue(dependent2Cells)) visibleDependents = Math.max(visibleDependents, 2);
-  if (anyValue(property3Cells)) visibleProperties = Math.max(visibleProperties, 3);
-  else if (anyValue(property2Cells)) visibleProperties = Math.max(visibleProperties, 2);
-  if (anyValue(incomeEvent3Cells)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 3);
-  else if (anyValue(incomeEvent2Cells)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 2);
-  if (anyValue(expenseEvent3Cells)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 3);
-  else if (anyValue(expenseEvent2Cells)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 2);
-  const appendedOrder = syncManualPropertyOrderForNewProperties();
-  if (appendedOrder) queueRecalc();
+  if (anyValue(fieldState, dependent3Fields)) visibleDependents = Math.max(visibleDependents, 3);
+  else if (anyValue(fieldState, dependent2Fields)) visibleDependents = Math.max(visibleDependents, 2);
+  if (anyValue(fieldState, property3Fields)) visibleProperties = Math.max(visibleProperties, 3);
+  else if (anyValue(fieldState, property2Fields)) visibleProperties = Math.max(visibleProperties, 2);
+  if (anyValue(fieldState, incomeEvent3Fields)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 3);
+  else if (anyValue(fieldState, incomeEvent2Fields)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 2);
+  if (anyValue(fieldState, expenseEvent3Fields)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 3);
+  else if (anyValue(fieldState, expenseEvent2Fields)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 2);
+  const appendedOrder = syncManualPropertyOrderForNewProperties(fieldState);
+  if (appendedOrder.length > 0) {
+    for (const update of appendedOrder) {
+      fieldState[update.fieldId] = update.value;
+    }
+    queueRecalc();
+  }
   const grouped = {
     "QUICK START": INPUT_DEFINITIONS.filter((d) => d.section === "QUICK START"),
     "DEEPER DIVE": INPUT_DEFINITIONS.filter((d) => d.section === "DEEPER DIVE"),
@@ -1872,8 +1615,8 @@ function renderInputs(): void {
     let prevSub = "";
     let liquidationRendered = false;
     for (const def of orderedDefs) {
-      if (!fieldVisible(def.cell)) continue;
-      if (PROPERTY_LIQUIDATION_CELLS.has(def.cell)) {
+      if (!fieldVisible(fieldState, def.fieldId, { visibleDependents, visibleProperties, visibleIncomeEvents, visibleExpenseEvents })) continue;
+      if (PROPERTY_LIQUIDATION_CELLS.has(def.fieldId)) {
         if (!liquidationRendered) {
           const controlHtml = renderPropertyLiquidationOrderControl();
           if (controlHtml) {
@@ -1883,7 +1626,7 @@ function renderInputs(): void {
         }
         continue;
       }
-      const tail = dynamicGroupTail(def).map((s) => s.trim()).filter((s) => s.length > 0);
+      const tail = getDynamicGroupTail(def, fieldState).map((s) => s.trim()).filter((s) => s.length > 0);
       if (tail.length === 0) {
         prevTop = "";
         prevSub = "";
@@ -1903,15 +1646,15 @@ function renderInputs(): void {
           prevSub = sub;
         }
       }
-      const label = dynamicLabel(def);
-      const value = rawInputs[def.cell as keyof RawInputs];
+      const label = getDynamicFieldLabel(def, fieldState);
+      const value = fieldState[def.fieldId];
       const valStr = formatFieldValue(def, value);
       const inputType = "text";
       const inputMode = def.type === "text" ? "text" : (def.type === "integer" ? "numeric" : "decimal");
-      const showTooltip = !["B4", "B23"].includes(def.cell) && !!def.tooltip;
+      const showTooltip = ![RUNTIME_FIELDS.currentAge, HOME_FIELDS.housingRentAnnual].includes(def.fieldId) && !!def.tooltip;
       const hasPrefix = fieldHasCurrencyAdornment(def);
       const hasSuffix = fieldHasPercentAdornment(def);
-      const stepSize = STEPPER_CONFIG[def.cell];
+      const stepSize = STEPPER_CONFIG[def.fieldId];
       const hasStepper = Number.isFinite(stepSize);
       const inputShellClass = [
         "input-shell",
@@ -1928,8 +1671,8 @@ function renderInputs(): void {
             ${hasSuffix ? `<span class="input-suffix" aria-hidden="true">%</span>` : ""}
             ${hasStepper ? `
               <div class="field-stepper">
-                <button type="button" class="field-step-btn" data-step-cell="${def.cell}" data-step-dir="-1" tabindex="-1" aria-label="Decrease ${escapeHtml(label)}">-</button>
-                <button type="button" class="field-step-btn" data-step-cell="${def.cell}" data-step-dir="1" tabindex="-1" aria-label="Increase ${escapeHtml(label)}">+</button>
+                <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease ${escapeHtml(label)}">-</button>
+                <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase ${escapeHtml(label)}">+</button>
               </div>
             ` : ""}
           </div>
@@ -1937,28 +1680,28 @@ function renderInputs(): void {
         </label>
       `;
 
-      if (def.cell === "B35" && visibleDependents < 2 && !isBlank(rawInputs.B33)) {
+      if (def.fieldId === DEPENDENT_RUNTIME_GROUPS[0].yearsField && visibleDependents < 2 && !isBlank(fieldState[DEPENDENT_RUNTIME_GROUPS[0].nameField])) {
         html += `<button type="button" class="add-dependent-btn" data-next-dependent="2">Add another dependent</button>`;
       }
-      if (def.cell === "B40" && visibleDependents < 3 && !isBlank(rawInputs.B38)) {
+      if (def.fieldId === DEPENDENT_RUNTIME_GROUPS[1].yearsField && visibleDependents < 3 && !isBlank(fieldState[DEPENDENT_RUNTIME_GROUPS[1].nameField])) {
         html += `<button type="button" class="add-dependent-btn" data-next-dependent="3">Add another dependent</button>`;
       }
-      if (def.cell === "B52" && visibleProperties < 2 && !isBlank(rawInputs.B50)) {
+      if (def.fieldId === PROPERTY_RUNTIME_GROUPS[0].annualCostsField && visibleProperties < 2 && !isBlank(fieldState[PROPERTY_RUNTIME_GROUPS[0].nameField])) {
         html += `<button type="button" class="add-property-btn" data-next-property="2">Add another property</button>`;
       }
-      if (def.cell === "B57" && visibleProperties < 3 && !isBlank(rawInputs.B55)) {
+      if (def.fieldId === PROPERTY_RUNTIME_GROUPS[1].annualCostsField && visibleProperties < 3 && !isBlank(fieldState[PROPERTY_RUNTIME_GROUPS[1].nameField])) {
         html += `<button type="button" class="add-property-btn" data-next-property="3">Add another property</button>`;
       }
-      if (def.cell === "B102" && visibleIncomeEvents < 2 && !isBlank(rawInputs.B100)) {
+      if (def.fieldId === INCOME_EVENT_RUNTIME_GROUPS[0].yearField && visibleIncomeEvents < 2 && !isBlank(fieldState[INCOME_EVENT_RUNTIME_GROUPS[0].nameField])) {
         html += `<button type="button" class="add-event-btn" data-next-income-event="2">Add another income event</button>`;
       }
-      if (def.cell === "B107" && visibleIncomeEvents < 3 && !isBlank(rawInputs.B105)) {
+      if (def.fieldId === INCOME_EVENT_RUNTIME_GROUPS[1].yearField && visibleIncomeEvents < 3 && !isBlank(fieldState[INCOME_EVENT_RUNTIME_GROUPS[1].nameField])) {
         html += `<button type="button" class="add-event-btn" data-next-income-event="3">Add another income event</button>`;
       }
-      if (def.cell === "B119" && visibleExpenseEvents < 2 && !isBlank(rawInputs.B117)) {
+      if (def.fieldId === EXPENSE_EVENT_RUNTIME_GROUPS[0].yearField && visibleExpenseEvents < 2 && !isBlank(fieldState[EXPENSE_EVENT_RUNTIME_GROUPS[0].nameField])) {
         html += `<button type="button" class="add-event-btn" data-next-expense-event="2">Add another expense event</button>`;
       }
-      if (def.cell === "B124" && visibleExpenseEvents < 3 && !isBlank(rawInputs.B122)) {
+      if (def.fieldId === EXPENSE_EVENT_RUNTIME_GROUPS[1].yearField && visibleExpenseEvents < 3 && !isBlank(fieldState[EXPENSE_EVENT_RUNTIME_GROUPS[1].nameField])) {
         html += `<button type="button" class="add-event-btn" data-next-expense-event="3">Add another expense event</button>`;
       }
     }
@@ -2024,33 +1767,32 @@ function renderInputs(): void {
     });
   }
 
-  inputsPanel.querySelectorAll<HTMLInputElement>("input[data-cell]").forEach((el) => {
+  inputsPanel.querySelectorAll<HTMLInputElement>("input[data-field-id]").forEach((el) => {
     el.addEventListener("keydown", (ev) => {
-      const stepCell = el.dataset.cell as keyof RawInputs;
-      if ((ev.key === "ArrowUp" || ev.key === "ArrowDown") && Number.isFinite(STEPPER_CONFIG[stepCell])) {
+      const fieldId = el.dataset.fieldId as FieldId;
+      if ((ev.key === "ArrowUp" || ev.key === "ArrowDown") && Number.isFinite(STEPPER_CONFIG[fieldId])) {
         ev.preventDefault();
-        applyStepperDelta(stepCell, ev.key === "ArrowUp" ? 1 : -1);
+        applyStepperDelta(fieldId, ev.key === "ArrowUp" ? 1 : -1);
         return;
       }
       if (ev.key !== "Tab" || ev.shiftKey) return;
-      const cell = el.dataset.cell;
-      if (cell !== "B15") return;
+      if (fieldId !== HOME_FIELDS.mortgageBalance) return;
       const balanceWillBeNonBlank = el.value.trim() !== "";
-      const interestInputPresent = !!inputsPanel.querySelector<HTMLInputElement>('input[data-cell="B16"]');
+      const interestInputPresent = !!inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${HOME_FIELDS.mortgageInterestRateAnnual}"]`);
       if (balanceWillBeNonBlank && !interestInputPresent) {
-        pendingFocusCell = "B16";
+        pendingFocusFieldId = HOME_FIELDS.mortgageInterestRateAnnual;
       }
     });
 
     el.addEventListener("input", () => {
-      const cell = el.dataset.cell as keyof RawInputs;
-      markFieldTouched(cell);
-      if (cell === "B4" || cell === "B19") {
+      const fieldId = el.dataset.fieldId as FieldId;
+      markFieldTouched(fieldId);
+      if (fieldId === RUNTIME_FIELDS.currentAge || fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
         clearAgeConstraintAttemptMessages();
       }
-      const def = INPUT_DEFINITIONS.find((d) => d.cell === cell)!;
-      const prevValue = rawInputs[cell];
-      const allowNegative = fieldAllowsNegative(cell);
+      const def = INPUT_DEFINITION_BY_FIELD_ID[fieldId];
+      const prevValue = fieldState[fieldId];
+      const allowNegative = fieldAllowsNegative(fieldId);
       if (def.type === "integer") {
         const sanitized = sanitizeNumericText(el.value, "integer", allowNegative);
         if (sanitized !== el.value) el.value = sanitized;
@@ -2071,21 +1813,21 @@ function renderInputs(): void {
             : parseNumberInput(el.value, allowNegative);
 
       if (def.type !== "text") {
-        nextValue = applyFieldNumericConstraint(cell, nextValue as number | null);
+        nextValue = applyFieldNumericConstraint(fieldId, nextValue as number | null);
       }
 
-      if (isOutOfRangeLiquidationRank(String(cell), nextValue) || isDuplicateLiquidationRank(String(cell), nextValue)) {
+      if (isOutOfRangeLiquidationRank(nextValue) || isDuplicateLiquidationRank(fieldState, fieldId, nextValue)) {
         el.value = prevValue === null || prevValue === undefined ? "" : String(prevValue);
         return;
       }
 
       if (def.type === "text") {
-        rawInputs[cell] = nextValue as string;
+        fieldState[fieldId] = nextValue as string;
       } else {
-        rawInputs[cell] = nextValue as number | null;
+        fieldState[fieldId] = nextValue as number | null;
       }
       setRetireCheckMessage(null);
-      if (String(cell) === "B19") {
+      if (fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
         const statutory = getStatutoryAge();
         if (statutory !== null) {
           uiState.earlyRetirementAge = statutory;
@@ -2093,21 +1835,21 @@ function renderInputs(): void {
         }
         syncEarlyRetirementControl(true);
       }
-      if (String(cell) === "B4") {
+      if (fieldId === RUNTIME_FIELDS.currentAge) {
         enforceLiveUntilAgeConstraint(true);
       }
       queueRecalc();
       // For numeric dependency-driver fields, defer UI structural rerender to blur
       // to avoid caret reset behavior in number inputs.
-      const rerenderNow = shouldRerenderOnInput(String(cell), prevValue, nextValue);
+      const rerenderNow = shouldRerenderOnInput(fieldId, prevValue, nextValue);
       if (rerenderNow) {
         renderInputs();
       }
     });
     el.addEventListener("focus", () => {
-      const cell = el.dataset.cell as keyof RawInputs;
-      const def = INPUT_DEFINITIONS.find((d) => d.cell === cell)!;
-      const current = rawInputs[cell];
+      const fieldId = el.dataset.fieldId as FieldId;
+      const def = INPUT_DEFINITION_BY_FIELD_ID[fieldId];
+      const current = fieldState[fieldId];
       if (def.type === "percent") {
         if (current === null || current === undefined || String(current).trim() === "") {
           el.value = "";
@@ -2126,18 +1868,18 @@ function renderInputs(): void {
       }
     });
     el.addEventListener("blur", (ev) => {
-      const cell = el.dataset.cell as keyof RawInputs;
-      markFieldTouched(cell);
-      if (cell === "B4" || cell === "B19") {
+      const fieldId = el.dataset.fieldId as FieldId;
+      markFieldTouched(fieldId);
+      if (fieldId === RUNTIME_FIELDS.currentAge || fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
         clearAgeConstraintAttemptMessages();
       }
-      const def = INPUT_DEFINITIONS.find((d) => d.cell === cell)!;
+      const def = INPUT_DEFINITION_BY_FIELD_ID[fieldId];
       if (def.type !== "text") {
-        const current = rawInputs[cell];
+        const current = fieldState[fieldId];
         const numericCurrent = typeof current === "number" && Number.isFinite(current) ? current : null;
-        const constrained = applyFieldNumericConstraint(cell, numericCurrent);
+        const constrained = applyFieldNumericConstraint(fieldId, numericCurrent);
         if (constrained !== numericCurrent) {
-          rawInputs[cell] = constrained;
+          fieldState[fieldId] = constrained;
           queueRecalc();
         }
       }
@@ -2148,37 +1890,37 @@ function renderInputs(): void {
         fieldState[key] = pruned[key];
       }
       if (changedByPrune) queueRecalc();
-      if (String(cell) === "B4" && rawInputs.B4 !== null && rawInputs.B4 !== undefined) {
-        const age = Number(rawInputs.B4);
+      if (fieldId === RUNTIME_FIELDS.currentAge && fieldState[RUNTIME_FIELDS.currentAge] !== null && fieldState[RUNTIME_FIELDS.currentAge] !== undefined) {
+        const age = Number(fieldState[RUNTIME_FIELDS.currentAge]);
         if (Number.isFinite(age)) {
-          rawInputs.B4 = Math.max(18, Math.min(100, Math.round(age)));
+          fieldState[RUNTIME_FIELDS.currentAge] = Math.max(18, Math.min(100, Math.round(age)));
           enforceLiveUntilAgeConstraint(true);
           queueRecalc();
         }
       }
       if (def.type === "percent" || def.type === "integer" || def.type === "number") {
-        el.value = formatFieldValue(def, rawInputs[cell]);
+        el.value = formatFieldValue(def, fieldState[fieldId]);
       }
       if (def.type === "text") {
-        if (STRUCTURAL_RERENDER_CELLS.has(String(cell)) || changedByPrune) {
+        if (STRUCTURAL_RERENDER_CELLS.has(fieldId) || changedByPrune) {
           renderInputs();
         }
         return;
       }
-      if (STRUCTURAL_RERENDER_CELLS.has(String(cell)) || changedByPrune) {
+      if (STRUCTURAL_RERENDER_CELLS.has(fieldId) || changedByPrune) {
         const next = ev.relatedTarget as HTMLElement | null;
-        const nextCell = next?.getAttribute?.("data-cell");
+        const nextFieldId = next?.getAttribute?.("data-field-id");
         renderInputs();
-        if (pendingFocusCell) {
-          const pendingInput = inputsPanel.querySelector<HTMLInputElement>(`input[data-cell="${pendingFocusCell}"]`);
-          pendingFocusCell = null;
+        if (pendingFocusFieldId) {
+          const pendingInput = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${pendingFocusFieldId}"]`);
+          pendingFocusFieldId = null;
           if (pendingInput) {
             pendingInput.focus({ preventScroll: true });
             return;
           }
         }
-        if (nextCell) {
-          const nextInput = inputsPanel.querySelector<HTMLInputElement>(`input[data-cell="${nextCell}"]`);
+        if (nextFieldId) {
+          const nextInput = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${nextFieldId}"]`);
           if (nextInput) nextInput.focus({ preventScroll: true });
         }
       }
@@ -2189,13 +1931,13 @@ function renderInputs(): void {
     btn.addEventListener("pointerdown", (ev) => {
       ev.preventDefault();
       stopStepperHold();
-      const cell = btn.dataset.stepCell as keyof RawInputs;
-      if (!cell) return;
+      const fieldId = btn.dataset.fieldId as FieldId;
+      if (!fieldId) return;
       const dir = Number(btn.dataset.stepDir);
       if (!Number.isFinite(dir) || (dir !== -1 && dir !== 1)) return;
-      applyStepperDelta(cell, dir);
+      applyStepperDelta(fieldId, dir);
       stepperHoldTimeout = window.setTimeout(() => {
-        stepperHoldInterval = window.setInterval(() => applyStepperDelta(cell, dir), 80);
+        stepperHoldInterval = window.setInterval(() => applyStepperDelta(fieldId, dir), 80);
       }, 320);
     });
   });
@@ -2316,8 +2058,8 @@ function renderInputs(): void {
         const targetIdx = Number(item.dataset.liquidationIdx);
         if (!Number.isFinite(targetIdx) || targetIdx === draggingIdx) return;
 
-        const active = activePropertyConfigs();
-        const order = buildPropertyLiquidationOrder(active);
+        const active = activePropertyConfigs(fieldState);
+        const order = buildPropertyLiquidationOrder(fieldState, active);
         const fromPos = order.findIndex((cfg) => cfg.idx === draggingIdx);
         const toBasePos = order.findIndex((cfg) => cfg.idx === targetIdx);
         if (fromPos < 0 || toBasePos < 0) return;
@@ -2722,6 +2464,7 @@ function recalc(): void {
   hideChartTooltip(nwCanvas);
 
   const result = runModel(fieldState, uiState);
+  latestRunResult = result;
   renderValidationState(result.validationMessages);
   const visibleValidationMessages = getVisibleValidationMessages(result.validationMessages);
   const hasBlockingErrors = hasProjectionBlockingValidation(result.validationMessages);
@@ -2729,6 +2472,7 @@ function recalc(): void {
   const statutory = getStatutoryAge();
   applyRetireCheckReadiness(result.validationMessages, statutory);
   if (hasBlockingErrors) {
+    setChartLegendsVisible(false);
     cashLegendA.textContent = "Retire at early age";
     cashLegendB.textContent = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
     nwLegendA.textContent = "Retire at early age";
@@ -2744,16 +2488,22 @@ function recalc(): void {
     drawEmptyChart(cashCanvas, chartLines);
     drawEmptyChart(nwCanvas, chartLines);
     clearTimeline(timelineMessage);
+    cashflowScenarioEarlyButton.textContent = "Early";
+    cashflowScenarioNormButton.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
+    renderCashflowPage(null, chartLines);
     return;
   }
 
   const contextByYear = buildChartContextByYear(result);
   const earlyLabel = spinner.value.trim() === "" ? "Retire at early age" : `Retire at ${uiState.earlyRetirementAge}`;
   const statutoryLabel = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
+  setChartLegendsVisible(true);
   cashLegendA.textContent = earlyLabel;
   cashLegendB.textContent = statutoryLabel;
   nwLegendA.textContent = earlyLabel;
   nwLegendB.textContent = statutoryLabel;
+  cashflowScenarioEarlyButton.textContent = `Early ${uiState.earlyRetirementAge}`;
+  cashflowScenarioNormButton.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
   drawChart(
     cashCanvas,
     result.outputs.ages,
@@ -2787,6 +2537,7 @@ function recalc(): void {
     contextByYear
   });
   renderMilestoneTimeline(result);
+  renderCashflowPage(result);
 }
 
 function queueRecalc(): void {
@@ -2848,6 +2599,52 @@ spinner.addEventListener("blur", () => {
 spinnerDown.addEventListener("click", () => adjustEarlyRetirementAge(-1));
 spinnerUp.addEventListener("click", () => adjustEarlyRetirementAge(1));
 
+openCashflowButton.addEventListener("click", () => {
+  currentView = "cashflow";
+  renderCashflowPage(latestRunResult, latestRunResult ? [] : getProjectionBlockingLines(getVisibleValidationMessages(latestValidationMessages)));
+  updateCashflowView();
+});
+
+cashflowBackButton.addEventListener("click", () => {
+  currentView = "dashboard";
+  updateCashflowView();
+});
+
+cashflowScenarioEarlyButton.addEventListener("click", () => {
+  cashflowScenario = "early";
+  recalc();
+});
+
+cashflowScenarioNormButton.addEventListener("click", () => {
+  cashflowScenario = "norm";
+  recalc();
+});
+
+cashflowExpandAllButton.addEventListener("click", () => {
+  resetCashflowExpandedGroups("expanded");
+  recalc();
+});
+
+cashflowCollapseAllButton.addEventListener("click", () => {
+  resetCashflowExpandedGroups("collapsed");
+  recalc();
+});
+
+cashflowTablePanel.addEventListener("click", (event) => {
+  const target = event.target as HTMLElement | null;
+  if (!target) return;
+  const toggle = target.closest<HTMLElement>("[data-cashflow-toggle]");
+  if (toggle) {
+    const groupId = toggle.dataset.cashflowToggle;
+    if (!groupId) return;
+    pendingCashflowScrollAnchor = captureCashflowScrollAnchor(groupId);
+    if (cashflowExpandedGroups.has(groupId)) cashflowExpandedGroups.delete(groupId);
+    else cashflowExpandedGroups.add(groupId);
+    recalc();
+    return;
+  }
+});
+
 retireCheckButton.addEventListener("click", () => {
   validationRevealAll = true;
   const statutory = getStatutoryAge();
@@ -2882,5 +2679,7 @@ retireCheckButton.addEventListener("click", () => {
 setupChartHover(cashCanvas);
 setupChartHover(nwCanvas);
 
+resetCashflowExpandedGroups("top-level");
+updateCashflowView();
 renderInputs();
 recalc();

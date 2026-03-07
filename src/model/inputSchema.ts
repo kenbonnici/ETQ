@@ -1,5 +1,5 @@
 import { InputDefinition, INPUT_DEFINITIONS } from "../ui/inputDefinitions";
-import { FieldId, InputCell } from "./fieldRegistry";
+import { FIELD_ID_TO_CELL, FieldId, InputCell } from "./fieldRegistry";
 
 export type { InputDefinition };
 export { INPUT_DEFINITIONS };
@@ -35,17 +35,172 @@ export interface FieldValidationRule {
   warningBounds?: NumericConstraint;
 }
 
-function mapRecordKeys<T>(record: Partial<Record<InputCell, T>>): Partial<Record<FieldId, T>> {
+type DependentGroup = {
+  nameField: FieldId;
+  annualCostField: FieldId;
+  yearsField: FieldId;
+};
+
+type DependentGroupByCell = {
+  nameCell: InputCell;
+  annualCostCell: InputCell;
+  yearsCell: InputCell;
+};
+
+type PropertyGroup = {
+  nameField: FieldId;
+  valueField: FieldId;
+  annualCostsField: FieldId;
+  rentalIncomeField: FieldId;
+  loanBalanceField: FieldId;
+  loanRateField: FieldId;
+  loanRepaymentField: FieldId;
+  liquidationRankField: FieldId;
+};
+
+type PropertyGroupByCell = {
+  nameCell: InputCell;
+  valueCell: InputCell;
+  annualCostsCell: InputCell;
+  rentalIncomeCell: InputCell;
+  loanBalanceCell: InputCell;
+  loanRateCell: InputCell;
+  loanRepaymentCell: InputCell;
+  liquidationRankCell: InputCell;
+};
+
+type EventGroup = {
+  nameField: FieldId;
+  amountField: FieldId;
+  yearField: FieldId;
+};
+
+type EventGroupByCell = {
+  nameCell: InputCell;
+  amountCell: InputCell;
+  yearCell: InputCell;
+};
+
+type HomeLoanGroup = {
+  homeValueField: FieldId;
+  rentField: FieldId;
+  balanceField: FieldId;
+  rateField: FieldId;
+  repaymentField: FieldId;
+};
+
+type HomeLoanGroupByCell = {
+  homeValueCell: InputCell;
+  rentCell: InputCell;
+  balanceCell: InputCell;
+  rateCell: InputCell;
+  repaymentCell: InputCell;
+};
+
+type OtherWorkGroup = {
+  incomeField: FieldId;
+  untilAgeField: FieldId;
+};
+
+type OtherWorkGroupByCell = {
+  incomeCell: InputCell;
+  untilAgeCell: InputCell;
+};
+
+type OtherLoanGroup = {
+  balanceField: FieldId;
+  rateField: FieldId;
+  repaymentField: FieldId;
+};
+
+type OtherLoanGroupByCell = {
+  balanceCell: InputCell;
+  rateCell: InputCell;
+  repaymentCell: InputCell;
+};
+
+type PostRetirementIncomeGroup = {
+  amountField: FieldId;
+  fromAgeField: FieldId;
+  toAgeField: FieldId;
+};
+
+type PostRetirementIncomeGroupByCell = {
+  amountCell: InputCell;
+  fromAgeCell: InputCell;
+  toAgeCell: InputCell;
+};
+
+function mapFieldRecordToCells<T>(record: Partial<Record<FieldId, T>>): Partial<Record<InputCell, T>> {
   return Object.fromEntries(
-    Object.entries(record).map(([cell, value]) => {
-      const def = INPUT_DEFINITION_BY_CELL[cell as InputCell];
-      return [def.fieldId, value];
-    })
-  ) as Partial<Record<FieldId, T>>;
+    Object.entries(record).map(([fieldId, value]) => [FIELD_ID_TO_CELL[fieldId as FieldId], value])
+  ) as Partial<Record<InputCell, T>>;
 }
 
-function mapCellList(cells: readonly InputCell[]): FieldId[] {
-  return cells.map((cell) => INPUT_DEFINITION_BY_CELL[cell].fieldId);
+function mapFieldListToCells<const T extends readonly FieldId[]>(fields: T): { readonly [K in keyof T]: InputCell } {
+  return fields.map((fieldId) => FIELD_ID_TO_CELL[fieldId]) as { readonly [K in keyof T]: InputCell };
+}
+
+function dependentGroupToCells(group: DependentGroup): DependentGroupByCell {
+  return {
+    nameCell: FIELD_ID_TO_CELL[group.nameField],
+    annualCostCell: FIELD_ID_TO_CELL[group.annualCostField],
+    yearsCell: FIELD_ID_TO_CELL[group.yearsField]
+  };
+}
+
+function propertyGroupToCells(group: PropertyGroup): PropertyGroupByCell {
+  return {
+    nameCell: FIELD_ID_TO_CELL[group.nameField],
+    valueCell: FIELD_ID_TO_CELL[group.valueField],
+    annualCostsCell: FIELD_ID_TO_CELL[group.annualCostsField],
+    rentalIncomeCell: FIELD_ID_TO_CELL[group.rentalIncomeField],
+    loanBalanceCell: FIELD_ID_TO_CELL[group.loanBalanceField],
+    loanRateCell: FIELD_ID_TO_CELL[group.loanRateField],
+    loanRepaymentCell: FIELD_ID_TO_CELL[group.loanRepaymentField],
+    liquidationRankCell: FIELD_ID_TO_CELL[group.liquidationRankField]
+  };
+}
+
+function eventGroupToCells(group: EventGroup): EventGroupByCell {
+  return {
+    nameCell: FIELD_ID_TO_CELL[group.nameField],
+    amountCell: FIELD_ID_TO_CELL[group.amountField],
+    yearCell: FIELD_ID_TO_CELL[group.yearField]
+  };
+}
+
+function homeLoanGroupToCells(group: HomeLoanGroup): HomeLoanGroupByCell {
+  return {
+    homeValueCell: FIELD_ID_TO_CELL[group.homeValueField],
+    rentCell: FIELD_ID_TO_CELL[group.rentField],
+    balanceCell: FIELD_ID_TO_CELL[group.balanceField],
+    rateCell: FIELD_ID_TO_CELL[group.rateField],
+    repaymentCell: FIELD_ID_TO_CELL[group.repaymentField]
+  };
+}
+
+function otherWorkGroupToCells(group: OtherWorkGroup): OtherWorkGroupByCell {
+  return {
+    incomeCell: FIELD_ID_TO_CELL[group.incomeField],
+    untilAgeCell: FIELD_ID_TO_CELL[group.untilAgeField]
+  };
+}
+
+function otherLoanGroupToCells(group: OtherLoanGroup): OtherLoanGroupByCell {
+  return {
+    balanceCell: FIELD_ID_TO_CELL[group.balanceField],
+    rateCell: FIELD_ID_TO_CELL[group.rateField],
+    repaymentCell: FIELD_ID_TO_CELL[group.repaymentField]
+  };
+}
+
+function postRetirementIncomeGroupToCells(group: PostRetirementIncomeGroup): PostRetirementIncomeGroupByCell {
+  return {
+    amountCell: FIELD_ID_TO_CELL[group.amountField],
+    fromAgeCell: FIELD_ID_TO_CELL[group.fromAgeField],
+    toAgeCell: FIELD_ID_TO_CELL[group.toAgeField]
+  };
 }
 
 export const INPUT_DEFINITION_BY_CELL: Record<InputCell, InputDefinition> = Object.fromEntries(
@@ -79,276 +234,279 @@ export const FINER_DETAILS_FIELDS: FieldId[] = INPUT_DEFINITIONS
   .filter((def) => def.section === "FINER DETAILS")
   .map((def) => def.fieldId);
 
-export const FINER_DETAILS_COL_C_DEFAULTS_BY_CELL: Partial<Record<InputCell, number | null>> = {
-  B134: 85,
-  B137: 0,
-  B138: -0.1,
-  B139: -0.2,
-  B141: null,
-  B142: null,
-  B143: null,
-  B145: 0.025,
-  B147: 0.03,
-  B149: 0.025,
-  B151: 0.08,
-  B153: 0.03,
-  B155: 0.03,
-  B157: 300,
-  B159: 20000,
-  B161: 0.05,
-  B163: 0.15,
-  B166: null,
-  B167: null,
-  B168: null
+export const FINER_DETAILS_COL_C_DEFAULTS: Partial<Record<FieldId, number | null>> = {
+  "planning.lifeExpectancyAge": 85,
+  "spending.adjustments.pre65.deltaRate": 0,
+  "spending.adjustments.age66To75.deltaRate": -0.1,
+  "spending.adjustments.age76Plus.deltaRate": -0.2,
+  "income.postRetirementSupplement.annual": null,
+  "income.postRetirementSupplement.startAge": null,
+  "income.postRetirementSupplement.endAge": null,
+  "assumptions.generalInflationRateAnnual": 0.025,
+  "assumptions.propertyAppreciationRateAnnual": 0.03,
+  "assumptions.cashYieldRateAnnual": 0.025,
+  "assumptions.equityReturnRateAnnual": 0.08,
+  "assumptions.salaryGrowthRateAnnual": 0.03,
+  "assumptions.rentalIncomeGrowthRateAnnual": 0.03,
+  "retirement.earlyPensionReductionPerYear": 300,
+  "liquidity.minimumCashBuffer": 20000,
+  "liquidation.stockSellingCostRate": 0.05,
+  "liquidation.propertyDisposalCostRate": 0.15,
+  "properties.primary.liquidationPriority": null,
+  "properties.secondary.liquidationPriority": null,
+  "properties.tertiary.liquidationPriority": null
 };
 
-export const FINER_DETAILS_COL_C_DEFAULTS = mapRecordKeys(FINER_DETAILS_COL_C_DEFAULTS_BY_CELL);
+export const FINER_DETAILS_COL_C_DEFAULTS_BY_CELL = mapFieldRecordToCells(FINER_DETAILS_COL_C_DEFAULTS);
 
-export const FIELD_VALIDATION_RULES_BY_CELL: Partial<Record<InputCell, FieldValidationRule>> = {
-  B4: { required: true, integer: true, nonNegative: true, clampBounds: { min: 18, max: 100 } },
-  B6: { nonNegative: true },
-  B8: { nonNegative: true },
-  B10: { nonNegative: true },
-  B12: { nonNegative: true },
-  B15: { nonNegative: true },
-  B16: { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
-  B17: { nonNegative: true },
-  B19: { required: true, integer: true, nonNegative: true, clampBounds: { min: 50, max: 70 } },
-  B21: { nonNegative: true },
-  B23: { nonNegative: true },
-  B25: { required: true, positive: true },
-  B34: { nonNegative: true },
-  B35: { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
-  B39: { nonNegative: true },
-  B40: { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
-  B44: { nonNegative: true },
-  B45: { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
-  B51: { nonNegative: true },
-  B52: { nonNegative: true },
-  B56: { nonNegative: true },
-  B57: { nonNegative: true },
-  B61: { nonNegative: true },
-  B62: { nonNegative: true },
-  B66: { nonNegative: true },
-  B67: { nonNegative: true },
-  B68: { nonNegative: true },
-  B70: { nonNegative: true },
-  B71: { integer: true, nonNegative: true },
-  B75: { nonNegative: true },
-  B78: { nonNegative: true },
-  B79: { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
-  B80: { nonNegative: true },
-  B83: { nonNegative: true },
-  B84: { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
-  B85: { nonNegative: true },
-  B88: { nonNegative: true },
-  B89: { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
-  B90: { nonNegative: true },
-  B93: { nonNegative: true },
-  B94: { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
-  B95: { nonNegative: true },
-  B101: { nonNegative: true },
-  B102: { integer: true },
-  B106: { nonNegative: true },
-  B107: { integer: true },
-  B111: { nonNegative: true },
-  B112: { integer: true },
-  B118: { nonNegative: true },
-  B119: { integer: true },
-  B123: { nonNegative: true },
-  B124: { integer: true },
-  B128: { nonNegative: true },
-  B129: { integer: true },
-  B134: { required: true, integer: true, nonNegative: true, clampBounds: { min: 19, max: 120 }, warningBounds: { max: 100 } },
-  B137: { allowNegative: true, warningBounds: { min: -0.5, max: 1 } },
-  B138: { allowNegative: true, warningBounds: { min: -0.5, max: 1 } },
-  B139: { allowNegative: true, warningBounds: { min: -0.5, max: 1 } },
-  B141: { nonNegative: true },
-  B142: { integer: true, nonNegative: true },
-  B143: { integer: true, nonNegative: true },
-  B145: { allowNegative: true, warningBounds: { min: 0, max: 0.06 } },
-  B147: { allowNegative: true, warningBounds: { min: 0, max: 0.08 } },
-  B149: { nonNegative: true, warningBounds: { min: 0, max: 0.06 } },
-  B151: { allowNegative: true, warningBounds: { min: 0, max: 0.12 } },
-  B153: { allowNegative: true, warningBounds: { min: 0, max: 0.08 } },
-  B155: { allowNegative: true, warningBounds: { min: 0, max: 0.08 } },
-  B157: { nonNegative: true },
-  B159: { nonNegative: true },
-  B161: { nonNegative: true, warningBounds: { max: 0.25 } },
-  B163: { nonNegative: true, warningBounds: { max: 0.3 } },
-  B166: { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } },
-  B167: { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } },
-  B168: { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } }
+export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule>> = {
+  "profile.currentAge": { required: true, integer: true, nonNegative: true, clampBounds: { min: 18, max: 100 } },
+  "income.employment.netAnnual": { nonNegative: true },
+  "assets.cash.totalBalance": { nonNegative: true },
+  "assets.equities.marketValue": { nonNegative: true },
+  "housing.primaryResidence.marketValue": { nonNegative: true },
+  "housing.primaryResidence.mortgage.balance": { nonNegative: true },
+  "housing.primaryResidence.mortgage.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "housing.primaryResidence.mortgage.monthlyRepayment": { nonNegative: true },
+  "retirement.statutoryAge": { required: true, integer: true, nonNegative: true, clampBounds: { min: 50, max: 70 } },
+  "retirement.statePension.netAnnualAtStart": { nonNegative: true },
+  "housing.rentAnnual": { nonNegative: true },
+  "spending.livingExpenses.annual": { required: true, positive: true },
+  "dependents.primary.annualCost": { nonNegative: true },
+  "dependents.primary.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "dependents.secondary.annualCost": { nonNegative: true },
+  "dependents.secondary.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "dependents.tertiary.annualCost": { nonNegative: true },
+  "dependents.tertiary.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "properties.primary.marketValue": { nonNegative: true },
+  "properties.primary.annualOperatingCost": { nonNegative: true },
+  "properties.secondary.marketValue": { nonNegative: true },
+  "properties.secondary.annualOperatingCost": { nonNegative: true },
+  "properties.tertiary.marketValue": { nonNegative: true },
+  "properties.tertiary.annualOperatingCost": { nonNegative: true },
+  "properties.primary.rentalIncomeNetAnnual": { nonNegative: true },
+  "properties.secondary.rentalIncomeNetAnnual": { nonNegative: true },
+  "properties.tertiary.rentalIncomeNetAnnual": { nonNegative: true },
+  "income.otherWork.netAnnual": { nonNegative: true },
+  "income.otherWork.endAge": { integer: true, nonNegative: true },
+  "debts.creditCards.balance": { nonNegative: true },
+  "properties.primary.loan.balance": { nonNegative: true },
+  "properties.primary.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "properties.primary.loan.monthlyRepayment": { nonNegative: true },
+  "properties.secondary.loan.balance": { nonNegative: true },
+  "properties.secondary.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "properties.secondary.loan.monthlyRepayment": { nonNegative: true },
+  "properties.tertiary.loan.balance": { nonNegative: true },
+  "properties.tertiary.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "properties.tertiary.loan.monthlyRepayment": { nonNegative: true },
+  "debts.other.balance": { nonNegative: true },
+  "debts.other.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "debts.other.monthlyRepayment": { nonNegative: true },
+  "cashflowEvents.income.primary.amount": { nonNegative: true },
+  "cashflowEvents.income.primary.year": { integer: true },
+  "cashflowEvents.income.secondary.amount": { nonNegative: true },
+  "cashflowEvents.income.secondary.year": { integer: true },
+  "cashflowEvents.income.tertiary.amount": { nonNegative: true },
+  "cashflowEvents.income.tertiary.year": { integer: true },
+  "cashflowEvents.expense.primary.amount": { nonNegative: true },
+  "cashflowEvents.expense.primary.year": { integer: true },
+  "cashflowEvents.expense.secondary.amount": { nonNegative: true },
+  "cashflowEvents.expense.secondary.year": { integer: true },
+  "cashflowEvents.expense.tertiary.amount": { nonNegative: true },
+  "cashflowEvents.expense.tertiary.year": { integer: true },
+  "planning.lifeExpectancyAge": { required: true, integer: true, nonNegative: true, clampBounds: { min: 19, max: 120 }, warningBounds: { max: 100 } },
+  "spending.adjustments.pre65.deltaRate": { allowNegative: true, warningBounds: { min: -0.5, max: 1 } },
+  "spending.adjustments.age66To75.deltaRate": { allowNegative: true, warningBounds: { min: -0.5, max: 1 } },
+  "spending.adjustments.age76Plus.deltaRate": { allowNegative: true, warningBounds: { min: -0.5, max: 1 } },
+  "income.postRetirementSupplement.annual": { nonNegative: true },
+  "income.postRetirementSupplement.startAge": { integer: true, nonNegative: true },
+  "income.postRetirementSupplement.endAge": { integer: true, nonNegative: true },
+  "assumptions.generalInflationRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.06 } },
+  "assumptions.propertyAppreciationRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.08 } },
+  "assumptions.cashYieldRateAnnual": { nonNegative: true, warningBounds: { min: 0, max: 0.06 } },
+  "assumptions.equityReturnRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.12 } },
+  "assumptions.salaryGrowthRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.08 } },
+  "assumptions.rentalIncomeGrowthRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.08 } },
+  "retirement.earlyPensionReductionPerYear": { nonNegative: true },
+  "liquidity.minimumCashBuffer": { nonNegative: true },
+  "liquidation.stockSellingCostRate": { nonNegative: true, warningBounds: { max: 0.25 } },
+  "liquidation.propertyDisposalCostRate": { nonNegative: true, warningBounds: { max: 0.3 } },
+  "properties.primary.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } },
+  "properties.secondary.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } },
+  "properties.tertiary.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } }
 };
 
-export const FIELD_VALIDATION_RULES = mapRecordKeys(FIELD_VALIDATION_RULES_BY_CELL);
+export const FIELD_VALIDATION_RULES_BY_CELL = mapFieldRecordToCells(FIELD_VALIDATION_RULES);
 
-export const COERCED_NUMERIC_BOUNDS_BY_CELL: Partial<Record<InputCell, NumericConstraint>> = Object.fromEntries(
-  Object.entries(FIELD_VALIDATION_RULES_BY_CELL)
+export const COERCED_NUMERIC_BOUNDS: Partial<Record<FieldId, NumericConstraint>> = Object.fromEntries(
+  Object.entries(FIELD_VALIDATION_RULES)
     .filter(([, rule]) => rule?.clampBounds)
-    .map(([cell, rule]) => [cell, rule?.clampBounds])
-) as Partial<Record<InputCell, NumericConstraint>>;
+    .map(([fieldId, rule]) => [fieldId, rule?.clampBounds])
+) as Partial<Record<FieldId, NumericConstraint>>;
 
-export const COERCED_NUMERIC_BOUNDS = mapRecordKeys(COERCED_NUMERIC_BOUNDS_BY_CELL);
-
-export const ALLOW_NEGATIVE_INPUT_CELLS = new Set<InputCell>(
-  (Object.entries(FIELD_VALIDATION_RULES_BY_CELL) as Array<[InputCell, FieldValidationRule]>)
-    .filter(([, rule]) => rule.allowNegative)
-    .map(([cell]) => cell)
-);
+export const COERCED_NUMERIC_BOUNDS_BY_CELL = mapFieldRecordToCells(COERCED_NUMERIC_BOUNDS);
 
 export const ALLOW_NEGATIVE_FIELDS = new Set<FieldId>(
-  mapCellList([...ALLOW_NEGATIVE_INPUT_CELLS])
+  (Object.entries(FIELD_VALIDATION_RULES) as Array<[FieldId, FieldValidationRule]>)
+    .filter(([, rule]) => rule.allowNegative)
+    .map(([fieldId]) => fieldId)
 );
 
-export const REQUIRED_CORE_CELLS = ["B4", "B19", "B25", "B134"] as const satisfies readonly InputCell[];
-export const REQUIRED_CORE_FIELDS = mapCellList(REQUIRED_CORE_CELLS);
-export const PROJECTION_GATE_CELLS = ["B4", "B19", "B134"] as const satisfies readonly InputCell[];
-export const PROJECTION_GATE_FIELDS = mapCellList(PROJECTION_GATE_CELLS);
-export const SKIP_REVEAL_CRITICAL_CELLS = PROJECTION_GATE_CELLS;
+export const ALLOW_NEGATIVE_INPUT_CELLS = new Set<InputCell>(
+  [...ALLOW_NEGATIVE_FIELDS].map((fieldId) => FIELD_ID_TO_CELL[fieldId])
+);
+
+export const REQUIRED_CORE_FIELDS = [
+  "profile.currentAge",
+  "retirement.statutoryAge",
+  "spending.livingExpenses.annual",
+  "planning.lifeExpectancyAge"
+] as const satisfies readonly FieldId[];
+
+export const REQUIRED_CORE_CELLS = mapFieldListToCells(REQUIRED_CORE_FIELDS);
+
+export const PROJECTION_GATE_FIELDS = [
+  "profile.currentAge",
+  "retirement.statutoryAge",
+  "planning.lifeExpectancyAge"
+] as const satisfies readonly FieldId[];
+
+export const PROJECTION_GATE_CELLS = mapFieldListToCells(PROJECTION_GATE_FIELDS);
 export const SKIP_REVEAL_CRITICAL_FIELDS = PROJECTION_GATE_FIELDS;
-export const LIQUIDATION_RANK_CELLS = ["B166", "B167", "B168"] as const satisfies readonly InputCell[];
-export const LIQUIDATION_RANK_FIELDS = mapCellList(LIQUIDATION_RANK_CELLS);
+export const SKIP_REVEAL_CRITICAL_CELLS = PROJECTION_GATE_CELLS;
 
-export const DEPENDENT_GROUPS_BY_CELL = [
-  { nameCell: "B33", annualCostCell: "B34", yearsCell: "B35" },
-  { nameCell: "B38", annualCostCell: "B39", yearsCell: "B40" },
-  { nameCell: "B43", annualCostCell: "B44", yearsCell: "B45" }
-] as const;
+export const LIQUIDATION_RANK_FIELDS = [
+  "properties.primary.liquidationPriority",
+  "properties.secondary.liquidationPriority",
+  "properties.tertiary.liquidationPriority"
+] as const satisfies readonly FieldId[];
 
-export const DEPENDENT_GROUPS = DEPENDENT_GROUPS_BY_CELL.map((group) => ({
-  nameField: INPUT_DEFINITION_BY_CELL[group.nameCell].fieldId,
-  annualCostField: INPUT_DEFINITION_BY_CELL[group.annualCostCell].fieldId,
-  yearsField: INPUT_DEFINITION_BY_CELL[group.yearsCell].fieldId
-})) as Array<{
-  nameField: FieldId;
-  annualCostField: FieldId;
-  yearsField: FieldId;
-}>;
+export const LIQUIDATION_RANK_CELLS = mapFieldListToCells(LIQUIDATION_RANK_FIELDS);
 
-export const PROPERTY_GROUPS_BY_CELL = [
+export const DEPENDENT_GROUPS = [
   {
-    nameCell: "B50",
-    valueCell: "B51",
-    annualCostsCell: "B52",
-    rentalIncomeCell: "B66",
-    loanBalanceCell: "B78",
-    loanRateCell: "B79",
-    loanRepaymentCell: "B80",
-    liquidationRankCell: "B166"
+    nameField: "dependents.primary.displayName",
+    annualCostField: "dependents.primary.annualCost",
+    yearsField: "dependents.primary.supportYearsRemaining"
   },
   {
-    nameCell: "B55",
-    valueCell: "B56",
-    annualCostsCell: "B57",
-    rentalIncomeCell: "B67",
-    loanBalanceCell: "B83",
-    loanRateCell: "B84",
-    loanRepaymentCell: "B85",
-    liquidationRankCell: "B167"
+    nameField: "dependents.secondary.displayName",
+    annualCostField: "dependents.secondary.annualCost",
+    yearsField: "dependents.secondary.supportYearsRemaining"
   },
   {
-    nameCell: "B60",
-    valueCell: "B61",
-    annualCostsCell: "B62",
-    rentalIncomeCell: "B68",
-    loanBalanceCell: "B88",
-    loanRateCell: "B89",
-    loanRepaymentCell: "B90",
-    liquidationRankCell: "B168"
+    nameField: "dependents.tertiary.displayName",
+    annualCostField: "dependents.tertiary.annualCost",
+    yearsField: "dependents.tertiary.supportYearsRemaining"
   }
-] as const;
+] as Array<DependentGroup>;
 
-export const PROPERTY_GROUPS = PROPERTY_GROUPS_BY_CELL.map((group) => ({
-  nameField: INPUT_DEFINITION_BY_CELL[group.nameCell].fieldId,
-  valueField: INPUT_DEFINITION_BY_CELL[group.valueCell].fieldId,
-  annualCostsField: INPUT_DEFINITION_BY_CELL[group.annualCostsCell].fieldId,
-  rentalIncomeField: INPUT_DEFINITION_BY_CELL[group.rentalIncomeCell].fieldId,
-  loanBalanceField: INPUT_DEFINITION_BY_CELL[group.loanBalanceCell].fieldId,
-  loanRateField: INPUT_DEFINITION_BY_CELL[group.loanRateCell].fieldId,
-  loanRepaymentField: INPUT_DEFINITION_BY_CELL[group.loanRepaymentCell].fieldId,
-  liquidationRankField: INPUT_DEFINITION_BY_CELL[group.liquidationRankCell].fieldId
-})) as Array<{
-  nameField: FieldId;
-  valueField: FieldId;
-  annualCostsField: FieldId;
-  rentalIncomeField: FieldId;
-  loanBalanceField: FieldId;
-  loanRateField: FieldId;
-  loanRepaymentField: FieldId;
-  liquidationRankField: FieldId;
-}>;
+export const DEPENDENT_GROUPS_BY_CELL = DEPENDENT_GROUPS.map(dependentGroupToCells) as Array<DependentGroupByCell>;
 
-export const INCOME_EVENT_GROUPS_BY_CELL = [
-  { nameCell: "B100", amountCell: "B101", yearCell: "B102" },
-  { nameCell: "B105", amountCell: "B106", yearCell: "B107" },
-  { nameCell: "B110", amountCell: "B111", yearCell: "B112" }
-] as const;
+export const PROPERTY_GROUPS = [
+  {
+    nameField: "properties.primary.displayName",
+    valueField: "properties.primary.marketValue",
+    annualCostsField: "properties.primary.annualOperatingCost",
+    rentalIncomeField: "properties.primary.rentalIncomeNetAnnual",
+    loanBalanceField: "properties.primary.loan.balance",
+    loanRateField: "properties.primary.loan.interestRateAnnual",
+    loanRepaymentField: "properties.primary.loan.monthlyRepayment",
+    liquidationRankField: "properties.primary.liquidationPriority"
+  },
+  {
+    nameField: "properties.secondary.displayName",
+    valueField: "properties.secondary.marketValue",
+    annualCostsField: "properties.secondary.annualOperatingCost",
+    rentalIncomeField: "properties.secondary.rentalIncomeNetAnnual",
+    loanBalanceField: "properties.secondary.loan.balance",
+    loanRateField: "properties.secondary.loan.interestRateAnnual",
+    loanRepaymentField: "properties.secondary.loan.monthlyRepayment",
+    liquidationRankField: "properties.secondary.liquidationPriority"
+  },
+  {
+    nameField: "properties.tertiary.displayName",
+    valueField: "properties.tertiary.marketValue",
+    annualCostsField: "properties.tertiary.annualOperatingCost",
+    rentalIncomeField: "properties.tertiary.rentalIncomeNetAnnual",
+    loanBalanceField: "properties.tertiary.loan.balance",
+    loanRateField: "properties.tertiary.loan.interestRateAnnual",
+    loanRepaymentField: "properties.tertiary.loan.monthlyRepayment",
+    liquidationRankField: "properties.tertiary.liquidationPriority"
+  }
+] as Array<PropertyGroup>;
 
-export const INCOME_EVENT_GROUPS = INCOME_EVENT_GROUPS_BY_CELL.map((group) => ({
-  nameField: INPUT_DEFINITION_BY_CELL[group.nameCell].fieldId,
-  amountField: INPUT_DEFINITION_BY_CELL[group.amountCell].fieldId,
-  yearField: INPUT_DEFINITION_BY_CELL[group.yearCell].fieldId
-})) as Array<{ nameField: FieldId; amountField: FieldId; yearField: FieldId }>;
+export const PROPERTY_GROUPS_BY_CELL = PROPERTY_GROUPS.map(propertyGroupToCells) as Array<PropertyGroupByCell>;
 
-export const EXPENSE_EVENT_GROUPS_BY_CELL = [
-  { nameCell: "B117", amountCell: "B118", yearCell: "B119" },
-  { nameCell: "B122", amountCell: "B123", yearCell: "B124" },
-  { nameCell: "B127", amountCell: "B128", yearCell: "B129" }
-] as const;
+export const INCOME_EVENT_GROUPS = [
+  {
+    nameField: "cashflowEvents.income.primary.name",
+    amountField: "cashflowEvents.income.primary.amount",
+    yearField: "cashflowEvents.income.primary.year"
+  },
+  {
+    nameField: "cashflowEvents.income.secondary.name",
+    amountField: "cashflowEvents.income.secondary.amount",
+    yearField: "cashflowEvents.income.secondary.year"
+  },
+  {
+    nameField: "cashflowEvents.income.tertiary.name",
+    amountField: "cashflowEvents.income.tertiary.amount",
+    yearField: "cashflowEvents.income.tertiary.year"
+  }
+] as Array<EventGroup>;
 
-export const EXPENSE_EVENT_GROUPS = EXPENSE_EVENT_GROUPS_BY_CELL.map((group) => ({
-  nameField: INPUT_DEFINITION_BY_CELL[group.nameCell].fieldId,
-  amountField: INPUT_DEFINITION_BY_CELL[group.amountCell].fieldId,
-  yearField: INPUT_DEFINITION_BY_CELL[group.yearCell].fieldId
-})) as Array<{ nameField: FieldId; amountField: FieldId; yearField: FieldId }>;
+export const INCOME_EVENT_GROUPS_BY_CELL = INCOME_EVENT_GROUPS.map(eventGroupToCells) as Array<EventGroupByCell>;
 
-export const HOME_LOAN_GROUP_BY_CELL = {
-  homeValueCell: "B12",
-  rentCell: "B23",
-  balanceCell: "B15",
-  rateCell: "B16",
-  repaymentCell: "B17"
-} as const;
+export const EXPENSE_EVENT_GROUPS = [
+  {
+    nameField: "cashflowEvents.expense.primary.name",
+    amountField: "cashflowEvents.expense.primary.amount",
+    yearField: "cashflowEvents.expense.primary.year"
+  },
+  {
+    nameField: "cashflowEvents.expense.secondary.name",
+    amountField: "cashflowEvents.expense.secondary.amount",
+    yearField: "cashflowEvents.expense.secondary.year"
+  },
+  {
+    nameField: "cashflowEvents.expense.tertiary.name",
+    amountField: "cashflowEvents.expense.tertiary.amount",
+    yearField: "cashflowEvents.expense.tertiary.year"
+  }
+] as Array<EventGroup>;
+
+export const EXPENSE_EVENT_GROUPS_BY_CELL = EXPENSE_EVENT_GROUPS.map(eventGroupToCells) as Array<EventGroupByCell>;
 
 export const HOME_LOAN_GROUP = {
-  homeValueField: INPUT_DEFINITION_BY_CELL[HOME_LOAN_GROUP_BY_CELL.homeValueCell].fieldId,
-  rentField: INPUT_DEFINITION_BY_CELL[HOME_LOAN_GROUP_BY_CELL.rentCell].fieldId,
-  balanceField: INPUT_DEFINITION_BY_CELL[HOME_LOAN_GROUP_BY_CELL.balanceCell].fieldId,
-  rateField: INPUT_DEFINITION_BY_CELL[HOME_LOAN_GROUP_BY_CELL.rateCell].fieldId,
-  repaymentField: INPUT_DEFINITION_BY_CELL[HOME_LOAN_GROUP_BY_CELL.repaymentCell].fieldId
-} as const;
+  homeValueField: "housing.primaryResidence.marketValue",
+  rentField: "housing.rentAnnual",
+  balanceField: "housing.primaryResidence.mortgage.balance",
+  rateField: "housing.primaryResidence.mortgage.interestRateAnnual",
+  repaymentField: "housing.primaryResidence.mortgage.monthlyRepayment"
+} as const satisfies HomeLoanGroup;
 
-export const OTHER_WORK_GROUP_BY_CELL = {
-  incomeCell: "B70",
-  untilAgeCell: "B71"
-} as const;
+export const HOME_LOAN_GROUP_BY_CELL = homeLoanGroupToCells(HOME_LOAN_GROUP);
 
 export const OTHER_WORK_GROUP = {
-  incomeField: INPUT_DEFINITION_BY_CELL[OTHER_WORK_GROUP_BY_CELL.incomeCell].fieldId,
-  untilAgeField: INPUT_DEFINITION_BY_CELL[OTHER_WORK_GROUP_BY_CELL.untilAgeCell].fieldId
-} as const;
+  incomeField: "income.otherWork.netAnnual",
+  untilAgeField: "income.otherWork.endAge"
+} as const satisfies OtherWorkGroup;
 
-export const OTHER_LOAN_GROUP_BY_CELL = {
-  balanceCell: "B93",
-  rateCell: "B94",
-  repaymentCell: "B95"
-} as const;
+export const OTHER_WORK_GROUP_BY_CELL = otherWorkGroupToCells(OTHER_WORK_GROUP);
 
 export const OTHER_LOAN_GROUP = {
-  balanceField: INPUT_DEFINITION_BY_CELL[OTHER_LOAN_GROUP_BY_CELL.balanceCell].fieldId,
-  rateField: INPUT_DEFINITION_BY_CELL[OTHER_LOAN_GROUP_BY_CELL.rateCell].fieldId,
-  repaymentField: INPUT_DEFINITION_BY_CELL[OTHER_LOAN_GROUP_BY_CELL.repaymentCell].fieldId
-} as const;
+  balanceField: "debts.other.balance",
+  rateField: "debts.other.interestRateAnnual",
+  repaymentField: "debts.other.monthlyRepayment"
+} as const satisfies OtherLoanGroup;
 
-export const POST_RETIREMENT_INCOME_GROUP_BY_CELL = {
-  amountCell: "B141",
-  fromAgeCell: "B142",
-  toAgeCell: "B143"
-} as const;
+export const OTHER_LOAN_GROUP_BY_CELL = otherLoanGroupToCells(OTHER_LOAN_GROUP);
 
 export const POST_RETIREMENT_INCOME_GROUP = {
-  amountField: INPUT_DEFINITION_BY_CELL[POST_RETIREMENT_INCOME_GROUP_BY_CELL.amountCell].fieldId,
-  fromAgeField: INPUT_DEFINITION_BY_CELL[POST_RETIREMENT_INCOME_GROUP_BY_CELL.fromAgeCell].fieldId,
-  toAgeField: INPUT_DEFINITION_BY_CELL[POST_RETIREMENT_INCOME_GROUP_BY_CELL.toAgeCell].fieldId
-} as const;
+  amountField: "income.postRetirementSupplement.annual",
+  fromAgeField: "income.postRetirementSupplement.startAge",
+  toAgeField: "income.postRetirementSupplement.endAge"
+} as const satisfies PostRetirementIncomeGroup;
+
+export const POST_RETIREMENT_INCOME_GROUP_BY_CELL = postRetirementIncomeGroupToCells(POST_RETIREMENT_INCOME_GROUP);

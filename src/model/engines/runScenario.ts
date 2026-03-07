@@ -1,4 +1,4 @@
-import { EffectiveInputs, ProjectionPoint, ScenarioOutputs } from "../types";
+import { EffectiveInputs, NamedProjectionSeries, ProjectionPoint, ScenarioOutputs } from "../types";
 import { buildTimeline } from "../timeline";
 import { fv, safePow, yearlyLoanPayment, clamp } from "../components/finance";
 
@@ -251,6 +251,20 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
   const propertyLoanSeries = inputs.properties.map(() => zeroSeries(n)); // Rows 62..64
   const propertyRentalSeries = inputs.properties.map(() => zeroSeries(n)); // Rows 8..10
   const propertyAnnualCostSeries = inputs.properties.map(() => zeroSeries(n)); // Rows 34..36
+  const salarySeries = zeroSeries(n);
+  const otherWorkSeries = zeroSeries(n);
+  const statutoryPensionSeries = zeroSeries(n);
+  const postRetIncomeSeries = zeroSeries(n);
+  const livingExpensesSeries = zeroSeries(n);
+  const housingRentSeries = zeroSeries(n);
+  const creditCardClearanceSeries = zeroSeries(n);
+  const homeLoanRepaymentSeries = zeroSeries(n);
+  const otherLoanRepaymentSeries = zeroSeries(n);
+  const propertyLoanRepaymentSeries = inputs.properties.map(() => zeroSeries(n));
+  const dependentCostSeries = inputs.dependents.map(() => zeroSeries(n));
+  const incomeEventSeries = inputs.incomeEvents.map(() => zeroSeries(n));
+  const expenseEventSeries = inputs.expenseEvents.map(() => zeroSeries(n));
+  const baseInterestSeries = zeroSeries(n);
 
   let cashBfwd = inputs.cashBalance; // Row 49 start
 
@@ -263,8 +277,10 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
       age < Math.min(inputs.statutoryRetirementAge, config.retirementAge)
         ? inputs.netIncomeAnnual * safePow(1 + inputs.salaryGrowth, idx)
         : 0;
+    salarySeries[idx] = salary;
 
     const otherWork = age <= inputs.otherWorkUntilAge ? inputs.otherWorkIncomeAnnual * infFactor : 0;
+    otherWorkSeries[idx] = otherWork;
 
     let rental = 0;
     for (let p = 0; p < inputs.properties.length; p += 1) {
@@ -275,29 +291,42 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
 
     const basePension = age >= inputs.statutoryRetirementAge ? inputs.pensionAnnual * infFactor : 0;
     const adjustedPension = Math.max(0, basePension - pensionReduction * infFactor);
+    statutoryPensionSeries[idx] = adjustedPension;
 
     const postRetIncome =
       age >= inputs.postRetIncomeFromAge && age <= inputs.postRetIncomeToAge
         ? inputs.postRetIncomeAnnual * infFactor
         : 0;
+    postRetIncomeSeries[idx] = postRetIncome;
 
-    const incomeEvents = inputs.incomeEvents.reduce((sum, e) => {
-      if (!e.name || e.amount === 0) return sum;
-      return sum + (e.year === year ? e.amount * infFactor : 0);
-    }, 0);
+    let incomeEvents = 0;
+    for (let e = 0; e < inputs.incomeEvents.length; e += 1) {
+      const event = inputs.incomeEvents[e];
+      if (!event.name || event.amount === 0) continue;
+      const value = event.year === year ? event.amount * infFactor : 0;
+      incomeEventSeries[e][idx] = value;
+      incomeEvents += value;
+    }
 
     const inflowsBeforeInterest = salary + otherWork + rental + adjustedPension + postRetIncome + incomeEvents;
 
-    let outflows = inputs.livingExpensesAnnual * infFactor;
-    if (age <= 65) outflows += inputs.spendAdjustTo65 * inputs.livingExpensesAnnual * infFactor;
-    if (age > 65 && age <= 75) outflows += inputs.spendAdjust66To75 * inputs.livingExpensesAnnual * infFactor;
-    if (age > 75) outflows += inputs.spendAdjustFrom76 * inputs.livingExpensesAnnual * infFactor;
+    let livingExpense = inputs.livingExpensesAnnual * infFactor;
+    if (age <= 65) livingExpense += inputs.spendAdjustTo65 * inputs.livingExpensesAnnual * infFactor;
+    if (age > 65 && age <= 75) livingExpense += inputs.spendAdjust66To75 * inputs.livingExpensesAnnual * infFactor;
+    if (age > 75) livingExpense += inputs.spendAdjustFrom76 * inputs.livingExpensesAnnual * infFactor;
+    livingExpensesSeries[idx] = livingExpense;
 
-    outflows += inputs.housingRentAnnual * infFactor;
+    let outflows = livingExpense;
+    const housingRent = inputs.housingRentAnnual * infFactor;
+    housingRentSeries[idx] = housingRent;
+    outflows += housingRent;
 
-    for (const d of inputs.dependents) {
-      if (!d.name) continue;
-      if (idx < d.yearsToSupport) outflows += d.annualCost * infFactor;
+    for (let d = 0; d < inputs.dependents.length; d += 1) {
+      const dependent = inputs.dependents[d];
+      if (!dependent.name) continue;
+      const cost = idx < dependent.yearsToSupport ? dependent.annualCost * infFactor : 0;
+      dependentCostSeries[d][idx] = cost;
+      outflows += cost;
     }
 
     for (let p = 0; p < inputs.properties.length; p += 1) {
@@ -307,22 +336,44 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     }
 
     // Year-1 credit card clearance.
-    if (idx === 0) outflows += inputs.creditCardBalance;
+    const creditCardClearance = idx === 0 ? inputs.creditCardBalance : 0;
+    creditCardClearanceSeries[idx] = creditCardClearance;
+    outflows += creditCardClearance;
 
-    outflows += yearlyLoanPayment(homeMonthsTotal, inputs.homeLoanRepaymentMonthly, idx);
+    const homeLoanRepayment = yearlyLoanPayment(homeMonthsTotal, inputs.homeLoanRepaymentMonthly, idx);
+    homeLoanRepaymentSeries[idx] = homeLoanRepayment;
+    outflows += homeLoanRepayment;
     for (let p = 0; p < inputs.properties.length; p += 1) {
-      outflows += yearlyLoanPayment(propertyMonthsTotals[p], inputs.properties[p].loanRepaymentMonthly, idx);
+      const repayment = yearlyLoanPayment(propertyMonthsTotals[p], inputs.properties[p].loanRepaymentMonthly, idx);
+      outflows += repayment;
+      propertyLoanSeries[p][idx] = Math.max(
+        fv(
+          inputs.properties[p].loanRate / 12,
+          (idx + 1) * 12,
+          inputs.properties[p].loanRepaymentMonthly,
+          -inputs.properties[p].loanBalance
+        ),
+        0
+      );
+      propertyLoanRepaymentSeries[p][idx] = repayment;
     }
-    outflows += yearlyLoanPayment(otherLoanMonthsTotal, inputs.otherLoanRepaymentMonthly, idx);
+    const otherLoanRepayment = yearlyLoanPayment(otherLoanMonthsTotal, inputs.otherLoanRepaymentMonthly, idx);
+    otherLoanRepaymentSeries[idx] = otherLoanRepayment;
+    outflows += otherLoanRepayment;
 
-    const expenseEvents = inputs.expenseEvents.reduce((sum, e) => {
-      if (!e.name || e.amount === 0) return sum;
-      return sum + (e.year === year ? e.amount * infFactor : 0);
-    }, 0);
+    let expenseEvents = 0;
+    for (let e = 0; e < inputs.expenseEvents.length; e += 1) {
+      const event = inputs.expenseEvents[e];
+      if (!event.name || event.amount === 0) continue;
+      const value = event.year === year ? event.amount * infFactor : 0;
+      expenseEventSeries[e][idx] = value;
+      expenseEvents += value;
+    }
     outflows += expenseEvents;
 
     const preInterestCash = cashBfwd + inflowsBeforeInterest - outflows;
     const interest = Math.max(((cashBfwd + preInterestCash) / 2) * inputs.cashRate, 0);
+    baseInterestSeries[idx] = interest;
     const cashCfwd = preInterestCash + interest;
 
     cashBaseSeries[idx] = cashCfwd;
@@ -335,15 +386,6 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     for (let p = 0; p < inputs.properties.length; p += 1) {
       propertyValueSeries[p][idx] =
         inputs.properties[p].value * safePow(1 + inputs.propertyAppreciation, idx + 1);
-      propertyLoanSeries[p][idx] = Math.max(
-        fv(
-          inputs.properties[p].loanRate / 12,
-          (idx + 1) * 12,
-          inputs.properties[p].loanRepaymentMonthly,
-          -inputs.properties[p].loanBalance
-        ),
-        0
-      );
     }
 
     homeLoanSeries[idx] = Math.max(
@@ -431,6 +473,37 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
   const row131 = row130.map((v) => v * inputs.cashRate);
   const row132 = row129.map((v, i) => v + cumulative(row131)[i]);
   const finalCashSeries = row132.map((v) => v + inputs.cashBuffer); // row134 / row201
+  const totalInterestSeries = baseInterestSeries.map((value, i) => value + row97[i] + row114[i] + row131[i]);
+  const openingCashSeries = zeroSeries(n);
+  const totalInflowsSeries = zeroSeries(n);
+  const totalOutflowsSeries = zeroSeries(n);
+  const netCashFlowSeries = zeroSeries(n);
+
+  for (let i = 0; i < n; i += 1) {
+    openingCashSeries[i] = i === 0 ? inputs.cashBalance : finalCashSeries[i - 1];
+    totalInflowsSeries[i] =
+      salarySeries[i] +
+      otherWorkSeries[i] +
+      sumAt(propertyRentalSeries, i) +
+      statutoryPensionSeries[i] +
+      postRetIncomeSeries[i] +
+      sumAt(incomeEventSeries, i) +
+      stockStage.netProceeds[i] +
+      stage1.netProceeds[i] +
+      stage2.netProceeds[i] +
+      stage3.netProceeds[i];
+    totalOutflowsSeries[i] =
+      creditCardClearanceSeries[i] +
+      homeLoanRepaymentSeries[i] +
+      sumAt(propertyLoanRepaymentSeries, i) +
+      otherLoanRepaymentSeries[i] +
+      sumAt(dependentCostSeries, i) +
+      housingRentSeries[i] +
+      sumAt(propertyAnnualCostSeries, i) +
+      livingExpensesSeries[i] +
+      sumAt(expenseEventSeries, i);
+    netCashFlowSeries[i] = totalInflowsSeries[i] - totalOutflowsSeries[i];
+  }
 
   // Adjusted net worth (rows 138..172 / row202).
   const adjustedPropertyValues = propertyValueSeries.map((s) => [...s]);
@@ -547,10 +620,125 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     });
   }
 
+  const propertyStages = [stage1, stage2, stage3];
+  const propertyOrderKeys = stagePropertyOrder(
+    inputs.liquidationPriority,
+    inputs.properties.map((p) => p.value)
+  );
+  const propertyStageByProperty = inputs.properties.map<PropertyStageSeries | null>(() => null);
+  for (let stageIdx = 0; stageIdx < propertyStages.length; stageIdx += 1) {
+    const propIdx = propertyOrderKeys[stageIdx];
+    if (propIdx < 0 || propIdx >= propertyStageByProperty.length) continue;
+    propertyStageByProperty[propIdx] = propertyStages[stageIdx];
+  }
+
+  const displayRentalIncomeByProperty = inputs.properties.map<NamedProjectionSeries>((property, idx) => {
+    const stage = propertyStageByProperty[idx];
+    const values = propertyRentalSeries[idx].map((value, yearIdx) => value + (stage?.rentalForegone[yearIdx] ?? 0));
+    return {
+      key: `rental-${idx}`,
+      label: property.name.trim() || `Property ${idx + 1}`,
+      values
+    };
+  });
+
+  const displayPropertyCostsByProperty = inputs.properties.map<NamedProjectionSeries>((property, idx) => {
+    const stage = propertyStageByProperty[idx];
+    const values = propertyAnnualCostSeries[idx].map(
+      (value, yearIdx) => value - (stage?.annualCostSaved[yearIdx] ?? 0)
+    );
+    return {
+      key: `property-cost-${idx}`,
+      label: property.name.trim() || `Property ${idx + 1}`,
+      values
+    };
+  });
+
+  const displayLiquidationsByProperty = inputs.properties.map<NamedProjectionSeries>((property, idx) => {
+    const stage = propertyStageByProperty[idx];
+    const values = stage
+      ? stage.netProceeds.map(
+          (value, yearIdx) => value - stage.rentalForegone[yearIdx] - stage.annualCostSaved[yearIdx]
+        )
+      : zeroSeries(n);
+    return {
+      key: `liquidation-property-${idx}`,
+      label: property.name.trim() || `Property ${idx + 1}`,
+      values
+    };
+  });
+
+  const displayTotalInflowsSeries = zeroSeries(n);
+  const displayTotalOutflowsSeries = zeroSeries(n);
+  const displayNetCashFlowSeries = zeroSeries(n);
+  for (let i = 0; i < n; i += 1) {
+    displayTotalInflowsSeries[i] =
+      salarySeries[i] +
+      otherWorkSeries[i] +
+      sumAt(displayRentalIncomeByProperty.map((row) => row.values), i) +
+      statutoryPensionSeries[i] +
+      postRetIncomeSeries[i] +
+      sumAt(incomeEventSeries, i) +
+      stockStage.netProceeds[i] +
+      sumAt(displayLiquidationsByProperty.map((row) => row.values), i);
+    displayTotalOutflowsSeries[i] =
+      creditCardClearanceSeries[i] +
+      homeLoanRepaymentSeries[i] +
+      sumAt(propertyLoanRepaymentSeries, i) +
+      otherLoanRepaymentSeries[i] +
+      sumAt(dependentCostSeries, i) +
+      housingRentSeries[i] +
+      sumAt(displayPropertyCostsByProperty.map((row) => row.values), i) +
+      livingExpensesSeries[i] +
+      sumAt(expenseEventSeries, i);
+    displayNetCashFlowSeries[i] = displayTotalInflowsSeries[i] - displayTotalOutflowsSeries[i];
+  }
+
   return {
     points,
     cashSeries: points.map((p) => p.cash),
     netWorthSeries: points.map((p) => p.netWorth),
-    milestoneHints
+    milestoneHints,
+    cashFlow: {
+      openingCash: openingCashSeries,
+      employmentIncome: salarySeries,
+      otherWorkIncome: otherWorkSeries,
+      rentalIncomeByProperty: displayRentalIncomeByProperty,
+      statutoryPension: statutoryPensionSeries,
+      otherPostRetirementIncome: postRetIncomeSeries,
+      incomeEvents: inputs.incomeEvents.map((event, idx) => ({
+        key: `income-event-${idx}`,
+        label: event.name.trim() || `Income event ${idx + 1}`,
+        values: [...incomeEventSeries[idx]]
+      })),
+      liquidationsStocks: [...stockStage.netProceeds],
+      liquidationsByProperty: displayLiquidationsByProperty,
+      interestOnCash: totalInterestSeries,
+      creditCardsCleared: creditCardClearanceSeries,
+      homeLoanRepayment: homeLoanRepaymentSeries,
+      propertyLoanRepayments: inputs.properties.map((property, idx) => ({
+        key: `property-loan-${idx}`,
+        label: property.name.trim() || `Property ${idx + 1}`,
+        values: [...propertyLoanRepaymentSeries[idx]]
+      })),
+      otherLoanRepayment: otherLoanRepaymentSeries,
+      dependentsCost: inputs.dependents.map((dependent, idx) => ({
+        key: `dependent-${idx}`,
+        label: dependent.name.trim() || `Dependent ${idx + 1}`,
+        values: [...dependentCostSeries[idx]]
+      })),
+      housingRent: housingRentSeries,
+      propertyCosts: displayPropertyCostsByProperty,
+      livingExpenses: livingExpensesSeries,
+      expenseEvents: inputs.expenseEvents.map((event, idx) => ({
+        key: `expense-event-${idx}`,
+        label: event.name.trim() || `Expense event ${idx + 1}`,
+        values: [...expenseEventSeries[idx]]
+      })),
+      totalInflows: displayTotalInflowsSeries,
+      totalOutflows: displayTotalOutflowsSeries,
+      netCashFlow: displayNetCashFlowSeries,
+      closingCash: finalCashSeries
+    }
   };
 }
