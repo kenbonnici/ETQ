@@ -79,8 +79,9 @@ let validationRevealAll = false;
 const touchedCells = new Set<FieldId>();
 const attemptedFieldMessages = new Map<FieldId, ValidationMessage>();
 let latestRunResult: RunModelResult | null = null;
-let currentView: "dashboard" | "cashflow" = "dashboard";
 let cashflowScenario: "early" | "norm" = "early";
+let cashflowSectionOpen = false;
+let cashflowHasMounted = false;
 const cashflowExpandedGroups = new Set<string>(["cash-bridge", "inflows", "outflows"]);
 
 const TIMELINE_EDGE_PADDING = 26;
@@ -160,11 +161,12 @@ app.innerHTML = `
           <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase early retirement age">+</button>
         </div>
       </header>
-      <article class="chart-card">
+      <article class="chart-card" id="cash-chart-card">
+        <div id="charts-anchor" class="scroll-anchor" aria-hidden="true"></div>
         <div class="chart-header">
           <h2>Cash</h2>
           <div class="chart-actions" id="cash-chart-actions">
-            <button id="open-cashflow-btn" class="cashflow-nav-btn" type="button">See cash flow</button>
+            <button id="open-cashflow-btn" class="cashflow-nav-btn" type="button">Open cash flow</button>
             <div class="chart-legend" id="cash-legend" aria-hidden="true">
               <span class="chart-legend-item">
                 <span class="chart-legend-line"></span>
@@ -205,30 +207,40 @@ app.innerHTML = `
       </div>
     </aside>
   </main>
-  <section class="cashflow-page" id="cashflow-page" hidden>
-    <header class="cashflow-page-header">
-      <div class="cashflow-page-heading">
-        <button id="cashflow-back-btn" class="cashflow-back-btn" type="button">Back to Overview</button>
-        <div>
-          <h1>Cash Flow Projection</h1>
+  <div id="cashflow-anchor" class="scroll-anchor" aria-hidden="true"></div>
+  <section class="cashflow-section" id="cashflow-section" hidden aria-hidden="true">
+    <div class="cashflow-section-shell">
+      <header class="cashflow-section-header">
+        <div class="cashflow-section-heading">
+          <div class="cashflow-section-title-row">
+            <h2>Cash Flow Projection</h2>
+            <button
+              id="cashflow-section-collapse"
+              class="cashflow-section-toggle-btn"
+              type="button"
+              aria-label="Collapse cash flow section"
+              title="Collapse cash flow section"
+            >
+              <span aria-hidden="true">⌃</span>
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="cashflow-page-controls">
-        <div class="cashflow-scenario-toggle" role="tablist" aria-label="Projection scenario">
-          <button id="cashflow-scenario-early" class="cashflow-scenario-btn" type="button">Early</button>
-          <button id="cashflow-scenario-norm" class="cashflow-scenario-btn" type="button">Statutory</button>
+        <div class="cashflow-section-controls">
+          <div class="cashflow-scenario-toggle" role="tablist" aria-label="Projection scenario">
+            <button id="cashflow-scenario-early" class="cashflow-scenario-btn" type="button">Early</button>
+            <button id="cashflow-scenario-norm" class="cashflow-scenario-btn" type="button">Statutory</button>
+          </div>
+          <div class="cashflow-page-actions" aria-label="Cash flow table controls">
+            <button id="cashflow-expand-all" class="cashflow-control-btn" type="button">Expand all</button>
+            <button id="cashflow-collapse-all" class="cashflow-control-btn" type="button">Collapse all</button>
+          </div>
         </div>
-        <div class="cashflow-page-actions" aria-label="Cash flow table controls">
-          <button id="cashflow-expand-all" class="cashflow-control-btn" type="button">Expand all</button>
-          <button id="cashflow-collapse-all" class="cashflow-control-btn" type="button">Collapse all</button>
-        </div>
-      </div>
-    </header>
-    <section class="cashflow-table-panel" id="cashflow-table-panel"></section>
+      </header>
+      <section class="cashflow-table-panel" id="cashflow-table-panel"></section>
+    </div>
   </section>
 `;
 
-const dashboardView = document.getElementById("dashboard-view") as HTMLElement;
 const inputsPanel = document.getElementById("inputs-panel") as HTMLDivElement;
 const spinner = document.getElementById("early-ret-age") as HTMLInputElement;
 const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonElement;
@@ -245,15 +257,17 @@ const cashLegendB = document.getElementById("cash-legend-b") as HTMLSpanElement;
 const nwLegend = document.getElementById("nw-legend") as HTMLDivElement;
 const nwLegendA = document.getElementById("nw-legend-a") as HTMLSpanElement;
 const nwLegendB = document.getElementById("nw-legend-b") as HTMLSpanElement;
+const chartsAnchorEl = document.getElementById("charts-anchor") as HTMLElement;
 const timelinePanel = document.getElementById("timeline-panel") as HTMLDivElement;
 const timelineScroll = document.getElementById("timeline-scroll") as HTMLDivElement;
 const timelineTrack = document.getElementById("timeline-track") as HTMLDivElement;
-const cashflowPage = document.getElementById("cashflow-page") as HTMLElement;
-const cashflowBackButton = document.getElementById("cashflow-back-btn") as HTMLButtonElement;
+const cashflowAnchorEl = document.getElementById("cashflow-anchor") as HTMLElement;
+const cashflowSectionEl = document.getElementById("cashflow-section") as HTMLElement;
 const cashflowScenarioEarlyButton = document.getElementById("cashflow-scenario-early") as HTMLButtonElement;
 const cashflowScenarioNormButton = document.getElementById("cashflow-scenario-norm") as HTMLButtonElement;
 const cashflowExpandAllButton = document.getElementById("cashflow-expand-all") as HTMLButtonElement;
 const cashflowCollapseAllButton = document.getElementById("cashflow-collapse-all") as HTMLButtonElement;
+const cashflowSectionCollapseButton = document.getElementById("cashflow-section-collapse") as HTMLButtonElement;
 const cashflowTablePanel = document.getElementById("cashflow-table-panel") as HTMLDivElement;
 
 const sectionState = {
@@ -334,6 +348,7 @@ const chartHoverIndex = new Map<HTMLCanvasElement, number | null>();
 const chartHoverDelayHandle = new Map<HTMLCanvasElement, number | null>();
 const chartHoverPending = new Map<HTMLCanvasElement, { idx: number; clientX: number; clientY: number } | null>();
 let pendingCashflowScrollAnchor: CashflowScrollAnchor | null = null;
+let pendingCashflowScrollRestoreFrame: number | null = null;
 
 function capturePanelCursorState(): PanelCursorState {
   const active = document.activeElement as HTMLInputElement | null;
@@ -358,10 +373,28 @@ function restorePanelCursorState(state: PanelCursorState): void {
   }
 }
 
-function captureCashflowScrollAnchor(rowId: string | null = null): CashflowScrollAnchor | null {
-  const scrollEl = cashflowTablePanel.querySelector<HTMLElement>(".cashflow-table-scroll");
+function getCashflowScrollContainer(): HTMLElement | null {
+  return cashflowTablePanel.querySelector<HTMLElement>(".cashflow-table-scroll");
+}
+
+function clampCashflowScrollTop(scrollEl: HTMLElement, value: number): number {
+  return Math.max(0, Math.min(value, scrollEl.scrollHeight - scrollEl.clientHeight));
+}
+
+function clampCashflowScrollLeft(scrollEl: HTMLElement, value: number): number {
+  return Math.max(0, Math.min(value, scrollEl.scrollWidth - scrollEl.clientWidth));
+}
+
+function captureCashflowScrollContext(rowId: string | null = null): CashflowScrollAnchor | null {
+  if (!cashflowSectionOpen) return null;
+  const scrollEl = getCashflowScrollContainer();
   if (!scrollEl) return null;
-  if (!rowId) {
+  const resolvedRowId = rowId ?? (() => {
+    const rows = Array.from(scrollEl.querySelectorAll<HTMLElement>("tr[data-row-id]"));
+    const visibleRow = rows.find((candidate) => candidate.offsetTop + candidate.offsetHeight > scrollEl.scrollTop);
+    return visibleRow?.dataset.rowId ?? null;
+  })();
+  if (!resolvedRowId) {
     return {
       rowId: null,
       offsetTop: 0,
@@ -369,7 +402,7 @@ function captureCashflowScrollAnchor(rowId: string | null = null): CashflowScrol
       scrollTop: scrollEl.scrollTop
     };
   }
-  const rowEl = scrollEl.querySelector<HTMLElement>(`tr[data-row-id="${rowId}"]`);
+  const rowEl = scrollEl.querySelector<HTMLElement>(`tr[data-row-id="${resolvedRowId}"]`);
   if (!rowEl) {
     return {
       rowId: null,
@@ -379,28 +412,52 @@ function captureCashflowScrollAnchor(rowId: string | null = null): CashflowScrol
     };
   }
   return {
-    rowId,
+    rowId: resolvedRowId,
     offsetTop: rowEl.offsetTop - scrollEl.scrollTop,
     scrollLeft: scrollEl.scrollLeft,
     scrollTop: scrollEl.scrollTop
   };
 }
 
-function restoreCashflowScrollAnchor(anchor: CashflowScrollAnchor | null): void {
-  if (!anchor) return;
-  const scrollEl = cashflowTablePanel.querySelector<HTMLElement>(".cashflow-table-scroll");
+function restoreCashflowScrollContext(anchor: CashflowScrollAnchor | null): void {
+  if (!anchor || !cashflowSectionOpen) return;
+  const scrollEl = getCashflowScrollContainer();
   if (!scrollEl) return;
-  scrollEl.scrollLeft = anchor.scrollLeft;
+  scrollEl.scrollLeft = clampCashflowScrollLeft(scrollEl, anchor.scrollLeft);
+  const fallbackTop = clampCashflowScrollTop(scrollEl, anchor.scrollTop);
   if (!anchor.rowId) {
-    scrollEl.scrollTop = anchor.scrollTop;
+    scrollEl.scrollTop = fallbackTop;
     return;
   }
   const rowEl = scrollEl.querySelector<HTMLElement>(`tr[data-row-id="${anchor.rowId}"]`);
   if (!rowEl) {
-    scrollEl.scrollTop = anchor.scrollTop;
+    scrollEl.scrollTop = fallbackTop;
     return;
   }
-  scrollEl.scrollTop = Math.max(0, rowEl.offsetTop - anchor.offsetTop);
+  scrollEl.scrollTop = clampCashflowScrollTop(scrollEl, rowEl.offsetTop - anchor.offsetTop);
+}
+
+function queueCashflowScrollContextRestore(anchor: CashflowScrollAnchor | null): void {
+  if (!anchor) return;
+  if (pendingCashflowScrollRestoreFrame !== null) {
+    cancelAnimationFrame(pendingCashflowScrollRestoreFrame);
+    pendingCashflowScrollRestoreFrame = null;
+  }
+  const scrollEl = getCashflowScrollContainer();
+  scrollEl?.classList.add("is-restoring-scroll");
+  pendingCashflowScrollRestoreFrame = requestAnimationFrame(() => {
+    restoreCashflowScrollContext(anchor);
+    getCashflowScrollContainer()?.classList.remove("is-restoring-scroll");
+    pendingCashflowScrollRestoreFrame = null;
+  });
+}
+
+function captureCashflowScrollAnchor(rowId: string | null = null): CashflowScrollAnchor | null {
+  return captureCashflowScrollContext(rowId);
+}
+
+function restoreCashflowScrollAnchor(anchor: CashflowScrollAnchor | null): void {
+  queueCashflowScrollContextRestore(anchor);
 }
 
 function currentCurrencySymbol(): string {
@@ -793,7 +850,24 @@ function cashflowSection(id: string, label: string): CashflowSectionRow {
   return { type: "section", id, label };
 }
 
-function filterCashflowNodes(nodes: CashflowNode[]): CashflowNode[] {
+function collectVisibleCashflowNodeIds(nodes: CashflowNode[], visibleIds = new Set<string>()): Set<string> {
+  for (const node of nodes) {
+    if (node.type === "section") continue;
+    if (node.type === "row") {
+      if (node.alwaysVisible || hasVisibleCashflowValue(node.values)) visibleIds.add(node.id);
+      continue;
+    }
+    const childIdsBefore = visibleIds.size;
+    collectVisibleCashflowNodeIds(node.children, visibleIds);
+    const hasVisibleChildren = visibleIds.size > childIdsBefore;
+    if (node.alwaysVisible || hasVisibleCashflowValue(node.values) || hasVisibleChildren) {
+      visibleIds.add(node.id);
+    }
+  }
+  return visibleIds;
+}
+
+function filterCashflowNodes(nodes: CashflowNode[], visibleIds?: ReadonlySet<string>): CashflowNode[] {
   const filtered: CashflowNode[] = [];
   for (const node of nodes) {
     if (node.type === "section") {
@@ -801,13 +875,19 @@ function filterCashflowNodes(nodes: CashflowNode[]): CashflowNode[] {
       continue;
     }
     if (node.type === "row") {
-      if (node.alwaysVisible || hasVisibleCashflowValue(node.values)) {
+      const shouldShow = visibleIds
+        ? node.alwaysVisible || visibleIds.has(node.id)
+        : node.alwaysVisible || hasVisibleCashflowValue(node.values);
+      if (shouldShow) {
         filtered.push(node);
       }
       continue;
     }
-    const children = filterCashflowNodes(node.children);
-    if (node.alwaysVisible || hasVisibleCashflowValue(node.values) || children.length > 0) {
+    const children = filterCashflowNodes(node.children, visibleIds);
+    const shouldShow = visibleIds
+      ? node.alwaysVisible || visibleIds.has(node.id) || children.length > 0
+      : node.alwaysVisible || hasVisibleCashflowValue(node.values) || children.length > 0;
+    if (shouldShow) {
       filtered.push({ ...node, children });
     }
   }
@@ -844,7 +924,7 @@ function buildCashflowNodes(scenario: ScenarioOutputs): CashflowNode[] {
     cashflowLeaf(series.key, series.label, series.values, 2)
   );
 
-  const nodes: CashflowNode[] = filterCashflowNodes([
+  return [
     cashflowGroup("inflows", "Inflows", displayInflowsTotal, 0, [
       cashflowLeaf("employment-income", "Employment income", cashFlow.employmentIncome, 1),
       cashflowLeaf("other-work-income", "Other work income", cashFlow.otherWorkIncome, 1),
@@ -876,9 +956,7 @@ function buildCashflowNodes(scenario: ScenarioOutputs): CashflowNode[] {
       cashflowLeaf("net-cash-flow", "Net cash flow", displayNetCashFlow, 1, "bridge", true),
       cashflowLeaf("closing-cash", "Closing cash balance", cashFlow.closingCash, 1, "bridge", true)
     ], "total", true)
-  ]);
-
-  return nodes;
+  ];
 }
 
 function renderCashflowRows(nodes: CashflowNode[], years: number[], ages: number[]): string {
@@ -964,13 +1042,46 @@ function renderCashflowRows(nodes: CashflowNode[], years: number[], ages: number
   `;
 }
 
-function updateCashflowView(): void {
-  const showDashboard = currentView === "dashboard";
-  dashboardView.hidden = !showDashboard;
-  cashflowPage.hidden = showDashboard;
-  dashboardView.classList.toggle("is-hidden", !showDashboard);
-  cashflowPage.classList.toggle("is-hidden", showDashboard);
-  openCashflowButton.classList.toggle("is-active", currentView === "cashflow");
+function syncCashflowSectionVisibility(): void {
+  cashflowSectionEl.hidden = !cashflowSectionOpen;
+  cashflowSectionEl.setAttribute("aria-hidden", cashflowSectionOpen ? "false" : "true");
+  cashflowSectionEl.classList.toggle("is-open", cashflowSectionOpen);
+  openCashflowButton.classList.toggle("is-active", cashflowSectionOpen);
+  document.body.classList.toggle("cashflow-open", cashflowSectionOpen);
+}
+
+function scrollAnchorIntoView(anchorEl: HTMLElement | null): void {
+  if (!anchorEl) return;
+  anchorEl.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
+
+function ensureCashflowMounted(result: RunModelResult | null, blockingLines: string[] = []): void {
+  if (cashflowHasMounted) return;
+  cashflowHasMounted = true;
+  renderCashflowPage(result, blockingLines);
+}
+
+function openCashflowSection(): void {
+  const blockingLines = latestRunResult
+    ? []
+    : getProjectionBlockingLines(getVisibleValidationMessages(latestValidationMessages));
+  ensureCashflowMounted(latestRunResult, blockingLines);
+  cashflowSectionOpen = true;
+  syncCashflowSectionVisibility();
+  void cashflowSectionEl.offsetHeight;
+  scrollAnchorIntoView(cashflowAnchorEl);
+}
+
+function closeCashflowSection(): void {
+  if (!cashflowSectionOpen) return;
+  scrollAnchorIntoView(chartsAnchorEl);
+  window.setTimeout(() => {
+    cashflowSectionOpen = false;
+    syncCashflowSectionVisibility();
+  }, 220);
 }
 
 function setChartLegendsVisible(visible: boolean): void {
@@ -1007,8 +1118,17 @@ function renderCashflowPage(result: RunModelResult | null, blockingLines: string
     return;
   }
 
-  const scenario = cashflowScenario === "early" ? result.outputs.scenarioEarly : result.outputs.scenarioNorm;
-  cashflowTablePanel.innerHTML = renderCashflowRows(buildCashflowNodes(scenario), result.outputs.years, result.outputs.ages);
+  const activeScenario = cashflowScenario === "early" ? result.outputs.scenarioEarly : result.outputs.scenarioNorm;
+  const comparisonScenario = cashflowScenario === "early" ? result.outputs.scenarioNorm : result.outputs.scenarioEarly;
+  const activeNodes = buildCashflowNodes(activeScenario);
+  const comparisonNodes = buildCashflowNodes(comparisonScenario);
+  const visibleNodeIds = collectVisibleCashflowNodeIds(activeNodes);
+  collectVisibleCashflowNodeIds(comparisonNodes, visibleNodeIds);
+  cashflowTablePanel.innerHTML = renderCashflowRows(
+    filterCashflowNodes(activeNodes, visibleNodeIds),
+    result.outputs.years,
+    result.outputs.ages
+  );
   restoreCashflowScrollAnchor(pendingCashflowScrollAnchor);
   pendingCashflowScrollAnchor = null;
 }
@@ -2490,7 +2610,7 @@ function recalc(): void {
     clearTimeline(timelineMessage);
     cashflowScenarioEarlyButton.textContent = "Early";
     cashflowScenarioNormButton.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
-    renderCashflowPage(null, chartLines);
+    if (cashflowHasMounted) renderCashflowPage(null, chartLines);
     return;
   }
 
@@ -2537,7 +2657,7 @@ function recalc(): void {
     contextByYear
   });
   renderMilestoneTimeline(result);
-  renderCashflowPage(result);
+  if (cashflowHasMounted) renderCashflowPage(result);
 }
 
 function queueRecalc(): void {
@@ -2599,35 +2719,43 @@ spinner.addEventListener("blur", () => {
 spinnerDown.addEventListener("click", () => adjustEarlyRetirementAge(-1));
 spinnerUp.addEventListener("click", () => adjustEarlyRetirementAge(1));
 
-openCashflowButton.addEventListener("click", () => {
-  currentView = "cashflow";
-  renderCashflowPage(latestRunResult, latestRunResult ? [] : getProjectionBlockingLines(getVisibleValidationMessages(latestValidationMessages)));
-  updateCashflowView();
+openCashflowButton.addEventListener("mousedown", (event) => {
+  event.preventDefault();
 });
 
-cashflowBackButton.addEventListener("click", () => {
-  currentView = "dashboard";
-  updateCashflowView();
+openCashflowButton.addEventListener("click", () => {
+  openCashflowButton.blur();
+  openCashflowSection();
 });
 
 cashflowScenarioEarlyButton.addEventListener("click", () => {
+  if (cashflowScenario === "early") return;
+  pendingCashflowScrollAnchor = captureCashflowScrollContext();
   cashflowScenario = "early";
   recalc();
 });
 
 cashflowScenarioNormButton.addEventListener("click", () => {
+  if (cashflowScenario === "norm") return;
+  pendingCashflowScrollAnchor = captureCashflowScrollContext();
   cashflowScenario = "norm";
   recalc();
 });
 
 cashflowExpandAllButton.addEventListener("click", () => {
+  pendingCashflowScrollAnchor = captureCashflowScrollContext();
   resetCashflowExpandedGroups("expanded");
   recalc();
 });
 
 cashflowCollapseAllButton.addEventListener("click", () => {
+  pendingCashflowScrollAnchor = captureCashflowScrollContext();
   resetCashflowExpandedGroups("collapsed");
   recalc();
+});
+
+cashflowSectionCollapseButton.addEventListener("click", () => {
+  closeCashflowSection();
 });
 
 cashflowTablePanel.addEventListener("click", (event) => {
@@ -2680,6 +2808,6 @@ setupChartHover(cashCanvas);
 setupChartHover(nwCanvas);
 
 resetCashflowExpandedGroups("top-level");
-updateCashflowView();
+syncCashflowSectionVisibility();
 renderInputs();
 recalc();

@@ -443,76 +443,90 @@ body {
   color: #0f5d57;
 }
 
-.cashflow-page {
-  min-height: 100vh;
-  padding: 18px;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: 14px;
+.cashflow-section {
+  margin: 0;
+  padding: 0 18px 18px;
 }
 
-.cashflow-page-header,
+.cashflow-section.is-open {
+  min-height: 100dvh;
+}
+
+.cashflow-section-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+}
+
+.cashflow-section-header,
 .cashflow-table-panel {
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 14px;
 }
 
-.cashflow-page-header {
+.cashflow-section-header {
   position: sticky;
-  top: 16px;
+  top: 0;
   z-index: 20;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 20px;
-  padding: 16px 18px 18px;
+  padding: 14px 18px 16px;
   border-bottom-color: #dbe5df;
-  box-shadow: 0 8px 24px rgb(15 23 42 / 0.04), 0 1px 0 rgb(219 229 223 / 0.9);
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.035), 0 1px 0 rgb(219 229 223 / 0.85);
+  margin: 0;
 }
 
-.cashflow-page-heading {
+.cashflow-section-heading {
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 11px;
+  align-items: center;
   flex-wrap: nowrap;
 }
 
-.cashflow-page-heading h1 {
+.cashflow-section-title-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.cashflow-section-heading h2 {
   margin: 0;
-  font-size: 29px;
+  font-size: 24px;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
   color: #17322d;
 }
 
-.cashflow-back-btn {
-  height: auto;
+.cashflow-section-toggle-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d4e0da;
+  border-radius: 999px;
+  background: #f8fbf9;
+  color: #4f6d65;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0;
-  border: 0;
-  background: transparent;
-  color: #72817d;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  line-height: 1.2;
-  text-decoration: none;
-  transition: color 150ms ease, text-decoration-color 150ms ease;
+  cursor: pointer;
+  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
 }
 
-.cashflow-back-btn::before {
-  content: "\2190";
-  margin-right: 6px;
-  color: currentColor;
-}
-
-.cashflow-back-btn:hover {
+.cashflow-section-toggle-btn:hover {
+  border-color: #9bc5b8;
   color: #2a7b69;
-  text-decoration: underline;
+  background: #ffffff;
 }
 
-.cashflow-page-controls {
+.cashflow-section-toggle-btn span {
+  font-size: 14px;
+  line-height: 1;
+  transform: translateY(-1px);
+}
+
+.cashflow-section-controls {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -577,8 +591,21 @@ body {
 }
 
 .cashflow-table-scroll {
-  height: calc(100vh - 156px);
+  height: calc(100vh - 176px);
   overflow: auto;
+}
+
+.cashflow-table-scroll.is-restoring-scroll {
+  visibility: hidden;
+}
+
+.scroll-anchor {
+  display: block;
+  height: 1px;
+  margin: 0 0 -1px;
+  padding: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .cashflow-table {
@@ -913,7 +940,6 @@ body {
   justify-content: flex-end;
   min-width: 0;
   gap: 10px;
-  font-size: 12px;
 }
 
 .chart-actions .chart-legend-item {
@@ -1573,11 +1599,15 @@ small {
     font-size: 16px;
   }
 
-  .cashflow-page {
+  .cashflow-section {
     padding: 12px;
   }
 
-  .cashflow-page-header {
+  .cashflow-section.is-open {
+    min-height: 100dvh;
+  }
+
+  .cashflow-section-header {
     position: static;
   }
 
