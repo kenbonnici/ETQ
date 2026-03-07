@@ -14,15 +14,19 @@ import {
   buildPropertyLiquidationAssignments,
   buildPropertyLiquidationOrder,
   buildTimelineMilestones,
+  deriveRuntimeVisibilityState,
   fieldVisible,
   hasRetireCheckEssentialErrors,
+  isOutOfRangeLiquidationRank,
   isDuplicateLiquidationRank,
   RuntimeVisibilityState,
   syncManualPropertyOrderForNewProperties
 } from "../../src/ui/runtimeRules";
 import {
   DEPENDENT_RUNTIME_GROUPS,
+  EXPENSE_EVENT_RUNTIME_GROUPS,
   HOME_FIELDS,
+  INCOME_EVENT_RUNTIME_GROUPS,
   OTHER_LOAN_FIELDS,
   OTHER_WORK_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
@@ -133,6 +137,22 @@ test("property liquidation order preserves default, manual, and duplicate-rank b
     isDuplicateLiquidationRank(fields, PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 2),
     true
   );
+  assert.equal(
+    isOutOfRangeLiquidationRank(PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 4),
+    true
+  );
+  assert.equal(
+    isOutOfRangeLiquidationRank(PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 2),
+    false
+  );
+  assert.equal(
+    isOutOfRangeLiquidationRank(RUNTIME_FIELDS.statutoryRetirementAge, 65),
+    false
+  );
+  assert.equal(
+    isOutOfRangeLiquidationRank(RUNTIME_FIELDS.currentAge, 48),
+    false
+  );
 
   const appended = syncManualPropertyOrderForNewProperties(fields);
   assert.deepEqual(appended, [{ fieldId: PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, value: 3 }]);
@@ -174,6 +194,35 @@ test("other-work visibility remains hidden until semantic income field is popula
   assert.equal(fieldVisible(fields, OTHER_WORK_FIELDS.untilAge, DEFAULT_VISIBILITY), true);
 });
 
+test("runtime visibility state stays collapsed until later slots actually contain data", () => {
+  const fields = createEmptyFieldState();
+
+  assert.deepEqual(deriveRuntimeVisibilityState(fields), DEFAULT_VISIBILITY);
+
+  fields[DEPENDENT_RUNTIME_GROUPS[1].nameField] = "Jamie";
+  assert.equal(deriveRuntimeVisibilityState(fields).visibleDependents, 2);
+  fields[DEPENDENT_RUNTIME_GROUPS[2].nameField] = "Morgan";
+  assert.equal(deriveRuntimeVisibilityState(fields).visibleDependents, 3);
+
+  const propertyFields = createEmptyFieldState();
+  propertyFields[PROPERTY_RUNTIME_GROUPS[1].nameField] = "Gzira";
+  assert.equal(deriveRuntimeVisibilityState(propertyFields).visibleProperties, 2);
+  propertyFields[PROPERTY_RUNTIME_GROUPS[2].annualCostsField] = 1_200;
+  assert.equal(deriveRuntimeVisibilityState(propertyFields).visibleProperties, 3);
+
+  const incomeEventFields = createEmptyFieldState();
+  incomeEventFields[INCOME_EVENT_RUNTIME_GROUPS[1].yearField] = 2031;
+  assert.equal(deriveRuntimeVisibilityState(incomeEventFields).visibleIncomeEvents, 2);
+  incomeEventFields[INCOME_EVENT_RUNTIME_GROUPS[2].amountField] = 20_000;
+  assert.equal(deriveRuntimeVisibilityState(incomeEventFields).visibleIncomeEvents, 3);
+
+  const expenseEventFields = createEmptyFieldState();
+  expenseEventFields[EXPENSE_EVENT_RUNTIME_GROUPS[1].nameField] = "School fees";
+  assert.equal(deriveRuntimeVisibilityState(expenseEventFields).visibleExpenseEvents, 2);
+  expenseEventFields[EXPENSE_EVENT_RUNTIME_GROUPS[2].yearField] = 2035;
+  assert.equal(deriveRuntimeVisibilityState(expenseEventFields).visibleExpenseEvents, 3);
+});
+
 test("main.ts runtime DOM wiring is field-id based", () => {
   const mainSource = readFileSync(join(process.cwd(), "src/main.ts"), "utf8");
 
@@ -185,4 +234,6 @@ test("main.ts runtime DOM wiring is field-id based", () => {
   assert.equal(mainSource.includes("resolveFieldId("), false);
   assert.equal(mainSource.includes('matches("input[data-field-id]")'), true);
   assert.equal(mainSource.includes('querySelectorAll<HTMLInputElement>("input[data-field-id]")'), true);
+  assert.equal(mainSource.includes("deriveRuntimeVisibilityState(fieldState)"), true);
+  assert.equal(mainSource.includes('isOutOfRangeLiquidationRank(fieldId,'), true);
 });

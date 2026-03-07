@@ -35,6 +35,7 @@ import {
   buildPropertyLiquidationOrder,
   buildTimelineMilestones,
   collectSpecificLabelsByYear,
+  deriveRuntimeVisibilityState,
   FIELD_DISPLAY_ORDER_OVERRIDE,
   FIELD_STEPPER_DECIMALS,
   FIELD_STEPPER_STEPS,
@@ -360,6 +361,14 @@ function capturePanelCursorState(): PanelCursorState {
     selectionStart: supportsSelection ? active!.selectionStart : null,
     selectionEnd: supportsSelection ? active!.selectionEnd : null
   };
+}
+
+function syncVisibleRuntimeGroupsFromState(): void {
+  const visibility = deriveRuntimeVisibilityState(fieldState);
+  visibleDependents = visibility.visibleDependents;
+  visibleProperties = visibility.visibleProperties;
+  visibleIncomeEvents = visibility.visibleIncomeEvents;
+  visibleExpenseEvents = visibility.visibleExpenseEvents;
 }
 
 function restorePanelCursorState(state: PanelCursorState): void {
@@ -1516,7 +1525,7 @@ function applyStepperDelta(fieldId: FieldId, dir: number): void {
   const rounded = Number(next.toFixed(decimals));
   const constrained = applyFieldNumericConstraint(fieldId, rounded);
   if (constrained === null) return;
-  if (isOutOfRangeLiquidationRank(constrained) || isDuplicateLiquidationRank(fieldState, fieldId, constrained)) return;
+  if (isOutOfRangeLiquidationRank(fieldId, constrained) || isDuplicateLiquidationRank(fieldState, fieldId, constrained)) return;
 
   if (fieldId === RUNTIME_FIELDS.currentAge || fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
     clearAgeConstraintAttemptMessages();
@@ -1614,6 +1623,8 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
       }
     }
 
+    syncVisibleRuntimeGroupsFromState();
+
     const statutory = getStatutoryAge();
     if (statutory !== null) {
       uiState.earlyRetirementAge = statutory;
@@ -1645,6 +1656,7 @@ function clearAllInputsPreservingFinerDefaults(): void {
   clearTouchedFields();
   clearAllAttemptedFieldMessages();
   applyFinerDefaultsIfNeeded();
+  syncVisibleRuntimeGroupsFromState();
   setRetireCheckMessage(null);
   const statutory = getStatutoryAge();
   if (statutory !== null) {
@@ -1936,7 +1948,7 @@ function renderInputs(): void {
         nextValue = applyFieldNumericConstraint(fieldId, nextValue as number | null);
       }
 
-      if (isOutOfRangeLiquidationRank(nextValue) || isDuplicateLiquidationRank(fieldState, fieldId, nextValue)) {
+      if (isOutOfRangeLiquidationRank(fieldId, nextValue) || isDuplicateLiquidationRank(fieldState, fieldId, nextValue)) {
         el.value = prevValue === null || prevValue === undefined ? "" : String(prevValue);
         return;
       }

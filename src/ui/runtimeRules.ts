@@ -244,6 +244,31 @@ export function anyValue(values: RuntimeValues, fields: readonly FieldId[]): boo
   return fields.some((fieldId) => !isBlank(values[fieldId]));
 }
 
+export function deriveRuntimeVisibilityState(values: RuntimeValues): RuntimeVisibilityState {
+  return {
+    visibleDependents: anyValue(values, DEPENDENT_RUNTIME_GROUPS[2].fields)
+      ? 3
+      : anyValue(values, DEPENDENT_RUNTIME_GROUPS[1].fields)
+        ? 2
+        : 1,
+    visibleProperties: anyValue(values, PROPERTY_RUNTIME_GROUPS[2].coreFields)
+      ? 3
+      : anyValue(values, PROPERTY_RUNTIME_GROUPS[1].coreFields)
+        ? 2
+        : 1,
+    visibleIncomeEvents: anyValue(values, INCOME_EVENT_RUNTIME_GROUPS[2].fields)
+      ? 3
+      : anyValue(values, INCOME_EVENT_RUNTIME_GROUPS[1].fields)
+        ? 2
+        : 1,
+    visibleExpenseEvents: anyValue(values, EXPENSE_EVENT_RUNTIME_GROUPS[2].fields)
+      ? 3
+      : anyValue(values, EXPENSE_EVENT_RUNTIME_GROUPS[1].fields)
+        ? 2
+        : 1
+  };
+}
+
 export function getRuntimeFieldValue(values: RuntimeValues, fieldId: FieldId): RawInputValue {
   return values[fieldId];
 }
@@ -280,7 +305,8 @@ function isPositiveNumber(value: unknown): boolean {
   return asNumber(value) > 0;
 }
 
-export function isOutOfRangeLiquidationRank(nextValue: unknown): boolean {
+export function isOutOfRangeLiquidationRank(fieldId: FieldId, nextValue: unknown): boolean {
+  if (!PROPERTY_LIQUIDATION_FIELDS.has(fieldId)) return false;
   if (nextValue === null || nextValue === undefined || String(nextValue).trim() === "") return false;
   const rank = Number(nextValue);
   if (!Number.isInteger(rank)) return true;

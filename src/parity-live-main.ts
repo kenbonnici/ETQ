@@ -3,6 +3,9 @@ import { runModel } from "./model";
 import { rawInputsToFieldState } from "./model/excelAdapter";
 import type { RawInputs } from "./model/types";
 
+const parsedTolerance = Number(process.env.LIVE_PARITY_TOLERANCE ?? "0.01");
+const LIVE_PARITY_TOLERANCE = Number.isFinite(parsedTolerance) ? parsedTolerance : 0.01;
+
 type LiveExtract = {
   early: number;
   raw: Record<string, unknown>;
@@ -57,7 +60,16 @@ function lineForIndex(label: string, i: number, deltas: number[]) {
   return `${label}: idx=${i} year=${2027 + i} age=${input.exp.ages[i]} delta=${deltas[i].toFixed(2)}`;
 }
 
+const maxAbsDelta = Math.max(
+  Math.abs(dCashE[maxCashE] ?? 0),
+  Math.abs(dNwE[maxNwE] ?? 0),
+  Math.abs(dCashN[maxCashN] ?? 0),
+  Math.abs(dNwN[maxNwN] ?? 0)
+);
+const liveParityPass = maxAbsDelta <= LIVE_PARITY_TOLERANCE;
+
 console.log(`Live workbook parity summary (early age=${input.early})`);
+console.log(`Tolerance: ${LIVE_PARITY_TOLERANCE.toFixed(2)}`);
 console.log(lineForIndex("Age 85 cash early", age85, dCashE));
 console.log(lineForIndex("Age 85 net worth early", age85, dNwE));
 console.log(lineForIndex("Age 95 cash early", age95, dCashE));
@@ -68,3 +80,8 @@ console.log(lineForIndex("Max |dCashE|", maxCashE, dCashE));
 console.log(lineForIndex("Max |dNwE|", maxNwE, dNwE));
 console.log(lineForIndex("Max |dCashN|", maxCashN, dCashN));
 console.log(lineForIndex("Max |dNwN|", maxNwN, dNwN));
+console.log(`Overall live parity: ${liveParityPass ? "PASS" : "FAIL"} (max abs delta ${maxAbsDelta.toFixed(2)})`);
+
+if (!liveParityPass) {
+  process.exitCode = 1;
+}
