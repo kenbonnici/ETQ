@@ -1186,8 +1186,8 @@ function syncProjectionSectionVisibility(): void {
   projectionSectionEl.classList.toggle("is-open", projectionSectionOpen);
   cashflowTablePanel.hidden = !projectionSectionOpen || projectionActiveTab !== "cashflow";
   networthTablePanel.hidden = !projectionSectionOpen || projectionActiveTab !== "networth";
-  openCashflowButton.classList.toggle("is-active", projectionSectionOpen && projectionActiveTab === "cashflow");
-  openNetworthButton.classList.toggle("is-active", projectionSectionOpen && projectionActiveTab === "networth");
+  openCashflowButton.classList.remove("is-active");
+  openNetworthButton.classList.remove("is-active");
   projectionTabCashflowButton.classList.toggle("is-active", projectionActiveTab === "cashflow");
   projectionTabNetworthButton.classList.toggle("is-active", projectionActiveTab === "networth");
   projectionTabCashflowButton.setAttribute("aria-selected", projectionActiveTab === "cashflow" ? "true" : "false");
