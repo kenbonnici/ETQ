@@ -81,10 +81,9 @@ const touchedCells = new Set<FieldId>();
 const attemptedFieldMessages = new Map<FieldId, ValidationMessage>();
 let latestRunResult: RunModelResult | null = null;
 let cashflowScenario: "early" | "norm" = "early";
-let cashflowSectionOpen = false;
-let cashflowHasMounted = false;
-let networthSectionOpen = false;
-let networthHasMounted = false;
+let projectionSectionOpen = false;
+let projectionHasMounted = false;
+let projectionActiveTab: ProjectionSectionKey = "cashflow";
 const cashflowExpandedGroups = new Set<string>(["cash-bridge", "inflows", "outflows"]);
 const networthExpandedGroups = new Set<string>(["networth-properties", "networth-loans"]);
 
@@ -216,69 +215,39 @@ app.innerHTML = `
     </aside>
   </main>
   <div id="cashflow-anchor" class="scroll-anchor" aria-hidden="true"></div>
-  <section class="cashflow-section" id="cashflow-section" hidden aria-hidden="true">
+  <section class="cashflow-section" id="projection-section" hidden aria-hidden="true">
     <div class="cashflow-section-shell">
       <header class="cashflow-section-header">
-        <div class="cashflow-section-heading">
-          <div class="cashflow-section-title-row">
-            <h2>Cash Flow Projection</h2>
-            <button
-              id="cashflow-section-collapse"
-              class="cashflow-section-toggle-btn"
-              type="button"
-              aria-label="Collapse cash flow section"
-              title="Collapse cash flow section"
-            >
-              <span aria-hidden="true">⌃</span>
-            </button>
+        <div class="projection-toolbar-main">
+          <div class="projection-tabs" role="tablist" aria-label="Projection table">
+            <button id="projection-tab-cashflow" class="projection-tab-btn" type="button">Cash Flow</button>
+            <button id="projection-tab-networth" class="projection-tab-btn" type="button">Net Worth</button>
           </div>
+          <button
+            id="projection-section-collapse"
+            class="cashflow-section-toggle-btn"
+            type="button"
+            aria-label="Collapse projection section"
+            title="Collapse projection section"
+          >
+            <span aria-hidden="true">⌃</span>
+          </button>
         </div>
-        <div class="cashflow-section-controls">
+        <div class="cashflow-section-controls projection-toolbar-controls">
           <div class="cashflow-scenario-toggle" role="tablist" aria-label="Projection scenario">
-            <button id="cashflow-scenario-early" class="cashflow-scenario-btn" type="button">Early</button>
-            <button id="cashflow-scenario-norm" class="cashflow-scenario-btn" type="button">Statutory</button>
+            <button id="projection-scenario-early" class="cashflow-scenario-btn" type="button">Early</button>
+            <button id="projection-scenario-norm" class="cashflow-scenario-btn" type="button">Statutory</button>
           </div>
-          <div class="cashflow-page-actions" aria-label="Cash flow table controls">
-            <button id="cashflow-open-networth" class="cashflow-control-btn" type="button">Open net worth</button>
-            <button id="cashflow-expand-all" class="cashflow-control-btn" type="button">Expand all</button>
-            <button id="cashflow-collapse-all" class="cashflow-control-btn" type="button">Collapse all</button>
+          <div class="cashflow-page-actions" aria-label="Projection table controls">
+            <button id="projection-expand-all" class="cashflow-control-btn" type="button">Expand all</button>
+            <button id="projection-collapse-all" class="cashflow-control-btn" type="button">Collapse all</button>
           </div>
         </div>
       </header>
-      <section class="cashflow-table-panel" id="cashflow-table-panel"></section>
-    </div>
-  </section>
-  <div id="networth-anchor" class="scroll-anchor" aria-hidden="true"></div>
-  <section class="cashflow-section" id="networth-section" hidden aria-hidden="true">
-    <div class="cashflow-section-shell">
-      <header class="cashflow-section-header">
-        <div class="cashflow-section-heading">
-          <div class="cashflow-section-title-row">
-            <h2>Net Worth</h2>
-            <button
-              id="networth-section-collapse"
-              class="cashflow-section-toggle-btn"
-              type="button"
-              aria-label="Collapse net worth section"
-              title="Collapse net worth section"
-            >
-              <span aria-hidden="true">⌃</span>
-            </button>
-          </div>
-        </div>
-        <div class="cashflow-section-controls">
-          <div class="cashflow-scenario-toggle" role="tablist" aria-label="Projection scenario">
-            <button id="networth-scenario-early" class="cashflow-scenario-btn" type="button">Early</button>
-            <button id="networth-scenario-norm" class="cashflow-scenario-btn" type="button">Statutory</button>
-          </div>
-          <div class="cashflow-page-actions" aria-label="Net worth table controls">
-            <button id="networth-open-cashflow" class="cashflow-control-btn" type="button">Open cash flow</button>
-            <button id="networth-expand-all" class="cashflow-control-btn" type="button">Expand all</button>
-            <button id="networth-collapse-all" class="cashflow-control-btn" type="button">Collapse all</button>
-          </div>
-        </div>
-      </header>
-      <section class="cashflow-table-panel" id="networth-table-panel"></section>
+      <section class="projection-content-panel">
+        <section class="cashflow-table-panel projection-tab-panel" id="cashflow-table-panel"></section>
+        <section class="cashflow-table-panel projection-tab-panel" id="networth-table-panel" hidden></section>
+      </section>
     </div>
   </section>
 `;
@@ -306,22 +275,15 @@ const timelinePanel = document.getElementById("timeline-panel") as HTMLDivElemen
 const timelineScroll = document.getElementById("timeline-scroll") as HTMLDivElement;
 const timelineTrack = document.getElementById("timeline-track") as HTMLDivElement;
 const cashflowAnchorEl = document.getElementById("cashflow-anchor") as HTMLElement;
-const cashflowSectionEl = document.getElementById("cashflow-section") as HTMLElement;
-const networthAnchorEl = document.getElementById("networth-anchor") as HTMLElement;
-const networthSectionEl = document.getElementById("networth-section") as HTMLElement;
-const cashflowScenarioEarlyButton = document.getElementById("cashflow-scenario-early") as HTMLButtonElement;
-const cashflowScenarioNormButton = document.getElementById("cashflow-scenario-norm") as HTMLButtonElement;
-const cashflowOpenNetworthButton = document.getElementById("cashflow-open-networth") as HTMLButtonElement;
-const cashflowExpandAllButton = document.getElementById("cashflow-expand-all") as HTMLButtonElement;
-const cashflowCollapseAllButton = document.getElementById("cashflow-collapse-all") as HTMLButtonElement;
-const cashflowSectionCollapseButton = document.getElementById("cashflow-section-collapse") as HTMLButtonElement;
+const projectionSectionEl = document.getElementById("projection-section") as HTMLElement;
+const projectionTabCashflowButton = document.getElementById("projection-tab-cashflow") as HTMLButtonElement;
+const projectionTabNetworthButton = document.getElementById("projection-tab-networth") as HTMLButtonElement;
+const projectionScenarioEarlyButton = document.getElementById("projection-scenario-early") as HTMLButtonElement;
+const projectionScenarioNormButton = document.getElementById("projection-scenario-norm") as HTMLButtonElement;
+const projectionExpandAllButton = document.getElementById("projection-expand-all") as HTMLButtonElement;
+const projectionCollapseAllButton = document.getElementById("projection-collapse-all") as HTMLButtonElement;
+const projectionSectionCollapseButton = document.getElementById("projection-section-collapse") as HTMLButtonElement;
 const cashflowTablePanel = document.getElementById("cashflow-table-panel") as HTMLDivElement;
-const networthScenarioEarlyButton = document.getElementById("networth-scenario-early") as HTMLButtonElement;
-const networthScenarioNormButton = document.getElementById("networth-scenario-norm") as HTMLButtonElement;
-const networthOpenCashflowButton = document.getElementById("networth-open-cashflow") as HTMLButtonElement;
-const networthExpandAllButton = document.getElementById("networth-expand-all") as HTMLButtonElement;
-const networthCollapseAllButton = document.getElementById("networth-collapse-all") as HTMLButtonElement;
-const networthSectionCollapseButton = document.getElementById("networth-section-collapse") as HTMLButtonElement;
 const networthTablePanel = document.getElementById("networth-table-panel") as HTMLDivElement;
 
 const sectionState = {
@@ -370,7 +332,6 @@ type ProjectionSectionKey = "cashflow" | "networth";
 interface ProjectionSectionConfig {
   key: ProjectionSectionKey;
   anchorEl: HTMLElement;
-  sectionEl: HTMLElement;
   tablePanel: HTMLDivElement;
   openButton: HTMLButtonElement;
   isOpen(): boolean;
@@ -424,18 +385,16 @@ function getProjectionSectionConfig(key: ProjectionSectionKey): ProjectionSectio
     ? {
         key,
         anchorEl: cashflowAnchorEl,
-        sectionEl: cashflowSectionEl,
         tablePanel: cashflowTablePanel,
         openButton: openCashflowButton,
-        isOpen: () => cashflowSectionOpen
+        isOpen: () => projectionSectionOpen && projectionActiveTab === "cashflow"
       }
     : {
         key,
-        anchorEl: networthAnchorEl,
-        sectionEl: networthSectionEl,
+        anchorEl: cashflowAnchorEl,
         tablePanel: networthTablePanel,
         openButton: openNetworthButton,
-        isOpen: () => networthSectionOpen
+        isOpen: () => projectionSectionOpen && projectionActiveTab === "networth"
       };
 }
 
@@ -1221,19 +1180,24 @@ function renderProjectionRows(
   `;
 }
 
-function syncProjectionSectionVisibility(sectionKey: ProjectionSectionKey): void {
-  const section = getProjectionSectionConfig(sectionKey);
-  const isOpen = section.isOpen();
-  section.sectionEl.hidden = !isOpen;
-  section.sectionEl.setAttribute("aria-hidden", isOpen ? "false" : "true");
-  section.sectionEl.classList.toggle("is-open", isOpen);
-  section.openButton.classList.toggle("is-active", isOpen);
-  document.body.classList.toggle("cashflow-open", cashflowSectionOpen || networthSectionOpen);
+function syncProjectionSectionVisibility(): void {
+  projectionSectionEl.hidden = !projectionSectionOpen;
+  projectionSectionEl.setAttribute("aria-hidden", projectionSectionOpen ? "false" : "true");
+  projectionSectionEl.classList.toggle("is-open", projectionSectionOpen);
+  cashflowTablePanel.hidden = !projectionSectionOpen || projectionActiveTab !== "cashflow";
+  networthTablePanel.hidden = !projectionSectionOpen || projectionActiveTab !== "networth";
+  openCashflowButton.classList.toggle("is-active", projectionSectionOpen && projectionActiveTab === "cashflow");
+  openNetworthButton.classList.toggle("is-active", projectionSectionOpen && projectionActiveTab === "networth");
+  projectionTabCashflowButton.classList.toggle("is-active", projectionActiveTab === "cashflow");
+  projectionTabNetworthButton.classList.toggle("is-active", projectionActiveTab === "networth");
+  projectionTabCashflowButton.setAttribute("aria-selected", projectionActiveTab === "cashflow" ? "true" : "false");
+  projectionTabNetworthButton.setAttribute("aria-selected", projectionActiveTab === "networth" ? "true" : "false");
+  document.body.classList.toggle("cashflow-open", projectionSectionOpen);
 }
 
 function syncProjectionScenarioButtons(): void {
-  const earlyButtons = [cashflowScenarioEarlyButton, networthScenarioEarlyButton];
-  const normButtons = [cashflowScenarioNormButton, networthScenarioNormButton];
+  const earlyButtons = [projectionScenarioEarlyButton];
+  const normButtons = [projectionScenarioNormButton];
   for (const button of earlyButtons) {
     button.classList.toggle("is-active", cashflowScenario === "early");
     button.setAttribute("aria-selected", cashflowScenario === "early" ? "true" : "false");
@@ -1252,55 +1216,53 @@ function scrollAnchorIntoView(anchorEl: HTMLElement | null): void {
   });
 }
 
-function ensureCashflowMounted(result: RunModelResult | null, blockingLines: string[] = []): void {
-  if (cashflowHasMounted) return;
-  cashflowHasMounted = true;
+function ensureProjectionMounted(result: RunModelResult | null, blockingLines: string[] = []): void {
+  if (projectionHasMounted) return;
+  projectionHasMounted = true;
   renderCashflowPage(result, blockingLines);
-}
-
-function ensureNetworthMounted(result: RunModelResult | null, blockingLines: string[] = []): void {
-  if (networthHasMounted) return;
-  networthHasMounted = true;
   renderNetworthPage(result, blockingLines);
 }
 
 function openCashflowSection(): void {
+  if (projectionSectionOpen) {
+    setProjectionTab("cashflow");
+    scrollAnchorIntoView(cashflowAnchorEl);
+    return;
+  }
   const blockingLines = latestRunResult
     ? []
     : getProjectionBlockingLines(getVisibleValidationMessages(latestValidationMessages));
-  ensureCashflowMounted(latestRunResult, blockingLines);
-  cashflowSectionOpen = true;
-  syncProjectionSectionVisibility("cashflow");
-  void cashflowSectionEl.offsetHeight;
+  projectionActiveTab = "cashflow";
+  ensureProjectionMounted(latestRunResult, blockingLines);
+  projectionSectionOpen = true;
+  syncProjectionSectionVisibility();
+  void projectionSectionEl.offsetHeight;
   scrollAnchorIntoView(cashflowAnchorEl);
 }
 
 function openNetworthSection(): void {
+  if (projectionSectionOpen) {
+    setProjectionTab("networth");
+    scrollAnchorIntoView(cashflowAnchorEl);
+    return;
+  }
   const blockingLines = latestRunResult
     ? []
     : getProjectionBlockingLines(getVisibleValidationMessages(latestValidationMessages));
-  ensureNetworthMounted(latestRunResult, blockingLines);
-  networthSectionOpen = true;
-  syncProjectionSectionVisibility("networth");
-  void networthSectionEl.offsetHeight;
-  scrollAnchorIntoView(networthAnchorEl);
+  projectionActiveTab = "networth";
+  ensureProjectionMounted(latestRunResult, blockingLines);
+  projectionSectionOpen = true;
+  syncProjectionSectionVisibility();
+  void projectionSectionEl.offsetHeight;
+  scrollAnchorIntoView(cashflowAnchorEl);
 }
 
-function closeCashflowSection(): void {
-  if (!cashflowSectionOpen) return;
+function closeProjectionSection(): void {
+  if (!projectionSectionOpen) return;
   scrollAnchorIntoView(dashboardAnchorEl);
   window.setTimeout(() => {
-    cashflowSectionOpen = false;
-    syncProjectionSectionVisibility("cashflow");
-  }, 220);
-}
-
-function closeNetworthSection(): void {
-  if (!networthSectionOpen) return;
-  scrollAnchorIntoView(dashboardAnchorEl);
-  window.setTimeout(() => {
-    networthSectionOpen = false;
-    syncProjectionSectionVisibility("networth");
+    projectionSectionOpen = false;
+    syncProjectionSectionVisibility();
   }, 220);
 }
 
@@ -2862,14 +2824,16 @@ function recalc(): void {
     drawEmptyChart(cashCanvas, chartLines);
     drawEmptyChart(nwCanvas, chartLines);
     clearTimeline(timelineMessage);
-    for (const button of [cashflowScenarioEarlyButton, networthScenarioEarlyButton]) {
+    for (const button of [projectionScenarioEarlyButton]) {
       button.textContent = "Early";
     }
-    for (const button of [cashflowScenarioNormButton, networthScenarioNormButton]) {
+    for (const button of [projectionScenarioNormButton]) {
       button.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
     }
-    if (cashflowHasMounted) renderCashflowPage(null, chartLines);
-    if (networthHasMounted) renderNetworthPage(null, chartLines);
+    if (projectionHasMounted) {
+      renderCashflowPage(null, chartLines);
+      renderNetworthPage(null, chartLines);
+    }
     return;
   }
 
@@ -2881,10 +2845,10 @@ function recalc(): void {
   cashLegendB.textContent = statutoryLabel;
   nwLegendA.textContent = earlyLabel;
   nwLegendB.textContent = statutoryLabel;
-  for (const button of [cashflowScenarioEarlyButton, networthScenarioEarlyButton]) {
+  for (const button of [projectionScenarioEarlyButton]) {
     button.textContent = `Early ${uiState.earlyRetirementAge}`;
   }
-  for (const button of [cashflowScenarioNormButton, networthScenarioNormButton]) {
+  for (const button of [projectionScenarioNormButton]) {
     button.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
   }
   drawChart(
@@ -2920,8 +2884,10 @@ function recalc(): void {
     contextByYear
   });
   renderMilestoneTimeline(result);
-  if (cashflowHasMounted) renderCashflowPage(result);
-  if (networthHasMounted) renderNetworthPage(result);
+  if (projectionHasMounted) {
+    renderCashflowPage(result);
+    renderNetworthPage(result);
+  }
 }
 
 function queueRecalc(): void {
@@ -3001,13 +2967,22 @@ openNetworthButton.addEventListener("click", () => {
   openNetworthSection();
 });
 
-cashflowOpenNetworthButton.addEventListener("click", () => {
-  openNetworthSection();
-});
-
-networthOpenCashflowButton.addEventListener("click", () => {
-  openCashflowSection();
-});
+function setProjectionTab(nextTab: ProjectionSectionKey): void {
+  if (projectionActiveTab === nextTab) return;
+  if (projectionSectionOpen) {
+    if (projectionActiveTab === "cashflow") {
+      pendingCashflowScrollAnchor = captureProjectionScrollContext("cashflow");
+    } else {
+      pendingNetworthScrollAnchor = captureProjectionScrollContext("networth");
+    }
+  }
+  projectionActiveTab = nextTab;
+  syncProjectionSectionVisibility();
+  restoreProjectionScrollAnchor(
+    nextTab,
+    nextTab === "cashflow" ? pendingCashflowScrollAnchor : pendingNetworthScrollAnchor
+  );
+}
 
 function setProjectionScenario(nextScenario: "early" | "norm"): void {
   if (cashflowScenario === nextScenario) return;
@@ -3017,52 +2992,43 @@ function setProjectionScenario(nextScenario: "early" | "norm"): void {
   recalc();
 }
 
-cashflowScenarioEarlyButton.addEventListener("click", () => {
+projectionTabCashflowButton.addEventListener("click", () => {
+  setProjectionTab("cashflow");
+});
+
+projectionTabNetworthButton.addEventListener("click", () => {
+  setProjectionTab("networth");
+});
+
+projectionScenarioEarlyButton.addEventListener("click", () => {
   setProjectionScenario("early");
 });
 
-networthScenarioEarlyButton.addEventListener("click", () => {
-  setProjectionScenario("early");
-});
-
-cashflowScenarioNormButton.addEventListener("click", () => {
+projectionScenarioNormButton.addEventListener("click", () => {
   setProjectionScenario("norm");
 });
 
-networthScenarioNormButton.addEventListener("click", () => {
-  setProjectionScenario("norm");
-});
-
-cashflowExpandAllButton.addEventListener("click", () => {
-  pendingCashflowScrollAnchor = captureProjectionScrollContext("cashflow");
-  resetCashflowExpandedGroups("expanded");
+function updateActiveProjectionExpansion(mode: "expanded" | "collapsed"): void {
+  if (projectionActiveTab === "cashflow") {
+    pendingCashflowScrollAnchor = captureProjectionScrollContext("cashflow");
+    resetCashflowExpandedGroups(mode);
+  } else {
+    pendingNetworthScrollAnchor = captureProjectionScrollContext("networth");
+    resetNetworthExpandedGroups(mode);
+  }
   recalc();
+}
+
+projectionExpandAllButton.addEventListener("click", () => {
+  updateActiveProjectionExpansion("expanded");
 });
 
-cashflowCollapseAllButton.addEventListener("click", () => {
-  pendingCashflowScrollAnchor = captureProjectionScrollContext("cashflow");
-  resetCashflowExpandedGroups("collapsed");
-  recalc();
+projectionCollapseAllButton.addEventListener("click", () => {
+  updateActiveProjectionExpansion("collapsed");
 });
 
-networthExpandAllButton.addEventListener("click", () => {
-  pendingNetworthScrollAnchor = captureProjectionScrollContext("networth");
-  resetNetworthExpandedGroups("expanded");
-  recalc();
-});
-
-networthCollapseAllButton.addEventListener("click", () => {
-  pendingNetworthScrollAnchor = captureProjectionScrollContext("networth");
-  resetNetworthExpandedGroups("collapsed");
-  recalc();
-});
-
-cashflowSectionCollapseButton.addEventListener("click", () => {
-  closeCashflowSection();
-});
-
-networthSectionCollapseButton.addEventListener("click", () => {
-  closeNetworthSection();
+projectionSectionCollapseButton.addEventListener("click", () => {
+  closeProjectionSection();
 });
 
 function handleProjectionToggleClick(
@@ -3128,9 +3094,8 @@ retireCheckButton.addEventListener("click", () => {
 setupChartHover(cashCanvas);
 setupChartHover(nwCanvas);
 
-resetCashflowExpandedGroups("top-level");
-resetNetworthExpandedGroups("top-level");
-syncProjectionSectionVisibility("cashflow");
-syncProjectionSectionVisibility("networth");
+resetCashflowExpandedGroups("collapsed");
+resetNetworthExpandedGroups("collapsed");
+syncProjectionSectionVisibility();
 renderInputs();
 recalc();

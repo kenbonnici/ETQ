@@ -455,7 +455,58 @@ body {
 .cashflow-section-shell {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
+  gap: 16px;
+  min-width: 0;
+}
+
+.projection-content-panel {
+  display: block;
+  min-width: 0;
+}
+
+.projection-toolbar-main {
+  display: inline-flex;
+  align-items: center;
   gap: 12px;
+  min-width: 0;
+}
+
+.projection-tabs {
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.projection-tab-btn {
+  position: relative;
+  border: 0;
+  padding: 0 0 8px;
+  background: transparent;
+  color: #6f807a;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+}
+
+.projection-tab-btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+  transition: background-color 150ms ease;
+}
+
+.projection-tab-btn.is-active {
+  color: #182320;
+}
+
+.projection-tab-btn.is-active::after {
+  background: #7ec2b6;
 }
 
 .cashflow-section-header,
@@ -470,13 +521,19 @@ body {
   top: 0;
   z-index: 20;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: 14px 18px 16px;
+  padding: 14px 18px;
   border-bottom-color: #dbe5df;
   box-shadow: 0 6px 18px rgb(15 23 42 / 0.035), 0 1px 0 rgb(219 229 223 / 0.85);
   margin: 0;
+  width: 100%;
+  min-width: 0;
+}
+
+.projection-toolbar-controls {
+  margin-left: auto;
 }
 
 .cashflow-section-heading {
@@ -567,8 +624,6 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
-  padding-left: 14px;
-  border-left: 1px solid #dce5e0;
 }
 
 .cashflow-control-btn {
@@ -588,6 +643,7 @@ body {
 
 .cashflow-table-panel {
   min-height: 0;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -846,6 +902,12 @@ body {
   background: #f4f9f6;
 }
 
+.cashflow-row.is-major-line-item .cashflow-label-cell,
+.cashflow-row.is-major-line-item .cashflow-value-cell {
+  border-top: 16px solid #fff;
+  background: #f4f9f6;
+}
+
 .cashflow-row.is-subgroup .cashflow-label-cell,
 .cashflow-row.is-subgroup .cashflow-value-cell {
   border-top: 6px solid #fff;
@@ -853,6 +915,10 @@ body {
 }
 
 .cashflow-row.is-major-group .cashflow-label-inner {
+  min-height: 58px;
+}
+
+.cashflow-row.is-major-line-item .cashflow-label-inner {
   min-height: 58px;
 }
 
