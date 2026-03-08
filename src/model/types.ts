@@ -119,12 +119,20 @@ export interface ScenarioCashFlowRows {
   closingCash: number[];
 }
 
+export interface ScenarioNetWorthRows {
+  cash: number[];
+  stockMarketEquity: number[];
+  properties: NamedProjectionSeries[];
+  loans: NamedProjectionSeries[];
+}
+
 export interface ScenarioOutputs {
   points: ProjectionPoint[];
   cashSeries: number[];
   netWorthSeries: number[];
   milestoneHints: ScenarioMilestoneHint[];
   cashFlow: ScenarioCashFlowRows;
+  netWorth: ScenarioNetWorthRows;
 }
 
 export interface ModelOutputs {

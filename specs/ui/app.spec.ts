@@ -7,7 +7,8 @@ const selectors = {
   mortgageBalance: 'input[data-field-id="housing.primaryResidence.mortgage.balance"]',
   dependentName: 'input[data-field-id="dependents.primary.displayName"]',
   dependentAnnualCost: 'input[data-field-id="dependents.primary.annualCost"]',
-  cashflowScroll: ".cashflow-table-scroll"
+  cashflowScroll: "#cashflow-table-panel .cashflow-table-scroll",
+  networthScroll: "#networth-table-panel .cashflow-table-scroll"
 } as const;
 
 async function loadSampleData(page: Page): Promise<void> {
@@ -100,4 +101,41 @@ test("cash-flow controls preserve structure and scroll position across scenario 
 
   expect(Math.abs(restoredMetrics.scrollTop - scrollMetrics.scrollTop)).toBeLessThanOrEqual(8);
   expect(restoredMetrics.rowId).toBe(scrollMetrics.rowId);
+});
+
+test("net-worth section opens independently and keeps scenario selection in sync", async ({ page }) => {
+  await loadSampleData(page);
+
+  await page.locator("#open-networth-btn").click();
+  await expect(page.locator("#networth-section")).toHaveAttribute("aria-hidden", "false");
+  await expect(page.locator("#cashflow-section")).toHaveAttribute("aria-hidden", "true");
+  await expect(page.locator(selectors.networthScroll)).toBeVisible();
+
+  await page.locator("#networth-open-cashflow").click();
+  await expect(page.locator("#cashflow-section")).toHaveAttribute("aria-hidden", "false");
+
+  const networthStatutoryButton = page.locator("#networth-scenario-norm");
+  await networthStatutoryButton.click();
+  await expect(networthStatutoryButton).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#cashflow-scenario-norm")).toHaveAttribute("aria-selected", "true");
+  await expect(page.locator("#networth-scenario-early")).toHaveAttribute("aria-selected", "false");
+  await expect(page.locator("#cashflow-scenario-early")).toHaveAttribute("aria-selected", "false");
+});
+
+test("net-worth collapse chevron returns to the top of the dashboard canvas", async ({ page }) => {
+  await loadSampleData(page);
+
+  await page.locator("#open-cashflow-btn").click();
+  await page.locator("#cashflow-open-networth").click();
+  await expect(page.locator("#cashflow-section")).toHaveAttribute("aria-hidden", "false");
+  await expect(page.locator("#networth-section")).toHaveAttribute("aria-hidden", "false");
+
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+
+  await page.locator("#networth-section-collapse").click();
+
+  await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeLessThan(20);
+  await expect(page.locator("#networth-section")).toHaveAttribute("aria-hidden", "true");
+  await expect(page.locator("#cashflow-section")).toHaveAttribute("aria-hidden", "false");
 });

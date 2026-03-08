@@ -739,6 +739,39 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
       totalOutflows: displayTotalOutflowsSeries,
       netCashFlow: displayNetCashFlowSeries,
       closingCash: finalCashSeries
+    },
+    netWorth: {
+      cash: [...finalCashSeries],
+      stockMarketEquity: [...stockStage.cfwd],
+      properties: [
+        {
+          key: "property-home",
+          label: "Home",
+          values: [...homeValueSeries]
+        },
+        ...inputs.properties.map((property, idx) => ({
+          key: `property-asset-${idx}`,
+          label: property.name.trim() || `Property ${idx + 1}`,
+          values: [...adjustedPropertyValues[idx]]
+        }))
+      ],
+      loans: [
+        {
+          key: "loan-home",
+          label: "Home loan",
+          values: [...homeLoanSeries]
+        },
+        ...inputs.properties.map((property, idx) => ({
+          key: `loan-property-${idx}`,
+          label: `${property.name.trim() || `Property ${idx + 1}`} loan`,
+          values: [...adjustedPropertyLoans[idx]]
+        })),
+        {
+          key: "loan-other",
+          label: "Other loan",
+          values: [...otherLoanSeries]
+        }
+      ]
     }
   };
 }

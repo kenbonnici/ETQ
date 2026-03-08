@@ -83,7 +83,10 @@ let latestRunResult: RunModelResult | null = null;
 let cashflowScenario: "early" | "norm" = "early";
 let cashflowSectionOpen = false;
 let cashflowHasMounted = false;
+let networthSectionOpen = false;
+let networthHasMounted = false;
 const cashflowExpandedGroups = new Set<string>(["cash-bridge", "inflows", "outflows"]);
+const networthExpandedGroups = new Set<string>(["networth-properties", "networth-loans"]);
 
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
@@ -147,6 +150,7 @@ function enforceLiveUntilAgeConstraint(syncVisibleInput: boolean): boolean {
 }
 
 app.innerHTML = `
+  <div id="dashboard-anchor" class="scroll-anchor" aria-hidden="true"></div>
   <main class="layout" id="dashboard-view">
     <section class="left" id="inputs-panel"></section>
     <section class="right">
@@ -185,15 +189,18 @@ app.innerHTML = `
       <article class="chart-card">
         <div class="chart-header">
           <h2>Net Worth</h2>
-          <div class="chart-legend" id="nw-legend" aria-hidden="true">
-            <span class="chart-legend-item">
-              <span class="chart-legend-line"></span>
-              <span id="nw-legend-a">Retire at early age</span>
-            </span>
-            <span class="chart-legend-item">
-              <span class="chart-legend-line is-dashed"></span>
-              <span id="nw-legend-b">Retire at statutory age</span>
-            </span>
+          <div class="chart-actions" id="nw-chart-actions">
+            <button id="open-networth-btn" class="cashflow-nav-btn" type="button">Open net worth</button>
+            <div class="chart-legend" id="nw-legend" aria-hidden="true">
+              <span class="chart-legend-item">
+                <span class="chart-legend-line"></span>
+                <span id="nw-legend-a">Retire at early age</span>
+              </span>
+              <span class="chart-legend-item">
+                <span class="chart-legend-line is-dashed"></span>
+                <span id="nw-legend-b">Retire at statutory age</span>
+              </span>
+            </div>
           </div>
         </div>
         <canvas id="nw-chart" width="920" height="300"></canvas>
@@ -232,12 +239,46 @@ app.innerHTML = `
             <button id="cashflow-scenario-norm" class="cashflow-scenario-btn" type="button">Statutory</button>
           </div>
           <div class="cashflow-page-actions" aria-label="Cash flow table controls">
+            <button id="cashflow-open-networth" class="cashflow-control-btn" type="button">Open net worth</button>
             <button id="cashflow-expand-all" class="cashflow-control-btn" type="button">Expand all</button>
             <button id="cashflow-collapse-all" class="cashflow-control-btn" type="button">Collapse all</button>
           </div>
         </div>
       </header>
       <section class="cashflow-table-panel" id="cashflow-table-panel"></section>
+    </div>
+  </section>
+  <div id="networth-anchor" class="scroll-anchor" aria-hidden="true"></div>
+  <section class="cashflow-section" id="networth-section" hidden aria-hidden="true">
+    <div class="cashflow-section-shell">
+      <header class="cashflow-section-header">
+        <div class="cashflow-section-heading">
+          <div class="cashflow-section-title-row">
+            <h2>Net Worth</h2>
+            <button
+              id="networth-section-collapse"
+              class="cashflow-section-toggle-btn"
+              type="button"
+              aria-label="Collapse net worth section"
+              title="Collapse net worth section"
+            >
+              <span aria-hidden="true">⌃</span>
+            </button>
+          </div>
+        </div>
+        <div class="cashflow-section-controls">
+          <div class="cashflow-scenario-toggle" role="tablist" aria-label="Projection scenario">
+            <button id="networth-scenario-early" class="cashflow-scenario-btn" type="button">Early</button>
+            <button id="networth-scenario-norm" class="cashflow-scenario-btn" type="button">Statutory</button>
+          </div>
+          <div class="cashflow-page-actions" aria-label="Net worth table controls">
+            <button id="networth-open-cashflow" class="cashflow-control-btn" type="button">Open cash flow</button>
+            <button id="networth-expand-all" class="cashflow-control-btn" type="button">Expand all</button>
+            <button id="networth-collapse-all" class="cashflow-control-btn" type="button">Collapse all</button>
+          </div>
+        </div>
+      </header>
+      <section class="cashflow-table-panel" id="networth-table-panel"></section>
     </div>
   </section>
 `;
@@ -249,27 +290,39 @@ const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
 const retireCheckResult = document.getElementById("retire-check-result") as HTMLParagraphElement;
 const retireCheckButton = document.getElementById("retire-check-btn") as HTMLButtonElement;
 const openCashflowButton = document.getElementById("open-cashflow-btn") as HTMLButtonElement;
+const openNetworthButton = document.getElementById("open-networth-btn") as HTMLButtonElement;
 const cashCanvas = document.getElementById("cash-chart") as HTMLCanvasElement;
 const nwCanvas = document.getElementById("nw-chart") as HTMLCanvasElement;
 const cashChartActions = document.getElementById("cash-chart-actions") as HTMLDivElement;
+const nwChartActions = document.getElementById("nw-chart-actions") as HTMLDivElement;
 const cashLegend = document.getElementById("cash-legend") as HTMLDivElement;
 const cashLegendA = document.getElementById("cash-legend-a") as HTMLSpanElement;
 const cashLegendB = document.getElementById("cash-legend-b") as HTMLSpanElement;
 const nwLegend = document.getElementById("nw-legend") as HTMLDivElement;
 const nwLegendA = document.getElementById("nw-legend-a") as HTMLSpanElement;
 const nwLegendB = document.getElementById("nw-legend-b") as HTMLSpanElement;
-const chartsAnchorEl = document.getElementById("charts-anchor") as HTMLElement;
+const dashboardAnchorEl = document.getElementById("dashboard-anchor") as HTMLElement;
 const timelinePanel = document.getElementById("timeline-panel") as HTMLDivElement;
 const timelineScroll = document.getElementById("timeline-scroll") as HTMLDivElement;
 const timelineTrack = document.getElementById("timeline-track") as HTMLDivElement;
 const cashflowAnchorEl = document.getElementById("cashflow-anchor") as HTMLElement;
 const cashflowSectionEl = document.getElementById("cashflow-section") as HTMLElement;
+const networthAnchorEl = document.getElementById("networth-anchor") as HTMLElement;
+const networthSectionEl = document.getElementById("networth-section") as HTMLElement;
 const cashflowScenarioEarlyButton = document.getElementById("cashflow-scenario-early") as HTMLButtonElement;
 const cashflowScenarioNormButton = document.getElementById("cashflow-scenario-norm") as HTMLButtonElement;
+const cashflowOpenNetworthButton = document.getElementById("cashflow-open-networth") as HTMLButtonElement;
 const cashflowExpandAllButton = document.getElementById("cashflow-expand-all") as HTMLButtonElement;
 const cashflowCollapseAllButton = document.getElementById("cashflow-collapse-all") as HTMLButtonElement;
 const cashflowSectionCollapseButton = document.getElementById("cashflow-section-collapse") as HTMLButtonElement;
 const cashflowTablePanel = document.getElementById("cashflow-table-panel") as HTMLDivElement;
+const networthScenarioEarlyButton = document.getElementById("networth-scenario-early") as HTMLButtonElement;
+const networthScenarioNormButton = document.getElementById("networth-scenario-norm") as HTMLButtonElement;
+const networthOpenCashflowButton = document.getElementById("networth-open-cashflow") as HTMLButtonElement;
+const networthExpandAllButton = document.getElementById("networth-expand-all") as HTMLButtonElement;
+const networthCollapseAllButton = document.getElementById("networth-collapse-all") as HTMLButtonElement;
+const networthSectionCollapseButton = document.getElementById("networth-section-collapse") as HTMLButtonElement;
+const networthTablePanel = document.getElementById("networth-table-panel") as HTMLDivElement;
 
 const sectionState = {
   quickStartOpen: true,
@@ -305,11 +358,22 @@ interface PanelCursorState {
   selectionEnd: number | null;
 }
 
-interface CashflowScrollAnchor {
+interface ProjectionScrollAnchor {
   rowId: string | null;
   offsetTop: number;
   scrollLeft: number;
   scrollTop: number;
+}
+
+type ProjectionSectionKey = "cashflow" | "networth";
+
+interface ProjectionSectionConfig {
+  key: ProjectionSectionKey;
+  anchorEl: HTMLElement;
+  sectionEl: HTMLElement;
+  tablePanel: HTMLDivElement;
+  openButton: HTMLButtonElement;
+  isOpen(): boolean;
 }
 
 interface TimelineMilestone {
@@ -348,8 +412,32 @@ const chartTooltips = new Map<HTMLCanvasElement, HTMLDivElement>();
 const chartHoverIndex = new Map<HTMLCanvasElement, number | null>();
 const chartHoverDelayHandle = new Map<HTMLCanvasElement, number | null>();
 const chartHoverPending = new Map<HTMLCanvasElement, { idx: number; clientX: number; clientY: number } | null>();
-let pendingCashflowScrollAnchor: CashflowScrollAnchor | null = null;
-let pendingCashflowScrollRestoreFrame: number | null = null;
+let pendingCashflowScrollAnchor: ProjectionScrollAnchor | null = null;
+let pendingNetworthScrollAnchor: ProjectionScrollAnchor | null = null;
+const pendingProjectionScrollRestoreFrame: Record<ProjectionSectionKey, number | null> = {
+  cashflow: null,
+  networth: null
+};
+
+function getProjectionSectionConfig(key: ProjectionSectionKey): ProjectionSectionConfig {
+  return key === "cashflow"
+    ? {
+        key,
+        anchorEl: cashflowAnchorEl,
+        sectionEl: cashflowSectionEl,
+        tablePanel: cashflowTablePanel,
+        openButton: openCashflowButton,
+        isOpen: () => cashflowSectionOpen
+      }
+    : {
+        key,
+        anchorEl: networthAnchorEl,
+        sectionEl: networthSectionEl,
+        tablePanel: networthTablePanel,
+        openButton: openNetworthButton,
+        isOpen: () => networthSectionOpen
+      };
+}
 
 function capturePanelCursorState(): PanelCursorState {
   const active = document.activeElement as HTMLInputElement | null;
@@ -382,21 +470,22 @@ function restorePanelCursorState(state: PanelCursorState): void {
   }
 }
 
-function getCashflowScrollContainer(): HTMLElement | null {
-  return cashflowTablePanel.querySelector<HTMLElement>(".cashflow-table-scroll");
+function getProjectionScrollContainer(tablePanel: HTMLElement): HTMLElement | null {
+  return tablePanel.querySelector<HTMLElement>(".cashflow-table-scroll");
 }
 
-function clampCashflowScrollTop(scrollEl: HTMLElement, value: number): number {
+function clampProjectionScrollTop(scrollEl: HTMLElement, value: number): number {
   return Math.max(0, Math.min(value, scrollEl.scrollHeight - scrollEl.clientHeight));
 }
 
-function clampCashflowScrollLeft(scrollEl: HTMLElement, value: number): number {
+function clampProjectionScrollLeft(scrollEl: HTMLElement, value: number): number {
   return Math.max(0, Math.min(value, scrollEl.scrollWidth - scrollEl.clientWidth));
 }
 
-function captureCashflowScrollContext(rowId: string | null = null): CashflowScrollAnchor | null {
-  if (!cashflowSectionOpen) return null;
-  const scrollEl = getCashflowScrollContainer();
+function captureProjectionScrollContext(sectionKey: ProjectionSectionKey, rowId: string | null = null): ProjectionScrollAnchor | null {
+  const section = getProjectionSectionConfig(sectionKey);
+  if (!section.isOpen()) return null;
+  const scrollEl = getProjectionScrollContainer(section.tablePanel);
   if (!scrollEl) return null;
   const resolvedRowId = rowId ?? (() => {
     const rows = Array.from(scrollEl.querySelectorAll<HTMLElement>("tr[data-row-id]"));
@@ -428,12 +517,13 @@ function captureCashflowScrollContext(rowId: string | null = null): CashflowScro
   };
 }
 
-function restoreCashflowScrollContext(anchor: CashflowScrollAnchor | null): void {
-  if (!anchor || !cashflowSectionOpen) return;
-  const scrollEl = getCashflowScrollContainer();
+function restoreProjectionScrollContext(sectionKey: ProjectionSectionKey, anchor: ProjectionScrollAnchor | null): void {
+  const section = getProjectionSectionConfig(sectionKey);
+  if (!anchor || !section.isOpen()) return;
+  const scrollEl = getProjectionScrollContainer(section.tablePanel);
   if (!scrollEl) return;
-  scrollEl.scrollLeft = clampCashflowScrollLeft(scrollEl, anchor.scrollLeft);
-  const fallbackTop = clampCashflowScrollTop(scrollEl, anchor.scrollTop);
+  scrollEl.scrollLeft = clampProjectionScrollLeft(scrollEl, anchor.scrollLeft);
+  const fallbackTop = clampProjectionScrollTop(scrollEl, anchor.scrollTop);
   if (!anchor.rowId) {
     scrollEl.scrollTop = fallbackTop;
     return;
@@ -443,30 +533,30 @@ function restoreCashflowScrollContext(anchor: CashflowScrollAnchor | null): void
     scrollEl.scrollTop = fallbackTop;
     return;
   }
-  scrollEl.scrollTop = clampCashflowScrollTop(scrollEl, rowEl.offsetTop - anchor.offsetTop);
+  scrollEl.scrollTop = clampProjectionScrollTop(scrollEl, rowEl.offsetTop - anchor.offsetTop);
 }
 
-function queueCashflowScrollContextRestore(anchor: CashflowScrollAnchor | null): void {
+function queueProjectionScrollContextRestore(sectionKey: ProjectionSectionKey, anchor: ProjectionScrollAnchor | null): void {
   if (!anchor) return;
-  if (pendingCashflowScrollRestoreFrame !== null) {
-    cancelAnimationFrame(pendingCashflowScrollRestoreFrame);
-    pendingCashflowScrollRestoreFrame = null;
+  if (pendingProjectionScrollRestoreFrame[sectionKey] !== null) {
+    cancelAnimationFrame(pendingProjectionScrollRestoreFrame[sectionKey]!);
+    pendingProjectionScrollRestoreFrame[sectionKey] = null;
   }
-  const scrollEl = getCashflowScrollContainer();
+  const scrollEl = getProjectionScrollContainer(getProjectionSectionConfig(sectionKey).tablePanel);
   scrollEl?.classList.add("is-restoring-scroll");
-  pendingCashflowScrollRestoreFrame = requestAnimationFrame(() => {
-    restoreCashflowScrollContext(anchor);
-    getCashflowScrollContainer()?.classList.remove("is-restoring-scroll");
-    pendingCashflowScrollRestoreFrame = null;
+  pendingProjectionScrollRestoreFrame[sectionKey] = requestAnimationFrame(() => {
+    restoreProjectionScrollContext(sectionKey, anchor);
+    getProjectionScrollContainer(getProjectionSectionConfig(sectionKey).tablePanel)?.classList.remove("is-restoring-scroll");
+    pendingProjectionScrollRestoreFrame[sectionKey] = null;
   });
 }
 
-function captureCashflowScrollAnchor(rowId: string | null = null): CashflowScrollAnchor | null {
-  return captureCashflowScrollContext(rowId);
+function captureProjectionScrollAnchor(sectionKey: ProjectionSectionKey, rowId: string | null = null): ProjectionScrollAnchor | null {
+  return captureProjectionScrollContext(sectionKey, rowId);
 }
 
-function restoreCashflowScrollAnchor(anchor: CashflowScrollAnchor | null): void {
-  queueCashflowScrollContextRestore(anchor);
+function restoreProjectionScrollAnchor(sectionKey: ProjectionSectionKey, anchor: ProjectionScrollAnchor | null): void {
+  queueProjectionScrollContextRestore(sectionKey, anchor);
 }
 
 function currentCurrencySymbol(): string {
@@ -780,7 +870,7 @@ function formatCashflowCellValue(value: number): string {
   return formatCurrencyPrecise(value);
 }
 
-interface CashflowLeafRow {
+interface ProjectionLeafRow {
   type: "row";
   id: string;
   label: string;
@@ -790,24 +880,24 @@ interface CashflowLeafRow {
   alwaysVisible?: boolean;
 }
 
-interface CashflowGroupRow {
+interface ProjectionGroupRow {
   type: "group";
   id: string;
   label: string;
   values: number[];
   level: number;
   tone?: "default" | "total" | "bridge";
-  children: CashflowNode[];
+  children: ProjectionNode[];
   alwaysVisible?: boolean;
 }
 
-interface CashflowSectionRow {
+interface ProjectionSectionRow {
   type: "section";
   id: string;
   label: string;
 }
 
-type CashflowNode = CashflowLeafRow | CashflowGroupRow | CashflowSectionRow;
+type ProjectionNode = ProjectionLeafRow | ProjectionGroupRow | ProjectionSectionRow;
 
 const CASHFLOW_DETAIL_GROUP_IDS = [
   "cash",
@@ -820,7 +910,12 @@ const CASHFLOW_DETAIL_GROUP_IDS = [
   "outflows-expense-events"
 ] as const;
 
-function sumCashflowSeries(seriesList: number[][], length = seriesList[0]?.length ?? 0): number[] {
+const NETWORTH_DETAIL_GROUP_IDS = [
+  "networth-properties",
+  "networth-loans"
+] as const;
+
+function sumProjectionSeries(seriesList: number[][], length = seriesList[0]?.length ?? 0): number[] {
   const total = Array.from({ length }, () => 0);
   for (const series of seriesList) {
     for (let i = 0; i < length; i += 1) total[i] += series[i] ?? 0;
@@ -828,56 +923,65 @@ function sumCashflowSeries(seriesList: number[][], length = seriesList[0]?.lengt
   return total;
 }
 
-function hasVisibleCashflowValue(values: number[]): boolean {
+function hasVisibleProjectionValue(values: number[]): boolean {
   return values.some((value) => Number.isFinite(value) && Math.abs(value) > 1e-6);
 }
 
-function cashflowLeaf(
+function projectionLeaf(
   id: string,
   label: string,
   values: number[],
   level: number,
-  tone: CashflowLeafRow["tone"] = "default",
+  tone: ProjectionLeafRow["tone"] = "default",
   alwaysVisible = false
-): CashflowLeafRow {
+): ProjectionLeafRow {
   return { type: "row", id, label, values, level, tone, alwaysVisible };
 }
 
-function cashflowGroup(
+function projectionGroup(
   id: string,
   label: string,
   values: number[],
   level: number,
-  children: CashflowNode[],
-  tone: CashflowGroupRow["tone"] = "default",
+  children: ProjectionNode[],
+  tone: ProjectionGroupRow["tone"] = "default",
   alwaysVisible = false
-): CashflowGroupRow {
+): ProjectionGroupRow {
   return { type: "group", id, label, values, level, children, tone, alwaysVisible };
 }
 
-function cashflowSection(id: string, label: string): CashflowSectionRow {
-  return { type: "section", id, label };
+function shiftProjectionNodeLevel(node: ProjectionNode, delta: number): ProjectionNode {
+  if (delta === 0) return node;
+  if (node.type === "section") return node;
+  if (node.type === "row") {
+    return { ...node, level: Math.max(0, node.level + delta) };
+  }
+  return {
+    ...node,
+    level: Math.max(0, node.level + delta),
+    children: node.children.map((child) => shiftProjectionNodeLevel(child, delta))
+  };
 }
 
-function collectVisibleCashflowNodeIds(nodes: CashflowNode[], visibleIds = new Set<string>()): Set<string> {
+function collectVisibleProjectionNodeIds(nodes: ProjectionNode[], visibleIds = new Set<string>()): Set<string> {
   for (const node of nodes) {
     if (node.type === "section") continue;
     if (node.type === "row") {
-      if (node.alwaysVisible || hasVisibleCashflowValue(node.values)) visibleIds.add(node.id);
+      if (node.alwaysVisible || hasVisibleProjectionValue(node.values)) visibleIds.add(node.id);
       continue;
     }
     const childIdsBefore = visibleIds.size;
-    collectVisibleCashflowNodeIds(node.children, visibleIds);
+    collectVisibleProjectionNodeIds(node.children, visibleIds);
     const hasVisibleChildren = visibleIds.size > childIdsBefore;
-    if (node.alwaysVisible || hasVisibleCashflowValue(node.values) || hasVisibleChildren) {
+    if (node.alwaysVisible || hasVisibleProjectionValue(node.values) || hasVisibleChildren) {
       visibleIds.add(node.id);
     }
   }
   return visibleIds;
 }
 
-function filterCashflowNodes(nodes: CashflowNode[], visibleIds?: ReadonlySet<string>): CashflowNode[] {
-  const filtered: CashflowNode[] = [];
+function filterProjectionNodes(nodes: ProjectionNode[], visibleIds?: ReadonlySet<string>): ProjectionNode[] {
+  const filtered: ProjectionNode[] = [];
   for (const node of nodes) {
     if (node.type === "section") {
       filtered.push(node);
@@ -886,16 +990,16 @@ function filterCashflowNodes(nodes: CashflowNode[], visibleIds?: ReadonlySet<str
     if (node.type === "row") {
       const shouldShow = visibleIds
         ? node.alwaysVisible || visibleIds.has(node.id)
-        : node.alwaysVisible || hasVisibleCashflowValue(node.values);
+        : node.alwaysVisible || hasVisibleProjectionValue(node.values);
       if (shouldShow) {
         filtered.push(node);
       }
       continue;
     }
-    const children = filterCashflowNodes(node.children, visibleIds);
+    const children = filterProjectionNodes(node.children, visibleIds);
     const shouldShow = visibleIds
       ? node.alwaysVisible || visibleIds.has(node.id) || children.length > 0
-      : node.alwaysVisible || hasVisibleCashflowValue(node.values) || children.length > 0;
+      : node.alwaysVisible || hasVisibleProjectionValue(node.values) || children.length > 0;
     if (shouldShow) {
       filtered.push({ ...node, children });
     }
@@ -903,74 +1007,139 @@ function filterCashflowNodes(nodes: CashflowNode[], visibleIds?: ReadonlySet<str
   return filtered;
 }
 
-function buildCashflowNodes(scenario: ScenarioOutputs): CashflowNode[] {
+function flattenSingleChildProjectionGroups(nodes: ProjectionNode[]): ProjectionNode[] {
+  const flattened: ProjectionNode[] = [];
+  for (const node of nodes) {
+    if (node.type !== "group") {
+      flattened.push(node);
+      continue;
+    }
+    const children = flattenSingleChildProjectionGroups(node.children);
+    if (children.length === 1) {
+      const child = children[0];
+      if (child.type === "section") {
+        flattened.push(child);
+        continue;
+      }
+      flattened.push(shiftProjectionNodeLevel(child, node.level - child.level));
+      continue;
+    }
+    flattened.push({ ...node, children });
+  }
+  return flattened;
+}
+
+function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
   const cashFlow = scenario.cashFlow;
   const yearCount = scenario.points.length;
   const displayInflowsTotal = cashFlow.totalInflows.map((value, idx) => value + cashFlow.interestOnCash[idx]);
   const displayNetCashFlow = cashFlow.netCashFlow.map((value, idx) => value + cashFlow.interestOnCash[idx]);
   const rentalChildren = cashFlow.rentalIncomeByProperty.map((series) =>
-    cashflowLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2)
   );
   const incomeEventChildren = cashFlow.incomeEvents.map((series) =>
-    cashflowLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2)
   );
   const liquidationChildren = [
-    cashflowLeaf("liquidation-stocks", "Stocks", cashFlow.liquidationsStocks, 2),
+    projectionLeaf("liquidation-stocks", "Stocks", cashFlow.liquidationsStocks, 2),
     ...cashFlow.liquidationsByProperty.map((series) =>
-      cashflowLeaf(series.key, series.label, series.values, 2)
+      projectionLeaf(series.key, series.label, series.values, 2)
     )
   ];
   const propertyLoanChildren = cashFlow.propertyLoanRepayments.map((series) =>
-    cashflowLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2)
   );
   const dependentChildren = cashFlow.dependentsCost.map((series) =>
-    cashflowLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2)
   );
   const propertyCostChildren = cashFlow.propertyCosts.map((series) =>
-    cashflowLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2)
   );
   const expenseEventChildren = cashFlow.expenseEvents.map((series) =>
-    cashflowLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2)
   );
 
   return [
-    cashflowGroup("inflows", "Inflows", displayInflowsTotal, 0, [
-      cashflowLeaf("employment-income", "Employment income", cashFlow.employmentIncome, 1),
-      cashflowLeaf("other-work-income", "Other work income", cashFlow.otherWorkIncome, 1),
-      cashflowGroup("inflows-rental", "Rental income", sumCashflowSeries(cashFlow.rentalIncomeByProperty.map((row) => row.values), yearCount), 1, rentalChildren),
-      cashflowLeaf("statutory-pension", "Statutory pension", cashFlow.statutoryPension, 1),
-      cashflowLeaf("other-post-retirement-income", "Other post-retirement income", cashFlow.otherPostRetirementIncome, 1),
-      cashflowGroup("inflows-income-events", "One-off income events", sumCashflowSeries(cashFlow.incomeEvents.map((row) => row.values), yearCount), 1, incomeEventChildren),
-      cashflowGroup("inflows-liquidations", "Liquidations", sumCashflowSeries([
+    projectionGroup("inflows", "Inflows", displayInflowsTotal, 0, [
+      projectionLeaf("employment-income", "Employment income", cashFlow.employmentIncome, 1),
+      projectionLeaf("other-work-income", "Other work income", cashFlow.otherWorkIncome, 1),
+      projectionGroup("inflows-rental", "Rental income", sumProjectionSeries(cashFlow.rentalIncomeByProperty.map((row) => row.values), yearCount), 1, rentalChildren),
+      projectionLeaf("statutory-pension", "Statutory pension", cashFlow.statutoryPension, 1),
+      projectionLeaf("other-post-retirement-income", "Other post-retirement income", cashFlow.otherPostRetirementIncome, 1),
+      projectionGroup("inflows-income-events", "One-off income events", sumProjectionSeries(cashFlow.incomeEvents.map((row) => row.values), yearCount), 1, incomeEventChildren),
+      projectionGroup("inflows-liquidations", "Liquidations", sumProjectionSeries([
         cashFlow.liquidationsStocks,
         ...cashFlow.liquidationsByProperty.map((row) => row.values)
       ], yearCount), 1, liquidationChildren),
-      cashflowLeaf("interest-cash", "Interest on cash", cashFlow.interestOnCash, 1),
-      cashflowLeaf("inflows-total-footer", "Inflows total", displayInflowsTotal, 1, "total", true)
+      projectionLeaf("interest-cash", "Interest on cash", cashFlow.interestOnCash, 1),
+      projectionLeaf("inflows-total-footer", "Inflows total", displayInflowsTotal, 1, "total", true)
     ], "total", true),
-    cashflowGroup("outflows", "Outflows", cashFlow.totalOutflows, 0, [
-      cashflowLeaf("credit-cards-cleared", "Credit cards cleared", cashFlow.creditCardsCleared, 1),
-      cashflowLeaf("home-loan-repayment", "Home loan repayment", cashFlow.homeLoanRepayment, 1),
-      cashflowGroup("outflows-property-loans", "Property loan repayments", sumCashflowSeries(cashFlow.propertyLoanRepayments.map((row) => row.values), yearCount), 1, propertyLoanChildren),
-      cashflowLeaf("other-loan-repayment", "Other loan repayment", cashFlow.otherLoanRepayment, 1),
-      cashflowGroup("outflows-dependents", "Dependents cost", sumCashflowSeries(cashFlow.dependentsCost.map((row) => row.values), yearCount), 1, dependentChildren),
-      cashflowLeaf("housing-rent", "Housing rent", cashFlow.housingRent, 1),
-      cashflowGroup("outflows-property-costs", "Other property costs", sumCashflowSeries(cashFlow.propertyCosts.map((row) => row.values), yearCount), 1, propertyCostChildren),
-      cashflowLeaf("living-expenses", "Living expenses", cashFlow.livingExpenses, 1),
-      cashflowGroup("outflows-expense-events", "One-off expense events", sumCashflowSeries(cashFlow.expenseEvents.map((row) => row.values), yearCount), 1, expenseEventChildren),
-      cashflowLeaf("outflows-total-footer", "Outflows total", cashFlow.totalOutflows, 1, "total", true)
+    projectionGroup("outflows", "Outflows", cashFlow.totalOutflows, 0, [
+      projectionLeaf("credit-cards-cleared", "Credit cards cleared", cashFlow.creditCardsCleared, 1),
+      projectionLeaf("home-loan-repayment", "Home loan repayment", cashFlow.homeLoanRepayment, 1),
+      projectionGroup("outflows-property-loans", "Property loan repayments", sumProjectionSeries(cashFlow.propertyLoanRepayments.map((row) => row.values), yearCount), 1, propertyLoanChildren),
+      projectionLeaf("other-loan-repayment", "Other loan repayment", cashFlow.otherLoanRepayment, 1),
+      projectionGroup("outflows-dependents", "Dependents cost", sumProjectionSeries(cashFlow.dependentsCost.map((row) => row.values), yearCount), 1, dependentChildren),
+      projectionLeaf("housing-rent", "Housing rent", cashFlow.housingRent, 1),
+      projectionGroup("outflows-property-costs", "Other property costs", sumProjectionSeries(cashFlow.propertyCosts.map((row) => row.values), yearCount), 1, propertyCostChildren),
+      projectionLeaf("living-expenses", "Living expenses", cashFlow.livingExpenses, 1),
+      projectionGroup("outflows-expense-events", "One-off expense events", sumProjectionSeries(cashFlow.expenseEvents.map((row) => row.values), yearCount), 1, expenseEventChildren),
+      projectionLeaf("outflows-total-footer", "Outflows total", cashFlow.totalOutflows, 1, "total", true)
     ], "total", true),
-    cashflowGroup("cash", "Cash", cashFlow.closingCash, 0, [
-      cashflowLeaf("opening-cash", "Opening cash balance", cashFlow.openingCash, 1, "default", true),
-      cashflowLeaf("net-cash-flow", "Net cash flow", displayNetCashFlow, 1, "bridge", true),
-      cashflowLeaf("closing-cash", "Closing cash balance", cashFlow.closingCash, 1, "bridge", true)
+    projectionGroup("cash", "Cash", cashFlow.closingCash, 0, [
+      projectionLeaf("opening-cash", "Opening cash balance", cashFlow.openingCash, 1, "default", true),
+      projectionLeaf("net-cash-flow", "Net cash flow", displayNetCashFlow, 1, "bridge", true),
+      projectionLeaf("closing-cash", "Closing cash balance", cashFlow.closingCash, 1, "bridge", true)
     ], "total", true)
   ];
 }
 
-function renderCashflowRows(nodes: CashflowNode[], years: number[], ages: number[]): string {
+function buildNetworthNodes(scenario: ScenarioOutputs): ProjectionNode[] {
+  const netWorth = scenario.netWorth;
+  const yearCount = scenario.points.length;
+  const propertyChildren = netWorth.properties.map((series) =>
+    projectionLeaf(series.key, series.label, series.values, 1)
+  );
+  const loanChildren = netWorth.loans.map((series) =>
+    projectionLeaf(series.key, series.label, series.values, 1)
+  );
+
+  return [
+    projectionGroup("networth-cash", "Cash", netWorth.cash, 0, [
+      projectionLeaf("networth-cash-balance", "Cash", netWorth.cash, 1, "bridge", true)
+    ], "total", true),
+    projectionGroup("networth-equity", "Stock market equity", netWorth.stockMarketEquity, 0, [
+      projectionLeaf("networth-stocks-balance", "Stocks", netWorth.stockMarketEquity, 1, "bridge", true)
+    ], "total", true),
+    projectionGroup(
+      "networth-properties",
+      "Properties",
+      sumProjectionSeries(netWorth.properties.map((row) => row.values), yearCount),
+      0,
+      propertyChildren,
+      "total",
+      true
+    ),
+    projectionGroup(
+      "networth-loans",
+      "Loans",
+      sumProjectionSeries(netWorth.loans.map((row) => row.values), yearCount),
+      0,
+      loanChildren,
+      "total",
+      true
+    )
+  ];
+}
+
+function renderProjectionRows(
+  nodes: ProjectionNode[],
+  years: number[],
+  ages: number[],
+  expandedGroups: ReadonlySet<string>
+): string {
   const rows: string[] = [];
-  const renderNode = (node: CashflowNode): void => {
+  const renderNode = (node: ProjectionNode): void => {
     if (node.type === "section") {
       rows.push(`
         <tr class="cashflow-section-row" data-row-id="${escapeHtml(node.id)}">
@@ -982,7 +1151,7 @@ function renderCashflowRows(nodes: CashflowNode[], years: number[], ages: number
       return;
     }
     const isGroup = node.type === "group";
-    const expanded = isGroup ? cashflowExpandedGroups.has(node.id) : false;
+    const expanded = isGroup ? expandedGroups.has(node.id) : false;
     const toneClass = node.tone === "bridge"
       ? "is-bridge"
       : node.tone === "total"
@@ -993,13 +1162,14 @@ function renderCashflowRows(nodes: CashflowNode[], years: number[], ages: number
       toneClass,
       isGroup ? "is-group-header" : "is-line-item",
       isGroup && node.level === 0 ? "is-major-group" : "",
+      !isGroup && node.level === 0 ? "is-major-line-item" : "",
       isGroup && node.level > 0 ? "is-subgroup" : "",
       node.level >= 2 ? "is-child" : "",
       node.id === "net-cash-flow" || node.id === "closing-cash" ? "is-key-total" : "",
       node.id === "inflows-liquidations" ? "is-liquidation-group" : ""
     ].filter(Boolean).join(" ");
     const labelHtml = isGroup
-      ? `<button class="cashflow-row-toggle" type="button" data-cashflow-toggle="${escapeHtml(node.id)}" aria-expanded="${expanded ? "true" : "false"}"><span class="cashflow-row-toggle-gutter"><span class="cashflow-row-toggle-icon">${expanded ? "−" : "+"}</span></span><span class="cashflow-row-toggle-text">${escapeHtml(node.label)}</span></button>`
+      ? `<button class="cashflow-row-toggle" type="button" data-projection-toggle="${escapeHtml(node.id)}" aria-expanded="${expanded ? "true" : "false"}"><span class="cashflow-row-toggle-gutter"><span class="cashflow-row-toggle-icon">${expanded ? "−" : "+"}</span></span><span class="cashflow-row-toggle-text">${escapeHtml(node.label)}</span></button>`
       : `<span class="cashflow-row-label-text"><span class="cashflow-row-toggle-gutter" aria-hidden="true"></span><span class="cashflow-row-label-copy">${escapeHtml(node.label)}</span></span>`;
     const negativeSensitive = node.id === "net-cash-flow" || node.id === "closing-cash" || node.id === "inflows-liquidations";
     const showSectionValues = !(isGroup && expanded);
@@ -1051,12 +1221,27 @@ function renderCashflowRows(nodes: CashflowNode[], years: number[], ages: number
   `;
 }
 
-function syncCashflowSectionVisibility(): void {
-  cashflowSectionEl.hidden = !cashflowSectionOpen;
-  cashflowSectionEl.setAttribute("aria-hidden", cashflowSectionOpen ? "false" : "true");
-  cashflowSectionEl.classList.toggle("is-open", cashflowSectionOpen);
-  openCashflowButton.classList.toggle("is-active", cashflowSectionOpen);
-  document.body.classList.toggle("cashflow-open", cashflowSectionOpen);
+function syncProjectionSectionVisibility(sectionKey: ProjectionSectionKey): void {
+  const section = getProjectionSectionConfig(sectionKey);
+  const isOpen = section.isOpen();
+  section.sectionEl.hidden = !isOpen;
+  section.sectionEl.setAttribute("aria-hidden", isOpen ? "false" : "true");
+  section.sectionEl.classList.toggle("is-open", isOpen);
+  section.openButton.classList.toggle("is-active", isOpen);
+  document.body.classList.toggle("cashflow-open", cashflowSectionOpen || networthSectionOpen);
+}
+
+function syncProjectionScenarioButtons(): void {
+  const earlyButtons = [cashflowScenarioEarlyButton, networthScenarioEarlyButton];
+  const normButtons = [cashflowScenarioNormButton, networthScenarioNormButton];
+  for (const button of earlyButtons) {
+    button.classList.toggle("is-active", cashflowScenario === "early");
+    button.setAttribute("aria-selected", cashflowScenario === "early" ? "true" : "false");
+  }
+  for (const button of normButtons) {
+    button.classList.toggle("is-active", cashflowScenario === "norm");
+    button.setAttribute("aria-selected", cashflowScenario === "norm" ? "true" : "false");
+  }
 }
 
 function scrollAnchorIntoView(anchorEl: HTMLElement | null): void {
@@ -1073,34 +1258,62 @@ function ensureCashflowMounted(result: RunModelResult | null, blockingLines: str
   renderCashflowPage(result, blockingLines);
 }
 
+function ensureNetworthMounted(result: RunModelResult | null, blockingLines: string[] = []): void {
+  if (networthHasMounted) return;
+  networthHasMounted = true;
+  renderNetworthPage(result, blockingLines);
+}
+
 function openCashflowSection(): void {
   const blockingLines = latestRunResult
     ? []
     : getProjectionBlockingLines(getVisibleValidationMessages(latestValidationMessages));
   ensureCashflowMounted(latestRunResult, blockingLines);
   cashflowSectionOpen = true;
-  syncCashflowSectionVisibility();
+  syncProjectionSectionVisibility("cashflow");
   void cashflowSectionEl.offsetHeight;
   scrollAnchorIntoView(cashflowAnchorEl);
 }
 
+function openNetworthSection(): void {
+  const blockingLines = latestRunResult
+    ? []
+    : getProjectionBlockingLines(getVisibleValidationMessages(latestValidationMessages));
+  ensureNetworthMounted(latestRunResult, blockingLines);
+  networthSectionOpen = true;
+  syncProjectionSectionVisibility("networth");
+  void networthSectionEl.offsetHeight;
+  scrollAnchorIntoView(networthAnchorEl);
+}
+
 function closeCashflowSection(): void {
   if (!cashflowSectionOpen) return;
-  scrollAnchorIntoView(chartsAnchorEl);
+  scrollAnchorIntoView(dashboardAnchorEl);
   window.setTimeout(() => {
     cashflowSectionOpen = false;
-    syncCashflowSectionVisibility();
+    syncProjectionSectionVisibility("cashflow");
+  }, 220);
+}
+
+function closeNetworthSection(): void {
+  if (!networthSectionOpen) return;
+  scrollAnchorIntoView(dashboardAnchorEl);
+  window.setTimeout(() => {
+    networthSectionOpen = false;
+    syncProjectionSectionVisibility("networth");
   }, 220);
 }
 
 function setChartLegendsVisible(visible: boolean): void {
   if (visible) {
     cashChartActions.removeAttribute("hidden");
+    nwChartActions.removeAttribute("hidden");
     cashLegend.removeAttribute("hidden");
     nwLegend.removeAttribute("hidden");
     return;
   }
   cashChartActions.setAttribute("hidden", "");
+  nwChartActions.setAttribute("hidden", "");
   cashLegend.setAttribute("hidden", "");
   nwLegend.setAttribute("hidden", "");
 }
@@ -1115,11 +1328,14 @@ function resetCashflowExpandedGroups(mode: "expanded" | "collapsed" | "top-level
   for (const groupId of CASHFLOW_DETAIL_GROUP_IDS) cashflowExpandedGroups.add(groupId);
 }
 
+function resetNetworthExpandedGroups(mode: "expanded" | "collapsed" | "top-level"): void {
+  networthExpandedGroups.clear();
+  if (mode === "collapsed") return;
+  for (const groupId of NETWORTH_DETAIL_GROUP_IDS) networthExpandedGroups.add(groupId);
+}
+
 function renderCashflowPage(result: RunModelResult | null, blockingLines: string[] = []): void {
-  cashflowScenarioEarlyButton.classList.toggle("is-active", cashflowScenario === "early");
-  cashflowScenarioNormButton.classList.toggle("is-active", cashflowScenario === "norm");
-  cashflowScenarioEarlyButton.setAttribute("aria-selected", cashflowScenario === "early" ? "true" : "false");
-  cashflowScenarioNormButton.setAttribute("aria-selected", cashflowScenario === "norm" ? "true" : "false");
+  syncProjectionScenarioButtons();
 
   if (!result) {
     const lines = blockingLines.length > 0 ? blockingLines : [PROJECTION_EMPTY_GUIDANCE];
@@ -1131,15 +1347,41 @@ function renderCashflowPage(result: RunModelResult | null, blockingLines: string
   const comparisonScenario = cashflowScenario === "early" ? result.outputs.scenarioNorm : result.outputs.scenarioEarly;
   const activeNodes = buildCashflowNodes(activeScenario);
   const comparisonNodes = buildCashflowNodes(comparisonScenario);
-  const visibleNodeIds = collectVisibleCashflowNodeIds(activeNodes);
-  collectVisibleCashflowNodeIds(comparisonNodes, visibleNodeIds);
-  cashflowTablePanel.innerHTML = renderCashflowRows(
-    filterCashflowNodes(activeNodes, visibleNodeIds),
+  const visibleNodeIds = collectVisibleProjectionNodeIds(activeNodes);
+  collectVisibleProjectionNodeIds(comparisonNodes, visibleNodeIds);
+  cashflowTablePanel.innerHTML = renderProjectionRows(
+    flattenSingleChildProjectionGroups(filterProjectionNodes(activeNodes, visibleNodeIds)),
     result.outputs.years,
-    result.outputs.ages
+    result.outputs.ages,
+    cashflowExpandedGroups
   );
-  restoreCashflowScrollAnchor(pendingCashflowScrollAnchor);
+  restoreProjectionScrollAnchor("cashflow", pendingCashflowScrollAnchor);
   pendingCashflowScrollAnchor = null;
+}
+
+function renderNetworthPage(result: RunModelResult | null, blockingLines: string[] = []): void {
+  syncProjectionScenarioButtons();
+
+  if (!result) {
+    const lines = blockingLines.length > 0 ? blockingLines : [PROJECTION_EMPTY_GUIDANCE];
+    networthTablePanel.innerHTML = `<div class="cashflow-empty">${escapeHtml(lines[0])}</div>`;
+    return;
+  }
+
+  const activeScenario = cashflowScenario === "early" ? result.outputs.scenarioEarly : result.outputs.scenarioNorm;
+  const comparisonScenario = cashflowScenario === "early" ? result.outputs.scenarioNorm : result.outputs.scenarioEarly;
+  const activeNodes = buildNetworthNodes(activeScenario);
+  const comparisonNodes = buildNetworthNodes(comparisonScenario);
+  const visibleNodeIds = collectVisibleProjectionNodeIds(activeNodes);
+  collectVisibleProjectionNodeIds(comparisonNodes, visibleNodeIds);
+  networthTablePanel.innerHTML = renderProjectionRows(
+    flattenSingleChildProjectionGroups(filterProjectionNodes(activeNodes, visibleNodeIds)),
+    result.outputs.years,
+    result.outputs.ages,
+    networthExpandedGroups
+  );
+  restoreProjectionScrollAnchor("networth", pendingNetworthScrollAnchor);
+  pendingNetworthScrollAnchor = null;
 }
 
 function buildChartContextByYear(result: RunModelResult): Map<number, TimelineYearEvent[]> {
@@ -2620,9 +2862,14 @@ function recalc(): void {
     drawEmptyChart(cashCanvas, chartLines);
     drawEmptyChart(nwCanvas, chartLines);
     clearTimeline(timelineMessage);
-    cashflowScenarioEarlyButton.textContent = "Early";
-    cashflowScenarioNormButton.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
+    for (const button of [cashflowScenarioEarlyButton, networthScenarioEarlyButton]) {
+      button.textContent = "Early";
+    }
+    for (const button of [cashflowScenarioNormButton, networthScenarioNormButton]) {
+      button.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
+    }
     if (cashflowHasMounted) renderCashflowPage(null, chartLines);
+    if (networthHasMounted) renderNetworthPage(null, chartLines);
     return;
   }
 
@@ -2634,8 +2881,12 @@ function recalc(): void {
   cashLegendB.textContent = statutoryLabel;
   nwLegendA.textContent = earlyLabel;
   nwLegendB.textContent = statutoryLabel;
-  cashflowScenarioEarlyButton.textContent = `Early ${uiState.earlyRetirementAge}`;
-  cashflowScenarioNormButton.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
+  for (const button of [cashflowScenarioEarlyButton, networthScenarioEarlyButton]) {
+    button.textContent = `Early ${uiState.earlyRetirementAge}`;
+  }
+  for (const button of [cashflowScenarioNormButton, networthScenarioNormButton]) {
+    button.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
+  }
   drawChart(
     cashCanvas,
     result.outputs.ages,
@@ -2670,6 +2921,7 @@ function recalc(): void {
   });
   renderMilestoneTimeline(result);
   if (cashflowHasMounted) renderCashflowPage(result);
+  if (networthHasMounted) renderNetworthPage(result);
 }
 
 function queueRecalc(): void {
@@ -2735,34 +2987,73 @@ openCashflowButton.addEventListener("mousedown", (event) => {
   event.preventDefault();
 });
 
+openNetworthButton.addEventListener("mousedown", (event) => {
+  event.preventDefault();
+});
+
 openCashflowButton.addEventListener("click", () => {
   openCashflowButton.blur();
   openCashflowSection();
 });
 
-cashflowScenarioEarlyButton.addEventListener("click", () => {
-  if (cashflowScenario === "early") return;
-  pendingCashflowScrollAnchor = captureCashflowScrollContext();
-  cashflowScenario = "early";
+openNetworthButton.addEventListener("click", () => {
+  openNetworthButton.blur();
+  openNetworthSection();
+});
+
+cashflowOpenNetworthButton.addEventListener("click", () => {
+  openNetworthSection();
+});
+
+networthOpenCashflowButton.addEventListener("click", () => {
+  openCashflowSection();
+});
+
+function setProjectionScenario(nextScenario: "early" | "norm"): void {
+  if (cashflowScenario === nextScenario) return;
+  pendingCashflowScrollAnchor = captureProjectionScrollContext("cashflow");
+  pendingNetworthScrollAnchor = captureProjectionScrollContext("networth");
+  cashflowScenario = nextScenario;
   recalc();
+}
+
+cashflowScenarioEarlyButton.addEventListener("click", () => {
+  setProjectionScenario("early");
+});
+
+networthScenarioEarlyButton.addEventListener("click", () => {
+  setProjectionScenario("early");
 });
 
 cashflowScenarioNormButton.addEventListener("click", () => {
-  if (cashflowScenario === "norm") return;
-  pendingCashflowScrollAnchor = captureCashflowScrollContext();
-  cashflowScenario = "norm";
-  recalc();
+  setProjectionScenario("norm");
+});
+
+networthScenarioNormButton.addEventListener("click", () => {
+  setProjectionScenario("norm");
 });
 
 cashflowExpandAllButton.addEventListener("click", () => {
-  pendingCashflowScrollAnchor = captureCashflowScrollContext();
+  pendingCashflowScrollAnchor = captureProjectionScrollContext("cashflow");
   resetCashflowExpandedGroups("expanded");
   recalc();
 });
 
 cashflowCollapseAllButton.addEventListener("click", () => {
-  pendingCashflowScrollAnchor = captureCashflowScrollContext();
+  pendingCashflowScrollAnchor = captureProjectionScrollContext("cashflow");
   resetCashflowExpandedGroups("collapsed");
+  recalc();
+});
+
+networthExpandAllButton.addEventListener("click", () => {
+  pendingNetworthScrollAnchor = captureProjectionScrollContext("networth");
+  resetNetworthExpandedGroups("expanded");
+  recalc();
+});
+
+networthCollapseAllButton.addEventListener("click", () => {
+  pendingNetworthScrollAnchor = captureProjectionScrollContext("networth");
+  resetNetworthExpandedGroups("collapsed");
   recalc();
 });
 
@@ -2770,19 +3061,37 @@ cashflowSectionCollapseButton.addEventListener("click", () => {
   closeCashflowSection();
 });
 
-cashflowTablePanel.addEventListener("click", (event) => {
+networthSectionCollapseButton.addEventListener("click", () => {
+  closeNetworthSection();
+});
+
+function handleProjectionToggleClick(
+  event: Event,
+  sectionKey: ProjectionSectionKey,
+  expandedGroups: Set<string>
+): void {
   const target = event.target as HTMLElement | null;
   if (!target) return;
-  const toggle = target.closest<HTMLElement>("[data-cashflow-toggle]");
-  if (toggle) {
-    const groupId = toggle.dataset.cashflowToggle;
-    if (!groupId) return;
-    pendingCashflowScrollAnchor = captureCashflowScrollAnchor(groupId);
-    if (cashflowExpandedGroups.has(groupId)) cashflowExpandedGroups.delete(groupId);
-    else cashflowExpandedGroups.add(groupId);
-    recalc();
-    return;
+  const toggle = target.closest<HTMLElement>("[data-projection-toggle]");
+  if (!toggle) return;
+  const groupId = toggle.dataset.projectionToggle;
+  if (!groupId) return;
+  if (sectionKey === "cashflow") {
+    pendingCashflowScrollAnchor = captureProjectionScrollAnchor(sectionKey, groupId);
+  } else {
+    pendingNetworthScrollAnchor = captureProjectionScrollAnchor(sectionKey, groupId);
   }
+  if (expandedGroups.has(groupId)) expandedGroups.delete(groupId);
+  else expandedGroups.add(groupId);
+  recalc();
+}
+
+cashflowTablePanel.addEventListener("click", (event) => {
+  handleProjectionToggleClick(event, "cashflow", cashflowExpandedGroups);
+});
+
+networthTablePanel.addEventListener("click", (event) => {
+  handleProjectionToggleClick(event, "networth", networthExpandedGroups);
 });
 
 retireCheckButton.addEventListener("click", () => {
@@ -2820,6 +3129,8 @@ setupChartHover(cashCanvas);
 setupChartHover(nwCanvas);
 
 resetCashflowExpandedGroups("top-level");
-syncCashflowSectionVisibility();
+resetNetworthExpandedGroups("top-level");
+syncProjectionSectionVisibility("cashflow");
+syncProjectionSectionVisibility("networth");
 renderInputs();
 recalc();
