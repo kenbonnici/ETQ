@@ -95,6 +95,7 @@ const TIMELINE_ROW_HEIGHT_DEFAULT = 20;
 const TIMELINE_ROW_GAP_EXTRA = 2;
 const TIMELINE_ENDCAP_CLEARANCE = 18;
 const CHART_PAD = { l: 72, r: 24, t: 26, b: 34 } as const;
+const CHART_MIN_LEFT_PAD = 48;
 const CHART_PRIMARY_COLOR = "#0284c7";
 const CHART_COMPARISON_COLOR = "#d97706";
 const CHART_TOOLTIP_DELAY_MS = 60;
@@ -390,6 +391,13 @@ interface CanvasRenderMetrics {
   dpr: number;
 }
 
+interface ChartPadMetrics {
+  l: number;
+  r: number;
+  t: number;
+  b: number;
+}
+
 function getCanvasDisplaySize(canvas: HTMLCanvasElement): { width: number; height: number } {
   const rect = canvas.getBoundingClientRect();
   const width = Math.max(1, Math.round(rect.width || canvas.clientWidth || Number(canvas.getAttribute("width")) || 920));
@@ -420,6 +428,136 @@ function prepareCanvas(canvas: HTMLCanvasElement): CanvasRenderMetrics | null {
   }
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   return { ctx, width, height, dpr };
+}
+
+function readChartPadMetrics(canvas: HTMLCanvasElement): ChartPadMetrics {
+  const base = CHART_PAD;
+  const left = Number(canvas.dataset.plotPadLeft);
+  return {
+    l: Number.isFinite(left) && left > 0 ? left : CHART_MIN_LEFT_PAD,
+    r: base.r,
+    t: base.t,
+    b: base.b
+  };
+}
+
+function formatAxisCurrencyParts(
+  value: number,
+  axisUnit: { div: number; suffix: "" | "k" | "m" | "b" },
+  axisDecimals: number
+): { prefix: string; amount: string } {
+  const sign = value < 0 ? "-" : "";
+  const symbol = currentCurrencySymbol();
+  const prefix = `${sign}${symbol}`;
+  if (axisUnit.div === 1) {
+    return {
+      prefix,
+      amount: Math.round(Math.abs(value)).toLocaleString("en-US")
+    };
+  }
+  const scaled = Math.abs(value) / axisUnit.div;
+  const rounded = Number(scaled.toFixed(axisDecimals));
+  return {
+    prefix,
+    amount: `${rounded.toLocaleString("en-US", {
+      minimumFractionDigits: axisDecimals,
+      maximumFractionDigits: axisDecimals
+    })}${axisUnit.suffix}`
+  };
+}
+
+function measureYAxisLabelBlockWidth(
+  ctx: CanvasRenderingContext2D,
+  values: number[],
+  axisUnit: { div: number; suffix: "" | "k" | "m" | "b" },
+  axisDecimals: number,
+  axisLabelFont: string,
+  axisPrefixFont: string,
+  axisPrefixGap: number
+): number {
+  let maxWidth = 0;
+  for (const value of values) {
+    const { prefix, amount } = formatAxisCurrencyParts(value, axisUnit, axisDecimals);
+    ctx.font = axisLabelFont;
+    const amountWidth = ctx.measureText(amount).width;
+    ctx.font = axisPrefixFont;
+    const prefixWidth = ctx.measureText(prefix).width;
+    maxWidth = Math.max(maxWidth, prefixWidth + axisPrefixGap + amountWidth);
+  }
+  return Math.ceil(maxWidth);
+}
+
+function computeYAxisTickValues(rawMinY: number, rawMaxY: number): {
+  axisUnit: { div: number; suffix: "" | "k" | "m" | "b" };
+  axisDecimals: number;
+  values: number[];
+} {
+  const targetTicks = 6;
+  const rawSpan = rawMaxY - rawMinY;
+  const effectiveSpan = rawSpan === 0 ? Math.max(Math.abs(rawMaxY), 1) : rawSpan;
+
+  const niceStep = (v: number): number => {
+    const safe = Math.max(v, 1e-9);
+    const exp = Math.floor(Math.log10(safe));
+    const base = 10 ** exp;
+    const f = safe / base;
+    const niceF = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
+    return niceF * base;
+  };
+
+  let tickStep = niceStep(effectiveSpan / targetTicks);
+  let yMinTick = Math.floor(rawMinY / tickStep) * tickStep;
+  let yMaxTick = Math.ceil(rawMaxY / tickStep) * tickStep;
+  while ((yMaxTick - yMinTick) / tickStep > 8) {
+    tickStep = niceStep(tickStep * 1.5);
+    yMinTick = Math.floor(rawMinY / tickStep) * tickStep;
+    yMaxTick = Math.ceil(rawMaxY / tickStep) * tickStep;
+  }
+
+  const axisAbsMax = Math.max(Math.abs(yMinTick), Math.abs(yMaxTick));
+  const axisUnit: { div: number; suffix: "" | "k" | "m" | "b" } =
+    axisAbsMax >= 1_000_000_000 ? { div: 1_000_000_000, suffix: "b" } :
+    axisAbsMax >= 1_000_000 ? { div: 1_000_000, suffix: "m" } :
+    axisAbsMax >= 1_000 ? { div: 1_000, suffix: "k" } :
+    { div: 1, suffix: "" };
+  const axisStepScaled = tickStep / axisUnit.div;
+  const axisDecimals = axisStepScaled < 1 ? 1 : 0;
+  const values = Array.from({ length: Math.round((yMaxTick - yMinTick) / tickStep) + 1 }, (_, idx) => yMinTick + (tickStep * idx));
+  return {
+    axisUnit,
+    axisDecimals,
+    values
+  };
+}
+
+function computeChartLeftPad(
+  canvas: HTMLCanvasElement,
+  seriesA: number[],
+  seriesB: number[],
+  axisLabelFont: string,
+  axisPrefixFont: string,
+  axisPrefixGap: number,
+  axisLineGap: number,
+  axisOuterMargin: number
+): number {
+  const metrics = prepareCanvas(canvas);
+  if (!metrics) return CHART_MIN_LEFT_PAD;
+  const { ctx } = metrics;
+  const rawMinY = Math.min(...seriesA, ...seriesB);
+  const rawMaxY = Math.max(...seriesA, ...seriesB);
+  const axisHasMeaningfulRange = Math.abs(rawMaxY - rawMinY) > 1e-6 || Math.abs(rawMaxY) > 1e-6 || Math.abs(rawMinY) > 1e-6;
+  if (!axisHasMeaningfulRange) return CHART_MIN_LEFT_PAD;
+  const { axisUnit, axisDecimals, values } = computeYAxisTickValues(rawMinY, rawMaxY);
+  const maxYAxisLabelWidth = measureYAxisLabelBlockWidth(
+    ctx,
+    values,
+    axisUnit,
+    axisDecimals,
+    axisLabelFont,
+    axisPrefixFont,
+    axisPrefixGap
+  );
+  return Math.max(CHART_MIN_LEFT_PAD, axisOuterMargin + maxYAxisLabelWidth + axisLineGap);
 }
 
 function getProjectionSectionConfig(key: ProjectionSectionKey): ProjectionSectionConfig {
@@ -742,6 +880,7 @@ function drawEmptyChart(canvas: HTMLCanvasElement, lines: string[]): void {
   const metrics = prepareCanvas(canvas);
   if (!metrics) return;
   const { ctx, width, height, dpr } = metrics;
+  canvas.dataset.plotPadLeft = String(CHART_MIN_LEFT_PAD);
   ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = "#f8fafc";
   ctx.fillRect(0, 0, width, height);
@@ -2600,12 +2739,13 @@ function setupChartHover(canvas: HTMLCanvasElement): void {
     }
 
     const { width: canvasWidth, height: canvasHeight } = getCanvasDisplaySize(canvas);
+    const pad = readChartPadMetrics(canvas);
     const cx = ev.clientX - rect.left;
     const cy = ev.clientY - rect.top;
-    const plotLeft = CHART_PAD.l;
-    const plotRight = canvasWidth - CHART_PAD.r;
-    const plotTop = CHART_PAD.t;
-    const plotBottom = canvasHeight - CHART_PAD.b;
+    const plotLeft = pad.l;
+    const plotRight = canvasWidth - pad.r;
+    const plotTop = pad.t;
+    const plotBottom = canvasHeight - pad.b;
     if (cx < plotLeft || cx > plotRight || cy < plotTop || cy > plotBottom) {
       clearChartHoverDelay(canvas);
       if ((chartHoverIndex.get(canvas) ?? null) !== null) {
@@ -2674,6 +2814,7 @@ function drawChart(
   options: {
     hoverIdx?: number | null;
     zeroLineAlert?: boolean;
+    leftPad?: number;
   } = {}
 ): void {
   const metrics = prepareCanvas(canvas);
@@ -2682,65 +2823,27 @@ function drawChart(
   const hoverIdx = options.hoverIdx ?? null;
   const zeroLineAlert = options.zeroLineAlert ?? false;
 
-  const pad = CHART_PAD;
+  const basePad = CHART_PAD;
   const allY = [...a, ...b];
   const rawMinY = Math.min(...allY);
   const rawMaxY = Math.max(...allY);
   const axisHasMeaningfulRange = Math.abs(rawMaxY - rawMinY) > 1e-6 || Math.abs(rawMaxY) > 1e-6 || Math.abs(rawMinY) > 1e-6;
 
-  const targetTicks = 6;
-  const rawSpan = rawMaxY - rawMinY;
-  const effectiveSpan = rawSpan === 0 ? Math.max(Math.abs(rawMaxY), 1) : rawSpan;
-
-  const niceStep = (v: number): number => {
-    const safe = Math.max(v, 1e-9);
-    const exp = Math.floor(Math.log10(safe));
-    const base = 10 ** exp;
-    const f = safe / base;
-    const niceF = f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10;
-    return niceF * base;
+  const axisLabelFont = '500 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  const axisPrefixFont = '500 12px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  const axisPrefixGap = 4;
+  const axisLineGap = 8;
+  const axisOuterMargin = 10;
+  const tickMetrics = computeYAxisTickValues(rawMinY, rawMaxY);
+  const { axisUnit, axisDecimals, values: yTickValues } = tickMetrics;
+  const pad: ChartPadMetrics = {
+    ...basePad,
+    l: Math.max(CHART_MIN_LEFT_PAD, options.leftPad ?? computeChartLeftPad(canvas, a, b, axisLabelFont, axisPrefixFont, axisPrefixGap, axisLineGap, axisOuterMargin))
   };
+  canvas.dataset.plotPadLeft = String(pad.l);
 
-  let tickStep = niceStep(effectiveSpan / targetTicks);
-  let yMinTick = Math.floor(rawMinY / tickStep) * tickStep;
-  let yMaxTick = Math.ceil(rawMaxY / tickStep) * tickStep;
-  while ((yMaxTick - yMinTick) / tickStep > 8) {
-    tickStep = niceStep(tickStep * 1.5);
-    yMinTick = Math.floor(rawMinY / tickStep) * tickStep;
-    yMaxTick = Math.ceil(rawMaxY / tickStep) * tickStep;
-  }
-
-  const axisAbsMax = Math.max(Math.abs(yMinTick), Math.abs(yMaxTick));
-  const axisUnit: { div: number; suffix: "" | "k" | "m" | "b" } =
-    axisAbsMax >= 1_000_000_000 ? { div: 1_000_000_000, suffix: "b" } :
-    axisAbsMax >= 1_000_000 ? { div: 1_000_000, suffix: "m" } :
-    axisAbsMax >= 1_000 ? { div: 1_000, suffix: "k" } :
-    { div: 1, suffix: "" };
-  const axisStepScaled = tickStep / axisUnit.div;
-  const axisDecimals = axisStepScaled < 1 ? 1 : 0;
-  const formatAxisCurrencyParts = (value: number): { prefix: string; amount: string } => {
-    const sign = value < 0 ? "-" : "";
-    const symbol = currentCurrencySymbol();
-    const prefix = `${sign}${symbol}`;
-    if (axisUnit.div === 1) {
-      return {
-        prefix,
-        amount: Math.round(Math.abs(value)).toLocaleString("en-US")
-      };
-    }
-    const scaled = Math.abs(value) / axisUnit.div;
-    const rounded = Number(scaled.toFixed(axisDecimals));
-    return {
-      prefix,
-      amount: `${rounded.toLocaleString("en-US", {
-        minimumFractionDigits: axisDecimals,
-        maximumFractionDigits: axisDecimals
-      })}${axisUnit.suffix}`
-    };
-  };
-
-  const minY = yMinTick;
-  const maxY = yMaxTick;
+  const minY = yTickValues[0] ?? rawMinY;
+  const maxY = yTickValues[yTickValues.length - 1] ?? rawMaxY;
   const ySpan = maxY - minY || 1;
   const xp = (i: number) => pad.l + (i / Math.max(1, x.length - 1)) * (w - pad.l - pad.r);
   const yp = (v: number) => h - pad.b - ((v - minY) / ySpan) * (h - pad.t - pad.b);
@@ -2748,7 +2851,7 @@ function drawChart(
   const axisBottomY = alignToDevicePixel(h - pad.b, dpr, 1.1);
   const plotRightX = alignToDevicePixel(w - pad.r, dpr, 1.1);
   const plotTopY = alignToDevicePixel(pad.t, dpr, 1.1);
-  const yAxisLabelX = alignTextCoordinate(pad.l - 8, dpr);
+  const yAxisLabelX = alignTextCoordinate(pad.l - axisLineGap, dpr);
   const xAxisLabelY = alignTextCoordinate(h - 8, dpr);
 
   ctx.clearRect(0, 0, w, h);
@@ -2767,10 +2870,10 @@ function drawChart(
     }
   }
 
-  if (axisHasMeaningfulRange) {
-    for (let yv = yMinTick; yv <= yMaxTick + 0.5; yv += tickStep) {
+  if (yTickValues.length > 0) {
+    for (const yv of yTickValues) {
       const yy = alignToDevicePixel(yp(yv), dpr);
-      if (Math.abs(yv) < tickStep * 0.001) continue;
+      if (Math.abs(yv) < ((maxY - minY) / Math.max(1, yTickValues.length - 1)) * 0.001) continue;
       ctx.strokeStyle = "rgba(100, 116, 139, 0.14)";
       ctx.lineWidth = 1;
       ctx.beginPath();
@@ -2842,17 +2945,14 @@ function drawChart(
     ctx.restore();
   }
 
-  const axisLabelFont = '500 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
-  const axisPrefixFont = '500 12px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
-  const axisPrefixGap = 4;
   ctx.font = axisLabelFont;
   ctx.textAlign = "right";
   ctx.textBaseline = "middle";
 
-  if (axisHasMeaningfulRange) {
-    for (let yv = yMinTick; yv <= yMaxTick + 0.5; yv += tickStep) {
+  if (yTickValues.length > 0) {
+    for (const yv of yTickValues) {
       const yy = alignTextCoordinate(yp(yv), dpr);
-      const { prefix, amount } = formatAxisCurrencyParts(yv);
+      const { prefix, amount } = formatAxisCurrencyParts(yv, axisUnit, axisDecimals);
       ctx.font = axisLabelFont;
       const amountWidth = ctx.measureText(amount).width;
       ctx.fillStyle = "#1f2937";
@@ -2950,6 +3050,15 @@ function recalc(): void {
     ? result.outputs.cashSeriesEarly
     : result.outputs.cashSeriesNorm;
   const cashZeroLineAlert = activeCashSeries.some((value) => value < 0);
+  const axisLabelFont = '500 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  const axisPrefixFont = '500 12px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  const axisPrefixGap = 4;
+  const axisLineGap = 8;
+  const axisOuterMargin = 10;
+  const sharedChartLeftPad = Math.max(
+    computeChartLeftPad(cashCanvas, result.outputs.cashSeriesEarly, result.outputs.cashSeriesNorm, axisLabelFont, axisPrefixFont, axisPrefixGap, axisLineGap, axisOuterMargin),
+    computeChartLeftPad(nwCanvas, result.outputs.netWorthSeriesEarly, result.outputs.netWorthSeriesNorm, axisLabelFont, axisPrefixFont, axisPrefixGap, axisLineGap, axisOuterMargin)
+  );
   setChartLegendsVisible(true);
   cashLegendA.textContent = earlyLabel;
   cashLegendB.textContent = statutoryLabel;
@@ -2966,7 +3075,7 @@ function recalc(): void {
     result.outputs.ages,
     result.outputs.cashSeriesEarly,
     result.outputs.cashSeriesNorm,
-    { zeroLineAlert: cashZeroLineAlert }
+    { zeroLineAlert: cashZeroLineAlert, leftPad: sharedChartLeftPad }
   );
   cashCanvas.dataset.zeroLineAlert = cashZeroLineAlert ? "true" : "false";
   chartHoverData.set(cashCanvas, {
@@ -2985,7 +3094,7 @@ function recalc(): void {
     result.outputs.ages,
     result.outputs.netWorthSeriesEarly,
     result.outputs.netWorthSeriesNorm,
-    { zeroLineAlert: false }
+    { zeroLineAlert: false, leftPad: sharedChartLeftPad }
   );
   chartHoverData.set(nwCanvas, {
     ages: result.outputs.ages,

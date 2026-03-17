@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
   earlyRetAge: "#early-ret-age",
+  currencySelector: "#currency-selector",
   homeValue: 'input[data-field-id="housing.primaryResidence.marketValue"]',
   housingRent: 'input[data-field-id="housing.rentAnnual"]',
   mortgageBalance: 'input[data-field-id="housing.primaryResidence.mortgage.balance"]',
@@ -167,6 +168,30 @@ test("charts match backing-store size to CSS size for crisp high-DPI rendering",
     expect(metrics.backingWidth).toBe(Math.round(metrics.clientWidth * metrics.dpr));
     expect(metrics.backingHeight).toBe(Math.round(metrics.clientHeight * metrics.dpr));
   }
+});
+
+test("longer currency prefixes expand y-axis gutter without jitter or clipping", async ({ page }) => {
+  await loadSampleData(page);
+
+  const measurePad = async (selector: string) => page.locator(selector).evaluate((node) => {
+    const canvas = node as HTMLCanvasElement;
+    return Number(canvas.dataset.plotPadLeft ?? "0");
+  });
+
+  const eurPad = await measurePad(selectors.cashChart);
+  expect(eurPad).toBeLessThan(72);
+  await page.locator(selectors.currencySelector).selectOption("CHF");
+  await expect(page.locator(selectors.cashChart)).toBeVisible();
+
+  const chfPad = await measurePad(selectors.cashChart);
+  expect(chfPad).toBeGreaterThanOrEqual(eurPad);
+  await expect.poll(() => measurePad(selectors.networthChart)).toBe(chfPad);
+
+  await page.getByRole("button", { name: "Open cash flow" }).click();
+  await page.locator("#projection-scenario-norm").click();
+  const chfPadAfterToggle = await measurePad(selectors.cashChart);
+  expect(chfPadAfterToggle).toBeGreaterThanOrEqual(chfPad);
+  await expect.poll(() => measurePad(selectors.networthChart)).toBe(chfPadAfterToggle);
 });
 
 test("net-worth collapse chevron returns to the top of the dashboard canvas", async ({ page }) => {
