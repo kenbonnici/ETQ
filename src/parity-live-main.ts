@@ -39,7 +39,8 @@ const input = JSON.parse(readFileSync("/tmp/etq_live_extract.json", "utf8")) as 
 const model = runModel(rawInputsToFieldState(input.raw as RawInputs), {
   deeperDiveOpen: true,
   finerDetailsOpen: true,
-  earlyRetirementAge: input.early
+  earlyRetirementAge: input.early,
+  manualPropertyLiquidationOrder: false
 }).outputs;
 
 const dCashE = model.cashSeriesEarly.map((v, i) => v - input.exp.cashE[i]);

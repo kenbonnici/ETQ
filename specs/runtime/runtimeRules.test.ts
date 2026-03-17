@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { runModel } from "../../src/model";
 import { createEmptyFieldState, fieldStateToRawInputs, rawInputsToFieldState } from "../../src/model/excelAdapter";
 import { FIELD_ID_TO_CELL } from "../../src/model/fieldRegistry";
+import { normalizeInputs } from "../../src/model/normalization";
 import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
 import { runSpecimenParity } from "../../src/model/parity/runSpecimenParity";
 import { FieldState } from "../../src/model/types";
@@ -20,6 +21,7 @@ import {
   isOutOfRangeLiquidationRank,
   isDuplicateLiquidationRank,
   RuntimeVisibilityState,
+  shouldRerenderOnInput,
   syncManualPropertyOrderForNewProperties
 } from "../../src/ui/runtimeRules";
 import {
@@ -38,7 +40,8 @@ const SPECIMEN_FIELDS = rawInputsToFieldState(EXCEL_BASELINE_SPECIMEN.raw_inputs
 const SPECIMEN_UI_STATE = {
   deeperDiveOpen: true,
   finerDetailsOpen: true,
-  earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age
+  earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age,
+  manualPropertyLiquidationOrder: false
 };
 const DEFAULT_VISIBILITY: RuntimeVisibilityState = {
   visibleDependents: 1,
@@ -117,24 +120,22 @@ test("visibility rules stay semantic for dependents, properties, and loans", () 
   assert.equal(fieldVisible(fields, HOME_FIELDS.housingRentAnnual, DEFAULT_VISIBILITY), false);
 });
 
-test("property liquidation order preserves default, manual, and duplicate-rank behavior", () => {
+test("property liquidation order preserves duplicate-rank guardrails and only appends ranks for newly activated properties", () => {
   const fields = createEmptyFieldState();
   fields[PROPERTY_RUNTIME_GROUPS[0].nameField] = "P1";
   fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 300_000;
   fields[PROPERTY_RUNTIME_GROUPS[1].nameField] = "P2";
   fields[PROPERTY_RUNTIME_GROUPS[1].valueField] = 150_000;
-  fields[PROPERTY_RUNTIME_GROUPS[2].nameField] = "P3";
-  fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 220_000;
 
-  const active = PROPERTY_RUNTIME_GROUPS.slice();
-  const defaultOrder = buildPropertyLiquidationOrder(fields, active);
-  assert.deepEqual(defaultOrder.map((group) => group.idx), [1, 2, 0]);
+  const active = PROPERTY_RUNTIME_GROUPS.slice(0, 2);
+  const defaultOrder = buildPropertyLiquidationOrder(fields, active, false);
+  assert.deepEqual(defaultOrder.map((group) => group.idx), [1, 0]);
 
+  fields[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField] = 2;
   fields[PROPERTY_RUNTIME_GROUPS[1].liquidationRankField] = 1;
-  fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = 2;
 
   assert.equal(
-    isDuplicateLiquidationRank(fields, PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 2),
+    isDuplicateLiquidationRank(fields, PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 1),
     true
   );
   assert.equal(
@@ -154,20 +155,100 @@ test("property liquidation order preserves default, manual, and duplicate-rank b
     false
   );
 
-  const appended = syncManualPropertyOrderForNewProperties(fields);
-  assert.deepEqual(appended, [{ fieldId: PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, value: 3 }]);
+  fields[PROPERTY_RUNTIME_GROUPS[2].nameField] = "P3";
+  fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 220_000;
+  const appended = syncManualPropertyOrderForNewProperties(fields, new Set([0, 1]), true);
+  assert.deepEqual(appended, [{ fieldId: PROPERTY_RUNTIME_GROUPS[2].liquidationRankField, value: 3 }]);
 
   for (const update of appended) {
     fields[update.fieldId] = update.value;
   }
 
-  const manualOrder = buildPropertyLiquidationOrder(fields, active);
-  assert.deepEqual(manualOrder.map((group) => group.idx), [1, 2, 0]);
+  fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = null;
+  assert.deepEqual(syncManualPropertyOrderForNewProperties(fields, new Set([0, 1, 2]), true), []);
 
-  const assignments = buildPropertyLiquidationAssignments(manualOrder, active);
+  fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = 3;
+  const manualOrder = buildPropertyLiquidationOrder(fields, PROPERTY_RUNTIME_GROUPS.slice(), true);
+  assert.deepEqual(manualOrder.map((group) => group.idx), [1, 0, 2]);
+
+  const assignments = buildPropertyLiquidationAssignments(manualOrder, PROPERTY_RUNTIME_GROUPS.slice());
   assert.deepEqual(
     assignments.filter((assignment) => assignment.value !== null).map((assignment) => assignment.value),
     [1, 2, 3]
+  );
+});
+
+test("auto liquidation order re-sorts from current property values after repeated edits", () => {
+  const fields = createEmptyFieldState();
+  fields[PROPERTY_RUNTIME_GROUPS[0].nameField] = "P1";
+  fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 300_000;
+  fields[PROPERTY_RUNTIME_GROUPS[1].nameField] = "P2";
+  fields[PROPERTY_RUNTIME_GROUPS[1].valueField] = 150_000;
+  fields[PROPERTY_RUNTIME_GROUPS[2].nameField] = "P3";
+  fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 220_000;
+
+  fields[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField] = 3;
+  fields[PROPERTY_RUNTIME_GROUPS[1].liquidationRankField] = 1;
+  fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = 2;
+
+  assert.deepEqual(
+    normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
+    [3, 1, 2]
+  );
+
+  fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 100_000;
+  assert.deepEqual(
+    normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
+    [1, 2, 3]
+  );
+
+  fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 50_000;
+  assert.deepEqual(
+    normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
+    [2, 3, 1]
+  );
+});
+
+test("manual liquidation order stays fixed across value edits and blank entries still mean never sell", () => {
+  const fields = createEmptyFieldState();
+  fields[PROPERTY_RUNTIME_GROUPS[0].nameField] = "P1";
+  fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 300_000;
+  fields[PROPERTY_RUNTIME_GROUPS[1].nameField] = "P2";
+  fields[PROPERTY_RUNTIME_GROUPS[1].valueField] = 150_000;
+  fields[PROPERTY_RUNTIME_GROUPS[2].nameField] = "P3";
+  fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 220_000;
+
+  fields[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField] = 2;
+  fields[PROPERTY_RUNTIME_GROUPS[1].liquidationRankField] = 1;
+  fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = null;
+
+  assert.deepEqual(
+    normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: true }).liquidationPriority,
+    [2, 1, 0]
+  );
+
+  fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 50_000;
+  fields[PROPERTY_RUNTIME_GROUPS[1].valueField] = 400_000;
+  fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 100_000;
+
+  assert.deepEqual(
+    normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: true }).liquidationPriority,
+    [2, 1, 0]
+  );
+  assert.deepEqual(
+    buildPropertyLiquidationOrder(fields, PROPERTY_RUNTIME_GROUPS.slice(), true).map((group) => group.idx),
+    [1, 0, 2]
+  );
+});
+
+test("property value edits trigger inputs-panel rerenders so liquidation rows stay fresh", () => {
+  assert.equal(
+    shouldRerenderOnInput(PROPERTY_RUNTIME_GROUPS[1].valueField, 500_000, 100_000),
+    true
+  );
+  assert.equal(
+    shouldRerenderOnInput(PROPERTY_RUNTIME_GROUPS[1].valueField, 100_000, 100_000),
+    false
   );
 });
 
@@ -236,4 +317,5 @@ test("main.ts runtime DOM wiring is field-id based", () => {
   assert.equal(mainSource.includes('querySelectorAll<HTMLInputElement>("input[data-field-id]")'), true);
   assert.equal(mainSource.includes("deriveRuntimeVisibilityState(fieldState)"), true);
   assert.equal(mainSource.includes('isOutOfRangeLiquidationRank(fieldId,'), true);
+  assert.equal(mainSource.includes("manualPropertyLiquidationOrder"), true);
 });

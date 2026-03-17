@@ -11,6 +11,7 @@ export interface ModelUiState {
   deeperDiveOpen: boolean;
   finerDetailsOpen: boolean;
   earlyRetirementAge: number;
+  manualPropertyLiquidationOrder: boolean;
 }
 
 export interface EffectiveInputs {

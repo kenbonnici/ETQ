@@ -3,7 +3,7 @@ import { fieldStateToRawInputs } from "./excelAdapter";
 import { runScenarioEarly } from "./engines/runScenarioEarly";
 import { runScenarioNorm } from "./engines/runScenarioNorm";
 import { INPUT_DEFINITION_BY_CELL, ValidationMessage } from "./inputSchema";
-import { normalizeInputs } from "./normalization";
+import { materializeLiquidationPriorityInputs, normalizeInputs } from "./normalization";
 import { ModelOutputs, ModelUiState, FieldState } from "./types";
 import { clamp } from "./components/finance";
 import { validateRawInputs } from "./validate";
@@ -23,14 +23,19 @@ export function runModel(fields: FieldState, uiState: ModelUiState): RunModelRes
     ...uiState,
     earlyRetirementAge
   });
-  const validationMessages: ValidationMessage[] = validateRawInputs(activation.activatedInputs).map((message) => ({
+  const effectiveRawInputs = materializeLiquidationPriorityInputs(activation.activatedInputs, {
+    manualOverrideActive: uiState.manualPropertyLiquidationOrder
+  });
+  const validationMessages: ValidationMessage[] = validateRawInputs(effectiveRawInputs).map((message) => ({
     fieldId: INPUT_DEFINITION_BY_CELL[message.cell].fieldId,
     severity: message.severity,
     message: message.message,
     blocksProjection: message.blocksProjection
   }));
 
-  const normalized = normalizeInputs(activation.activatedInputs);
+  const normalized = normalizeInputs(activation.activatedInputs, {
+    manualOverrideActive: uiState.manualPropertyLiquidationOrder
+  });
 
   const scenarioNorm = runScenarioNorm(normalized);
   const scenarioEarly = runScenarioEarly(normalized, earlyRetirementAge);

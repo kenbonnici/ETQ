@@ -12,7 +12,8 @@ export function runSpecimenParity(): ParityReport {
   const result = runModel(fields, {
     deeperDiveOpen: true,
     finerDetailsOpen: true,
-    earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age
+    earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age,
+    manualPropertyLiquidationOrder: false
   });
 
   const ages = result.outputs.ages;

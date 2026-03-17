@@ -47,7 +47,6 @@ import {
   isDuplicateLiquidationRank,
   isOutOfRangeLiquidationRank,
   normalizeTimelineLabel,
-  parsePropertyRank,
   PROPERTY_LIQUIDATION_FIELDS,
   shouldRerenderOnInput,
   STRUCTURAL_RERENDER_FIELDS,
@@ -65,7 +64,8 @@ for (const [fieldId, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
 let uiState: ModelUiState = {
   deeperDiveOpen: false,
   finerDetailsOpen: false,
-  earlyRetirementAge: 65
+  earlyRetirementAge: 65,
+  manualPropertyLiquidationOrder: false
 };
 
 let debounceHandle: number | null = null;
@@ -84,6 +84,7 @@ let cashflowScenario: "early" | "norm" = "early";
 let projectionSectionOpen = false;
 let projectionHasMounted = false;
 let projectionActiveTab: ProjectionSectionKey = "cashflow";
+let previousActivePropertyIndices = new Set<number>();
 const cashflowExpandedGroups = new Set<string>(["cash-bridge", "inflows", "outflows"]);
 const networthExpandedGroups = new Set<string>(["networth-properties", "networth-loans"]);
 
@@ -1752,10 +1753,14 @@ function applyStepperDelta(fieldId: FieldId, dir: number): void {
   if (input) input.value = formatFieldValue(def, fieldState[fieldId]);
 
   setRetireCheckMessage(null);
+  if (STRUCTURAL_RERENDER_CELLS.has(fieldId)) {
+    renderInputs();
+  }
   queueRecalc();
 }
 
 function persistPropertyLiquidationOrder(order: ReturnType<typeof activePropertyConfigs>, active: ReturnType<typeof activePropertyConfigs>): void {
+  uiState.manualPropertyLiquidationOrder = true;
   for (const assignment of buildPropertyLiquidationAssignments(order, active)) {
     fieldState[assignment.fieldId] = assignment.value;
   }
@@ -1764,7 +1769,7 @@ function persistPropertyLiquidationOrder(order: ReturnType<typeof activeProperty
 function renderPropertyLiquidationOrderControl(): string {
   const active = activePropertyConfigs(fieldState);
   if (active.length === 0) return "";
-  const ordered = buildPropertyLiquidationOrder(fieldState, active);
+  const ordered = buildPropertyLiquidationOrder(fieldState, active, uiState.manualPropertyLiquidationOrder);
   const canDrag = ordered.length > 1;
   const rows = ordered.map((cfg, idx) => {
     const name = String(fieldState[cfg.nameField] ?? "").trim() || cfg.fallbackName;
@@ -1828,6 +1833,7 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
     }
 
     syncVisibleRuntimeGroupsFromState();
+    uiState.manualPropertyLiquidationOrder = false;
 
     const statutory = getStatutoryAge();
     if (statutory !== null) {
@@ -1861,6 +1867,7 @@ function clearAllInputsPreservingFinerDefaults(): void {
   clearAllAttemptedFieldMessages();
   applyFinerDefaultsIfNeeded();
   syncVisibleRuntimeGroupsFromState();
+  uiState.manualPropertyLiquidationOrder = false;
   setRetireCheckMessage(null);
   const statutory = getStatutoryAge();
   if (statutory !== null) {
@@ -1878,6 +1885,7 @@ function clearFinerDetailsInputs(): void {
   validationRevealAll = false;
   clearTouchedFields(FINER_DETAILS_FIELD_IDS);
   clearAllAttemptedFieldMessages();
+  uiState.manualPropertyLiquidationOrder = false;
   setRetireCheckMessage(null);
   renderInputs();
   queueRecalc();
@@ -1893,6 +1901,7 @@ function loadFinerDetailsDefaults(): void {
   validationRevealAll = false;
   clearTouchedFields(FINER_DETAILS_FIELD_IDS);
   clearAllAttemptedFieldMessages();
+  uiState.manualPropertyLiquidationOrder = false;
   setRetireCheckMessage(null);
   renderInputs();
   queueRecalc();
@@ -1908,13 +1917,18 @@ function renderInputs(): void {
   else if (anyValue(fieldState, incomeEvent2Fields)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 2);
   if (anyValue(fieldState, expenseEvent3Fields)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 3);
   else if (anyValue(fieldState, expenseEvent2Fields)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 2);
-  const appendedOrder = syncManualPropertyOrderForNewProperties(fieldState);
+  const appendedOrder = syncManualPropertyOrderForNewProperties(
+    fieldState,
+    previousActivePropertyIndices,
+    uiState.manualPropertyLiquidationOrder
+  );
   if (appendedOrder.length > 0) {
     for (const update of appendedOrder) {
       fieldState[update.fieldId] = update.value;
     }
     queueRecalc();
   }
+  previousActivePropertyIndices = new Set(activePropertyConfigs(fieldState).map((group) => group.idx));
   const grouped = {
     "QUICK START": INPUT_DEFINITIONS.filter((d) => d.section === "QUICK START"),
     "DEEPER DIVE": INPUT_DEFINITIONS.filter((d) => d.section === "DEEPER DIVE"),
@@ -2395,7 +2409,7 @@ function renderInputs(): void {
         if (!Number.isFinite(targetIdx) || targetIdx === draggingIdx) return;
 
         const active = activePropertyConfigs(fieldState);
-        const order = buildPropertyLiquidationOrder(fieldState, active);
+        const order = buildPropertyLiquidationOrder(fieldState, active, uiState.manualPropertyLiquidationOrder);
         const fromPos = order.findIndex((cfg) => cfg.idx === draggingIdx);
         const toBasePos = order.findIndex((cfg) => cfg.idx === targetIdx);
         if (fromPos < 0 || toBasePos < 0) return;

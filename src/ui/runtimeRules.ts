@@ -202,8 +202,11 @@ export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
   DEPENDENT_RUNTIME_GROUPS[1].nameField,
   DEPENDENT_RUNTIME_GROUPS[2].nameField,
   PROPERTY_RUNTIME_GROUPS[0].nameField,
+  PROPERTY_RUNTIME_GROUPS[0].valueField,
   PROPERTY_RUNTIME_GROUPS[1].nameField,
+  PROPERTY_RUNTIME_GROUPS[1].valueField,
   PROPERTY_RUNTIME_GROUPS[2].nameField,
+  PROPERTY_RUNTIME_GROUPS[2].valueField,
   OTHER_WORK_FIELDS.income,
   PROPERTY_RUNTIME_GROUPS[0].loanBalanceField,
   PROPERTY_RUNTIME_GROUPS[1].loanBalanceField,
@@ -281,6 +284,9 @@ export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, next
   if (fieldId === HOME_FIELDS.homeValue) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === OTHER_WORK_FIELDS.income) return isNonZeroNumber(prevValue) !== isNonZeroNumber(nextValue);
   if (fieldId === POST_RETIREMENT_INCOME_FIELDS.amount) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
+  if (PROPERTY_RUNTIME_GROUPS.some((group) => group.valueField === fieldId)) {
+    return asNumber(prevValue) !== asNumber(nextValue);
+  }
   if (
     fieldId === HOME_FIELDS.mortgageBalance
     || fieldId === OTHER_LOAN_FIELDS.balance
@@ -477,10 +483,13 @@ export function defaultPropertyOrder(values: RuntimeValues, active: PropertyRunt
   return [...active].sort((a, b) => (asNumber(values[a.valueField]) - asNumber(values[b.valueField])) || (a.idx - b.idx));
 }
 
-export function buildPropertyLiquidationOrder(values: RuntimeValues, active: PropertyRuntimeConfig[]): PropertyRuntimeConfig[] {
+export function buildPropertyLiquidationOrder(
+  values: RuntimeValues,
+  active: PropertyRuntimeConfig[],
+  manualOverrideActive: boolean
+): PropertyRuntimeConfig[] {
   if (active.length <= 1) return [...active];
-  const hasManual = active.some((group) => !isBlank(values[group.liquidationRankField]));
-  if (!hasManual) return defaultPropertyOrder(values, active);
+  if (!manualOverrideActive) return defaultPropertyOrder(values, active);
   const ranked = active
     .filter((group) => {
       const rank = parsePropertyRank(values, group.liquidationRankField);
@@ -495,11 +504,14 @@ export function buildPropertyLiquidationOrder(values: RuntimeValues, active: Pro
   return [...ranked, ...unranked];
 }
 
-export function syncManualPropertyOrderForNewProperties(values: RuntimeValues): Array<{ fieldId: FieldId; value: number }> {
+export function syncManualPropertyOrderForNewProperties(
+  values: RuntimeValues,
+  previousActivePropertyIndices: ReadonlySet<number>,
+  manualOverrideActive: boolean
+): Array<{ fieldId: FieldId; value: number }> {
   const active = activePropertyConfigs(values);
   if (active.length <= 1) return [];
-  const hasManual = active.some((group) => !isBlank(values[group.liquidationRankField]));
-  if (!hasManual) return [];
+  if (!manualOverrideActive) return [];
 
   const ranked = active
     .map((group) => ({ group, rank: parsePropertyRank(values, group.liquidationRankField) }))
@@ -509,6 +521,7 @@ export function syncManualPropertyOrderForNewProperties(values: RuntimeValues): 
   let nextRank = ranked.length > 0 ? (ranked[ranked.length - 1].rank ?? 0) : 0;
   const updates: Array<{ fieldId: FieldId; value: number }> = [];
   for (const group of active) {
+    if (previousActivePropertyIndices.has(group.idx)) continue;
     if (!isBlank(values[group.liquidationRankField])) continue;
     nextRank += 1;
     updates.push({ fieldId: group.liquidationRankField, value: nextRank });

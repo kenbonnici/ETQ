@@ -1,5 +1,12 @@
 import { EffectiveInputs, InputCell, RawInputValue, RawInputs } from "./types";
 
+const PROPERTY_VALUE_CELLS = ["B51", "B56", "B61"] as const satisfies readonly InputCell[];
+const PROPERTY_LIQUIDATION_CELLS = ["B166", "B167", "B168"] as const satisfies readonly InputCell[];
+
+export interface LiquidationPriorityOptions {
+  manualOverrideActive?: boolean;
+}
+
 function toTrimmedString(v: RawInputValue): string {
   if (v === null || v === undefined) return "";
   return String(v).trim();
@@ -29,19 +36,8 @@ function toBoundedNumber(v: RawInputValue, min: number, max: number): number {
   return Math.min(max, Math.max(min, n));
 }
 
-function liquidationPriority(raw: RawInputs): number[] {
-  const p1 = toNullableNumber(raw.B166);
-  const p2 = toNullableNumber(raw.B167);
-  const p3 = toNullableNumber(raw.B168);
-
-  // Any blanks are treated as zero (never sell), as clarified.
-  const hasAny = p1 !== null || p2 !== null || p3 !== null;
-  if (hasAny) {
-    return [p1 ?? 0, p2 ?? 0, p3 ?? 0];
-  }
-
-  // No user values entered => default cheapest-first ranking.
-  const values = [toNumber(raw.B51), toNumber(raw.B56), toNumber(raw.B61)];
+export function deriveDefaultLiquidationPriority(raw: RawInputs): number[] {
+  const values = PROPERTY_VALUE_CELLS.map((cell) => toNumber(raw[cell]));
   const indexed = values.map((v, i) => ({ v, i }));
   indexed.sort((a, b) => a.v - b.v);
   const rank = [0, 0, 0];
@@ -51,7 +47,27 @@ function liquidationPriority(raw: RawInputs): number[] {
   return rank;
 }
 
-export function normalizeInputs(raw: RawInputs): EffectiveInputs {
+export function resolveLiquidationPriority(raw: RawInputs, options: LiquidationPriorityOptions = {}): number[] {
+  if (!options.manualOverrideActive) {
+    return deriveDefaultLiquidationPriority(raw);
+  }
+
+  return PROPERTY_LIQUIDATION_CELLS.map((cell) => toNullableNumber(raw[cell]) ?? 0);
+}
+
+export function materializeLiquidationPriorityInputs(
+  raw: RawInputs,
+  options: LiquidationPriorityOptions = {}
+): RawInputs {
+  const priority = resolveLiquidationPriority(raw, options);
+  const next: RawInputs = { ...raw };
+  PROPERTY_LIQUIDATION_CELLS.forEach((cell, idx) => {
+    next[cell] = priority[idx] ?? 0;
+  });
+  return next;
+}
+
+export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOptions = {}): EffectiveInputs {
   const ageNow = toNumber(raw.B4);
   const statutoryRetirementAge = toBoundedNumber(raw.B19, 50, 70);
   const liveUntilMinimum = ageNow > 0 ? ageNow + 1 : 19;
@@ -145,6 +161,6 @@ export function normalizeInputs(raw: RawInputs): EffectiveInputs {
     stockSellingCosts: toNumber(raw.B161),
     propertyDisposalCosts: toNumber(raw.B163),
 
-    liquidationPriority: liquidationPriority(raw)
+    liquidationPriority: resolveLiquidationPriority(raw, options)
   };
 }
