@@ -148,6 +148,27 @@ test("cash chart zero-line emphasis follows the active cash scenario only", asyn
   await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "true");
 });
 
+test("charts match backing-store size to CSS size for crisp high-DPI rendering", async ({ page }) => {
+  await loadSampleData(page);
+
+  for (const selector of [selectors.cashChart, selectors.networthChart]) {
+    const metrics = await page.locator(selector).evaluate((node) => {
+      const canvas = node as HTMLCanvasElement;
+      const rect = canvas.getBoundingClientRect();
+      return {
+        clientWidth: rect.width,
+        clientHeight: rect.height,
+        backingWidth: canvas.width,
+        backingHeight: canvas.height,
+        dpr: window.devicePixelRatio
+      };
+    });
+
+    expect(metrics.backingWidth).toBe(Math.round(metrics.clientWidth * metrics.dpr));
+    expect(metrics.backingHeight).toBe(Math.round(metrics.clientHeight * metrics.dpr));
+  }
+});
+
 test("net-worth collapse chevron returns to the top of the dashboard canvas", async ({ page }) => {
   await loadSampleData(page);
 

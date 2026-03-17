@@ -381,6 +381,46 @@ const pendingProjectionScrollRestoreFrame: Record<ProjectionSectionKey, number |
   cashflow: null,
   networth: null
 };
+let chartResizeFrame: number | null = null;
+
+interface CanvasRenderMetrics {
+  ctx: CanvasRenderingContext2D;
+  width: number;
+  height: number;
+  dpr: number;
+}
+
+function getCanvasDisplaySize(canvas: HTMLCanvasElement): { width: number; height: number } {
+  const rect = canvas.getBoundingClientRect();
+  const width = Math.max(1, Math.round(rect.width || canvas.clientWidth || Number(canvas.getAttribute("width")) || 920));
+  const height = Math.max(1, Math.round(rect.height || canvas.clientHeight || Number(canvas.getAttribute("height")) || 296));
+  return { width, height };
+}
+
+function alignToDevicePixel(value: number, dpr: number, lineWidth = 1): number {
+  const scaledLineWidth = Math.max(1, Math.round(lineWidth * dpr));
+  const offset = scaledLineWidth % 2 === 1 ? 0.5 / dpr : 0;
+  return (Math.round((value - offset) * dpr) / dpr) + offset;
+}
+
+function alignTextCoordinate(value: number, dpr: number): number {
+  return Math.round(value * dpr) / dpr;
+}
+
+function prepareCanvas(canvas: HTMLCanvasElement): CanvasRenderMetrics | null {
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const { width, height } = getCanvasDisplaySize(canvas);
+  const dpr = Math.max(1, window.devicePixelRatio || 1);
+  const backingWidth = Math.max(1, Math.round(width * dpr));
+  const backingHeight = Math.max(1, Math.round(height * dpr));
+  if (canvas.width !== backingWidth || canvas.height !== backingHeight) {
+    canvas.width = backingWidth;
+    canvas.height = backingHeight;
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { ctx, width, height, dpr };
+}
 
 function getProjectionSectionConfig(key: ProjectionSectionKey): ProjectionSectionConfig {
   return key === "cashflow"
@@ -699,23 +739,24 @@ function renderValidationState(messages: ValidationMessage[]): void {
 }
 
 function drawEmptyChart(canvas: HTMLCanvasElement, lines: string[]): void {
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const metrics = prepareCanvas(canvas);
+  if (!metrics) return;
+  const { ctx, width, height, dpr } = metrics;
+  ctx.clearRect(0, 0, width, height);
   ctx.fillStyle = "#f8fafc";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillRect(0, 0, width, height);
   const messageLines = lines.length > 0 ? lines : [PROJECTION_EMPTY_GUIDANCE];
-  const titleY = canvas.height / 2 - (messageLines.length > 1 ? 18 : 0);
+  const titleY = alignTextCoordinate(height / 2 - (messageLines.length > 1 ? 18 : 0), dpr);
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
   ctx.fillStyle = "#475569";
   ctx.font = '500 15px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
-  ctx.fillText(messageLines[0], canvas.width / 2, titleY);
+  ctx.fillText(messageLines[0], alignTextCoordinate(width / 2, dpr), titleY);
   if (messageLines.length === 1) return;
   ctx.fillStyle = "#64748b";
   ctx.font = '400 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
   messageLines.slice(1, 4).forEach((line, idx) => {
-    ctx.fillText(line, canvas.width / 2, titleY + 26 + (idx * 18));
+    ctx.fillText(line, alignTextCoordinate(width / 2, dpr), alignTextCoordinate(titleY + 26 + (idx * 18), dpr));
   });
 }
 
@@ -2558,12 +2599,13 @@ function setupChartHover(canvas: HTMLCanvasElement): void {
       return;
     }
 
-    const cx = ((ev.clientX - rect.left) / rect.width) * canvas.width;
-    const cy = ((ev.clientY - rect.top) / rect.height) * canvas.height;
+    const { width: canvasWidth, height: canvasHeight } = getCanvasDisplaySize(canvas);
+    const cx = ev.clientX - rect.left;
+    const cy = ev.clientY - rect.top;
     const plotLeft = CHART_PAD.l;
-    const plotRight = canvas.width - CHART_PAD.r;
+    const plotRight = canvasWidth - CHART_PAD.r;
     const plotTop = CHART_PAD.t;
-    const plotBottom = canvas.height - CHART_PAD.b;
+    const plotBottom = canvasHeight - CHART_PAD.b;
     if (cx < plotLeft || cx > plotRight || cy < plotTop || cy > plotBottom) {
       clearChartHoverDelay(canvas);
       if ((chartHoverIndex.get(canvas) ?? null) !== null) {
@@ -2634,19 +2676,17 @@ function drawChart(
     zeroLineAlert?: boolean;
   } = {}
 ): void {
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return;
+  const metrics = prepareCanvas(canvas);
+  if (!metrics) return;
+  const { ctx, width: w, height: h, dpr } = metrics;
   const hoverIdx = options.hoverIdx ?? null;
   const zeroLineAlert = options.zeroLineAlert ?? false;
 
-  const w = canvas.width;
-  const h = canvas.height;
   const pad = CHART_PAD;
   const allY = [...a, ...b];
   const rawMinY = Math.min(...allY);
   const rawMaxY = Math.max(...allY);
   const axisHasMeaningfulRange = Math.abs(rawMaxY - rawMinY) > 1e-6 || Math.abs(rawMaxY) > 1e-6 || Math.abs(rawMinY) > 1e-6;
-  const axisLabelInset = 10;
 
   const targetTicks = 6;
   const rawSpan = rawMaxY - rawMinY;
@@ -2678,16 +2718,25 @@ function drawChart(
     { div: 1, suffix: "" };
   const axisStepScaled = tickStep / axisUnit.div;
   const axisDecimals = axisStepScaled < 1 ? 1 : 0;
-  const formatAxisCurrency = (value: number): string => {
+  const formatAxisCurrencyParts = (value: number): { prefix: string; amount: string } => {
     const sign = value < 0 ? "-" : "";
     const symbol = currentCurrencySymbol();
-    if (axisUnit.div === 1) return `${sign}${symbol}${Math.round(Math.abs(value)).toLocaleString("en-US")}`;
+    const prefix = `${sign}${symbol}`;
+    if (axisUnit.div === 1) {
+      return {
+        prefix,
+        amount: Math.round(Math.abs(value)).toLocaleString("en-US")
+      };
+    }
     const scaled = Math.abs(value) / axisUnit.div;
     const rounded = Number(scaled.toFixed(axisDecimals));
-    return `${sign}${symbol}${rounded.toLocaleString("en-US", {
-      minimumFractionDigits: axisDecimals,
-      maximumFractionDigits: axisDecimals
-    })}${axisUnit.suffix}`;
+    return {
+      prefix,
+      amount: `${rounded.toLocaleString("en-US", {
+        minimumFractionDigits: axisDecimals,
+        maximumFractionDigits: axisDecimals
+      })}${axisUnit.suffix}`
+    };
   };
 
   const minY = yMinTick;
@@ -2695,6 +2744,12 @@ function drawChart(
   const ySpan = maxY - minY || 1;
   const xp = (i: number) => pad.l + (i / Math.max(1, x.length - 1)) * (w - pad.l - pad.r);
   const yp = (v: number) => h - pad.b - ((v - minY) / ySpan) * (h - pad.t - pad.b);
+  const axisLeftX = alignToDevicePixel(pad.l, dpr, 1.1);
+  const axisBottomY = alignToDevicePixel(h - pad.b, dpr, 1.1);
+  const plotRightX = alignToDevicePixel(w - pad.r, dpr, 1.1);
+  const plotTopY = alignToDevicePixel(pad.t, dpr, 1.1);
+  const yAxisLabelX = alignTextCoordinate(pad.l - 8, dpr);
+  const xAxisLabelY = alignTextCoordinate(h - 8, dpr);
 
   ctx.clearRect(0, 0, w, h);
   ctx.fillStyle = "#ffffff";
@@ -2714,13 +2769,13 @@ function drawChart(
 
   if (axisHasMeaningfulRange) {
     for (let yv = yMinTick; yv <= yMaxTick + 0.5; yv += tickStep) {
-      const yy = yp(yv);
+      const yy = alignToDevicePixel(yp(yv), dpr);
       if (Math.abs(yv) < tickStep * 0.001) continue;
       ctx.strokeStyle = "rgba(100, 116, 139, 0.14)";
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.moveTo(pad.l, yy);
-      ctx.lineTo(w - pad.r, yy);
+      ctx.moveTo(axisLeftX, yy);
+      ctx.lineTo(plotRightX, yy);
       ctx.stroke();
     }
   }
@@ -2728,10 +2783,10 @@ function drawChart(
   ctx.strokeStyle = "#c8d3df";
   ctx.lineWidth = 1.1;
   ctx.beginPath();
-  ctx.moveTo(pad.l, h - pad.b);
-  ctx.lineTo(w - pad.r, h - pad.b);
-  ctx.moveTo(pad.l, pad.t);
-  ctx.lineTo(pad.l, h - pad.b);
+  ctx.moveTo(axisLeftX, axisBottomY);
+  ctx.lineTo(plotRightX, axisBottomY);
+  ctx.moveTo(axisLeftX, plotTopY);
+  ctx.lineTo(axisLeftX, axisBottomY);
   ctx.stroke();
 
   const plot = (series: number[], color: string, dash: number[] = []) => {
@@ -2757,44 +2812,54 @@ function drawChart(
   plot(b, comparisonColor, [10, 6]);
 
   if (hoverIdx !== null && hoverIdx >= 0 && hoverIdx < x.length) {
-    const hoverX = xp(hoverIdx);
+    const hoverX = alignToDevicePixel(xp(hoverIdx), dpr, 1.1);
     ctx.save();
     ctx.strokeStyle = "rgba(71, 85, 105, 0.34)";
     ctx.lineWidth = 1.1;
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
-    ctx.moveTo(hoverX, pad.t);
-    ctx.lineTo(hoverX, h - pad.b);
+    ctx.moveTo(hoverX, plotTopY);
+    ctx.lineTo(hoverX, axisBottomY);
     ctx.stroke();
     ctx.restore();
   }
 
   if (rawMinY < 0 && rawMaxY > 0) {
-    const y0 = yp(0);
+    const zeroLineWidth = zeroLineAlert ? 1.28 : 1.6;
+    const y0 = alignToDevicePixel(yp(0), dpr, zeroLineWidth);
     ctx.save();
     ctx.strokeStyle = zeroLineAlert ? "#dc2626" : "#334155";
-    ctx.lineWidth = zeroLineAlert ? 1.28 : 1.6;
+    ctx.lineWidth = zeroLineWidth;
     ctx.setLineDash([]);
     if (zeroLineAlert) {
       ctx.shadowColor = "rgba(220, 38, 38, 0.25)";
       ctx.shadowBlur = 2;
     }
     ctx.beginPath();
-    ctx.moveTo(pad.l, y0);
-    ctx.lineTo(w - pad.r, y0);
+    ctx.moveTo(axisLeftX, y0);
+    ctx.lineTo(alignToDevicePixel(w - pad.r, dpr, zeroLineWidth), y0);
     ctx.stroke();
     ctx.restore();
   }
 
-  ctx.font = '600 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
-  ctx.textAlign = "start";
-  ctx.textBaseline = "alphabetic";
+  const axisLabelFont = '500 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  const axisPrefixFont = '500 12px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  const axisPrefixGap = 4;
+  ctx.font = axisLabelFont;
+  ctx.textAlign = "right";
+  ctx.textBaseline = "middle";
 
   if (axisHasMeaningfulRange) {
     for (let yv = yMinTick; yv <= yMaxTick + 0.5; yv += tickStep) {
-      const yy = yp(yv);
+      const yy = alignTextCoordinate(yp(yv), dpr);
+      const { prefix, amount } = formatAxisCurrencyParts(yv);
+      ctx.font = axisLabelFont;
+      const amountWidth = ctx.measureText(amount).width;
       ctx.fillStyle = "#1f2937";
-      ctx.fillText(formatAxisCurrency(yv), axisLabelInset, yy + 4);
+      ctx.fillText(amount, yAxisLabelX, yy);
+      ctx.font = axisPrefixFont;
+      ctx.fillStyle = "#475569";
+      ctx.fillText(prefix, yAxisLabelX - amountWidth - axisPrefixGap, yy);
     }
   }
 
@@ -2806,19 +2871,28 @@ function drawChart(
     for (let i = 0; i < x.length; i += 1) {
       const age = Math.round(x[i]);
       const xx = xp(i);
+      const tickX = alignToDevicePixel(xx, dpr);
       ctx.strokeStyle = "#cfd8e3";
       ctx.beginPath();
-      ctx.moveTo(xx, h - pad.b);
+      ctx.moveTo(tickX, axisBottomY);
       const isMajorTick = (age - startAge) % majorTickStep === 0;
-      ctx.lineTo(xx, h - pad.b + (isMajorTick ? 5 : 3));
+      ctx.lineTo(tickX, alignToDevicePixel((h - pad.b) + (isMajorTick ? 5 : 3), dpr));
       ctx.stroke();
       if (!isMajorTick) continue;
       ctx.fillStyle = "#1f2937";
-      const label = String(age);
-      const labelWidth = ctx.measureText(label).width;
-      ctx.fillText(label, xx - labelWidth / 2, h - 8);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(age), alignTextCoordinate(xx, dpr), xAxisLabelY);
     }
   }
+}
+
+function scheduleChartResizeRecalc(): void {
+  if (chartResizeFrame !== null) window.cancelAnimationFrame(chartResizeFrame);
+  chartResizeFrame = window.requestAnimationFrame(() => {
+    chartResizeFrame = null;
+    recalc();
+  });
 }
 
 function recalc(): void {
@@ -3134,6 +3208,16 @@ retireCheckButton.addEventListener("click", () => {
 
 setupChartHover(cashCanvas);
 setupChartHover(nwCanvas);
+
+if (typeof ResizeObserver !== "undefined") {
+  const chartResizeObserver = new ResizeObserver((entries) => {
+    if (entries.some((entry) => entry.contentRect.width > 0 && entry.contentRect.height > 0)) {
+      scheduleChartResizeRecalc();
+    }
+  });
+  chartResizeObserver.observe(cashCanvas);
+  chartResizeObserver.observe(nwCanvas);
+}
 
 resetCashflowExpandedGroups("collapsed");
 resetNetworthExpandedGroups("collapsed");
