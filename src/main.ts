@@ -363,6 +363,7 @@ interface ChartHoverData {
   years: number[];
   seriesPrimary: number[];
   seriesComparison: number[];
+  zeroLineAlert: boolean;
   retireNowAge: number | null;
   statutoryAge: number | null;
   metricLabel: string;
@@ -2567,7 +2568,9 @@ function setupChartHover(canvas: HTMLCanvasElement): void {
       clearChartHoverDelay(canvas);
       if ((chartHoverIndex.get(canvas) ?? null) !== null) {
         chartHoverIndex.set(canvas, null);
-        drawChart(canvas, data.ages, data.seriesPrimary, data.seriesComparison);
+        drawChart(canvas, data.ages, data.seriesPrimary, data.seriesComparison, {
+          zeroLineAlert: data.zeroLineAlert
+        });
       }
       hideChartTooltip(canvas);
       return;
@@ -2578,7 +2581,10 @@ function setupChartHover(canvas: HTMLCanvasElement): void {
     const idx = Math.max(0, Math.min(maxIndex, Math.round(ratio * maxIndex)));
     if ((chartHoverIndex.get(canvas) ?? null) !== idx) {
       chartHoverIndex.set(canvas, idx);
-      drawChart(canvas, data.ages, data.seriesPrimary, data.seriesComparison, idx);
+      drawChart(canvas, data.ages, data.seriesPrimary, data.seriesComparison, {
+        hoverIdx: idx,
+        zeroLineAlert: data.zeroLineAlert
+      });
     }
     const pending = { idx, clientX: ev.clientX, clientY: ev.clientY };
     chartHoverPending.set(canvas, pending);
@@ -2608,7 +2614,9 @@ function setupChartHover(canvas: HTMLCanvasElement): void {
     const data = chartHoverData.get(canvas);
     if (data && (chartHoverIndex.get(canvas) ?? null) !== null) {
       chartHoverIndex.set(canvas, null);
-      drawChart(canvas, data.ages, data.seriesPrimary, data.seriesComparison);
+      drawChart(canvas, data.ages, data.seriesPrimary, data.seriesComparison, {
+        zeroLineAlert: data.zeroLineAlert
+      });
     }
     hideChartTooltip(canvas);
   };
@@ -2621,10 +2629,15 @@ function drawChart(
   x: number[],
   a: number[],
   b: number[],
-  hoverIdx: number | null = null
+  options: {
+    hoverIdx?: number | null;
+    zeroLineAlert?: boolean;
+  } = {}
 ): void {
   const ctx = canvas.getContext("2d");
   if (!ctx) return;
+  const hoverIdx = options.hoverIdx ?? null;
+  const zeroLineAlert = options.zeroLineAlert ?? false;
 
   const w = canvas.width;
   const h = canvas.height;
@@ -2759,9 +2772,13 @@ function drawChart(
   if (rawMinY < 0 && rawMaxY > 0) {
     const y0 = yp(0);
     ctx.save();
-    ctx.strokeStyle = "#334155";
-    ctx.lineWidth = 1.6;
+    ctx.strokeStyle = zeroLineAlert ? "#dc2626" : "#334155";
+    ctx.lineWidth = zeroLineAlert ? 1.28 : 1.6;
     ctx.setLineDash([]);
+    if (zeroLineAlert) {
+      ctx.shadowColor = "rgba(220, 38, 38, 0.25)";
+      ctx.shadowBlur = 2;
+    }
     ctx.beginPath();
     ctx.moveTo(pad.l, y0);
     ctx.lineTo(w - pad.r, y0);
@@ -2827,6 +2844,7 @@ function recalc(): void {
     cashLegendB.textContent = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
     nwLegendA.textContent = "Retire at early age";
     nwLegendB.textContent = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
+    cashCanvas.dataset.zeroLineAlert = "false";
     chartHoverData.delete(cashCanvas);
     chartHoverData.delete(nwCanvas);
     const chartLines = hasVisibleBlockingErrors
@@ -2854,6 +2872,10 @@ function recalc(): void {
   const contextByYear = buildChartContextByYear(result);
   const earlyLabel = spinner.value.trim() === "" ? "Retire at early age" : `Retire at ${uiState.earlyRetirementAge}`;
   const statutoryLabel = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
+  const activeCashSeries = cashflowScenario === "early"
+    ? result.outputs.cashSeriesEarly
+    : result.outputs.cashSeriesNorm;
+  const cashZeroLineAlert = activeCashSeries.some((value) => value < 0);
   setChartLegendsVisible(true);
   cashLegendA.textContent = earlyLabel;
   cashLegendB.textContent = statutoryLabel;
@@ -2869,13 +2891,16 @@ function recalc(): void {
     cashCanvas,
     result.outputs.ages,
     result.outputs.cashSeriesEarly,
-    result.outputs.cashSeriesNorm
+    result.outputs.cashSeriesNorm,
+    { zeroLineAlert: cashZeroLineAlert }
   );
+  cashCanvas.dataset.zeroLineAlert = cashZeroLineAlert ? "true" : "false";
   chartHoverData.set(cashCanvas, {
     ages: result.outputs.ages,
     years: result.outputs.years,
     seriesPrimary: result.outputs.cashSeriesEarly,
     seriesComparison: result.outputs.cashSeriesNorm,
+    zeroLineAlert: cashZeroLineAlert,
     retireNowAge: uiState.earlyRetirementAge,
     statutoryAge: statutory,
     metricLabel: "Cash",
@@ -2885,13 +2910,15 @@ function recalc(): void {
     nwCanvas,
     result.outputs.ages,
     result.outputs.netWorthSeriesEarly,
-    result.outputs.netWorthSeriesNorm
+    result.outputs.netWorthSeriesNorm,
+    { zeroLineAlert: false }
   );
   chartHoverData.set(nwCanvas, {
     ages: result.outputs.ages,
     years: result.outputs.years,
     seriesPrimary: result.outputs.netWorthSeriesEarly,
     seriesComparison: result.outputs.netWorthSeriesNorm,
+    zeroLineAlert: false,
     retireNowAge: uiState.earlyRetirementAge,
     statutoryAge: statutory,
     metricLabel: "Net worth",

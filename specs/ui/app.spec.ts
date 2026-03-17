@@ -2,11 +2,14 @@ import { expect, test, type Page } from "@playwright/test";
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
+  earlyRetAge: "#early-ret-age",
   homeValue: 'input[data-field-id="housing.primaryResidence.marketValue"]',
   housingRent: 'input[data-field-id="housing.rentAnnual"]',
   mortgageBalance: 'input[data-field-id="housing.primaryResidence.mortgage.balance"]',
   dependentName: 'input[data-field-id="dependents.primary.displayName"]',
   dependentAnnualCost: 'input[data-field-id="dependents.primary.annualCost"]',
+  cashChart: "#cash-chart",
+  networthChart: "#nw-chart",
   cashflowScroll: "#cashflow-table-panel .cashflow-table-scroll",
   networthScroll: "#networth-table-panel .cashflow-table-scroll"
 } as const;
@@ -125,6 +128,24 @@ test("net-worth section opens independently and keeps scenario selection in sync
   await expect(page.locator("#projection-tab-networth")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#projection-scenario-norm")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator("#projection-scenario-early")).toHaveAttribute("aria-selected", "false");
+});
+
+test("cash chart zero-line emphasis follows the active cash scenario only", async ({ page }) => {
+  await loadSampleData(page);
+
+  await fillAndBlur(page, selectors.earlyRetAge, "53");
+
+  await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "true");
+  await expect(page.locator(selectors.networthChart)).not.toHaveAttribute("data-zero-line-alert", "true");
+
+  await page.locator("#projection-scenario-norm").click();
+
+  await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "false");
+  await expect(page.locator(selectors.networthChart)).not.toHaveAttribute("data-zero-line-alert", "true");
+
+  await page.locator("#projection-scenario-early").click();
+
+  await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "true");
 });
 
 test("net-worth collapse chevron returns to the top of the dashboard canvas", async ({ page }) => {
