@@ -252,9 +252,9 @@ export const FINER_DETAILS_COL_C_DEFAULTS: Partial<Record<FieldId, number | null
   "liquidity.minimumCashBuffer": 20000,
   "liquidation.stockSellingCostRate": 0.05,
   "liquidation.propertyDisposalCostRate": 0.15,
-  "properties.primary.liquidationPriority": null,
-  "properties.secondary.liquidationPriority": null,
-  "properties.tertiary.liquidationPriority": null
+  "properties.01.liquidationPriority": null,
+  "properties.02.liquidationPriority": null,
+  "properties.03.liquidationPriority": null
 };
 
 export const FINER_DETAILS_COL_C_DEFAULTS_BY_CELL = mapFieldRecordToCells(FINER_DETAILS_COL_C_DEFAULTS);
@@ -264,56 +264,56 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "income.employment.netAnnual": { nonNegative: true },
   "assets.cash.totalBalance": { nonNegative: true },
   "assets.equities.marketValue": { nonNegative: true },
-  "housing.primaryResidence.marketValue": { nonNegative: true },
-  "housing.primaryResidence.mortgage.balance": { nonNegative: true },
-  "housing.primaryResidence.mortgage.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
-  "housing.primaryResidence.mortgage.monthlyRepayment": { nonNegative: true },
+  "housing.01Residence.marketValue": { nonNegative: true },
+  "housing.01Residence.mortgage.balance": { nonNegative: true },
+  "housing.01Residence.mortgage.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "housing.01Residence.mortgage.monthlyRepayment": { nonNegative: true },
   "retirement.statutoryAge": { required: true, integer: true, nonNegative: true, clampBounds: { min: 50, max: 70 } },
   "retirement.statePension.netAnnualAtStart": { nonNegative: true },
   "housing.rentAnnual": { nonNegative: true },
   "spending.livingExpenses.annual": { required: true, positive: true },
-  "dependents.primary.annualCost": { nonNegative: true },
-  "dependents.primary.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
-  "dependents.secondary.annualCost": { nonNegative: true },
-  "dependents.secondary.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
-  "dependents.tertiary.annualCost": { nonNegative: true },
-  "dependents.tertiary.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
-  "properties.primary.marketValue": { nonNegative: true },
-  "properties.primary.annualOperatingCost": { nonNegative: true },
-  "properties.secondary.marketValue": { nonNegative: true },
-  "properties.secondary.annualOperatingCost": { nonNegative: true },
-  "properties.tertiary.marketValue": { nonNegative: true },
-  "properties.tertiary.annualOperatingCost": { nonNegative: true },
-  "properties.primary.rentalIncomeNetAnnual": { nonNegative: true },
-  "properties.secondary.rentalIncomeNetAnnual": { nonNegative: true },
-  "properties.tertiary.rentalIncomeNetAnnual": { nonNegative: true },
+  "dependents.01.annualCost": { nonNegative: true },
+  "dependents.01.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "dependents.02.annualCost": { nonNegative: true },
+  "dependents.02.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "dependents.03.annualCost": { nonNegative: true },
+  "dependents.03.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "properties.01.marketValue": { nonNegative: true },
+  "properties.01.annualOperatingCost": { nonNegative: true },
+  "properties.02.marketValue": { nonNegative: true },
+  "properties.02.annualOperatingCost": { nonNegative: true },
+  "properties.03.marketValue": { nonNegative: true },
+  "properties.03.annualOperatingCost": { nonNegative: true },
+  "properties.01.rentalIncomeNetAnnual": { nonNegative: true },
+  "properties.02.rentalIncomeNetAnnual": { nonNegative: true },
+  "properties.03.rentalIncomeNetAnnual": { nonNegative: true },
   "income.otherWork.netAnnual": { nonNegative: true },
   "income.otherWork.endAge": { integer: true, nonNegative: true },
   "debts.creditCards.balance": { nonNegative: true },
-  "properties.primary.loan.balance": { nonNegative: true },
-  "properties.primary.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
-  "properties.primary.loan.monthlyRepayment": { nonNegative: true },
-  "properties.secondary.loan.balance": { nonNegative: true },
-  "properties.secondary.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
-  "properties.secondary.loan.monthlyRepayment": { nonNegative: true },
-  "properties.tertiary.loan.balance": { nonNegative: true },
-  "properties.tertiary.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
-  "properties.tertiary.loan.monthlyRepayment": { nonNegative: true },
+  "properties.01.loan.balance": { nonNegative: true },
+  "properties.01.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "properties.01.loan.monthlyRepayment": { nonNegative: true },
+  "properties.02.loan.balance": { nonNegative: true },
+  "properties.02.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "properties.02.loan.monthlyRepayment": { nonNegative: true },
+  "properties.03.loan.balance": { nonNegative: true },
+  "properties.03.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "properties.03.loan.monthlyRepayment": { nonNegative: true },
   "debts.other.balance": { nonNegative: true },
   "debts.other.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
   "debts.other.monthlyRepayment": { nonNegative: true },
-  "cashflowEvents.income.primary.amount": { nonNegative: true },
-  "cashflowEvents.income.primary.year": { integer: true },
-  "cashflowEvents.income.secondary.amount": { nonNegative: true },
-  "cashflowEvents.income.secondary.year": { integer: true },
-  "cashflowEvents.income.tertiary.amount": { nonNegative: true },
-  "cashflowEvents.income.tertiary.year": { integer: true },
-  "cashflowEvents.expense.primary.amount": { nonNegative: true },
-  "cashflowEvents.expense.primary.year": { integer: true },
-  "cashflowEvents.expense.secondary.amount": { nonNegative: true },
-  "cashflowEvents.expense.secondary.year": { integer: true },
-  "cashflowEvents.expense.tertiary.amount": { nonNegative: true },
-  "cashflowEvents.expense.tertiary.year": { integer: true },
+  "cashflowEvents.income.01.amount": { nonNegative: true },
+  "cashflowEvents.income.01.year": { integer: true },
+  "cashflowEvents.income.02.amount": { nonNegative: true },
+  "cashflowEvents.income.02.year": { integer: true },
+  "cashflowEvents.income.03.amount": { nonNegative: true },
+  "cashflowEvents.income.03.year": { integer: true },
+  "cashflowEvents.expense.01.amount": { nonNegative: true },
+  "cashflowEvents.expense.01.year": { integer: true },
+  "cashflowEvents.expense.02.amount": { nonNegative: true },
+  "cashflowEvents.expense.02.year": { integer: true },
+  "cashflowEvents.expense.03.amount": { nonNegative: true },
+  "cashflowEvents.expense.03.year": { integer: true },
   "planning.lifeExpectancyAge": { required: true, integer: true, nonNegative: true, clampBounds: { min: 19, max: 120 }, warningBounds: { max: 100 } },
   "spending.adjustments.pre65.deltaRate": { allowNegative: true, warningBounds: { min: -0.5, max: 1 } },
   "spending.adjustments.age66To75.deltaRate": { allowNegative: true, warningBounds: { min: -0.5, max: 1 } },
@@ -331,9 +331,9 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "liquidity.minimumCashBuffer": { nonNegative: true },
   "liquidation.stockSellingCostRate": { nonNegative: true, warningBounds: { max: 0.25 } },
   "liquidation.propertyDisposalCostRate": { nonNegative: true, warningBounds: { max: 0.3 } },
-  "properties.primary.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } },
-  "properties.secondary.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } },
-  "properties.tertiary.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } }
+  "properties.01.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } },
+  "properties.02.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } },
+  "properties.03.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } }
 };
 
 export const FIELD_VALIDATION_RULES_BY_CELL = mapFieldRecordToCells(FIELD_VALIDATION_RULES);
@@ -376,28 +376,28 @@ export const SKIP_REVEAL_CRITICAL_FIELDS = PROJECTION_GATE_FIELDS;
 export const SKIP_REVEAL_CRITICAL_CELLS = PROJECTION_GATE_CELLS;
 
 export const LIQUIDATION_RANK_FIELDS = [
-  "properties.primary.liquidationPriority",
-  "properties.secondary.liquidationPriority",
-  "properties.tertiary.liquidationPriority"
+  "properties.01.liquidationPriority",
+  "properties.02.liquidationPriority",
+  "properties.03.liquidationPriority"
 ] as const satisfies readonly FieldId[];
 
 export const LIQUIDATION_RANK_CELLS = mapFieldListToCells(LIQUIDATION_RANK_FIELDS);
 
 export const DEPENDENT_GROUPS = [
   {
-    nameField: "dependents.primary.displayName",
-    annualCostField: "dependents.primary.annualCost",
-    yearsField: "dependents.primary.supportYearsRemaining"
+    nameField: "dependents.01.displayName",
+    annualCostField: "dependents.01.annualCost",
+    yearsField: "dependents.01.supportYearsRemaining"
   },
   {
-    nameField: "dependents.secondary.displayName",
-    annualCostField: "dependents.secondary.annualCost",
-    yearsField: "dependents.secondary.supportYearsRemaining"
+    nameField: "dependents.02.displayName",
+    annualCostField: "dependents.02.annualCost",
+    yearsField: "dependents.02.supportYearsRemaining"
   },
   {
-    nameField: "dependents.tertiary.displayName",
-    annualCostField: "dependents.tertiary.annualCost",
-    yearsField: "dependents.tertiary.supportYearsRemaining"
+    nameField: "dependents.03.displayName",
+    annualCostField: "dependents.03.annualCost",
+    yearsField: "dependents.03.supportYearsRemaining"
   }
 ] as Array<DependentGroup>;
 
@@ -405,34 +405,34 @@ export const DEPENDENT_GROUPS_BY_CELL = DEPENDENT_GROUPS.map(dependentGroupToCel
 
 export const PROPERTY_GROUPS = [
   {
-    nameField: "properties.primary.displayName",
-    valueField: "properties.primary.marketValue",
-    annualCostsField: "properties.primary.annualOperatingCost",
-    rentalIncomeField: "properties.primary.rentalIncomeNetAnnual",
-    loanBalanceField: "properties.primary.loan.balance",
-    loanRateField: "properties.primary.loan.interestRateAnnual",
-    loanRepaymentField: "properties.primary.loan.monthlyRepayment",
-    liquidationRankField: "properties.primary.liquidationPriority"
+    nameField: "properties.01.displayName",
+    valueField: "properties.01.marketValue",
+    annualCostsField: "properties.01.annualOperatingCost",
+    rentalIncomeField: "properties.01.rentalIncomeNetAnnual",
+    loanBalanceField: "properties.01.loan.balance",
+    loanRateField: "properties.01.loan.interestRateAnnual",
+    loanRepaymentField: "properties.01.loan.monthlyRepayment",
+    liquidationRankField: "properties.01.liquidationPriority"
   },
   {
-    nameField: "properties.secondary.displayName",
-    valueField: "properties.secondary.marketValue",
-    annualCostsField: "properties.secondary.annualOperatingCost",
-    rentalIncomeField: "properties.secondary.rentalIncomeNetAnnual",
-    loanBalanceField: "properties.secondary.loan.balance",
-    loanRateField: "properties.secondary.loan.interestRateAnnual",
-    loanRepaymentField: "properties.secondary.loan.monthlyRepayment",
-    liquidationRankField: "properties.secondary.liquidationPriority"
+    nameField: "properties.02.displayName",
+    valueField: "properties.02.marketValue",
+    annualCostsField: "properties.02.annualOperatingCost",
+    rentalIncomeField: "properties.02.rentalIncomeNetAnnual",
+    loanBalanceField: "properties.02.loan.balance",
+    loanRateField: "properties.02.loan.interestRateAnnual",
+    loanRepaymentField: "properties.02.loan.monthlyRepayment",
+    liquidationRankField: "properties.02.liquidationPriority"
   },
   {
-    nameField: "properties.tertiary.displayName",
-    valueField: "properties.tertiary.marketValue",
-    annualCostsField: "properties.tertiary.annualOperatingCost",
-    rentalIncomeField: "properties.tertiary.rentalIncomeNetAnnual",
-    loanBalanceField: "properties.tertiary.loan.balance",
-    loanRateField: "properties.tertiary.loan.interestRateAnnual",
-    loanRepaymentField: "properties.tertiary.loan.monthlyRepayment",
-    liquidationRankField: "properties.tertiary.liquidationPriority"
+    nameField: "properties.03.displayName",
+    valueField: "properties.03.marketValue",
+    annualCostsField: "properties.03.annualOperatingCost",
+    rentalIncomeField: "properties.03.rentalIncomeNetAnnual",
+    loanBalanceField: "properties.03.loan.balance",
+    loanRateField: "properties.03.loan.interestRateAnnual",
+    loanRepaymentField: "properties.03.loan.monthlyRepayment",
+    liquidationRankField: "properties.03.liquidationPriority"
   }
 ] as Array<PropertyGroup>;
 
@@ -440,19 +440,19 @@ export const PROPERTY_GROUPS_BY_CELL = PROPERTY_GROUPS.map(propertyGroupToCells)
 
 export const INCOME_EVENT_GROUPS = [
   {
-    nameField: "cashflowEvents.income.primary.name",
-    amountField: "cashflowEvents.income.primary.amount",
-    yearField: "cashflowEvents.income.primary.year"
+    nameField: "cashflowEvents.income.01.name",
+    amountField: "cashflowEvents.income.01.amount",
+    yearField: "cashflowEvents.income.01.year"
   },
   {
-    nameField: "cashflowEvents.income.secondary.name",
-    amountField: "cashflowEvents.income.secondary.amount",
-    yearField: "cashflowEvents.income.secondary.year"
+    nameField: "cashflowEvents.income.02.name",
+    amountField: "cashflowEvents.income.02.amount",
+    yearField: "cashflowEvents.income.02.year"
   },
   {
-    nameField: "cashflowEvents.income.tertiary.name",
-    amountField: "cashflowEvents.income.tertiary.amount",
-    yearField: "cashflowEvents.income.tertiary.year"
+    nameField: "cashflowEvents.income.03.name",
+    amountField: "cashflowEvents.income.03.amount",
+    yearField: "cashflowEvents.income.03.year"
   }
 ] as Array<EventGroup>;
 
@@ -460,30 +460,30 @@ export const INCOME_EVENT_GROUPS_BY_CELL = INCOME_EVENT_GROUPS.map(eventGroupToC
 
 export const EXPENSE_EVENT_GROUPS = [
   {
-    nameField: "cashflowEvents.expense.primary.name",
-    amountField: "cashflowEvents.expense.primary.amount",
-    yearField: "cashflowEvents.expense.primary.year"
+    nameField: "cashflowEvents.expense.01.name",
+    amountField: "cashflowEvents.expense.01.amount",
+    yearField: "cashflowEvents.expense.01.year"
   },
   {
-    nameField: "cashflowEvents.expense.secondary.name",
-    amountField: "cashflowEvents.expense.secondary.amount",
-    yearField: "cashflowEvents.expense.secondary.year"
+    nameField: "cashflowEvents.expense.02.name",
+    amountField: "cashflowEvents.expense.02.amount",
+    yearField: "cashflowEvents.expense.02.year"
   },
   {
-    nameField: "cashflowEvents.expense.tertiary.name",
-    amountField: "cashflowEvents.expense.tertiary.amount",
-    yearField: "cashflowEvents.expense.tertiary.year"
+    nameField: "cashflowEvents.expense.03.name",
+    amountField: "cashflowEvents.expense.03.amount",
+    yearField: "cashflowEvents.expense.03.year"
   }
 ] as Array<EventGroup>;
 
 export const EXPENSE_EVENT_GROUPS_BY_CELL = EXPENSE_EVENT_GROUPS.map(eventGroupToCells) as Array<EventGroupByCell>;
 
 export const HOME_LOAN_GROUP = {
-  homeValueField: "housing.primaryResidence.marketValue",
+  homeValueField: "housing.01Residence.marketValue",
   rentField: "housing.rentAnnual",
-  balanceField: "housing.primaryResidence.mortgage.balance",
-  rateField: "housing.primaryResidence.mortgage.interestRateAnnual",
-  repaymentField: "housing.primaryResidence.mortgage.monthlyRepayment"
+  balanceField: "housing.01Residence.mortgage.balance",
+  rateField: "housing.01Residence.mortgage.interestRateAnnual",
+  repaymentField: "housing.01Residence.mortgage.monthlyRepayment"
 } as const satisfies HomeLoanGroup;
 
 export const HOME_LOAN_GROUP_BY_CELL = homeLoanGroupToCells(HOME_LOAN_GROUP);

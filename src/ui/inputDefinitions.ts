@@ -69,7 +69,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 12,
-    fieldId: "housing.primaryResidence.marketValue",
+    fieldId: "housing.01Residence.marketValue",
     label: "Home current market value",
     section: "QUICK START",
     groupPath: "QUICK START",
@@ -81,7 +81,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 15,
-    fieldId: "housing.primaryResidence.mortgage.balance",
+    fieldId: "housing.01Residence.mortgage.balance",
     label: "Balance",
     section: "QUICK START",
     groupPath: "QUICK START > Home loan (mortgage)",
@@ -93,7 +93,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 16,
-    fieldId: "housing.primaryResidence.mortgage.interestRateAnnual",
+    fieldId: "housing.01Residence.mortgage.interestRateAnnual",
     label: "Interest rate",
     section: "QUICK START",
     groupPath: "QUICK START > Home loan (mortgage)",
@@ -105,7 +105,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 17,
-    fieldId: "housing.primaryResidence.mortgage.monthlyRepayment",
+    fieldId: "housing.01Residence.mortgage.monthlyRepayment",
     label: "Monthly repayment",
     section: "QUICK START",
     groupPath: "QUICK START > Home loan (mortgage)",
@@ -165,7 +165,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 33,
-    fieldId: "dependents.primary.displayName",
+    fieldId: "dependents.01.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 1",
@@ -177,7 +177,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 34,
-    fieldId: "dependents.primary.annualCost",
+    fieldId: "dependents.01.annualCost",
     label: "Annual cost",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 1",
@@ -189,7 +189,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 35,
-    fieldId: "dependents.primary.supportYearsRemaining",
+    fieldId: "dependents.01.supportYearsRemaining",
     label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 1",
@@ -201,7 +201,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 38,
-    fieldId: "dependents.secondary.displayName",
+    fieldId: "dependents.02.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 2",
@@ -213,7 +213,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 39,
-    fieldId: "dependents.secondary.annualCost",
+    fieldId: "dependents.02.annualCost",
     label: "Annual cost",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 2",
@@ -225,7 +225,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 40,
-    fieldId: "dependents.secondary.supportYearsRemaining",
+    fieldId: "dependents.02.supportYearsRemaining",
     label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 2",
@@ -237,7 +237,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 43,
-    fieldId: "dependents.tertiary.displayName",
+    fieldId: "dependents.03.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 3",
@@ -249,7 +249,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 44,
-    fieldId: "dependents.tertiary.annualCost",
+    fieldId: "dependents.03.annualCost",
     label: "Annual cost",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 3",
@@ -261,7 +261,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 45,
-    fieldId: "dependents.tertiary.supportYearsRemaining",
+    fieldId: "dependents.03.supportYearsRemaining",
     label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 3",
@@ -273,7 +273,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 50,
-    fieldId: "properties.primary.displayName",
+    fieldId: "properties.01.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 1",
@@ -285,7 +285,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 51,
-    fieldId: "properties.primary.marketValue",
+    fieldId: "properties.01.marketValue",
     label: "Market value",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 1",
@@ -297,7 +297,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 52,
-    fieldId: "properties.primary.annualOperatingCost",
+    fieldId: "properties.01.annualOperatingCost",
     label: "Annual costs",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 1",
@@ -309,7 +309,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 55,
-    fieldId: "properties.secondary.displayName",
+    fieldId: "properties.02.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 2",
@@ -321,7 +321,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 56,
-    fieldId: "properties.secondary.marketValue",
+    fieldId: "properties.02.marketValue",
     label: "Market value",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 2",
@@ -333,7 +333,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 57,
-    fieldId: "properties.secondary.annualOperatingCost",
+    fieldId: "properties.02.annualOperatingCost",
     label: "Annual costs",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 2",
@@ -345,7 +345,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 60,
-    fieldId: "properties.tertiary.displayName",
+    fieldId: "properties.03.displayName",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 3",
@@ -357,7 +357,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 61,
-    fieldId: "properties.tertiary.marketValue",
+    fieldId: "properties.03.marketValue",
     label: "Market value",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 3",
@@ -369,7 +369,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 62,
-    fieldId: "properties.tertiary.annualOperatingCost",
+    fieldId: "properties.03.annualOperatingCost",
     label: "Annual costs",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Investment Properties  > Property 3",
@@ -381,7 +381,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 66,
-    fieldId: "properties.primary.rentalIncomeNetAnnual",
+    fieldId: "properties.01.rentalIncomeNetAnnual",
     label: "Rental income: Sliema",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
@@ -393,7 +393,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 67,
-    fieldId: "properties.secondary.rentalIncomeNetAnnual",
+    fieldId: "properties.02.rentalIncomeNetAnnual",
     label: "Rental income: Gzira",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
@@ -405,7 +405,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 68,
-    fieldId: "properties.tertiary.rentalIncomeNetAnnual",
+    fieldId: "properties.03.rentalIncomeNetAnnual",
     label: "Rental income: Qormi",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
@@ -453,7 +453,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 78,
-    fieldId: "properties.primary.loan.balance",
+    fieldId: "properties.01.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Sliema Property",
@@ -465,7 +465,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 79,
-    fieldId: "properties.primary.loan.interestRateAnnual",
+    fieldId: "properties.01.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Sliema Property",
@@ -477,7 +477,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 80,
-    fieldId: "properties.primary.loan.monthlyRepayment",
+    fieldId: "properties.01.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Sliema Property",
@@ -489,7 +489,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 83,
-    fieldId: "properties.secondary.loan.balance",
+    fieldId: "properties.02.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Gzira Property",
@@ -501,7 +501,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 84,
-    fieldId: "properties.secondary.loan.interestRateAnnual",
+    fieldId: "properties.02.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Gzira Property",
@@ -513,7 +513,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 85,
-    fieldId: "properties.secondary.loan.monthlyRepayment",
+    fieldId: "properties.02.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Gzira Property",
@@ -525,7 +525,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 88,
-    fieldId: "properties.tertiary.loan.balance",
+    fieldId: "properties.03.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Qormi Property",
@@ -537,7 +537,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 89,
-    fieldId: "properties.tertiary.loan.interestRateAnnual",
+    fieldId: "properties.03.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Qormi Property",
@@ -549,7 +549,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 90,
-    fieldId: "properties.tertiary.loan.monthlyRepayment",
+    fieldId: "properties.03.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other loans > Qormi Property",
@@ -597,7 +597,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 100,
-    fieldId: "cashflowEvents.income.primary.name",
+    fieldId: "cashflowEvents.income.01.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 1",
@@ -609,7 +609,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 101,
-    fieldId: "cashflowEvents.income.primary.amount",
+    fieldId: "cashflowEvents.income.01.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 1",
@@ -621,7 +621,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 102,
-    fieldId: "cashflowEvents.income.primary.year",
+    fieldId: "cashflowEvents.income.01.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 1",
@@ -633,7 +633,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 105,
-    fieldId: "cashflowEvents.income.secondary.name",
+    fieldId: "cashflowEvents.income.02.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 2",
@@ -645,7 +645,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 106,
-    fieldId: "cashflowEvents.income.secondary.amount",
+    fieldId: "cashflowEvents.income.02.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 2",
@@ -657,7 +657,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 107,
-    fieldId: "cashflowEvents.income.secondary.year",
+    fieldId: "cashflowEvents.income.02.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 2",
@@ -669,7 +669,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 110,
-    fieldId: "cashflowEvents.income.tertiary.name",
+    fieldId: "cashflowEvents.income.03.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 3",
@@ -681,7 +681,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 111,
-    fieldId: "cashflowEvents.income.tertiary.amount",
+    fieldId: "cashflowEvents.income.03.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 3",
@@ -693,7 +693,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 112,
-    fieldId: "cashflowEvents.income.tertiary.year",
+    fieldId: "cashflowEvents.income.03.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life income events > Income Event 3",
@@ -705,7 +705,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 117,
-    fieldId: "cashflowEvents.expense.primary.name",
+    fieldId: "cashflowEvents.expense.01.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 1",
@@ -717,7 +717,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 118,
-    fieldId: "cashflowEvents.expense.primary.amount",
+    fieldId: "cashflowEvents.expense.01.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 1",
@@ -729,7 +729,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 119,
-    fieldId: "cashflowEvents.expense.primary.year",
+    fieldId: "cashflowEvents.expense.01.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 1",
@@ -741,7 +741,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 122,
-    fieldId: "cashflowEvents.expense.secondary.name",
+    fieldId: "cashflowEvents.expense.02.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 2",
@@ -753,7 +753,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 123,
-    fieldId: "cashflowEvents.expense.secondary.amount",
+    fieldId: "cashflowEvents.expense.02.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 2",
@@ -765,7 +765,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 124,
-    fieldId: "cashflowEvents.expense.secondary.year",
+    fieldId: "cashflowEvents.expense.02.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 2",
@@ -777,7 +777,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 127,
-    fieldId: "cashflowEvents.expense.tertiary.name",
+    fieldId: "cashflowEvents.expense.03.name",
     label: "Name",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 3",
@@ -789,7 +789,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 128,
-    fieldId: "cashflowEvents.expense.tertiary.amount",
+    fieldId: "cashflowEvents.expense.03.amount",
     label: "Amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 3",
@@ -801,7 +801,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 129,
-    fieldId: "cashflowEvents.expense.tertiary.year",
+    fieldId: "cashflowEvents.expense.03.year",
     label: "Year",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Major life expense events > Expense Event 3",
@@ -1017,7 +1017,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 166,
-    fieldId: "properties.primary.liquidationPriority",
+    fieldId: "properties.01.liquidationPriority",
     label: "Sliema",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Property liquidation order",
@@ -1029,7 +1029,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 167,
-    fieldId: "properties.secondary.liquidationPriority",
+    fieldId: "properties.02.liquidationPriority",
     label: "Gzira",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Property liquidation order",
@@ -1041,7 +1041,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 168,
-    fieldId: "properties.tertiary.liquidationPriority",
+    fieldId: "properties.03.liquidationPriority",
     label: "Qormi",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Property liquidation order",
