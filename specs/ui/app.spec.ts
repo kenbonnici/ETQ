@@ -5,7 +5,6 @@ const selectors = {
   earlyRetAge: "#early-ret-age",
   currencySelector: "#currency-selector",
   livingExpenses: 'input[data-field-id="spending.livingExpenses.annual"]',
-  livingExpensesSingleMode: '[data-living-expenses-mode="single"]',
   livingExpensesExpandedMode: '[data-living-expenses-mode="expanded"]',
   livingExpensesDerivedTotal: 'input[data-living-expenses-derived-total]',
   livingExpensesGroceries: 'input[data-living-expense-category="groceries"]',

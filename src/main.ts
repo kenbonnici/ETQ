@@ -1955,17 +1955,37 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
 function renderLivingExpensesField(def: InputDefinition, label: string): string {
   const modeToggleHtml = `
     <div class="living-expenses-mode-toggle" role="group" aria-label="Living expenses entry mode">
-      <button type="button" class="living-expenses-mode-btn${livingExpensesMode === "single" ? " is-active" : ""}" data-living-expenses-mode="single" aria-pressed="${livingExpensesMode === "single" ? "true" : "false"}">Single total</button>
-      <button type="button" class="living-expenses-mode-btn${livingExpensesMode === "expanded" ? " is-active" : ""}" data-living-expenses-mode="expanded" aria-pressed="${livingExpensesMode === "expanded" ? "true" : "false"}">Category breakdown</button>
+      <button type="button" class="living-expenses-mode-btn${livingExpensesMode === "expanded" ? " is-active" : ""}" data-living-expenses-mode="expanded" aria-pressed="${livingExpensesMode === "expanded" ? "true" : "false"}">
+        <span class="living-expenses-switch-track" aria-hidden="true">
+          <span class="living-expenses-switch-thumb"></span>
+        </span>
+        <span class="living-expenses-switch-label">Detailed breakdown</span>
+      </button>
+    </div>
+  `;
+  const topRowHtml = `
+    <div class="living-expenses-top-row">
+      <span class="living-expenses-heading">${label}</span>
+      ${modeToggleHtml}
     </div>
   `;
 
   if (livingExpensesMode === "single") {
+    const value = fieldState[def.fieldId];
+    const valStr = formatFieldValue(def, value);
     return `
       <div class="living-expenses-wrap">
-        ${renderStandardFieldControl(def, label)}
-        ${modeToggleHtml}
-        <small class="living-expenses-note">Prefer a quick estimate? Keep using one annual total.</small>
+        <div class="field living-expenses-field living-expenses-field--simple" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+          ${topRowHtml}
+          <div class="input-shell has-prefix has-stepper">
+            <span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>
+            <input data-cell="${def.cell}" data-field-id="${def.fieldId}" type="text" inputmode="decimal" value="${valStr}" placeholder="" />
+            <div class="field-stepper">
+              <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease ${escapeHtml(label)}">-</button>
+              <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase ${escapeHtml(label)}">+</button>
+            </div>
+          </div>
+        </div>
       </div>
     `;
   }
@@ -1992,24 +2012,23 @@ function renderLivingExpensesField(def: InputDefinition, label: string): string 
   }).join("");
 
   return `
-    <div class="field living-expenses-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
-      <span>${label}</span>
-      ${modeToggleHtml}
-      <small class="living-expenses-note">Add up categories here. We still send one annual living-expenses total into the model.</small>
-      <div class="input-shell has-prefix living-expenses-derived-shell">
-        <span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>
-        <input
-          type="text"
-          value="${formatFieldValue(LIVING_EXPENSES_DEF, derivedTotal)}"
-          readonly
-          tabindex="-1"
-          data-living-expenses-derived-total
-          aria-label="Derived annual living expenses total"
-        />
-      </div>
-      <div class="living-expenses-derived-caption">Derived annual total</div>
-      <div class="living-expenses-category-grid">
-        ${categoryFieldsHtml}
+    <div class="field living-expenses-field living-expenses-field--expanded" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+      ${topRowHtml}
+      <div class="living-expenses-expanded-panel">
+        <div class="input-shell has-prefix living-expenses-derived-shell">
+          <span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>
+          <input
+            type="text"
+            value="${formatFieldValue(LIVING_EXPENSES_DEF, derivedTotal)}"
+            readonly
+            tabindex="-1"
+            data-living-expenses-derived-total
+            aria-label="Derived annual living expenses total"
+          />
+        </div>
+        <div class="living-expenses-category-grid">
+          ${categoryFieldsHtml}
+        </div>
       </div>
     </div>
   `;
@@ -2425,8 +2444,8 @@ function renderInputs(): void {
   inputsPanel.querySelectorAll<HTMLButtonElement>("[data-living-expenses-mode]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const nextMode = btn.dataset.livingExpensesMode;
-      if (nextMode === "single" || nextMode === "expanded") {
-        setLivingExpensesMode(nextMode);
+      if (nextMode === "expanded") {
+        setLivingExpensesMode(livingExpensesMode === "expanded" ? "single" : "expanded");
       }
     });
   });

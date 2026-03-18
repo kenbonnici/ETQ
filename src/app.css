@@ -1498,51 +1498,131 @@ body {
 }
 
 .living-expenses-field {
-  padding: 10px;
-  border: 1px solid #dce8e0;
-  border-radius: 12px;
-  background: linear-gradient(180deg, #f9fcfb 0%, #ffffff 100%);
+  gap: 8px;
+}
+
+.living-expenses-field--simple {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.living-expenses-field--expanded {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.living-expenses-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.living-expenses-heading {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink);
+  text-align: left;
+  flex: 1 1 auto;
 }
 
 .living-expenses-mode-toggle {
   display: inline-flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin: 2px 0 4px;
+  width: auto;
+  margin-left: auto;
 }
 
 .living-expenses-mode-btn {
-  border: 1px solid #c8d8cf;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #dde7e1;
   border-radius: 999px;
-  background: #ffffff;
-  color: #37564d;
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 700;
+  background: #fcfefd;
+  color: #73867f;
+  padding: 4px 9px 4px 7px;
+  font-size: 10px;
+  font-weight: 500;
   cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease,
+    box-shadow 120ms ease;
 }
 
 .living-expenses-mode-btn.is-active {
-  border-color: #0f766e;
-  background: #ddf4ef;
-  color: #0b5d56;
+  border-color: #cfe1d9;
+  background: #f7fbf9;
+  color: #506a61;
+  box-shadow: none;
 }
 
-.living-expenses-note {
-  margin-bottom: 4px;
+.living-expenses-switch-track {
+  position: relative;
+  width: 28px;
+  height: 16px;
+  border-radius: 999px;
+  background: #dbe5e0;
+  flex: 0 0 auto;
+  transition: background-color 120ms ease;
+}
+
+.living-expenses-switch-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 1px rgb(15 23 42 / 0.12);
+  transition: transform 120ms ease;
+}
+
+.living-expenses-mode-btn.is-active .living-expenses-switch-track {
+  background: #88aea0;
+}
+
+.living-expenses-mode-btn.is-active .living-expenses-switch-thumb {
+  transform: translateX(12px);
+}
+
+.living-expenses-switch-label {
+  line-height: 1.2;
+  letter-spacing: 0;
 }
 
 .living-expenses-derived-shell input[readonly] {
-  background: #f4fbf8;
-  color: #0f172a;
-  font-weight: 700;
+  background: #fcfefd;
+  color: var(--ink);
+  font-weight: 400;
   cursor: default;
 }
 
-.living-expenses-derived-caption {
-  font-size: 11px;
-  color: #5b6f68;
-  margin: -2px 0 6px;
+.living-expenses-field--simple .input-shell {
+  margin-top: 0;
+}
+
+.living-expenses-expanded-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 2px;
+  padding: 10px;
+  border: 1px solid #dce8e0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f9fcfb 0%, #ffffff 100%);
+  animation: living-expenses-panel-in 140ms ease-out;
+}
+
+.living-expenses-field--expanded .input-shell {
+  margin-top: 0;
 }
 
 .living-expenses-category-grid {
@@ -1558,8 +1638,10 @@ body {
 }
 
 .living-expenses-category span {
-  font-size: 12px;
-  color: #334155;
+  font-size: 11px;
+  font-weight: 400;
+  color: #64748b;
+  letter-spacing: 0.01em;
 }
 
 .field.has-error .input-shell input,
