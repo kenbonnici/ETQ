@@ -832,6 +832,29 @@ function getVisibleInputOrder(): FieldId[] {
     .map((def) => def.fieldId);
 }
 
+function getAdjacentVisibleFieldId(fieldId: FieldId, reverse: boolean): FieldId | null {
+  const orderedFields = getVisibleInputOrder();
+  const currentIndex = orderedFields.indexOf(fieldId);
+  if (currentIndex < 0) return null;
+  const nextIndex = currentIndex + (reverse ? -1 : 1);
+  return orderedFields[nextIndex] ?? null;
+}
+
+function focusRenderedField(fieldId: FieldId | null): boolean {
+  if (!fieldId) return false;
+  const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${fieldId}"]`);
+  if (!input) return false;
+  input.focus({ preventScroll: true });
+  return true;
+}
+
+function restorePendingOrRelatedFocus(nextFieldId: string | null): void {
+  const pendingFieldId = pendingFocusFieldId;
+  pendingFocusFieldId = null;
+  if (focusRenderedField(pendingFieldId)) return;
+  if (focusRenderedField((nextFieldId as FieldId | null) ?? null)) return;
+}
+
 function hasUserEnteredValue(fieldId: FieldId): boolean {
   return touchedCells.has(fieldId) && !isBlank(fieldState[fieldId]);
 }
@@ -2502,12 +2525,9 @@ function renderInputs(): void {
         applyStepperDelta(fieldId, ev.key === "ArrowUp" ? 1 : -1);
         return;
       }
-      if (ev.key !== "Tab" || ev.shiftKey) return;
-      if (fieldId !== HOME_FIELDS.mortgageBalance) return;
-      const balanceWillBeNonBlank = el.value.trim() !== "";
-      const interestInputPresent = !!inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${HOME_FIELDS.mortgageInterestRateAnnual}"]`);
-      if (balanceWillBeNonBlank && !interestInputPresent) {
-        pendingFocusFieldId = HOME_FIELDS.mortgageInterestRateAnnual;
+      if (ev.key !== "Tab") return;
+      if (STRUCTURAL_RERENDER_CELLS.has(fieldId)) {
+        pendingFocusFieldId = getAdjacentVisibleFieldId(fieldId, ev.shiftKey);
       }
     });
 
@@ -2633,7 +2653,10 @@ function renderInputs(): void {
       }
       if (def.type === "text") {
         if (STRUCTURAL_RERENDER_CELLS.has(fieldId) || changedByPrune) {
+          const next = ev.relatedTarget as HTMLElement | null;
+          const nextFieldId = next?.getAttribute?.("data-field-id");
           renderInputs();
+          restorePendingOrRelatedFocus(nextFieldId ?? null);
         }
         return;
       }
@@ -2641,18 +2664,7 @@ function renderInputs(): void {
         const next = ev.relatedTarget as HTMLElement | null;
         const nextFieldId = next?.getAttribute?.("data-field-id");
         renderInputs();
-        if (pendingFocusFieldId) {
-          const pendingInput = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${pendingFocusFieldId}"]`);
-          pendingFocusFieldId = null;
-          if (pendingInput) {
-            pendingInput.focus({ preventScroll: true });
-            return;
-          }
-        }
-        if (nextFieldId) {
-          const nextInput = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${nextFieldId}"]`);
-          if (nextInput) nextInput.focus({ preventScroll: true });
-        }
+        restorePendingOrRelatedFocus(nextFieldId ?? null);
       }
     });
   });

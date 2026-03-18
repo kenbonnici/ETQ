@@ -13,6 +13,8 @@ const selectors = {
   homeValue: 'input[data-field-id="housing.01Residence.marketValue"]',
   housingRent: 'input[data-field-id="housing.rentAnnual"]',
   mortgageBalance: 'input[data-field-id="housing.01Residence.mortgage.balance"]',
+  mortgageInterest: 'input[data-field-id="housing.01Residence.mortgage.interestRateAnnual"]',
+  mortgageRepayment: 'input[data-field-id="housing.01Residence.mortgage.monthlyRepayment"]',
   dependentName: 'input[data-field-id="dependents.01.displayName"]',
   dependent2Name: 'input[data-field-id="dependents.02.displayName"]',
   dependent3Name: 'input[data-field-id="dependents.03.displayName"]',
@@ -37,6 +39,14 @@ async function fillAndBlur(page: Page, selector: string, value: string): Promise
   const input = page.locator(selector);
   await input.fill(value);
   await input.blur();
+}
+
+async function expectActiveElement(page: Page, selector: string): Promise<void> {
+  await expect.poll(async () => {
+    return page.evaluate((targetSelector) => (
+      document.activeElement === document.querySelector(targetSelector)
+    ), selector);
+  }).toBe(true);
 }
 
 test("activates dependent fields and home-owner visibility rules in the rendered UI", async ({ page }) => {
@@ -76,6 +86,48 @@ test("reveals dependent slots up to five through the existing add-dependent flow
   await fillAndBlur(page, selectors.dependent4Name, "Taylor");
   await page.locator(".add-dependent-btn").last().click();
   await expect(page.locator(selectors.dependent5Name)).toBeVisible();
+});
+
+test("tab order stays in visible dependent field order as groups appear", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  const dependentName = page.locator(selectors.dependentName);
+  await dependentName.fill("Chris");
+  await dependentName.press("Tab");
+  await expectActiveElement(page, selectors.dependentAnnualCost);
+
+  const dependentAnnualCost = page.locator(selectors.dependentAnnualCost);
+  await dependentAnnualCost.fill("2000");
+  await dependentAnnualCost.press("Tab");
+  await expectActiveElement(page, 'input[data-field-id="dependents.01.supportYearsRemaining"]');
+
+  await page.locator(".add-dependent-btn").click();
+  await page.locator('input[data-field-id="dependents.01.supportYearsRemaining"]').press("Tab");
+  await expectActiveElement(page, selectors.dependent2Name);
+
+  await page.locator(selectors.dependent2Name).press("Shift+Tab");
+  await expectActiveElement(page, 'input[data-field-id="dependents.01.supportYearsRemaining"]');
+});
+
+test("tab order skips hidden housing rent and reveals mortgage fields in sequence", async ({ page }) => {
+  await page.goto("/");
+
+  const homeValue = page.locator(selectors.homeValue);
+  await homeValue.fill("600000");
+  await homeValue.press("Tab");
+  await expect(page.locator(selectors.housingRent)).toHaveCount(0);
+  await expectActiveElement(page, selectors.mortgageBalance);
+
+  await page.locator(selectors.mortgageBalance).fill("50000");
+  await page.locator(selectors.mortgageBalance).press("Tab");
+  await expectActiveElement(page, selectors.mortgageInterest);
+
+  await page.locator(selectors.mortgageInterest).press("Tab");
+  await expectActiveElement(page, selectors.mortgageRepayment);
+
+  await page.locator(selectors.mortgageRepayment).press("Shift+Tab");
+  await expectActiveElement(page, selectors.mortgageInterest);
 });
 
 test("living expenses default to single-total entry and expanded mode aggregates categories", async ({ page }) => {
