@@ -4,6 +4,13 @@ const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
   earlyRetAge: "#early-ret-age",
   currencySelector: "#currency-selector",
+  livingExpenses: 'input[data-field-id="spending.livingExpenses.annual"]',
+  livingExpensesSingleMode: '[data-living-expenses-mode="single"]',
+  livingExpensesExpandedMode: '[data-living-expenses-mode="expanded"]',
+  livingExpensesDerivedTotal: 'input[data-living-expenses-derived-total]',
+  livingExpensesGroceries: 'input[data-living-expense-category="groceries"]',
+  livingExpensesUtilities: 'input[data-living-expense-category="utilities"]',
+  livingExpensesMiscellaneous: 'input[data-living-expense-category="miscellaneous"]',
   homeValue: 'input[data-field-id="housing.primaryResidence.marketValue"]',
   housingRent: 'input[data-field-id="housing.rentAnnual"]',
   mortgageBalance: 'input[data-field-id="housing.primaryResidence.mortgage.balance"]',
@@ -41,6 +48,58 @@ test("activates dependent fields and home-owner visibility rules in the rendered
   await fillAndBlur(page, selectors.homeValue, "600000");
   await expect(page.locator(selectors.housingRent)).toHaveCount(0);
   await expect(page.locator(selectors.mortgageBalance)).toBeVisible();
+});
+
+test("living expenses default to single-total entry and expanded mode aggregates categories", async ({ page }) => {
+  await loadSampleData(page);
+
+  await expect(page.locator(selectors.livingExpenses)).toBeVisible();
+  await expect(page.locator(selectors.livingExpensesGroceries)).toHaveCount(0);
+  await page.locator(selectors.livingExpensesExpandedMode).click();
+
+  await expect(page.locator(selectors.livingExpenses)).toHaveCount(0);
+  await expect(page.locator(selectors.livingExpensesDerivedTotal)).toHaveValue(/50,000/);
+  await expect(page.locator(selectors.livingExpensesMiscellaneous)).toHaveValue(/50,000/);
+
+  await fillAndBlur(page, selectors.livingExpensesMiscellaneous, "");
+  await fillAndBlur(page, selectors.livingExpensesGroceries, "18000");
+  await fillAndBlur(page, selectors.livingExpensesUtilities, "4200");
+  await fillAndBlur(page, selectors.livingExpensesMiscellaneous, "27800");
+
+  await expect(page.locator(selectors.livingExpensesDerivedTotal)).toHaveValue(/50,000/);
+});
+
+test("equivalent living-expense totals keep downstream projections unchanged across entry modes", async ({ page }) => {
+  await loadSampleData(page);
+  await fillAndBlur(page, selectors.livingExpenses, "60000");
+
+  await page.getByRole("button", { name: "Open cash flow" }).click();
+  await page.locator("#projection-expand-all").click();
+  const singleModeRow = await page.locator('tr[data-row-id="living-expenses"]').textContent();
+
+  await page.locator(selectors.livingExpensesExpandedMode).click();
+  await fillAndBlur(page, selectors.livingExpensesMiscellaneous, "");
+  await fillAndBlur(page, selectors.livingExpensesGroceries, "24000");
+  await fillAndBlur(page, selectors.livingExpensesUtilities, "6000");
+  await fillAndBlur(page, selectors.livingExpensesMiscellaneous, "30000");
+
+  await expect(page.locator(selectors.livingExpensesDerivedTotal)).toHaveValue(/60,000/);
+  const expandedModeRow = await page.locator('tr[data-row-id="living-expenses"]').textContent();
+
+  expect(expandedModeRow).toBe(singleModeRow);
+});
+
+test("expanded living expenses surface the existing total-field validation when categories are cleared", async ({ page }) => {
+  await loadSampleData(page);
+  await page.locator(selectors.livingExpensesExpandedMode).click();
+
+  const miscellaneous = page.locator(selectors.livingExpensesMiscellaneous);
+  await miscellaneous.click();
+  await miscellaneous.press(`${process.platform === "darwin" ? "Meta" : "Control"}+A`);
+  await miscellaneous.press("Backspace");
+  await miscellaneous.blur();
+
+  await expect(page.locator('.living-expenses-field .field-feedback.is-error')).toContainText("required");
 });
 
 test("retire-check readiness follows projection-blocking validation", async ({ page }) => {
@@ -135,6 +194,7 @@ test("cash chart zero-line emphasis follows the active cash scenario only", asyn
   await loadSampleData(page);
 
   await fillAndBlur(page, selectors.earlyRetAge, "53");
+  await page.getByRole("button", { name: "Open cash flow" }).click();
 
   await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "true");
   await expect(page.locator(selectors.networthChart)).not.toHaveAttribute("data-zero-line-alert", "true");

@@ -52,6 +52,16 @@ import {
   STRUCTURAL_RERENDER_FIELDS,
   syncManualPropertyOrderForNewProperties
 } from "./ui/runtimeRules";
+import {
+  createEmptyLivingExpenseCategoryValues,
+  hasAnyLivingExpenseCategoryValue,
+  LIVING_EXPENSE_CATEGORY_DEFINITIONS,
+  LivingExpenseCategoryId,
+  LivingExpenseCategoryValues,
+  LivingExpensesMode,
+  seedLivingExpenseCategoryValuesFromTotal,
+  sumLivingExpenseCategoryValues
+} from "./ui/livingExpenses";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
@@ -114,6 +124,9 @@ const TOP_CURRENCIES = [
 ] as const;
 const STEPPER_CONFIG = FIELD_STEPPER_STEPS;
 const STEP_DECIMALS = FIELD_STEPPER_DECIMALS;
+const LIVING_EXPENSES_FIELD_ID = RUNTIME_FIELDS.annualLivingExpenses;
+const LIVING_EXPENSES_DEF = INPUT_DEFINITION_BY_FIELD_ID[LIVING_EXPENSES_FIELD_ID];
+
 function getDynamicMinConstraint(fieldId: FieldId): number | null {
   if (fieldId !== RUNTIME_FIELDS.lifeExpectancyAge) return null;
   const currentAge = getCurrentAge();
@@ -314,6 +327,8 @@ const expenseEvent2Fields = EXPENSE_EVENT_RUNTIME_GROUPS[1].fields;
 const expenseEvent3Fields = EXPENSE_EVENT_RUNTIME_GROUPS[2].fields;
 const displayOrderOverride = FIELD_DISPLAY_ORDER_OVERRIDE;
 const STRUCTURAL_RERENDER_CELLS = STRUCTURAL_RERENDER_FIELDS;
+let livingExpensesMode: LivingExpensesMode = "single";
+let livingExpenseCategoryValues: LivingExpenseCategoryValues = createEmptyLivingExpenseCategoryValues();
 
 interface PanelCursorState {
   scrollTop: number;
@@ -738,6 +753,43 @@ function clearAllAttemptedFieldMessages(): void {
 function clearAgeConstraintAttemptMessages(): void {
   clearAttemptedFieldMessage(RUNTIME_FIELDS.currentAge);
   clearAttemptedFieldMessage(RUNTIME_FIELDS.statutoryRetirementAge);
+}
+
+function resetLivingExpensesHelperState(): void {
+  livingExpensesMode = "single";
+  livingExpenseCategoryValues = createEmptyLivingExpenseCategoryValues();
+}
+
+function getLivingExpensesCategoryTotal(): number | null {
+  if (!hasAnyLivingExpenseCategoryValue(livingExpenseCategoryValues)) return null;
+  return sumLivingExpenseCategoryValues(livingExpenseCategoryValues);
+}
+
+function syncLivingExpensesFieldFromExpandedMode(): void {
+  fieldState[LIVING_EXPENSES_FIELD_ID] = getLivingExpensesCategoryTotal();
+}
+
+function syncRenderedLivingExpensesDerivedTotal(): void {
+  const derivedTotalInput = inputsPanel.querySelector<HTMLInputElement>("[data-living-expenses-derived-total]");
+  if (!derivedTotalInput) return;
+  derivedTotalInput.value = formatFieldValue(LIVING_EXPENSES_DEF, getLivingExpensesCategoryTotal());
+}
+
+function setLivingExpensesMode(nextMode: LivingExpensesMode): void {
+  if (livingExpensesMode === nextMode) return;
+  if (nextMode === "expanded" && !hasAnyLivingExpenseCategoryValue(livingExpenseCategoryValues)) {
+    const existingTotal = asNumber(fieldState[LIVING_EXPENSES_FIELD_ID]);
+    if (existingTotal > 0) {
+      livingExpenseCategoryValues = seedLivingExpenseCategoryValuesFromTotal(existingTotal);
+    }
+  }
+  livingExpensesMode = nextMode;
+  if (livingExpensesMode === "expanded") {
+    syncLivingExpensesFieldFromExpandedMode();
+  }
+  setRetireCheckMessage(null);
+  renderInputs();
+  queueRecalc();
 }
 
 function setAttemptedFieldMessage(fieldId: FieldId, message: string): void {
@@ -1864,6 +1916,105 @@ function fieldHasPercentAdornment(def: InputDefinition): boolean {
   return def.type === "percent";
 }
 
+function renderStandardFieldControl(def: InputDefinition, label: string): string {
+  const value = fieldState[def.fieldId];
+  const valStr = formatFieldValue(def, value);
+  const inputType = "text";
+  const inputMode = def.type === "text" ? "text" : (def.type === "integer" ? "numeric" : "decimal");
+  const showTooltip = ![RUNTIME_FIELDS.currentAge, HOME_FIELDS.housingRentAnnual].includes(def.fieldId) && !!def.tooltip;
+  const hasPrefix = fieldHasCurrencyAdornment(def);
+  const hasSuffix = fieldHasPercentAdornment(def);
+  const stepSize = STEPPER_CONFIG[def.fieldId];
+  const hasStepper = Number.isFinite(stepSize);
+  const inputShellClass = [
+    "input-shell",
+    hasPrefix ? "has-prefix" : "",
+    hasSuffix ? "has-suffix" : "",
+    hasStepper ? "has-stepper" : ""
+  ].join(" ").trim();
+
+  return `
+    <div class="field${def.fieldId === LIVING_EXPENSES_FIELD_ID ? " living-expenses-field" : ""}" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+      <span>${label}</span>
+      <div class="${inputShellClass}">
+        ${hasPrefix ? `<span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>` : ""}
+        <input data-cell="${def.cell}" data-field-id="${def.fieldId}" type="${inputType}" inputmode="${inputMode}" value="${valStr}" placeholder="" />
+        ${hasSuffix ? `<span class="input-suffix" aria-hidden="true">%</span>` : ""}
+        ${hasStepper ? `
+          <div class="field-stepper">
+            <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease ${escapeHtml(label)}">-</button>
+            <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase ${escapeHtml(label)}">+</button>
+          </div>
+        ` : ""}
+      </div>
+      ${showTooltip ? `<small>${def.tooltip}</small>` : ""}
+    </div>
+  `;
+}
+
+function renderLivingExpensesField(def: InputDefinition, label: string): string {
+  const modeToggleHtml = `
+    <div class="living-expenses-mode-toggle" role="group" aria-label="Living expenses entry mode">
+      <button type="button" class="living-expenses-mode-btn${livingExpensesMode === "single" ? " is-active" : ""}" data-living-expenses-mode="single" aria-pressed="${livingExpensesMode === "single" ? "true" : "false"}">Single total</button>
+      <button type="button" class="living-expenses-mode-btn${livingExpensesMode === "expanded" ? " is-active" : ""}" data-living-expenses-mode="expanded" aria-pressed="${livingExpensesMode === "expanded" ? "true" : "false"}">Category breakdown</button>
+    </div>
+  `;
+
+  if (livingExpensesMode === "single") {
+    return `
+      <div class="living-expenses-wrap">
+        ${renderStandardFieldControl(def, label)}
+        ${modeToggleHtml}
+        <small class="living-expenses-note">Prefer a quick estimate? Keep using one annual total.</small>
+      </div>
+    `;
+  }
+
+  const derivedTotal = getLivingExpensesCategoryTotal();
+  const categoryFieldsHtml = LIVING_EXPENSE_CATEGORY_DEFINITIONS.map(({ id, label: categoryLabel }) => {
+    const value = livingExpenseCategoryValues[id];
+    const valueText = formatFieldValue(LIVING_EXPENSES_DEF, value);
+    return `
+      <label class="living-expenses-category">
+        <span>${categoryLabel}</span>
+        <div class="input-shell has-prefix">
+          <span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>
+          <input
+            type="text"
+            inputmode="decimal"
+            value="${valueText}"
+            data-living-expense-category="${id}"
+            aria-label="${escapeHtml(categoryLabel)}"
+          />
+        </div>
+      </label>
+    `;
+  }).join("");
+
+  return `
+    <div class="field living-expenses-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+      <span>${label}</span>
+      ${modeToggleHtml}
+      <small class="living-expenses-note">Add up categories here. We still send one annual living-expenses total into the model.</small>
+      <div class="input-shell has-prefix living-expenses-derived-shell">
+        <span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>
+        <input
+          type="text"
+          value="${formatFieldValue(LIVING_EXPENSES_DEF, derivedTotal)}"
+          readonly
+          tabindex="-1"
+          data-living-expenses-derived-total
+          aria-label="Derived annual living expenses total"
+        />
+      </div>
+      <div class="living-expenses-derived-caption">Derived annual total</div>
+      <div class="living-expenses-category-grid">
+        ${categoryFieldsHtml}
+      </div>
+    </div>
+  `;
+}
+
 function stopStepperHold(): void {
   if (stepperHoldTimeout !== null) {
     window.clearTimeout(stepperHoldTimeout);
@@ -1996,6 +2147,7 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
     for (const def of INPUT_DEFINITIONS) {
       fieldState[def.fieldId] = null;
     }
+    resetLivingExpensesHelperState();
 
     for (const def of INPUT_DEFINITIONS) {
       const cell = def.cell;
@@ -2043,6 +2195,7 @@ function clearAllInputsPreservingFinerDefaults(): void {
   for (const def of INPUT_DEFINITIONS) {
     fieldState[def.fieldId] = null;
   }
+  resetLivingExpensesHelperState();
   validationRevealAll = false;
   clearTouchedFields();
   clearAllAttemptedFieldMessages();
@@ -2178,38 +2331,9 @@ function renderInputs(): void {
         }
       }
       const label = getDynamicFieldLabel(def, fieldState);
-      const value = fieldState[def.fieldId];
-      const valStr = formatFieldValue(def, value);
-      const inputType = "text";
-      const inputMode = def.type === "text" ? "text" : (def.type === "integer" ? "numeric" : "decimal");
-      const showTooltip = ![RUNTIME_FIELDS.currentAge, HOME_FIELDS.housingRentAnnual].includes(def.fieldId) && !!def.tooltip;
-      const hasPrefix = fieldHasCurrencyAdornment(def);
-      const hasSuffix = fieldHasPercentAdornment(def);
-      const stepSize = STEPPER_CONFIG[def.fieldId];
-      const hasStepper = Number.isFinite(stepSize);
-      const inputShellClass = [
-        "input-shell",
-        hasPrefix ? "has-prefix" : "",
-        hasSuffix ? "has-suffix" : "",
-        hasStepper ? "has-stepper" : ""
-      ].join(" ").trim();
-      html += `
-        <label class="field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
-          <span>${label}</span>
-          <div class="${inputShellClass}">
-            ${hasPrefix ? `<span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>` : ""}
-            <input data-cell="${def.cell}" data-field-id="${def.fieldId}" type="${inputType}" inputmode="${inputMode}" value="${valStr}" placeholder="" />
-            ${hasSuffix ? `<span class="input-suffix" aria-hidden="true">%</span>` : ""}
-            ${hasStepper ? `
-              <div class="field-stepper">
-                <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease ${escapeHtml(label)}">-</button>
-                <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase ${escapeHtml(label)}">+</button>
-              </div>
-            ` : ""}
-          </div>
-          ${showTooltip ? `<small>${def.tooltip}</small>` : ""}
-        </label>
-      `;
+      html += def.fieldId === LIVING_EXPENSES_FIELD_ID
+        ? renderLivingExpensesField(def, label)
+        : renderStandardFieldControl(def, label);
 
       if (def.fieldId === DEPENDENT_RUNTIME_GROUPS[0].yearsField && visibleDependents < 2 && !isBlank(fieldState[DEPENDENT_RUNTIME_GROUPS[0].nameField])) {
         html += `<button type="button" class="add-dependent-btn" data-next-dependent="2">Add another dependent</button>`;
@@ -2298,6 +2422,45 @@ function renderInputs(): void {
     });
   }
 
+  inputsPanel.querySelectorAll<HTMLButtonElement>("[data-living-expenses-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const nextMode = btn.dataset.livingExpensesMode;
+      if (nextMode === "single" || nextMode === "expanded") {
+        setLivingExpensesMode(nextMode);
+      }
+    });
+  });
+
+  inputsPanel.querySelectorAll<HTMLInputElement>("input[data-living-expense-category]").forEach((el) => {
+    el.addEventListener("input", () => {
+      const categoryId = el.dataset.livingExpenseCategory as LivingExpenseCategoryId | undefined;
+      if (!categoryId) return;
+      const sanitized = sanitizeNumericText(el.value, "number", false);
+      if (sanitized !== el.value) el.value = sanitized;
+      const nextValue = parseNumberInput(el.value, false);
+      livingExpenseCategoryValues[categoryId] = nextValue === null ? null : Math.max(0, nextValue);
+      markFieldTouched(LIVING_EXPENSES_FIELD_ID);
+      syncLivingExpensesFieldFromExpandedMode();
+      syncRenderedLivingExpensesDerivedTotal();
+      setRetireCheckMessage(null);
+      queueRecalc();
+    });
+
+    el.addEventListener("focus", () => {
+      const categoryId = el.dataset.livingExpenseCategory as LivingExpenseCategoryId | undefined;
+      if (!categoryId) return;
+      const current = livingExpenseCategoryValues[categoryId];
+      el.value = current === null ? "" : String(current);
+    });
+
+    el.addEventListener("blur", () => {
+      const categoryId = el.dataset.livingExpenseCategory as LivingExpenseCategoryId | undefined;
+      if (!categoryId) return;
+      el.value = formatFieldValue(LIVING_EXPENSES_DEF, livingExpenseCategoryValues[categoryId]);
+      syncRenderedLivingExpensesDerivedTotal();
+    });
+  });
+
   inputsPanel.querySelectorAll<HTMLInputElement>("input[data-field-id]").forEach((el) => {
     el.addEventListener("keydown", (ev) => {
       const fieldId = el.dataset.fieldId as FieldId;
@@ -2356,6 +2519,9 @@ function renderInputs(): void {
         fieldState[fieldId] = nextValue as string;
       } else {
         fieldState[fieldId] = nextValue as number | null;
+      }
+      if (fieldId === LIVING_EXPENSES_FIELD_ID && livingExpensesMode === "single") {
+        livingExpenseCategoryValues = createEmptyLivingExpenseCategoryValues();
       }
       setRetireCheckMessage(null);
       if (fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
