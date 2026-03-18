@@ -308,9 +308,7 @@ const sectionState = {
 };
 
 let visibleDependents = 1;
-const dependent1Fields = DEPENDENT_RUNTIME_GROUPS[0].fields;
-const dependent2Fields = DEPENDENT_RUNTIME_GROUPS[1].fields;
-const dependent3Fields = DEPENDENT_RUNTIME_GROUPS[2].fields;
+const dependentFieldSets = DEPENDENT_RUNTIME_GROUPS.map((group) => group.fields);
 let visibleProperties = 1;
 const property1Fields = PROPERTY_RUNTIME_GROUPS[0].coreFields;
 const property2Fields = PROPERTY_RUNTIME_GROUPS[1].coreFields;
@@ -611,6 +609,20 @@ function syncVisibleRuntimeGroupsFromState(): void {
   visibleProperties = visibility.visibleProperties;
   visibleIncomeEvents = visibility.visibleIncomeEvents;
   visibleExpenseEvents = visibility.visibleExpenseEvents;
+}
+
+function expandVisibleGroupCount(
+  currentVisible: number,
+  fieldSets: ReadonlyArray<readonly FieldId[]>
+): number {
+  let visible = currentVisible;
+  for (let idx = fieldSets.length - 1; idx >= 1; idx -= 1) {
+    if (anyValue(fieldState, fieldSets[idx])) {
+      visible = Math.max(visible, idx + 1);
+      break;
+    }
+  }
+  return visible;
 }
 
 function restorePanelCursorState(state: PanelCursorState): void {
@@ -2262,8 +2274,7 @@ function loadFinerDetailsDefaults(): void {
 
 function renderInputs(): void {
   const cursorState = capturePanelCursorState();
-  if (anyValue(fieldState, dependent3Fields)) visibleDependents = Math.max(visibleDependents, 3);
-  else if (anyValue(fieldState, dependent2Fields)) visibleDependents = Math.max(visibleDependents, 2);
+  visibleDependents = expandVisibleGroupCount(visibleDependents, dependentFieldSets);
   if (anyValue(fieldState, property3Fields)) visibleProperties = Math.max(visibleProperties, 3);
   else if (anyValue(fieldState, property2Fields)) visibleProperties = Math.max(visibleProperties, 2);
   if (anyValue(fieldState, incomeEvent3Fields)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 3);
@@ -2354,11 +2365,14 @@ function renderInputs(): void {
         ? renderLivingExpensesField(def, label)
         : renderStandardFieldControl(def, label);
 
-      if (def.fieldId === DEPENDENT_RUNTIME_GROUPS[0].yearsField && visibleDependents < 2 && !isBlank(fieldState[DEPENDENT_RUNTIME_GROUPS[0].nameField])) {
-        html += `<button type="button" class="add-dependent-btn" data-next-dependent="2">Add another dependent</button>`;
-      }
-      if (def.fieldId === DEPENDENT_RUNTIME_GROUPS[1].yearsField && visibleDependents < 3 && !isBlank(fieldState[DEPENDENT_RUNTIME_GROUPS[1].nameField])) {
-        html += `<button type="button" class="add-dependent-btn" data-next-dependent="3">Add another dependent</button>`;
+      const dependentGroup = DEPENDENT_RUNTIME_GROUPS.find((group) => group.yearsField === def.fieldId);
+      if (
+        dependentGroup
+        && dependentGroup.idx < DEPENDENT_RUNTIME_GROUPS.length - 1
+        && visibleDependents < dependentGroup.idx + 2
+        && !isBlank(fieldState[dependentGroup.nameField])
+      ) {
+        html += `<button type="button" class="add-dependent-btn" data-next-dependent="${dependentGroup.idx + 2}">Add another dependent</button>`;
       }
       if (def.fieldId === PROPERTY_RUNTIME_GROUPS[0].annualCostsField && visibleProperties < 2 && !isBlank(fieldState[PROPERTY_RUNTIME_GROUPS[0].nameField])) {
         html += `<button type="button" class="add-property-btn" data-next-property="2">Add another property</button>`;
@@ -2699,7 +2713,7 @@ function renderInputs(): void {
     btn.addEventListener("click", () => {
       const next = Number(btn.dataset.nextDependent);
       if (Number.isFinite(next)) {
-        visibleDependents = Math.max(visibleDependents, Math.min(3, next));
+        visibleDependents = Math.max(visibleDependents, Math.min(DEPENDENT_RUNTIME_GROUPS.length, next));
         renderInputs();
       }
     });

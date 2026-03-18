@@ -35,6 +35,25 @@ test("validation requires a complete dependent entry once any dependent field is
   );
 });
 
+test("validation applies the same dependent rules to the fifth slot", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[DEPENDENT_RUNTIME_GROUPS[4].annualCostField] = 3_200;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === DEPENDENT_RUNTIME_GROUPS[4].nameField && message.severity === "error"),
+    true
+  );
+  assert.equal(
+    messages.some((message) => message.fieldId === DEPENDENT_RUNTIME_GROUPS[4].yearsField && message.severity === "error"),
+    true
+  );
+});
+
 test("validation enforces property-loan companion fields", () => {
   const fields = createEmptyFieldState();
   fields[PROPERTY_RUNTIME_GROUPS[0].nameField] = "Harbour Flat";

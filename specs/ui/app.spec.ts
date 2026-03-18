@@ -14,6 +14,10 @@ const selectors = {
   housingRent: 'input[data-field-id="housing.rentAnnual"]',
   mortgageBalance: 'input[data-field-id="housing.01Residence.mortgage.balance"]',
   dependentName: 'input[data-field-id="dependents.01.displayName"]',
+  dependent2Name: 'input[data-field-id="dependents.02.displayName"]',
+  dependent3Name: 'input[data-field-id="dependents.03.displayName"]',
+  dependent4Name: 'input[data-field-id="dependents.04.displayName"]',
+  dependent5Name: 'input[data-field-id="dependents.05.displayName"]',
   dependentAnnualCost: 'input[data-field-id="dependents.01.annualCost"]',
   cashChart: "#cash-chart",
   networthChart: "#nw-chart",
@@ -47,6 +51,31 @@ test("activates dependent fields and home-owner visibility rules in the rendered
   await fillAndBlur(page, selectors.homeValue, "600000");
   await expect(page.locator(selectors.housingRent)).toHaveCount(0);
   await expect(page.locator(selectors.mortgageBalance)).toBeVisible();
+});
+
+test("reveals dependent slots up to five through the existing add-dependent flow", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  await expect(page.locator(selectors.dependent2Name)).toHaveCount(0);
+  await expect(page.locator(selectors.dependent4Name)).toHaveCount(0);
+  await expect(page.locator(selectors.dependent5Name)).toHaveCount(0);
+
+  await fillAndBlur(page, selectors.dependentName, "Chris");
+  await page.locator(".add-dependent-btn").last().click();
+  await expect(page.locator(selectors.dependent2Name)).toBeVisible();
+
+  await fillAndBlur(page, selectors.dependent2Name, "Jamie");
+  await page.locator(".add-dependent-btn").last().click();
+  await expect(page.locator(selectors.dependent3Name)).toBeVisible();
+
+  await fillAndBlur(page, selectors.dependent3Name, "Morgan");
+  await page.locator(".add-dependent-btn").last().click();
+  await expect(page.locator(selectors.dependent4Name)).toBeVisible();
+
+  await fillAndBlur(page, selectors.dependent4Name, "Taylor");
+  await page.locator(".add-dependent-btn").last().click();
+  await expect(page.locator(selectors.dependent5Name)).toBeVisible();
 });
 
 test("living expenses default to single-total entry and expanded mode aggregates categories", async ({ page }) => {

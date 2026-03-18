@@ -63,7 +63,8 @@ test("input definitions preserve row order and derive cells from semantic field 
   assert.deepEqual(
     INPUT_DEFINITIONS.map((def) => def.row),
     [
-      4, 6, 8, 10, 12, 15, 16, 17, 19, 21, 23, 25, 33, 34, 35, 38, 39, 40, 43, 44, 45, 50, 51, 52, 55,
+      4, 6, 8, 10, 12, 15, 16, 17, 19, 21, 23, 25, 33, 34, 35, 38, 39, 40, 43, 44, 45, 46, 47, 48, 49, 49,
+      49, 50, 51, 52, 55,
       56, 57, 60, 61, 62, 66, 67, 68, 70, 71, 75, 78, 79, 80, 83, 84, 85, 88, 89, 90, 93, 94, 95, 100, 101,
       102, 105, 106, 107, 110, 111, 112, 117, 118, 119, 122, 123, 124, 127, 128, 129, 134, 137, 138, 139,
       141, 142, 143, 145, 147, 149, 151, 153, 155, 157, 159, 161, 163, 166, 167, 168
@@ -284,6 +285,10 @@ test("runtime visibility state stays collapsed until later slots actually contai
   assert.equal(deriveRuntimeVisibilityState(fields).visibleDependents, 2);
   fields[DEPENDENT_RUNTIME_GROUPS[2].nameField] = "Morgan";
   assert.equal(deriveRuntimeVisibilityState(fields).visibleDependents, 3);
+  fields[DEPENDENT_RUNTIME_GROUPS[3].annualCostField] = 2_400;
+  assert.equal(deriveRuntimeVisibilityState(fields).visibleDependents, 4);
+  fields[DEPENDENT_RUNTIME_GROUPS[4].yearsField] = 6;
+  assert.equal(deriveRuntimeVisibilityState(fields).visibleDependents, 5);
 
   const propertyFields = createEmptyFieldState();
   propertyFields[PROPERTY_RUNTIME_GROUPS[1].nameField] = "Gzira";
@@ -302,6 +307,40 @@ test("runtime visibility state stays collapsed until later slots actually contai
   assert.equal(deriveRuntimeVisibilityState(expenseEventFields).visibleExpenseEvents, 2);
   expenseEventFields[EXPENSE_EVENT_RUNTIME_GROUPS[2].yearField] = 2035;
   assert.equal(deriveRuntimeVisibilityState(expenseEventFields).visibleExpenseEvents, 3);
+});
+
+test("normalization and scenario outputs include dependent slots four and five", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.annualLivingExpenses] = 50_000;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[DEPENDENT_RUNTIME_GROUPS[3].nameField] = "Jordan";
+  fields[DEPENDENT_RUNTIME_GROUPS[3].annualCostField] = 2_400;
+  fields[DEPENDENT_RUNTIME_GROUPS[3].yearsField] = 4;
+  fields[DEPENDENT_RUNTIME_GROUPS[4].nameField] = "Taylor";
+  fields[DEPENDENT_RUNTIME_GROUPS[4].annualCostField] = 3_200;
+  fields[DEPENDENT_RUNTIME_GROUPS[4].yearsField] = 2;
+
+  const normalized = normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false });
+  assert.equal(normalized.dependents.length, 5);
+  assert.deepEqual(normalized.dependents[3], { name: "Jordan", annualCost: 2_400, yearsToSupport: 4 });
+  assert.deepEqual(normalized.dependents[4], { name: "Taylor", annualCost: 3_200, yearsToSupport: 2 });
+
+  const result = runModel(fields, {
+    deeperDiveOpen: true,
+    finerDetailsOpen: true,
+    earlyRetirementAge: 55,
+    manualPropertyLiquidationOrder: false
+  });
+
+  assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost.length, 5);
+  assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost[3].label, "Jordan");
+  assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost[3].values[0], 2_400);
+  assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost[3].values[4], 0);
+  assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost[4].label, "Taylor");
+  assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost[4].values[0], 3_200);
+  assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost[4].values[2], 0);
 });
 
 test("main.ts runtime DOM wiring is field-id based", () => {

@@ -198,9 +198,7 @@ export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, numb
 export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
   HOME_FIELDS.homeValue,
   HOME_FIELDS.mortgageBalance,
-  DEPENDENT_RUNTIME_GROUPS[0].nameField,
-  DEPENDENT_RUNTIME_GROUPS[1].nameField,
-  DEPENDENT_RUNTIME_GROUPS[2].nameField,
+  ...DEPENDENT_RUNTIME_GROUPS.map((group) => group.nameField),
   PROPERTY_RUNTIME_GROUPS[0].nameField,
   PROPERTY_RUNTIME_GROUPS[0].valueField,
   PROPERTY_RUNTIME_GROUPS[1].nameField,
@@ -247,28 +245,19 @@ export function anyValue(values: RuntimeValues, fields: readonly FieldId[]): boo
   return fields.some((fieldId) => !isBlank(values[fieldId]));
 }
 
+function deriveVisibleGroupCount(values: RuntimeValues, groups: ReadonlyArray<readonly FieldId[]>): number {
+  for (let idx = groups.length - 1; idx >= 1; idx -= 1) {
+    if (anyValue(values, groups[idx])) return idx + 1;
+  }
+  return 1;
+}
+
 export function deriveRuntimeVisibilityState(values: RuntimeValues): RuntimeVisibilityState {
   return {
-    visibleDependents: anyValue(values, DEPENDENT_RUNTIME_GROUPS[2].fields)
-      ? 3
-      : anyValue(values, DEPENDENT_RUNTIME_GROUPS[1].fields)
-        ? 2
-        : 1,
-    visibleProperties: anyValue(values, PROPERTY_RUNTIME_GROUPS[2].coreFields)
-      ? 3
-      : anyValue(values, PROPERTY_RUNTIME_GROUPS[1].coreFields)
-        ? 2
-        : 1,
-    visibleIncomeEvents: anyValue(values, INCOME_EVENT_RUNTIME_GROUPS[2].fields)
-      ? 3
-      : anyValue(values, INCOME_EVENT_RUNTIME_GROUPS[1].fields)
-        ? 2
-        : 1,
-    visibleExpenseEvents: anyValue(values, EXPENSE_EVENT_RUNTIME_GROUPS[2].fields)
-      ? 3
-      : anyValue(values, EXPENSE_EVENT_RUNTIME_GROUPS[1].fields)
-        ? 2
-        : 1
+    visibleDependents: deriveVisibleGroupCount(values, DEPENDENT_RUNTIME_GROUPS.map((group) => group.fields)),
+    visibleProperties: deriveVisibleGroupCount(values, PROPERTY_RUNTIME_GROUPS.map((group) => group.coreFields)),
+    visibleIncomeEvents: deriveVisibleGroupCount(values, INCOME_EVENT_RUNTIME_GROUPS.map((group) => group.fields)),
+    visibleExpenseEvents: deriveVisibleGroupCount(values, EXPENSE_EVENT_RUNTIME_GROUPS.map((group) => group.fields))
   };
 }
 

@@ -1,3 +1,4 @@
+import { DEPENDENT_GROUPS_BY_CELL } from "./inputSchema";
 import { EffectiveInputs, InputCell, RawInputValue, RawInputs } from "./types";
 
 const PROPERTY_VALUE_CELLS = ["B51", "B56", "B61"] as const satisfies readonly InputCell[];
@@ -87,11 +88,11 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
     housingRentAnnual: toNumber(raw.B23),
     livingExpensesAnnual: toNumber(raw.B25),
 
-    dependents: [
-      { name: toTrimmedString(raw.B33), annualCost: toNumber(raw.B34), yearsToSupport: toNumber(raw.B35) },
-      { name: toTrimmedString(raw.B38), annualCost: toNumber(raw.B39), yearsToSupport: toNumber(raw.B40) },
-      { name: toTrimmedString(raw.B43), annualCost: toNumber(raw.B44), yearsToSupport: toNumber(raw.B45) }
-    ],
+    dependents: DEPENDENT_GROUPS_BY_CELL.map((group) => ({
+      name: toTrimmedString(raw[group.nameCell]),
+      annualCost: toNumber(raw[group.annualCostCell]),
+      yearsToSupport: toNumber(raw[group.yearsCell])
+    })),
 
     properties: [
       {

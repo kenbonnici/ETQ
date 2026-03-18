@@ -272,6 +272,78 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
+    row: 46,
+    fieldId: "dependents.04.displayName",
+    label: "Name",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Dependents > Dependent 4",
+    groupTail: ["Dependents", "Dependent 4"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "",
+    type: "text"
+  },
+  {
+    row: 47,
+    fieldId: "dependents.04.annualCost",
+    label: "Annual cost",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Dependents > Dependent 4",
+    groupTail: ["Dependents", "Dependent 4"],
+    tooltip: "Food, education, healthcare,\netc.",
+    uiNote: "Hide until user enters dependent name",
+    sampleValue: "",
+    type: "number"
+  },
+  {
+    row: 48,
+    fieldId: "dependents.04.supportYearsRemaining",
+    label: "Years to support",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Dependents > Dependent 4",
+    groupTail: ["Dependents", "Dependent 4"],
+    tooltip: "Years from now",
+    uiNote: "Hide until user enters dependent name",
+    sampleValue: "",
+    type: "integer"
+  },
+  {
+    row: 49,
+    fieldId: "dependents.05.displayName",
+    label: "Name",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Dependents > Dependent 5",
+    groupTail: ["Dependents", "Dependent 5"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "",
+    type: "text"
+  },
+  {
+    row: 49,
+    fieldId: "dependents.05.annualCost",
+    label: "Annual cost",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Dependents > Dependent 5",
+    groupTail: ["Dependents", "Dependent 5"],
+    tooltip: "Food, education, healthcare,\netc.",
+    uiNote: "Hide until user enters dependent name",
+    sampleValue: "",
+    type: "number"
+  },
+  {
+    row: 49,
+    fieldId: "dependents.05.supportYearsRemaining",
+    label: "Years to support",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Dependents > Dependent 5",
+    groupTail: ["Dependents", "Dependent 5"],
+    tooltip: "Years from now",
+    uiNote: "Hide until user enters dependent name",
+    sampleValue: "",
+    type: "integer"
+  },
+  {
     row: 50,
     fieldId: "properties.01.displayName",
     label: "Name",

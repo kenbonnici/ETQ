@@ -278,6 +278,10 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "dependents.02.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
   "dependents.03.annualCost": { nonNegative: true },
   "dependents.03.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "dependents.04.annualCost": { nonNegative: true },
+  "dependents.04.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "dependents.05.annualCost": { nonNegative: true },
+  "dependents.05.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
   "properties.01.marketValue": { nonNegative: true },
   "properties.01.annualOperatingCost": { nonNegative: true },
   "properties.02.marketValue": { nonNegative: true },
@@ -398,6 +402,16 @@ export const DEPENDENT_GROUPS = [
     nameField: "dependents.03.displayName",
     annualCostField: "dependents.03.annualCost",
     yearsField: "dependents.03.supportYearsRemaining"
+  },
+  {
+    nameField: "dependents.04.displayName",
+    annualCostField: "dependents.04.annualCost",
+    yearsField: "dependents.04.supportYearsRemaining"
+  },
+  {
+    nameField: "dependents.05.displayName",
+    annualCostField: "dependents.05.annualCost",
+    yearsField: "dependents.05.supportYearsRemaining"
   }
 ] as Array<DependentGroup>;
 
