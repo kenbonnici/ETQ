@@ -1,6 +1,6 @@
 # Live Workbook Parity Report
 
-Source workbook: specs/excel_prototype/ETQ.xlsx
+Source workbook: specs/ETQ v2.xlsx
 
 Model fixes included: property trigger bug, loan horizon bug, staged one-year-ahead property preempt logic
 
