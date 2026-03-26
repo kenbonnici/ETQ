@@ -19,20 +19,20 @@ export const RUNTIME_FIELDS = {
   statutoryRetirementAge: INPUT_DEFINITION_BY_CELL.B19.fieldId,
   annualPensionAtRetirement: INPUT_DEFINITION_BY_CELL.B21.fieldId,
   annualLivingExpenses: INPUT_DEFINITION_BY_CELL.B25.fieldId,
-  lifeExpectancyAge: INPUT_DEFINITION_BY_CELL.B134.fieldId,
-  spendingAdjustmentPre65: INPUT_DEFINITION_BY_CELL.B137.fieldId,
-  spendingAdjustment66To75: INPUT_DEFINITION_BY_CELL.B138.fieldId,
-  spendingAdjustment76Plus: INPUT_DEFINITION_BY_CELL.B139.fieldId,
-  generalInflation: INPUT_DEFINITION_BY_CELL.B145.fieldId,
-  propertyAnnualAppreciation: INPUT_DEFINITION_BY_CELL.B147.fieldId,
-  cashInterestRate: INPUT_DEFINITION_BY_CELL.B149.fieldId,
-  stockMarketReturn: INPUT_DEFINITION_BY_CELL.B151.fieldId,
-  salaryAnnualGrowthRate: INPUT_DEFINITION_BY_CELL.B153.fieldId,
-  rentalIncomeAnnualIncrease: INPUT_DEFINITION_BY_CELL.B155.fieldId,
-  pensionReductionPerYearEarly: INPUT_DEFINITION_BY_CELL.B157.fieldId,
-  minimumCashBuffer: INPUT_DEFINITION_BY_CELL.B159.fieldId,
-  stockSellingCostRate: INPUT_DEFINITION_BY_CELL.B161.fieldId,
-  propertyDisposalCostRate: INPUT_DEFINITION_BY_CELL.B163.fieldId
+  lifeExpectancyAge: INPUT_DEFINITION_BY_CELL.B144.fieldId,
+  spendingAdjustmentPre65: INPUT_DEFINITION_BY_CELL.B147.fieldId,
+  spendingAdjustment66To75: INPUT_DEFINITION_BY_CELL.B148.fieldId,
+  spendingAdjustment76Plus: INPUT_DEFINITION_BY_CELL.B149.fieldId,
+  generalInflation: INPUT_DEFINITION_BY_CELL.B155.fieldId,
+  propertyAnnualAppreciation: INPUT_DEFINITION_BY_CELL.B157.fieldId,
+  cashInterestRate: INPUT_DEFINITION_BY_CELL.B159.fieldId,
+  stockMarketReturn: INPUT_DEFINITION_BY_CELL.B161.fieldId,
+  salaryAnnualGrowthRate: INPUT_DEFINITION_BY_CELL.B163.fieldId,
+  rentalIncomeAnnualIncrease: INPUT_DEFINITION_BY_CELL.B165.fieldId,
+  pensionReductionPerYearEarly: INPUT_DEFINITION_BY_CELL.B167.fieldId,
+  minimumCashBuffer: INPUT_DEFINITION_BY_CELL.B169.fieldId,
+  stockSellingCostRate: INPUT_DEFINITION_BY_CELL.B171.fieldId,
+  propertyDisposalCostRate: INPUT_DEFINITION_BY_CELL.B173.fieldId
 } as const satisfies Record<string, FieldId>;
 
 export const HOME_FIELDS = {
@@ -146,4 +146,3 @@ export const EXPENSE_EVENT_RUNTIME_GROUPS = EXPENSE_EVENT_GROUPS.map((group, idx
   yearField: FieldId;
   fields: readonly [FieldId, FieldId, FieldId];
 }>;
-

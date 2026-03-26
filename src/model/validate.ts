@@ -44,7 +44,7 @@ function pushMessage(
 
 function projectionEndYear(raw: RawInputs): number | null {
   const ageNow = asNumber(raw.B4);
-  const endAge = asNumber(raw.B134);
+  const endAge = asNumber(raw.B144);
   if (ageNow === null || endAge === null || endAge <= ageNow) return null;
   return new Date().getFullYear() + Math.round(endAge - ageNow);
 }
@@ -102,7 +102,7 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   }
 
   const ageNow = asNumber(raw.B4);
-  const lifeExpectancy = asNumber(raw.B134);
+  const lifeExpectancy = asNumber(raw.B144);
   const statutoryAge = asNumber(raw.B19);
   if (ageNow !== null && statutoryAge !== null && ageNow >= statutoryAge) {
     pushMessage(messages, "B4", "error", "Your age must be less than statutory retirement age.", true);
@@ -110,11 +110,11 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   }
 
   if (ageNow !== null && lifeExpectancy !== null && lifeExpectancy <= ageNow) {
-    pushMessage(messages, "B134", "error", "Plan to live until age must be greater than current age.", true);
+    pushMessage(messages, "B144", "error", "Plan to live until age must be greater than current age.", true);
   }
 
   if (lifeExpectancy !== null && lifeExpectancy > 100) {
-    pushMessage(messages, "B134", "warning", "Planning past age 100 is allowed, but double-check that horizon.");
+    pushMessage(messages, "B144", "warning", "Planning past age 100 is allowed, but double-check that horizon.");
   }
 
   if (asNumber(raw.B12) !== null && (asNumber(raw.B12) ?? 0) > 0 && (asNumber(raw.B23) ?? 0) > 0) {
@@ -274,9 +274,9 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   }
 
   const spendAdjustments = [
-    { cell: "B137" as const, label: getCellLabel("B137") },
-    { cell: "B138" as const, label: getCellLabel("B138") },
-    { cell: "B139" as const, label: getCellLabel("B139") }
+    { cell: "B147" as const, label: getCellLabel("B147") },
+    { cell: "B148" as const, label: getCellLabel("B148") },
+    { cell: "B149" as const, label: getCellLabel("B149") }
   ];
   for (const adjustment of spendAdjustments) {
     const value = asNumber(raw[adjustment.cell]);
@@ -297,17 +297,17 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   }
 
   const startingLiquidAssets = (asNumber(raw.B8) ?? 0) + (asNumber(raw.B10) ?? 0);
-  const cashBuffer = asNumber(raw.B159) ?? 0;
+  const cashBuffer = asNumber(raw.B169) ?? 0;
   if (cashBuffer > 0 && startingLiquidAssets > 0 && cashBuffer > startingLiquidAssets) {
-    pushMessage(messages, "B159", "warning", "Cash buffer exceeds starting cash plus stock balances.");
+    pushMessage(messages, "B169", "warning", "Cash buffer exceeds starting cash plus stock balances.");
   }
 
   const annualPension = asNumber(raw.B21) ?? 0;
-  const pensionReduction = asNumber(raw.B157) ?? 0;
+  const pensionReduction = asNumber(raw.B167) ?? 0;
   if (annualPension > 0 && pensionReduction > 0 && ageNow !== null && statutoryAge !== null) {
     const maxYearsEarly = Math.max(0, statutoryAge - ageNow);
     if (pensionReduction * maxYearsEarly > annualPension) {
-      pushMessage(messages, "B157", "warning", "Maximum early-retirement reduction would fully eliminate the pension.");
+      pushMessage(messages, "B167", "warning", "Maximum early-retirement reduction would fully eliminate the pension.");
     }
   }
 

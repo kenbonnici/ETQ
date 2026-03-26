@@ -22,78 +22,84 @@ row,section,subsection,sheet,cell,label,default,style_id,number_format
 43,DEEPER DIVE,Dependents,Inputs,B43,Name,,43,General
 44,DEEPER DIVE,Dependents,Inputs,B44,Annual cost,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
 45,DEEPER DIVE,Dependents,Inputs,B45,Years to support,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-50,DEEPER DIVE,Investment Properties,Inputs,B50,Name,Sliema,43,General
-51,DEEPER DIVE,Investment Properties,Inputs,B51,Market value,300000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-52,DEEPER DIVE,Investment Properties,Inputs,B52,Annual costs,5000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-55,DEEPER DIVE,Investment Properties,Inputs,B55,Name,Gzira,43,General
-56,DEEPER DIVE,Investment Properties,Inputs,B56,Market value,150000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-57,DEEPER DIVE,Investment Properties,Inputs,B57,Annual costs,2000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-60,DEEPER DIVE,Investment Properties,Inputs,B60,Name,Qormi,43,General
-61,DEEPER DIVE,Investment Properties,Inputs,B61,Market value,220000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-62,DEEPER DIVE,Investment Properties,Inputs,B62,Annual costs,1200,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-66,DEEPER DIVE,Other income,Inputs,B66,Rental income: Sliema,12000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-67,DEEPER DIVE,Other income,Inputs,B67,Rental income: Gzira,10000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-68,DEEPER DIVE,Other income,Inputs,B68,Rental income: Qormi,8000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-70,DEEPER DIVE,Other income,Inputs,B70,Other work income (net annual),,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-71,DEEPER DIVE,Other income,Inputs,B71,Continue other work until age,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-75,DEEPER DIVE,Other loans,Inputs,B75,Credit card balances,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-78,DEEPER DIVE,Other loans,Inputs,B78,Balance,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-79,DEEPER DIVE,Other loans,Inputs,B79,Interest rate,,41,0.0%
-80,DEEPER DIVE,Other loans,Inputs,B80,Monthly repayment,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-82,DEEPER DIVE,Other loans,Inputs,B82,Gzira Property,,23,General
-83,DEEPER DIVE,Other loans,Inputs,B83,Balance,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-84,DEEPER DIVE,Other loans,Inputs,B84,Interest rate,,41,0.0%
-85,DEEPER DIVE,Other loans,Inputs,B85,Monthly repayment,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-87,DEEPER DIVE,Other loans,Inputs,B87,Qormi Property,,23,General
-88,DEEPER DIVE,Other loans,Inputs,B88,Balance,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-89,DEEPER DIVE,Other loans,Inputs,B89,Interest rate,,41,0.0%
-90,DEEPER DIVE,Other loans,Inputs,B90,Monthly repayment,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-93,DEEPER DIVE,Other loans,Inputs,B93,Balance,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-94,DEEPER DIVE,Other loans,Inputs,B94,Interest rate,,41,0.0%
-95,DEEPER DIVE,Other loans,Inputs,B95,Monthly repayment,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-99,DEEPER DIVE,Major life income events,Inputs,B99,Income Event 1,,39,General
-100,DEEPER DIVE,Major life income events,Inputs,B100,Name,,44,General
-101,DEEPER DIVE,Major life income events,Inputs,B101,Amount,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-102,DEEPER DIVE,Major life income events,Inputs,B102,Year,,43,General
-104,DEEPER DIVE,Major life income events,Inputs,B104,Income Event 2,,39,General
-105,DEEPER DIVE,Major life income events,Inputs,B105,Name,,44,General
-106,DEEPER DIVE,Major life income events,Inputs,B106,Amount,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-107,DEEPER DIVE,Major life income events,Inputs,B107,Year,,43,General
-109,DEEPER DIVE,Major life income events,Inputs,B109,Income Event 3,,39,General
-110,DEEPER DIVE,Major life income events,Inputs,B110,Name,,44,General
-111,DEEPER DIVE,Major life income events,Inputs,B111,Amount,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-112,DEEPER DIVE,Major life income events,Inputs,B112,Year,,43,General
-114,DEEPER DIVE,Major life expense events,Inputs,B114,Major life expense events,,39,General
-116,DEEPER DIVE,Major life expense events,Inputs,B116,Expense Event 1,,39,General
-117,DEEPER DIVE,Major life expense events,Inputs,B117,Name,,44,General
-118,DEEPER DIVE,Major life expense events,Inputs,B118,Amount,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-119,DEEPER DIVE,Major life expense events,Inputs,B119,Year,,43,General
-121,DEEPER DIVE,Major life expense events,Inputs,B121,Expense Event 2,,39,General
-122,DEEPER DIVE,Major life expense events,Inputs,B122,Name,,44,General
-123,DEEPER DIVE,Major life expense events,Inputs,B123,Amount,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-124,DEEPER DIVE,Major life expense events,Inputs,B124,Year,,43,General
-126,DEEPER DIVE,Major life expense events,Inputs,B126,Expense Event 3,,39,General
-127,DEEPER DIVE,Major life expense events,Inputs,B127,Name,,44,General
-128,DEEPER DIVE,Major life expense events,Inputs,B128,Amount,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-129,DEEPER DIVE,Major life expense events,Inputs,B129,Year,,43,General
-132,FINER DETAILS,,Inputs,B132,FINER DETAILS,,38,General
-134,FINER DETAILS,,Inputs,B134,Plan to live until age,85,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-137,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B137,from now to 65,0,45,0%
-138,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B138,from 66-75,-0.1,45,0%
-139,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B139,from age 76,-0.2,45,0%
-141,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B141,Other post-retirement income,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-142,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B142,From age,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-143,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B143,To age,,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-145,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B145,General inflatiion,2.5000000000000001E-2,41,0.0%
-147,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B147,Property annual appreciation,0.03,41,0.0%
-149,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B149,Cash interest rate,2.5000000000000001E-2,46,0.0%
-151,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B151,Stock market return,0.08,47,0%
-153,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B153,Salary annual growth rate,0.03,45,0%
-155,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B155,Rental income annual increase,0.03,45,0%
-157,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B157,Pension reduction per year early,300,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-159,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B159,Cash buffer at any time,40000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
-161,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B161,Stock market selling costs,0.05,45,0%
-163,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B163,Property disposal costs,0.15,45,0%
-166,FINER DETAILS,Property liquidation order,Inputs,B166,Sliema,3,48,0;0;
-167,FINER DETAILS,Property liquidation order,Inputs,B167,Gzira,1,48,0;0;
-168,FINER DETAILS,Property liquidation order,Inputs,B168,Qormi,2,48,0;0;
+48,DEEPER DIVE,Dependents,Inputs,B48,Name,Stephen,43,General
+49,DEEPER DIVE,Dependents,Inputs,B49,Annual cost,2500,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+50,DEEPER DIVE,Dependents,Inputs,B50,Years to support,3,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+53,DEEPER DIVE,Dependents,Inputs,B53,Name,Jane,43,General
+54,DEEPER DIVE,Dependents,Inputs,B54,Annual cost,2860,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+55,DEEPER DIVE,Dependents,Inputs,B55,Years to support,6,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+60,DEEPER DIVE,Investment Properties,Inputs,B60,Name,Sliema,43,General
+61,DEEPER DIVE,Investment Properties,Inputs,B61,Market value,300000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+62,DEEPER DIVE,Investment Properties,Inputs,B62,Annual costs,5000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+65,DEEPER DIVE,Investment Properties,Inputs,B65,Name,Gzira,43,General
+66,DEEPER DIVE,Investment Properties,Inputs,B66,Market value,150000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+67,DEEPER DIVE,Investment Properties,Inputs,B67,Annual costs,2000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+70,DEEPER DIVE,Investment Properties,Inputs,B70,Name,Qormi,43,General
+71,DEEPER DIVE,Investment Properties,Inputs,B71,Market value,220000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+72,DEEPER DIVE,Investment Properties,Inputs,B72,Annual costs,1200,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+76,DEEPER DIVE,Other income,Inputs,B76,Rental income: Sliema,12000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+77,DEEPER DIVE,Other income,Inputs,B77,Rental income: Gzira,10000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+78,DEEPER DIVE,Other income,Inputs,B78,Rental income: Qormi,8000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+80,DEEPER DIVE,Other income,Inputs,B80,Other work income (net annual),2000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+81,DEEPER DIVE,Other income,Inputs,B81,Continue other work until age,58,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+85,DEEPER DIVE,Other loans,Inputs,B85,Credit card balances,1000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+88,DEEPER DIVE,Other loans,Inputs,B88,Balance,50000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+89,DEEPER DIVE,Other loans,Inputs,B89,Interest rate,0.03,41,0.0%
+90,DEEPER DIVE,Other loans,Inputs,B90,Monthly repayment,500,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+92,DEEPER DIVE,Other loans,Inputs,B92,Gzira Property,,23,General
+93,DEEPER DIVE,Other loans,Inputs,B93,Balance,8500,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+94,DEEPER DIVE,Other loans,Inputs,B94,Interest rate,0.02,41,0.0%
+95,DEEPER DIVE,Other loans,Inputs,B95,Monthly repayment,200,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+97,DEEPER DIVE,Other loans,Inputs,B97,Qormi Property,,23,General
+98,DEEPER DIVE,Other loans,Inputs,B98,Balance,15000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+99,DEEPER DIVE,Other loans,Inputs,B99,Interest rate,0.05,41,0.0%
+100,DEEPER DIVE,Other loans,Inputs,B100,Monthly repayment,250,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+103,DEEPER DIVE,Other loans,Inputs,B103,Balance,4000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+104,DEEPER DIVE,Other loans,Inputs,B104,Interest rate,0.06,41,0.0%
+105,DEEPER DIVE,Other loans,Inputs,B105,Monthly repayment,50,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+109,DEEPER DIVE,Major life income events,Inputs,B109,Income Event 1,,39,General
+110,DEEPER DIVE,Major life income events,Inputs,B110,Name,Inheritance,44,General
+111,DEEPER DIVE,Major life income events,Inputs,B111,Amount,50000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+112,DEEPER DIVE,Major life income events,Inputs,B112,Year,2035,43,General
+114,DEEPER DIVE,Major life income events,Inputs,B114,Income Event 2,,39,General
+115,DEEPER DIVE,Major life income events,Inputs,B115,Name,Sell Painting,44,General
+116,DEEPER DIVE,Major life income events,Inputs,B116,Amount,10000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+117,DEEPER DIVE,Major life income events,Inputs,B117,Year,2029,43,General
+119,DEEPER DIVE,Major life income events,Inputs,B119,Income Event 3,,39,General
+120,DEEPER DIVE,Major life income events,Inputs,B120,Name,Sell Jewels,44,General
+121,DEEPER DIVE,Major life income events,Inputs,B121,Amount,5000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+122,DEEPER DIVE,Major life income events,Inputs,B122,Year,2032,43,General
+124,DEEPER DIVE,Major life expense events,Inputs,B124,Major life expense events,,39,General
+126,DEEPER DIVE,Major life expense events,Inputs,B126,Expense Event 1,,39,General
+127,DEEPER DIVE,Major life expense events,Inputs,B127,Name,Wedding,44,General
+128,DEEPER DIVE,Major life expense events,Inputs,B128,Amount,40000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+129,DEEPER DIVE,Major life expense events,Inputs,B129,Year,2036,43,General
+131,DEEPER DIVE,Major life expense events,Inputs,B131,Expense Event 2,,39,General
+132,DEEPER DIVE,Major life expense events,Inputs,B132,Name,New Car,44,General
+133,DEEPER DIVE,Major life expense events,Inputs,B133,Amount,35000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+134,DEEPER DIVE,Major life expense events,Inputs,B134,Year,2029,43,General
+136,DEEPER DIVE,Major life expense events,Inputs,B136,Expense Event 3,,39,General
+137,DEEPER DIVE,Major life expense events,Inputs,B137,Name,New AC,44,General
+138,DEEPER DIVE,Major life expense events,Inputs,B138,Amount,15000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+139,DEEPER DIVE,Major life expense events,Inputs,B139,Year,2034,43,General
+142,FINER DETAILS,,Inputs,B142,FINER DETAILS,,38,General
+144,FINER DETAILS,,Inputs,B144,Plan to live until age,85,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+147,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B147,from now to 65,0,45,0%
+148,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B148,from 66-75,-0.1,45,0%
+149,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B149,from age 76,-0.2,45,0%
+151,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B151,Other post-retirement income,12000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+152,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B152,From age,58,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+153,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B153,To age,69,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+155,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B155,General inflatiion,2.5000000000000001E-2,41,0.0%
+157,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B157,Property annual appreciation,0.03,41,0.0%
+159,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B159,Cash interest rate,2.5000000000000001E-2,46,0.0%
+161,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B161,Stock market return,0.08,47,0%
+163,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B163,Salary annual growth rate,0.03,45,0%
+165,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B165,Rental income annual increase,0.03,45,0%
+167,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B167,Pension reduction per year early,300,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+169,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B169,Cash buffer at any time,40000,40,"#,##0\ ;\(#,##0\);\ \ \ \-\ "
+171,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B171,Stock market selling costs,0.05,45,0%
+173,FINER DETAILS,Spending adjustment (at today's euros),Inputs,B173,Property disposal costs,0.15,45,0%
+176,FINER DETAILS,Property liquidation order,Inputs,B176,Sliema,3,48,0;0;
+177,FINER DETAILS,Property liquidation order,Inputs,B177,Gzira,1,48,0;0;
+178,FINER DETAILS,Property liquidation order,Inputs,B178,Qormi,2,48,0;0;

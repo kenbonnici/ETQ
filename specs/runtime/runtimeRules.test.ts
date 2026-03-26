@@ -56,6 +56,8 @@ function cloneFields(fields: FieldState): FieldState {
 
 test("Excel adapter round-trips and specimen parity still passes", () => {
   assert.deepEqual(fieldStateToRawInputs(SPECIMEN_FIELDS), EXCEL_BASELINE_SPECIMEN.raw_inputs);
+  assert.equal(SPECIMEN_FIELDS["dependents.04.displayName"], "Stephen");
+  assert.equal(SPECIMEN_FIELDS["dependents.05.displayName"], "Jane");
   assert.equal(runSpecimenParity().overallPass, true);
 });
 
@@ -63,11 +65,11 @@ test("input definitions preserve row order and derive cells from semantic field 
   assert.deepEqual(
     INPUT_DEFINITIONS.map((def) => def.row),
     [
-      4, 6, 8, 10, 12, 15, 16, 17, 19, 21, 23, 25, 33, 34, 35, 38, 39, 40, 43, 44, 45, 46, 47, 48, 49, 49,
-      49, 50, 51, 52, 55,
-      56, 57, 60, 61, 62, 66, 67, 68, 70, 71, 75, 78, 79, 80, 83, 84, 85, 88, 89, 90, 93, 94, 95, 100, 101,
-      102, 105, 106, 107, 110, 111, 112, 117, 118, 119, 122, 123, 124, 127, 128, 129, 134, 137, 138, 139,
-      141, 142, 143, 145, 147, 149, 151, 153, 155, 157, 159, 161, 163, 166, 167, 168
+      4, 6, 8, 10, 12, 15, 16, 17, 19, 21, 23, 25, 33, 34, 35, 38, 39, 40, 43, 44, 45, 48, 49, 50, 53, 54,
+      55, 60, 61, 62, 65, 66, 67, 70, 71, 72, 76, 77, 78, 80, 81, 85, 88, 89, 90, 93, 94, 95, 98, 99, 100,
+      103, 104, 105, 110, 111, 112, 115, 116, 117, 120, 121, 122, 127, 128, 129, 132, 133, 134, 137, 138,
+      139, 144, 147, 148, 149, 151, 152, 153, 155, 157, 159, 161, 163, 165, 167, 169, 171, 173, 176, 177,
+      178
     ]
   );
 

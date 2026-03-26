@@ -23,68 +23,76 @@ etc.",Hide until user enters dependent name
 44,B44,Annual cost,DEEPER DIVE > Dependents > Dependent 3,4000,"Food, education, healthcare,
 etc.",Hide until user enters dependent name
 45,B45,Years to support,DEEPER DIVE > Dependents > Dependent 3,2,Years from now,Hide until user enters dependent name
-50,B50,Name,DEEPER DIVE > Investment Properties  > Property 1,Sliema,Leave blank if none,
-51,B51,Market value,DEEPER DIVE > Investment Properties  > Property 1,300000,,Hide until user enters property name
-52,B52,Annual costs,DEEPER DIVE > Investment Properties  > Property 1,5000,"Repairs, maintenance, etc.",Hide until user enters property name
-55,B55,Name,DEEPER DIVE > Investment Properties  > Property 2,Gzira,Leave blank if none,
-56,B56,Market value,DEEPER DIVE > Investment Properties  > Property 2,150000,,Hide until user enters property name
-57,B57,Annual costs,DEEPER DIVE > Investment Properties  > Property 2,2000,"Repairs, maintenance, etc.",Hide until user enters property name
-60,B60,Name,DEEPER DIVE > Investment Properties  > Property 3,Qormi,Leave blank if none,
-61,B61,Market value,DEEPER DIVE > Investment Properties  > Property 3,220000,,Hide until user enters property name
-62,B62,Annual costs,DEEPER DIVE > Investment Properties  > Property 3,1200,"Repairs, maintenance, etc.",Hide until user enters property name
-66,B66,Rental income: Sliema,DEEPER DIVE > Other income,12000,net annual after all costs and tax,Show with property name only if name was entered
-67,B67,Rental income: Gzira,DEEPER DIVE > Other income,10000,net annual after all costs and tax,Show with property name only if name was entered
-68,B68,Rental income: Qormi,DEEPER DIVE > Other income,8000,net annual after all costs and tax,Show with property name only if name was entered
-70,B70,Other work income (net annual),DEEPER DIVE > Other income,2000,Part-time / consulting / side projects etc. Leave blank if none,
-71,B71,Continue other work until age,DEEPER DIVE > Other income,58,,Show only if other work income entered
-75,B75,Credit card balances,DEEPER DIVE > Other loans,1000,Assumed cleared in Year 1. Leave blank if none,
-78,B78,Balance,DEEPER DIVE > Other loans > Sliema Property,50000,Enter 0 or leave blank if none,
-79,B79,Interest rate,DEEPER DIVE > Other loans > Sliema Property,0.03,,
-80,B80,Monthly repayment,DEEPER DIVE > Other loans > Sliema Property,500,,
-83,B83,Balance,DEEPER DIVE > Other loans > Gzira Property,8500,Enter 0 or leave blank if none,
-84,B84,Interest rate,DEEPER DIVE > Other loans > Gzira Property,0.02,,
-85,B85,Monthly repayment,DEEPER DIVE > Other loans > Gzira Property,200,,
-88,B88,Balance,DEEPER DIVE > Other loans > Qormi Property,15000,Enter 0 or leave blank if none,
-89,B89,Interest rate,DEEPER DIVE > Other loans > Qormi Property,0.05,,
-90,B90,Monthly repayment,DEEPER DIVE > Other loans > Qormi Property,250,,
-93,B93,Balance,DEEPER DIVE > Other loans > Other loan,4000,Leave blank if none,
-94,B94,Interest rate,DEEPER DIVE > Other loans > Other loan,0.06,,
-95,B95,Monthly repayment,DEEPER DIVE > Other loans > Other loan,50,,
-100,B100,Name,DEEPER DIVE > Major life income events > Income Event 1,Inheritance,Leave blank if none,
-101,B101,Amount,DEEPER DIVE > Major life income events > Income Event 1,50000,Enter 0 or leave blank if none,
-102,B102,Year,DEEPER DIVE > Major life income events > Income Event 1,2035,,
-105,B105,Name,DEEPER DIVE > Major life income events > Income Event 2,Sell Painting,Leave blank if none,
-106,B106,Amount,DEEPER DIVE > Major life income events > Income Event 2,10000,Enter 0 or leave blank if none,
-107,B107,Year,DEEPER DIVE > Major life income events > Income Event 2,2029,,
-110,B110,Name,DEEPER DIVE > Major life income events > Income Event 3,Sell Jewels,Leave blank if none,
-111,B111,Amount,DEEPER DIVE > Major life income events > Income Event 3,5000,Enter 0 or leave blank if none,
-112,B112,Year,DEEPER DIVE > Major life income events > Income Event 3,2032,,
-117,B117,Name,DEEPER DIVE > Major life expense events > Expense Event 1,Wedding,Leave blank if none,
-118,B118,Amount,DEEPER DIVE > Major life expense events > Expense Event 1,40000,Enter 0 or leave blank if none,
-119,B119,Year,DEEPER DIVE > Major life expense events > Expense Event 1,2036,,
-122,B122,Name,DEEPER DIVE > Major life expense events > Expense Event 2,New Car,Leave blank if none,
-123,B123,Amount,DEEPER DIVE > Major life expense events > Expense Event 2,35000,Enter 0 or leave blank if none,
-124,B124,Year,DEEPER DIVE > Major life expense events > Expense Event 2,2029,,
-127,B127,Name,DEEPER DIVE > Major life expense events > Expense Event 3,New AC,Leave blank if none,
-128,B128,Amount,DEEPER DIVE > Major life expense events > Expense Event 3,15000,Enter 0 or leave blank if none,
-129,B129,Year,DEEPER DIVE > Major life expense events > Expense Event 3,2034,,
-134,B134,Plan to live until age,FINER DETAILS,85,,
-137,B137,from now to 65,FINER DETAILS > Spending adjustment (at today's euros),0,more / less than current,
-138,B138,from 66-75,FINER DETAILS > Spending adjustment (at today's euros),-0.1,more / less than current,
-139,B139,from age 76,FINER DETAILS > Spending adjustment (at today's euros),-0.2,more / less than current,
-141,B141,Other post-retirement income,FINER DETAILS > Other post-retirement income,12000,Enter 0 or leave blank if none,
-142,B142,From age,FINER DETAILS > Other post-retirement income,58,,Only show if value>0 entered in B141
-143,B143,To age,FINER DETAILS > Other post-retirement income,69,,Only show if value>0 entered in B141
-145,B145,General inflatiion,FINER DETAILS,2.5000000000000001E-2,,
-147,B147,Property annual appreciation,FINER DETAILS,0.03,including inflation,
-149,B149,Cash interest rate,FINER DETAILS,2.5000000000000001E-2,including inflation,
-151,B151,Stock market return,FINER DETAILS,0.08,including inflation,
-153,B153,Salary annual growth rate,FINER DETAILS,0.03,including inflation,
-155,B155,Rental income annual increase,FINER DETAILS,0.03,,
-157,B157,Pension reduction per year early,FINER DETAILS,300,reduction in pension for each year retired early,
-159,B159,Cash buffer at any time,FINER DETAILS,40000,emergency reserve,
-161,B161,Stock market selling costs,FINER DETAILS,0.05,"tax, broker and other fees",
-163,B163,Property disposal costs,FINER DETAILS,0.15,"agency, tax, legal fees ",
-166,B166,Sliema,FINER DETAILS > Property liquidation order,3,0 = would never sell,
-167,B167,Gzira,FINER DETAILS > Property liquidation order,1,,
-168,B168,Qormi,FINER DETAILS > Property liquidation order,2,,
+48,B48,Name,DEEPER DIVE > Dependents > Dependent 4,Stephen,Leave blank if none,
+49,B49,Annual cost,DEEPER DIVE > Dependents > Dependent 4,2500,"Food, education, healthcare,
+etc.",Hide until user enters dependent name
+50,B50,Years to support,DEEPER DIVE > Dependents > Dependent 4,3,Years from now,Hide until user enters dependent name
+53,B53,Name,DEEPER DIVE > Dependents > Dependent 5,Jane,Leave blank if none,
+54,B54,Annual cost,DEEPER DIVE > Dependents > Dependent 5,2860,"Food, education, healthcare,
+etc.",Hide until user enters dependent name
+55,B55,Years to support,DEEPER DIVE > Dependents > Dependent 5,6,Years from now,Hide until user enters dependent name
+60,B60,Name,DEEPER DIVE > Investment Properties  > Property 1,Sliema,Leave blank if none,
+61,B61,Market value,DEEPER DIVE > Investment Properties  > Property 1,300000,,Hide until user enters property name
+62,B62,Annual costs,DEEPER DIVE > Investment Properties  > Property 1,5000,"Repairs, maintenance, etc.",Hide until user enters property name
+65,B65,Name,DEEPER DIVE > Investment Properties  > Property 2,Gzira,Leave blank if none,
+66,B66,Market value,DEEPER DIVE > Investment Properties  > Property 2,150000,,Hide until user enters property name
+67,B67,Annual costs,DEEPER DIVE > Investment Properties  > Property 2,2000,"Repairs, maintenance, etc.",Hide until user enters property name
+70,B70,Name,DEEPER DIVE > Investment Properties  > Property 3,Qormi,Leave blank if none,
+71,B71,Market value,DEEPER DIVE > Investment Properties  > Property 3,220000,,Hide until user enters property name
+72,B72,Annual costs,DEEPER DIVE > Investment Properties  > Property 3,1200,"Repairs, maintenance, etc.",Hide until user enters property name
+76,B76,Rental income: Sliema,DEEPER DIVE > Other income,12000,net annual after all costs and tax,Show with property name only if name was entered
+77,B77,Rental income: Gzira,DEEPER DIVE > Other income,10000,net annual after all costs and tax,Show with property name only if name was entered
+78,B78,Rental income: Qormi,DEEPER DIVE > Other income,8000,net annual after all costs and tax,Show with property name only if name was entered
+80,B80,Other work income (net annual),DEEPER DIVE > Other income,2000,Part-time / consulting / side projects etc. Leave blank if none,
+81,B81,Continue other work until age,DEEPER DIVE > Other income,58,,Show only if other work income entered
+85,B85,Credit card balances,DEEPER DIVE > Other loans,1000,Assumed cleared in Year 1. Leave blank if none,
+88,B88,Balance,DEEPER DIVE > Other loans > Sliema Property,50000,Enter 0 or leave blank if none,
+89,B89,Interest rate,DEEPER DIVE > Other loans > Sliema Property,0.03,,
+90,B90,Monthly repayment,DEEPER DIVE > Other loans > Sliema Property,500,,
+93,B93,Balance,DEEPER DIVE > Other loans > Gzira Property,8500,Enter 0 or leave blank if none,
+94,B94,Interest rate,DEEPER DIVE > Other loans > Gzira Property,0.02,,
+95,B95,Monthly repayment,DEEPER DIVE > Other loans > Gzira Property,200,,
+98,B98,Balance,DEEPER DIVE > Other loans > Qormi Property,15000,Enter 0 or leave blank if none,
+99,B99,Interest rate,DEEPER DIVE > Other loans > Qormi Property,0.05,,
+100,B100,Monthly repayment,DEEPER DIVE > Other loans > Qormi Property,250,,
+103,B103,Balance,DEEPER DIVE > Other loans > Other loan,4000,Leave blank if none,
+104,B104,Interest rate,DEEPER DIVE > Other loans > Other loan,0.06,,
+105,B105,Monthly repayment,DEEPER DIVE > Other loans > Other loan,50,,
+110,B110,Name,DEEPER DIVE > Major life income events > Income Event 1,Inheritance,Leave blank if none,
+111,B111,Amount,DEEPER DIVE > Major life income events > Income Event 1,50000,Enter 0 or leave blank if none,
+112,B112,Year,DEEPER DIVE > Major life income events > Income Event 1,2035,,
+115,B115,Name,DEEPER DIVE > Major life income events > Income Event 2,Sell Painting,Leave blank if none,
+116,B116,Amount,DEEPER DIVE > Major life income events > Income Event 2,10000,Enter 0 or leave blank if none,
+117,B117,Year,DEEPER DIVE > Major life income events > Income Event 2,2029,,
+120,B120,Name,DEEPER DIVE > Major life income events > Income Event 3,Sell Jewels,Leave blank if none,
+121,B121,Amount,DEEPER DIVE > Major life income events > Income Event 3,5000,Enter 0 or leave blank if none,
+122,B122,Year,DEEPER DIVE > Major life income events > Income Event 3,2032,,
+127,B127,Name,DEEPER DIVE > Major life expense events > Expense Event 1,Wedding,Leave blank if none,
+128,B128,Amount,DEEPER DIVE > Major life expense events > Expense Event 1,40000,Enter 0 or leave blank if none,
+129,B129,Year,DEEPER DIVE > Major life expense events > Expense Event 1,2036,,
+132,B132,Name,DEEPER DIVE > Major life expense events > Expense Event 2,New Car,Leave blank if none,
+133,B133,Amount,DEEPER DIVE > Major life expense events > Expense Event 2,35000,Enter 0 or leave blank if none,
+134,B134,Year,DEEPER DIVE > Major life expense events > Expense Event 2,2029,,
+137,B137,Name,DEEPER DIVE > Major life expense events > Expense Event 3,New AC,Leave blank if none,
+138,B138,Amount,DEEPER DIVE > Major life expense events > Expense Event 3,15000,Enter 0 or leave blank if none,
+139,B139,Year,DEEPER DIVE > Major life expense events > Expense Event 3,2034,,
+144,B144,Plan to live until age,FINER DETAILS,85,,
+147,B147,from now to 65,FINER DETAILS > Spending adjustment (at today's euros),0,more / less than current,
+148,B148,from 66-75,FINER DETAILS > Spending adjustment (at today's euros),-0.1,more / less than current,
+149,B149,from age 76,FINER DETAILS > Spending adjustment (at today's euros),-0.2,more / less than current,
+151,B151,Other post-retirement income,FINER DETAILS > Other post-retirement income,12000,Enter 0 or leave blank if none,
+152,B152,From age,FINER DETAILS > Other post-retirement income,58,,Only show if value>0 entered in B151
+153,B153,To age,FINER DETAILS > Other post-retirement income,69,,Only show if value>0 entered in B151
+155,B155,General inflatiion,FINER DETAILS,2.5000000000000001E-2,,
+157,B157,Property annual appreciation,FINER DETAILS,0.03,including inflation,
+159,B159,Cash interest rate,FINER DETAILS,2.5000000000000001E-2,including inflation,
+161,B161,Stock market return,FINER DETAILS,0.08,including inflation,
+163,B163,Salary annual growth rate,FINER DETAILS,0.03,including inflation,
+165,B165,Rental income annual increase,FINER DETAILS,0.03,,
+167,B167,Pension reduction per year early,FINER DETAILS,300,reduction in pension for each year retired early,
+169,B169,Cash buffer at any time,FINER DETAILS,40000,emergency reserve,
+171,B171,Stock market selling costs,FINER DETAILS,0.05,"tax, broker and other fees",
+173,B173,Property disposal costs,FINER DETAILS,0.15,"agency, tax, legal fees ",
+176,B176,Sliema,FINER DETAILS > Property liquidation order,3,0 = would never sell,
+177,B177,Gzira,FINER DETAILS > Property liquidation order,1,,
+178,B178,Qormi,FINER DETAILS > Property liquidation order,2,,

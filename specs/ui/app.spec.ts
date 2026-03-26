@@ -149,6 +149,20 @@ test("living expenses default to single-total entry and expanded mode aggregates
   await expect(page.locator(selectors.livingExpensesDerivedTotal)).toHaveValue(/50,000/);
 });
 
+test("load sample data restores dependents 4 and 5 from the Excel specimen", async ({ page }) => {
+  await loadSampleData(page);
+
+  await expect(page.locator(selectors.dependent4Name)).toBeVisible();
+  await expect(page.locator(selectors.dependent4Name)).toHaveValue("Stephen");
+  await expect(page.locator('input[data-field-id="dependents.04.annualCost"]')).toHaveValue(/2,500/);
+  await expect(page.locator('input[data-field-id="dependents.04.supportYearsRemaining"]')).toHaveValue("3");
+
+  await expect(page.locator(selectors.dependent5Name)).toBeVisible();
+  await expect(page.locator(selectors.dependent5Name)).toHaveValue("Jane");
+  await expect(page.locator('input[data-field-id="dependents.05.annualCost"]')).toHaveValue(/2,860/);
+  await expect(page.locator('input[data-field-id="dependents.05.supportYearsRemaining"]')).toHaveValue("6");
+});
+
 test("equivalent living-expense totals keep downstream projections unchanged across entry modes", async ({ page }) => {
   await loadSampleData(page);
   await fillAndBlur(page, selectors.livingExpenses, "60000");

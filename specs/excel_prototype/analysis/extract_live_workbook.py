@@ -4,7 +4,7 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
-XLSX_PATH = Path("specs/excel_prototype/ETQ.xlsx")
+XLSX_PATH = Path("specs/ETQ v2.xlsx")
 INPUTS_CSV_PATH = Path("specs/excel_prototype/analysis/step1_inputs_with_tooltips_ui_notes.csv")
 OUT_PATH = Path("/tmp/etq_live_extract.json")
 
@@ -42,10 +42,10 @@ def main() -> None:
         "raw": load_raw_inputs(ws_inputs),
         "exp": {
             "ages": read_ages_and_series(ws_norm, 3),
-            "cashE": read_ages_and_series(ws_early, 201),
-            "cashN": read_ages_and_series(ws_norm, 201),
-            "nwE": read_ages_and_series(ws_early, 202),
-            "nwN": read_ages_and_series(ws_norm, 202),
+            "cashE": read_ages_and_series(ws_early, 203),
+            "cashN": read_ages_and_series(ws_norm, 203),
+            "nwE": read_ages_and_series(ws_early, 204),
+            "nwN": read_ages_and_series(ws_norm, 204),
         },
     }
 
