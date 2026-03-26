@@ -706,7 +706,6 @@ function restoreProjectionScrollContext(sectionKey: ProjectionSectionKey, anchor
 }
 
 function queueProjectionScrollContextRestore(sectionKey: ProjectionSectionKey, anchor: ProjectionScrollAnchor | null): void {
-  if (!anchor) return;
   if (pendingProjectionScrollRestoreFrame[sectionKey] !== null) {
     cancelAnimationFrame(pendingProjectionScrollRestoreFrame[sectionKey]!);
     pendingProjectionScrollRestoreFrame[sectionKey] = null;
