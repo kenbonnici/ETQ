@@ -4,7 +4,7 @@ from pathlib import Path
 
 from openpyxl import load_workbook
 
-XLSX_PATH = Path("specs/ETQ v2.xlsx")
+XLSX_PATH = Path("specs/ETQ.xlsx")
 INPUTS_CSV_PATH = Path("specs/excel_prototype/analysis/step1_inputs_with_tooltips_ui_notes.csv")
 OUT_PATH = Path("/tmp/etq_live_extract.json")
 

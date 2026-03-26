@@ -121,7 +121,7 @@ At the following checkpoints:
   - timing or order of operations
   - liquidation logic
   - input mapping
-- Whenever specs/ETQ v2.xlsx changes
+- Whenever specs/ETQ.xlsx changes
 
 A change is not complete unless all checks pass.
 

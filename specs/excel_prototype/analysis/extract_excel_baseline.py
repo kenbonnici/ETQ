@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
-XLSX = "specs/ETQ v2.xlsx"
+XLSX = "specs/ETQ.xlsx"
 INPUTS_CSV = "specs/excel_prototype/analysis/step1_inputs_with_tooltips_ui_notes.csv"
 OUT_JSON = "specs/excel_prototype/analysis/excel_baseline_specimen.json"
 OUT_TS = "src/model/parity/excelBaselineSpecimen.ts"
