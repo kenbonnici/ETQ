@@ -943,10 +943,10 @@ body {
 
 .cashflow-row[data-row-id="networth-total"] .cashflow-label-cell,
 .cashflow-row[data-row-id="networth-total"] .cashflow-value-cell {
-  background: #eef7f3;
-  font-weight: 800;
+  background: #f9fcfa;
+  font-weight: 820;
   border-top: 18px solid #fff;
-  box-shadow: inset 0 1px 0 #cfddd6;
+  box-shadow: inset 0 1px 0 #c7d8cf, inset 0 -1px 0 #e6efea;
 }
 
 .cashflow-row[data-row-id="closing-cash"] .cashflow-label-inner {
@@ -956,9 +956,14 @@ body {
 }
 
 .cashflow-row[data-row-id="networth-total"] .cashflow-label-inner {
-  min-height: 58px;
+  min-height: 60px;
   padding-top: 14px;
   padding-bottom: 14px;
+}
+
+.cashflow-row[data-row-id="networth-total"] .cashflow-label-copy,
+.cashflow-row[data-row-id="networth-total"] .cashflow-value-cell {
+  color: #163a33;
 }
 
 .cashflow-row[data-row-id="net-cash-flow"] .cashflow-label-cell,
