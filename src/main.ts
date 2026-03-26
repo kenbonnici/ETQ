@@ -391,6 +391,7 @@ const chartHoverDelayHandle = new Map<HTMLCanvasElement, number | null>();
 const chartHoverPending = new Map<HTMLCanvasElement, { idx: number; clientX: number; clientY: number } | null>();
 let pendingCashflowScrollAnchor: ProjectionScrollAnchor | null = null;
 let pendingNetworthScrollAnchor: ProjectionScrollAnchor | null = null;
+let sharedProjectionScrollLeft = 0;
 const pendingProjectionScrollRestoreFrame: Record<ProjectionSectionKey, number | null> = {
   cashflow: null,
   networth: null
@@ -653,6 +654,7 @@ function captureProjectionScrollContext(sectionKey: ProjectionSectionKey, rowId:
   if (!section.isOpen()) return null;
   const scrollEl = getProjectionScrollContainer(section.tablePanel);
   if (!scrollEl) return null;
+  sharedProjectionScrollLeft = clampProjectionScrollLeft(scrollEl, scrollEl.scrollLeft);
   const resolvedRowId = rowId ?? (() => {
     const rows = Array.from(scrollEl.querySelectorAll<HTMLElement>("tr[data-row-id]"));
     const visibleRow = rows.find((candidate) => candidate.offsetTop + candidate.offsetHeight > scrollEl.scrollTop);
@@ -685,10 +687,11 @@ function captureProjectionScrollContext(sectionKey: ProjectionSectionKey, rowId:
 
 function restoreProjectionScrollContext(sectionKey: ProjectionSectionKey, anchor: ProjectionScrollAnchor | null): void {
   const section = getProjectionSectionConfig(sectionKey);
-  if (!anchor || !section.isOpen()) return;
+  if (!section.isOpen()) return;
   const scrollEl = getProjectionScrollContainer(section.tablePanel);
   if (!scrollEl) return;
-  scrollEl.scrollLeft = clampProjectionScrollLeft(scrollEl, anchor.scrollLeft);
+  scrollEl.scrollLeft = clampProjectionScrollLeft(scrollEl, sharedProjectionScrollLeft);
+  if (!anchor) return;
   const fallbackTop = clampProjectionScrollTop(scrollEl, anchor.scrollTop);
   if (!anchor.rowId) {
     scrollEl.scrollTop = fallbackTop;
