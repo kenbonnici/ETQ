@@ -1151,6 +1151,10 @@ function sumProjectionSeries(seriesList: number[][], length = seriesList[0]?.len
   return total;
 }
 
+function normalizeProjectionValue(value: number | undefined): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
 function hasVisibleProjectionValue(values: number[]): boolean {
   return values.some((value) => Number.isFinite(value) && Math.abs(value) > 1e-6);
 }
@@ -1325,6 +1329,14 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
 function buildNetworthNodes(scenario: ScenarioOutputs): ProjectionNode[] {
   const netWorth = scenario.netWorth;
   const yearCount = scenario.points.length;
+  const propertyValues = sumProjectionSeries(netWorth.properties.map((row) => row.values), yearCount);
+  const loanValues = sumProjectionSeries(netWorth.loans.map((row) => row.values), yearCount);
+  const totalValues = Array.from({ length: yearCount }, (_, idx) =>
+    normalizeProjectionValue(netWorth.cash[idx]) +
+    normalizeProjectionValue(netWorth.stockMarketEquity[idx]) +
+    normalizeProjectionValue(propertyValues[idx]) -
+    normalizeProjectionValue(loanValues[idx])
+  );
   const propertyChildren = netWorth.properties.map((series) =>
     projectionLeaf(series.key, series.label, series.values, 1)
   );
@@ -1342,7 +1354,7 @@ function buildNetworthNodes(scenario: ScenarioOutputs): ProjectionNode[] {
     projectionGroup(
       "networth-properties",
       "Properties",
-      sumProjectionSeries(netWorth.properties.map((row) => row.values), yearCount),
+      propertyValues,
       0,
       propertyChildren,
       "total",
@@ -1351,12 +1363,13 @@ function buildNetworthNodes(scenario: ScenarioOutputs): ProjectionNode[] {
     projectionGroup(
       "networth-loans",
       "Loans",
-      sumProjectionSeries(netWorth.loans.map((row) => row.values), yearCount),
+      loanValues,
       0,
       loanChildren,
       "total",
       true
-    )
+    ),
+    projectionLeaf("networth-total", "Net Worth", totalValues, 0, "total", true)
   ];
 }
 
@@ -1393,7 +1406,7 @@ function renderProjectionRows(
       !isGroup && node.level === 0 ? "is-major-line-item" : "",
       isGroup && node.level > 0 ? "is-subgroup" : "",
       node.level >= 2 ? "is-child" : "",
-      node.id === "net-cash-flow" || node.id === "closing-cash" ? "is-key-total" : "",
+      node.id === "net-cash-flow" || node.id === "closing-cash" || node.id === "networth-total" ? "is-key-total" : "",
       node.id === "inflows-liquidations" ? "is-liquidation-group" : ""
     ].filter(Boolean).join(" ");
     const labelHtml = isGroup

@@ -941,7 +941,20 @@ body {
   border-top: 1px solid #cfddd6;
 }
 
+.cashflow-row[data-row-id="networth-total"] .cashflow-label-cell,
+.cashflow-row[data-row-id="networth-total"] .cashflow-value-cell {
+  background: #eef7f3;
+  font-weight: 800;
+  border-top: 1px solid #cfddd6;
+}
+
 .cashflow-row[data-row-id="closing-cash"] .cashflow-label-inner {
+  min-height: 58px;
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+.cashflow-row[data-row-id="networth-total"] .cashflow-label-inner {
   min-height: 58px;
   padding-top: 14px;
   padding-bottom: 14px;
