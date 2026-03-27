@@ -414,7 +414,7 @@ function expenseEventSlotVisible(values: RuntimeValues, group: typeof EXPENSE_EV
 export function getDynamicFieldLabel(def: InputDefinition, values: RuntimeValues): string {
   const propertyByRentalIncomeField = PROPERTY_RUNTIME_GROUPS.find((group) => group.rentalIncomeField === def.fieldId);
   if (propertyByRentalIncomeField) {
-    return "Net annual rental income";
+    return String(values[propertyByRentalIncomeField.nameField] ?? "").trim() || propertyByRentalIncomeField.fallbackName;
   }
   if (def.fieldId === RUNTIME_FIELDS.generalInflation) return "General inflation";
   const propertyByRankField = PROPERTY_RUNTIME_GROUPS.find((group) => group.liquidationRankField === def.fieldId);
@@ -428,10 +428,8 @@ export function getDynamicGroupTail(def: InputDefinition, values: RuntimeValues)
   const tail = [...def.groupTail];
   const propertyByRentalIncomeField = PROPERTY_RUNTIME_GROUPS.find((group) => group.rentalIncomeField === def.fieldId);
   if (propertyByRentalIncomeField) {
-    const name = String(values[propertyByRentalIncomeField.nameField] ?? "").trim();
     tail[0] = "Other income";
     tail[1] = "Rental income from properties";
-    tail[2] = name || propertyByRentalIncomeField.fallbackName;
     return tail;
   }
   if (def.fieldId === OTHER_WORK_FIELDS.income || def.fieldId === OTHER_WORK_FIELDS.untilAge) {
