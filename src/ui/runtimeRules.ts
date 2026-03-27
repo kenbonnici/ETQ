@@ -178,7 +178,8 @@ for (const group of EXPENSE_EVENT_RUNTIME_GROUPS) {
 }
 
 export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, number>>> = {
-  [RUNTIME_FIELDS.statutoryRetirementAge]: 3.9
+  [RUNTIME_FIELDS.statutoryRetirementAge]: 3.9,
+  ["debts.creditCards.balance" as FieldId]: 124.5
 };
 
 export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([

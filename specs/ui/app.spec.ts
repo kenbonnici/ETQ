@@ -218,7 +218,7 @@ test("load sample data restores the workbook early-retirement age", async ({ pag
   await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(EXCEL_BASELINE_SPECIMEN.early_retirement_age));
 });
 
-test("deep dive keeps investment properties together before other income and property loans", async ({ page }) => {
+test("deep dive keeps investment properties together before other income and orders other loans cleanly", async ({ page }) => {
   await loadSampleData(page);
   await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
@@ -237,8 +237,9 @@ test("deep dive keeps investment properties together before other income and pro
   expect(position("properties.01.loan.balance")).toBeGreaterThan(-1);
   expect(position("properties.05.annualOperatingCost")).toBeLessThan(position("properties.01.rentalIncomeNetAnnual"));
   expect(position("properties.01.rentalIncomeNetAnnual")).toBeLessThan(position("income.otherWork.netAnnual"));
-  expect(position("income.otherWork.netAnnual")).toBeLessThan(position("debts.creditCards.balance"));
-  expect(position("debts.creditCards.balance")).toBeLessThan(position("properties.01.loan.balance"));
+  expect(position("income.otherWork.netAnnual")).toBeLessThan(position("properties.01.loan.balance"));
+  expect(position("properties.05.loan.monthlyRepayment")).toBeLessThan(position("debts.creditCards.balance"));
+  expect(position("debts.creditCards.balance")).toBeLessThan(position("debts.other.balance"));
 });
 
 test("equivalent living-expense totals keep downstream projections unchanged across entry modes", async ({ page }) => {
