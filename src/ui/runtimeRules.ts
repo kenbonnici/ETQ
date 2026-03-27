@@ -184,6 +184,8 @@ export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, numb
   [PROPERTY_RUNTIME_GROUPS[0].rentalIncomeField]: 66.3,
   [PROPERTY_RUNTIME_GROUPS[1].rentalIncomeField]: 66.4,
   [PROPERTY_RUNTIME_GROUPS[2].rentalIncomeField]: 66.5,
+  [PROPERTY_RUNTIME_GROUPS[3].rentalIncomeField]: 66.6,
+  [PROPERTY_RUNTIME_GROUPS[4].rentalIncomeField]: 66.7,
   [PROPERTY_RUNTIME_GROUPS[0].loanBalanceField]: 74.1,
   [PROPERTY_RUNTIME_GROUPS[0].loanRateField]: 74.2,
   [PROPERTY_RUNTIME_GROUPS[0].loanRepaymentField]: 74.3,
@@ -192,23 +194,22 @@ export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, numb
   [PROPERTY_RUNTIME_GROUPS[1].loanRepaymentField]: 74.6,
   [PROPERTY_RUNTIME_GROUPS[2].loanBalanceField]: 74.7,
   [PROPERTY_RUNTIME_GROUPS[2].loanRateField]: 74.8,
-  [PROPERTY_RUNTIME_GROUPS[2].loanRepaymentField]: 74.9
+  [PROPERTY_RUNTIME_GROUPS[2].loanRepaymentField]: 74.9,
+  [PROPERTY_RUNTIME_GROUPS[3].loanBalanceField]: 75.0,
+  [PROPERTY_RUNTIME_GROUPS[3].loanRateField]: 75.1,
+  [PROPERTY_RUNTIME_GROUPS[3].loanRepaymentField]: 75.2,
+  [PROPERTY_RUNTIME_GROUPS[4].loanBalanceField]: 75.3,
+  [PROPERTY_RUNTIME_GROUPS[4].loanRateField]: 75.4,
+  [PROPERTY_RUNTIME_GROUPS[4].loanRepaymentField]: 75.5
 };
 
 export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
   HOME_FIELDS.homeValue,
   HOME_FIELDS.mortgageBalance,
   ...DEPENDENT_RUNTIME_GROUPS.map((group) => group.nameField),
-  PROPERTY_RUNTIME_GROUPS[0].nameField,
-  PROPERTY_RUNTIME_GROUPS[0].valueField,
-  PROPERTY_RUNTIME_GROUPS[1].nameField,
-  PROPERTY_RUNTIME_GROUPS[1].valueField,
-  PROPERTY_RUNTIME_GROUPS[2].nameField,
-  PROPERTY_RUNTIME_GROUPS[2].valueField,
+  ...PROPERTY_RUNTIME_GROUPS.flatMap((group) => [group.nameField, group.valueField]),
   OTHER_WORK_FIELDS.income,
-  PROPERTY_RUNTIME_GROUPS[0].loanBalanceField,
-  PROPERTY_RUNTIME_GROUPS[1].loanBalanceField,
-  PROPERTY_RUNTIME_GROUPS[2].loanBalanceField,
+  ...PROPERTY_RUNTIME_GROUPS.map((group) => group.loanBalanceField),
   OTHER_LOAN_FIELDS.balance,
   INCOME_EVENT_RUNTIME_GROUPS[0].nameField,
   INCOME_EVENT_RUNTIME_GROUPS[1].nameField,
@@ -305,7 +306,7 @@ export function isOutOfRangeLiquidationRank(fieldId: FieldId, nextValue: unknown
   if (nextValue === null || nextValue === undefined || String(nextValue).trim() === "") return false;
   const rank = Number(nextValue);
   if (!Number.isInteger(rank)) return true;
-  return rank < 0 || rank > 3;
+  return rank < 0 || rank > PROPERTY_RUNTIME_GROUPS.length;
 }
 
 export function isDuplicateLiquidationRank(values: RuntimeValues, fieldId: FieldId, nextValue: unknown): boolean {

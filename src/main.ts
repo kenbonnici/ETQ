@@ -310,9 +310,7 @@ const sectionState = {
 let visibleDependents = 1;
 const dependentFieldSets = DEPENDENT_RUNTIME_GROUPS.map((group) => group.fields);
 let visibleProperties = 1;
-const property1Fields = PROPERTY_RUNTIME_GROUPS[0].coreFields;
-const property2Fields = PROPERTY_RUNTIME_GROUPS[1].coreFields;
-const property3Fields = PROPERTY_RUNTIME_GROUPS[2].coreFields;
+const propertyFieldSets = PROPERTY_RUNTIME_GROUPS.map((group) => group.coreFields);
 const PROPERTY_LIQUIDATION_CELLS = PROPERTY_LIQUIDATION_FIELDS;
 const FINER_DETAILS_FIELD_IDS = FINER_DETAILS_FIELDS;
 let visibleIncomeEvents = 1;
@@ -2313,8 +2311,7 @@ function loadFinerDetailsDefaults(): void {
 function renderInputs(): void {
   const cursorState = capturePanelCursorState();
   visibleDependents = expandVisibleGroupCount(visibleDependents, dependentFieldSets);
-  if (anyValue(fieldState, property3Fields)) visibleProperties = Math.max(visibleProperties, 3);
-  else if (anyValue(fieldState, property2Fields)) visibleProperties = Math.max(visibleProperties, 2);
+  visibleProperties = expandVisibleGroupCount(visibleProperties, propertyFieldSets);
   if (anyValue(fieldState, incomeEvent3Fields)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 3);
   else if (anyValue(fieldState, incomeEvent2Fields)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 2);
   if (anyValue(fieldState, expenseEvent3Fields)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 3);
@@ -2412,11 +2409,14 @@ function renderInputs(): void {
       ) {
         html += `<button type="button" class="add-dependent-btn" data-next-dependent="${dependentGroup.idx + 2}">Add another dependent</button>`;
       }
-      if (def.fieldId === PROPERTY_RUNTIME_GROUPS[0].annualCostsField && visibleProperties < 2 && !isBlank(fieldState[PROPERTY_RUNTIME_GROUPS[0].nameField])) {
-        html += `<button type="button" class="add-property-btn" data-next-property="2">Add another property</button>`;
-      }
-      if (def.fieldId === PROPERTY_RUNTIME_GROUPS[1].annualCostsField && visibleProperties < 3 && !isBlank(fieldState[PROPERTY_RUNTIME_GROUPS[1].nameField])) {
-        html += `<button type="button" class="add-property-btn" data-next-property="3">Add another property</button>`;
+      const propertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.annualCostsField === def.fieldId);
+      if (
+        propertyGroup
+        && propertyGroup.idx < PROPERTY_RUNTIME_GROUPS.length - 1
+        && visibleProperties < propertyGroup.idx + 2
+        && !isBlank(fieldState[propertyGroup.nameField])
+      ) {
+        html += `<button type="button" class="add-property-btn" data-next-property="${propertyGroup.idx + 2}">Add another property</button>`;
       }
       if (def.fieldId === INCOME_EVENT_RUNTIME_GROUPS[0].yearField && visibleIncomeEvents < 2 && !isBlank(fieldState[INCOME_EVENT_RUNTIME_GROUPS[0].nameField])) {
         html += `<button type="button" class="add-event-btn" data-next-income-event="2">Add another income event</button>`;
@@ -2750,7 +2750,7 @@ function renderInputs(): void {
     btn.addEventListener("click", () => {
       const next = Number(btn.dataset.nextProperty);
       if (Number.isFinite(next)) {
-        visibleProperties = Math.max(visibleProperties, Math.min(3, next));
+        visibleProperties = Math.max(visibleProperties, Math.min(PROPERTY_RUNTIME_GROUPS.length, next));
         renderInputs();
       }
     });

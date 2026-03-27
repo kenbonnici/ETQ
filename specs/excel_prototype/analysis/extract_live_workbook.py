@@ -1,11 +1,11 @@
-import csv
 import json
+import re
 from pathlib import Path
 
 from openpyxl import load_workbook
 
 XLSX_PATH = Path("specs/ETQ.xlsx")
-INPUTS_CSV_PATH = Path("specs/excel_prototype/analysis/step1_inputs_with_tooltips_ui_notes.csv")
+FIELD_REGISTRY_PATH = Path("src/model/fieldRegistry.ts")
 OUT_PATH = Path("/tmp/etq_live_extract.json")
 
 
@@ -21,13 +21,15 @@ def read_ages_and_series(ws, row: int) -> list[float]:
     return values
 
 
+def load_input_cells() -> list[str]:
+    field_registry = FIELD_REGISTRY_PATH.read_text(encoding="utf-8")
+    return re.findall(r'^\s*(B\d+):\s+"[^"]+",?$', field_registry, flags=re.MULTILINE)
+
+
 def load_raw_inputs(inputs_ws) -> dict:
     raw: dict = {}
-    with INPUTS_CSV_PATH.open(newline="", encoding="utf-8") as f:
-        for rec in csv.DictReader(f):
-            cell = rec["cell"]
-            value = inputs_ws[cell].value
-            raw[cell] = value
+    for cell in load_input_cells():
+        raw[cell] = inputs_ws[cell].value
     return raw
 
 
@@ -42,10 +44,10 @@ def main() -> None:
         "raw": load_raw_inputs(ws_inputs),
         "exp": {
             "ages": read_ages_and_series(ws_norm, 3),
-            "cashE": read_ages_and_series(ws_early, 203),
-            "cashN": read_ages_and_series(ws_norm, 203),
-            "nwE": read_ages_and_series(ws_early, 204),
-            "nwN": read_ages_and_series(ws_norm, 204),
+            "cashE": read_ages_and_series(ws_early, 247),
+            "cashN": read_ages_and_series(ws_norm, 247),
+            "nwE": read_ages_and_series(ws_early, 248),
+            "nwN": read_ages_and_series(ws_norm, 248),
         },
     }
 

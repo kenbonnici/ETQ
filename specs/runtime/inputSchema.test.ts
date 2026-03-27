@@ -66,6 +66,10 @@ test("cell-keyed schema exports match the field-keyed source when remapped", () 
 test("field and cell group exports round-trip without drift", () => {
   assert.equal(DEPENDENT_GROUPS.length, 5);
   assert.equal(DEPENDENT_GROUPS_BY_CELL.length, 5);
+  assert.equal(PROPERTY_GROUPS.length, 5);
+  assert.equal(PROPERTY_GROUPS_BY_CELL.length, 5);
+  assert.equal(LIQUIDATION_RANK_FIELDS.length, 5);
+  assert.equal(LIQUIDATION_RANK_CELLS.length, 5);
 
   assert.deepEqual(
     DEPENDENT_GROUPS_BY_CELL,

@@ -254,7 +254,9 @@ export const FINER_DETAILS_COL_C_DEFAULTS: Partial<Record<FieldId, number | null
   "liquidation.propertyDisposalCostRate": 0.15,
   "properties.01.liquidationPriority": null,
   "properties.02.liquidationPriority": null,
-  "properties.03.liquidationPriority": null
+  "properties.03.liquidationPriority": null,
+  "properties.04.liquidationPriority": null,
+  "properties.05.liquidationPriority": null
 };
 
 export const FINER_DETAILS_COL_C_DEFAULTS_BY_CELL = mapFieldRecordToCells(FINER_DETAILS_COL_C_DEFAULTS);
@@ -288,9 +290,15 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "properties.02.annualOperatingCost": { nonNegative: true },
   "properties.03.marketValue": { nonNegative: true },
   "properties.03.annualOperatingCost": { nonNegative: true },
+  "properties.04.marketValue": { nonNegative: true },
+  "properties.04.annualOperatingCost": { nonNegative: true },
+  "properties.05.marketValue": { nonNegative: true },
+  "properties.05.annualOperatingCost": { nonNegative: true },
   "properties.01.rentalIncomeNetAnnual": { nonNegative: true },
   "properties.02.rentalIncomeNetAnnual": { nonNegative: true },
   "properties.03.rentalIncomeNetAnnual": { nonNegative: true },
+  "properties.04.rentalIncomeNetAnnual": { nonNegative: true },
+  "properties.05.rentalIncomeNetAnnual": { nonNegative: true },
   "income.otherWork.netAnnual": { nonNegative: true },
   "income.otherWork.endAge": { integer: true, nonNegative: true },
   "debts.creditCards.balance": { nonNegative: true },
@@ -303,6 +311,12 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "properties.03.loan.balance": { nonNegative: true },
   "properties.03.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
   "properties.03.loan.monthlyRepayment": { nonNegative: true },
+  "properties.04.loan.balance": { nonNegative: true },
+  "properties.04.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "properties.04.loan.monthlyRepayment": { nonNegative: true },
+  "properties.05.loan.balance": { nonNegative: true },
+  "properties.05.loan.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
+  "properties.05.loan.monthlyRepayment": { nonNegative: true },
   "debts.other.balance": { nonNegative: true },
   "debts.other.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },
   "debts.other.monthlyRepayment": { nonNegative: true },
@@ -335,9 +349,11 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "liquidity.minimumCashBuffer": { nonNegative: true },
   "liquidation.stockSellingCostRate": { nonNegative: true, warningBounds: { max: 0.25 } },
   "liquidation.propertyDisposalCostRate": { nonNegative: true, warningBounds: { max: 0.3 } },
-  "properties.01.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } },
-  "properties.02.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } },
-  "properties.03.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 3 } }
+  "properties.01.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 5 } },
+  "properties.02.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 5 } },
+  "properties.03.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 5 } },
+  "properties.04.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 5 } },
+  "properties.05.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 5 } }
 };
 
 export const FIELD_VALIDATION_RULES_BY_CELL = mapFieldRecordToCells(FIELD_VALIDATION_RULES);
@@ -382,7 +398,9 @@ export const SKIP_REVEAL_CRITICAL_CELLS = PROJECTION_GATE_CELLS;
 export const LIQUIDATION_RANK_FIELDS = [
   "properties.01.liquidationPriority",
   "properties.02.liquidationPriority",
-  "properties.03.liquidationPriority"
+  "properties.03.liquidationPriority",
+  "properties.04.liquidationPriority",
+  "properties.05.liquidationPriority"
 ] as const satisfies readonly FieldId[];
 
 export const LIQUIDATION_RANK_CELLS = mapFieldListToCells(LIQUIDATION_RANK_FIELDS);
@@ -447,6 +465,26 @@ export const PROPERTY_GROUPS = [
     loanRateField: "properties.03.loan.interestRateAnnual",
     loanRepaymentField: "properties.03.loan.monthlyRepayment",
     liquidationRankField: "properties.03.liquidationPriority"
+  },
+  {
+    nameField: "properties.04.displayName",
+    valueField: "properties.04.marketValue",
+    annualCostsField: "properties.04.annualOperatingCost",
+    rentalIncomeField: "properties.04.rentalIncomeNetAnnual",
+    loanBalanceField: "properties.04.loan.balance",
+    loanRateField: "properties.04.loan.interestRateAnnual",
+    loanRepaymentField: "properties.04.loan.monthlyRepayment",
+    liquidationRankField: "properties.04.liquidationPriority"
+  },
+  {
+    nameField: "properties.05.displayName",
+    valueField: "properties.05.marketValue",
+    annualCostsField: "properties.05.annualOperatingCost",
+    rentalIncomeField: "properties.05.rentalIncomeNetAnnual",
+    loanBalanceField: "properties.05.loan.balance",
+    loanRateField: "properties.05.loan.interestRateAnnual",
+    loanRepaymentField: "properties.05.loan.monthlyRepayment",
+    liquidationRankField: "properties.05.liquidationPriority"
   }
 ] as Array<PropertyGroup>;
 

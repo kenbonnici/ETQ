@@ -6,8 +6,6 @@ interface ScenarioConfig {
   retirementAge: number;
 }
 
-type FirstReqMode = "negate" | "raw" | "base_ref";
-
 interface StageSeries {
   bfwd: number[];
   disposal: number[];
@@ -48,15 +46,8 @@ function computePensionReduction(inputs: EffectiveInputs, earlyRetirementAge: nu
   return yearsEarly * inputs.pensionReductionPerYearEarly;
 }
 
-function propertyOrder(priority: number[], currentValues: number[]): number[] {
-  const hasAnyPositive = priority.some((p) => p > 0);
-  if (hasAnyPositive) {
-    return [0, 1, 2]
-      .filter((i) => priority[i] > 0)
-      .sort((a, b) => priority[a] - priority[b]);
-  }
-
-  const indexed = [0, 1, 2].map((i) => ({ i, v: currentValues[i] }));
+function propertyOrder(_priority: number[], currentValues: number[]): number[] {
+  const indexed = currentValues.map((v, i) => ({ i, v }));
   indexed.sort((a, b) => a.v - b.v);
   return indexed.map((x) => x.i);
 }
@@ -81,23 +72,12 @@ function sumAt(arrays: number[][], idx: number): number {
   return s;
 }
 
-function computeLiquidationRequired(
-  basis: number[],
-  firstMode: FirstReqMode,
-  firstBaseRef: number[] | null = null
-): number[] {
+function computeLiquidationRequired(basis: number[]): number[] {
   const n = basis.length;
   const req = zeroSeries(n);
   if (n === 0) return req;
 
-  if (firstMode === "negate") {
-    req[0] = basis[0] < 0 ? -basis[0] : 0;
-  } else if (firstMode === "raw") {
-    req[0] = basis[0] < 0 ? basis[0] : 0;
-  } else {
-    const ref = firstBaseRef ?? basis;
-    req[0] = basis[0] < 0 ? ref[0] : 0;
-  }
+  req[0] = basis[0] < 0 ? -basis[0] : 0;
 
   for (let i = 1; i < n; i += 1) {
     let prior = 0;
@@ -208,12 +188,12 @@ function computePropertyStage(
 
 function stagePropertyOrder(priority: number[], currentValues: number[]): number[] {
   const hasAnyPositive = priority.some((p) => p > 0);
-  if (!hasAnyPositive) return propertyOrder(priority, currentValues).slice(0, 3);
+  if (!hasAnyPositive) return propertyOrder(priority, currentValues);
 
-  const byRank = [-1, -1, -1];
-  for (let i = 0; i < 3; i += 1) {
+  const byRank = currentValues.map(() => -1);
+  for (let i = 0; i < currentValues.length; i += 1) {
     const rank = Math.trunc(priority[i]);
-    if (rank >= 1 && rank <= 3 && byRank[rank - 1] === -1) {
+    if (rank >= 1 && rank <= currentValues.length && byRank[rank - 1] === -1) {
       byRank[rank - 1] = i;
     }
   }
@@ -400,7 +380,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
 
   // Liquidation system (rows 68..134).
   const row68 = cashBaseSeries.map((v) => v - inputs.cashBuffer);
-  const row69 = computeLiquidationRequired(row68, "negate");
+  const row69 = computeLiquidationRequired(row68);
 
   const stockStage = computeStockStage(
     row69,
@@ -410,7 +390,6 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
   ); // rows 74..79
 
   const row81 = row68.map((v, i) => v + cumulative(stockStage.netProceeds)[i]);
-  const row82 = computeLiquidationRequired(row81, "raw");
 
   const order = stagePropertyOrder(
     inputs.liquidationPriority,
@@ -420,60 +399,41 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
   const stageSeriesForProperty = (propIdx: number, series: number[][]): number[] =>
     propIdx >= 0 ? series[propIdx] : zeroSeries(n);
 
-  const stage1 = computePropertyStage(
-    row82,
-    stageSeriesForProperty(order[0], propertyValueSeries),
-    stageSeriesForProperty(order[0], propertyRentalSeries),
-    stageSeriesForProperty(order[0], propertyAnnualCostSeries),
-    stageSeriesForProperty(order[0], propertyLoanSeries),
-    inputs.propertyAppreciation,
-    inputs.propertyDisposalCosts
-  ); // rows 85..93
+  const propertyStages: PropertyStageSeries[] = [];
+  const propertyExtraInterestSeries: number[][] = [];
+  let cashAvailableAfterLiquidationStages = row81;
 
-  const row95 = row81.map((v, i) => v + cumulative(stage1.netProceeds)[i]);
-  const row96 = row95.map(
-    (v, i) => Math.max(v + inputs.cashBuffer, 0) - Math.max(row81[i] + inputs.cashBuffer, 0)
+  for (let stageIdx = 0; stageIdx < order.length; stageIdx += 1) {
+    const required = computeLiquidationRequired(cashAvailableAfterLiquidationStages);
+    const propIdx = order[stageIdx];
+    const stage = computePropertyStage(
+      required,
+      stageSeriesForProperty(propIdx, propertyValueSeries),
+      stageSeriesForProperty(propIdx, propertyRentalSeries),
+      stageSeriesForProperty(propIdx, propertyAnnualCostSeries),
+      stageSeriesForProperty(propIdx, propertyLoanSeries),
+      inputs.propertyAppreciation,
+      inputs.propertyDisposalCosts
+    );
+    propertyStages.push(stage);
+
+    const cashAfterProceeds = cashAvailableAfterLiquidationStages.map(
+      (value, idx) => value + cumulative(stage.netProceeds)[idx]
+    );
+    const extraCash = cashAfterProceeds.map(
+      (value, idx) => Math.max(value + inputs.cashBuffer, 0) - Math.max(cashAvailableAfterLiquidationStages[idx] + inputs.cashBuffer, 0)
+    );
+    const extraInterest = extraCash.map((value) => value * inputs.cashRate);
+    propertyExtraInterestSeries.push(extraInterest);
+    cashAvailableAfterLiquidationStages = cashAfterProceeds.map(
+      (value, idx) => value + cumulative(extraInterest)[idx]
+    );
+  }
+
+  const finalCashSeries = cashAvailableAfterLiquidationStages.map((v) => v + inputs.cashBuffer); // row180 / row213
+  const totalInterestSeries = baseInterestSeries.map(
+    (value, i) => value + propertyExtraInterestSeries.reduce((sum, series) => sum + series[i], 0)
   );
-  const row97 = row96.map((v) => v * inputs.cashRate);
-  const row98 = row95.map((v, i) => v + cumulative(row97)[i]);
-  const row99 = computeLiquidationRequired(row98, "base_ref", row95);
-
-  const stage2 = computePropertyStage(
-    row99,
-    stageSeriesForProperty(order[1], propertyValueSeries),
-    stageSeriesForProperty(order[1], propertyRentalSeries),
-    stageSeriesForProperty(order[1], propertyAnnualCostSeries),
-    stageSeriesForProperty(order[1], propertyLoanSeries),
-    inputs.propertyAppreciation,
-    inputs.propertyDisposalCosts
-  ); // rows 102..110
-
-  const row112 = row98.map((v, i) => v + cumulative(stage2.netProceeds)[i]);
-  const row113 = row112.map(
-    (v, i) => Math.max(v + inputs.cashBuffer, 0) - Math.max(row98[i] + inputs.cashBuffer, 0)
-  );
-  const row114 = row113.map((v) => v * inputs.cashRate);
-  const row115 = row112.map((v, i) => v + cumulative(row114)[i]);
-  const row116 = computeLiquidationRequired(row115, "raw");
-
-  const stage3 = computePropertyStage(
-    row116,
-    stageSeriesForProperty(order[2], propertyValueSeries),
-    stageSeriesForProperty(order[2], propertyRentalSeries),
-    stageSeriesForProperty(order[2], propertyAnnualCostSeries),
-    stageSeriesForProperty(order[2], propertyLoanSeries),
-    inputs.propertyAppreciation,
-    inputs.propertyDisposalCosts
-  ); // rows 119..127
-
-  const row129 = row115.map((v, i) => v + cumulative(stage3.netProceeds)[i]);
-  const row130 = row129.map(
-    (v, i) => Math.max(v + inputs.cashBuffer, 0) - Math.max(row115[i] + inputs.cashBuffer, 0)
-  );
-  const row131 = row130.map((v) => v * inputs.cashRate);
-  const row132 = row129.map((v, i) => v + cumulative(row131)[i]);
-  const finalCashSeries = row132.map((v) => v + inputs.cashBuffer); // row134 / row201
-  const totalInterestSeries = baseInterestSeries.map((value, i) => value + row97[i] + row114[i] + row131[i]);
   const openingCashSeries = zeroSeries(n);
   const totalInflowsSeries = zeroSeries(n);
   const totalOutflowsSeries = zeroSeries(n);
@@ -489,9 +449,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
       postRetIncomeSeries[i] +
       sumAt(incomeEventSeries, i) +
       stockStage.netProceeds[i] +
-      stage1.netProceeds[i] +
-      stage2.netProceeds[i] +
-      stage3.netProceeds[i];
+      propertyStages.reduce((sum, stage) => sum + stage.netProceeds[i], 0);
     totalOutflowsSeries[i] =
       creditCardClearanceSeries[i] +
       homeLoanRepaymentSeries[i] +
@@ -509,11 +467,11 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
   const adjustedPropertyValues = propertyValueSeries.map((s) => [...s]);
   const adjustedPropertyLoans = propertyLoanSeries.map((s) => [...s]);
 
-  const stageDisposals = [stage1.disposal, stage2.disposal, stage3.disposal];
-  const stageLoanRepayments = [stage1.loanRepayment, stage2.loanRepayment, stage3.loanRepayment];
+  const stageDisposals = propertyStages.map((stage) => stage.disposal);
+  const stageLoanRepayments = propertyStages.map((stage) => stage.loanRepayment);
   const EPS = 1e-9;
 
-  for (let s = 0; s < 3; s += 1) {
+  for (let s = 0; s < propertyStages.length; s += 1) {
     const propIdx = order[s];
     if (propIdx < 0) continue;
 
@@ -603,7 +561,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     });
   }
 
-  const disposalStages = [stage1.disposal, stage2.disposal, stage3.disposal];
+  const disposalStages = propertyStages.map((stage) => stage.disposal);
   for (let s = 0; s < disposalStages.length; s += 1) {
     const propIdx = order[s];
     if (propIdx < 0 || propIdx >= inputs.properties.length) continue;
@@ -620,14 +578,9 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     });
   }
 
-  const propertyStages = [stage1, stage2, stage3];
-  const propertyOrderKeys = stagePropertyOrder(
-    inputs.liquidationPriority,
-    inputs.properties.map((p) => p.value)
-  );
   const propertyStageByProperty = inputs.properties.map<PropertyStageSeries | null>(() => null);
   for (let stageIdx = 0; stageIdx < propertyStages.length; stageIdx += 1) {
-    const propIdx = propertyOrderKeys[stageIdx];
+    const propIdx = order[stageIdx];
     if (propIdx < 0 || propIdx >= propertyStageByProperty.length) continue;
     propertyStageByProperty[propIdx] = propertyStages[stageIdx];
   }

@@ -66,10 +66,10 @@ test("input definitions preserve row order and derive cells from semantic field 
     INPUT_DEFINITIONS.map((def) => def.row),
     [
       4, 6, 8, 10, 12, 15, 16, 17, 19, 21, 23, 25, 33, 34, 35, 38, 39, 40, 43, 44, 45, 48, 49, 50, 53, 54,
-      55, 60, 61, 62, 65, 66, 67, 70, 71, 72, 76, 77, 78, 80, 81, 85, 88, 89, 90, 93, 94, 95, 98, 99, 100,
-      103, 104, 105, 110, 111, 112, 115, 116, 117, 120, 121, 122, 127, 128, 129, 132, 133, 134, 137, 138,
-      139, 144, 147, 148, 149, 151, 152, 153, 155, 157, 159, 161, 163, 165, 167, 169, 171, 173, 176, 177,
-      178
+      55, 60, 61, 62, 65, 66, 67, 70, 71, 72, 75, 76, 77, 80, 81, 82, 86, 87, 88, 89, 90, 92, 93, 97, 100,
+      101, 102, 105, 106, 107, 110, 111, 112, 115, 116, 117, 120, 121, 122, 125, 126, 127, 132, 133, 134,
+      137, 138, 139, 142, 143, 144, 149, 150, 151, 154, 155, 156, 159, 160, 161, 166, 169, 170, 171, 173,
+      174, 175, 177, 179, 181, 183, 185, 187, 189, 191, 193, 195, 198, 199, 200, 201, 202
     ]
   );
 
@@ -142,11 +142,11 @@ test("property liquidation order preserves duplicate-rank guardrails and only ap
     true
   );
   assert.equal(
-    isOutOfRangeLiquidationRank(PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 4),
+    isOutOfRangeLiquidationRank(PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 6),
     true
   );
   assert.equal(
-    isOutOfRangeLiquidationRank(PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 2),
+    isOutOfRangeLiquidationRank(PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 5),
     false
   );
   assert.equal(
@@ -160,24 +160,34 @@ test("property liquidation order preserves duplicate-rank guardrails and only ap
 
   fields[PROPERTY_RUNTIME_GROUPS[2].nameField] = "P3";
   fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 220_000;
+  fields[PROPERTY_RUNTIME_GROUPS[3].nameField] = "P4";
+  fields[PROPERTY_RUNTIME_GROUPS[3].valueField] = 80_000;
+  fields[PROPERTY_RUNTIME_GROUPS[4].nameField] = "P5";
+  fields[PROPERTY_RUNTIME_GROUPS[4].valueField] = 120_000;
   const appended = syncManualPropertyOrderForNewProperties(fields, new Set([0, 1]), true);
-  assert.deepEqual(appended, [{ fieldId: PROPERTY_RUNTIME_GROUPS[2].liquidationRankField, value: 3 }]);
+  assert.deepEqual(appended, [
+    { fieldId: PROPERTY_RUNTIME_GROUPS[2].liquidationRankField, value: 3 },
+    { fieldId: PROPERTY_RUNTIME_GROUPS[3].liquidationRankField, value: 4 },
+    { fieldId: PROPERTY_RUNTIME_GROUPS[4].liquidationRankField, value: 5 }
+  ]);
 
   for (const update of appended) {
     fields[update.fieldId] = update.value;
   }
 
   fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = null;
-  assert.deepEqual(syncManualPropertyOrderForNewProperties(fields, new Set([0, 1, 2]), true), []);
+  assert.deepEqual(syncManualPropertyOrderForNewProperties(fields, new Set([0, 1, 2, 3, 4]), true), []);
 
   fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = 3;
+  fields[PROPERTY_RUNTIME_GROUPS[3].liquidationRankField] = 4;
+  fields[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField] = 5;
   const manualOrder = buildPropertyLiquidationOrder(fields, PROPERTY_RUNTIME_GROUPS.slice(), true);
-  assert.deepEqual(manualOrder.map((group) => group.idx), [1, 0, 2]);
+  assert.deepEqual(manualOrder.map((group) => group.idx), [1, 0, 2, 3, 4]);
 
   const assignments = buildPropertyLiquidationAssignments(manualOrder, PROPERTY_RUNTIME_GROUPS.slice());
   assert.deepEqual(
     assignments.filter((assignment) => assignment.value !== null).map((assignment) => assignment.value),
-    [1, 2, 3]
+    [1, 2, 3, 4, 5]
   );
 });
 
@@ -189,26 +199,32 @@ test("auto liquidation order re-sorts from current property values after repeate
   fields[PROPERTY_RUNTIME_GROUPS[1].valueField] = 150_000;
   fields[PROPERTY_RUNTIME_GROUPS[2].nameField] = "P3";
   fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 220_000;
+  fields[PROPERTY_RUNTIME_GROUPS[3].nameField] = "P4";
+  fields[PROPERTY_RUNTIME_GROUPS[3].valueField] = 80_000;
+  fields[PROPERTY_RUNTIME_GROUPS[4].nameField] = "P5";
+  fields[PROPERTY_RUNTIME_GROUPS[4].valueField] = 120_000;
 
-  fields[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField] = 3;
-  fields[PROPERTY_RUNTIME_GROUPS[1].liquidationRankField] = 1;
-  fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = 2;
+  fields[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField] = 5;
+  fields[PROPERTY_RUNTIME_GROUPS[1].liquidationRankField] = 3;
+  fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = 4;
+  fields[PROPERTY_RUNTIME_GROUPS[3].liquidationRankField] = 1;
+  fields[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField] = 2;
 
   assert.deepEqual(
     normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
-    [3, 1, 2]
+    [5, 3, 4, 1, 2]
   );
 
   fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 100_000;
   assert.deepEqual(
     normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
-    [1, 2, 3]
+    [2, 4, 5, 1, 3]
   );
 
   fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 50_000;
   assert.deepEqual(
     normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
-    [2, 3, 1]
+    [3, 5, 1, 2, 4]
   );
 });
 
@@ -220,27 +236,35 @@ test("manual liquidation order stays fixed across value edits and blank entries 
   fields[PROPERTY_RUNTIME_GROUPS[1].valueField] = 150_000;
   fields[PROPERTY_RUNTIME_GROUPS[2].nameField] = "P3";
   fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 220_000;
+  fields[PROPERTY_RUNTIME_GROUPS[3].nameField] = "P4";
+  fields[PROPERTY_RUNTIME_GROUPS[3].valueField] = 80_000;
+  fields[PROPERTY_RUNTIME_GROUPS[4].nameField] = "P5";
+  fields[PROPERTY_RUNTIME_GROUPS[4].valueField] = 120_000;
 
   fields[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField] = 2;
   fields[PROPERTY_RUNTIME_GROUPS[1].liquidationRankField] = 1;
   fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = null;
+  fields[PROPERTY_RUNTIME_GROUPS[3].liquidationRankField] = null;
+  fields[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField] = null;
 
   assert.deepEqual(
     normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: true }).liquidationPriority,
-    [2, 1, 0]
+    [2, 1, 0, 0, 0]
   );
 
   fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 50_000;
   fields[PROPERTY_RUNTIME_GROUPS[1].valueField] = 400_000;
   fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 100_000;
+  fields[PROPERTY_RUNTIME_GROUPS[3].valueField] = 300_000;
+  fields[PROPERTY_RUNTIME_GROUPS[4].valueField] = 200_000;
 
   assert.deepEqual(
     normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: true }).liquidationPriority,
-    [2, 1, 0]
+    [2, 1, 0, 0, 0]
   );
   assert.deepEqual(
     buildPropertyLiquidationOrder(fields, PROPERTY_RUNTIME_GROUPS.slice(), true).map((group) => group.idx),
-    [1, 0, 2]
+    [1, 0, 2, 3, 4]
   );
 });
 
@@ -297,6 +321,10 @@ test("runtime visibility state stays collapsed until later slots actually contai
   assert.equal(deriveRuntimeVisibilityState(propertyFields).visibleProperties, 2);
   propertyFields[PROPERTY_RUNTIME_GROUPS[2].annualCostsField] = 1_200;
   assert.equal(deriveRuntimeVisibilityState(propertyFields).visibleProperties, 3);
+  propertyFields[PROPERTY_RUNTIME_GROUPS[3].valueField] = 80_000;
+  assert.equal(deriveRuntimeVisibilityState(propertyFields).visibleProperties, 4);
+  propertyFields[PROPERTY_RUNTIME_GROUPS[4].nameField] = "Marsa";
+  assert.equal(deriveRuntimeVisibilityState(propertyFields).visibleProperties, 5);
 
   const incomeEventFields = createEmptyFieldState();
   incomeEventFields[INCOME_EVENT_RUNTIME_GROUPS[1].yearField] = 2031;
@@ -343,6 +371,57 @@ test("normalization and scenario outputs include dependent slots four and five",
   assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost[4].label, "Taylor");
   assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost[4].values[0], 3_200);
   assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost[4].values[2], 0);
+});
+
+test("normalization and scenario outputs include property slots four and five", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.annualLivingExpenses] = 50_000;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[PROPERTY_RUNTIME_GROUPS[3].nameField] = "Gudja";
+  fields[PROPERTY_RUNTIME_GROUPS[3].valueField] = 80_000;
+  fields[PROPERTY_RUNTIME_GROUPS[3].annualCostsField] = 1_000;
+  fields[PROPERTY_RUNTIME_GROUPS[3].rentalIncomeField] = 5_000;
+  fields[PROPERTY_RUNTIME_GROUPS[4].nameField] = "Marsa";
+  fields[PROPERTY_RUNTIME_GROUPS[4].valueField] = 120_000;
+  fields[PROPERTY_RUNTIME_GROUPS[4].annualCostsField] = 800;
+  fields[PROPERTY_RUNTIME_GROUPS[4].rentalIncomeField] = 6_500;
+
+  const normalized = normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false });
+  assert.equal(normalized.properties.length, 5);
+  assert.deepEqual(normalized.properties[3], {
+    name: "Gudja",
+    value: 80_000,
+    annualCosts: 1_000,
+    rentalIncome: 5_000,
+    loanBalance: 0,
+    loanRate: 0,
+    loanRepaymentMonthly: 0
+  });
+  assert.deepEqual(normalized.properties[4], {
+    name: "Marsa",
+    value: 120_000,
+    annualCosts: 800,
+    rentalIncome: 6_500,
+    loanBalance: 0,
+    loanRate: 0,
+    loanRepaymentMonthly: 0
+  });
+
+  const result = runModel(fields, {
+    deeperDiveOpen: true,
+    finerDetailsOpen: true,
+    earlyRetirementAge: 55,
+    manualPropertyLiquidationOrder: false
+  });
+
+  assert.equal(result.outputs.scenarioNorm.cashFlow.rentalIncomeByProperty.length, 5);
+  assert.equal(result.outputs.scenarioNorm.cashFlow.rentalIncomeByProperty[3].label, "Gudja");
+  assert.equal(result.outputs.scenarioNorm.cashFlow.rentalIncomeByProperty[4].label, "Marsa");
+  assert.equal(result.outputs.scenarioNorm.netWorth.properties.length, 6);
+  assert.equal(result.outputs.scenarioNorm.netWorth.properties[4].label, "Gudja");
+  assert.equal(result.outputs.scenarioNorm.netWorth.properties[5].label, "Marsa");
 });
 
 test("main.ts runtime DOM wiring is field-id based", () => {

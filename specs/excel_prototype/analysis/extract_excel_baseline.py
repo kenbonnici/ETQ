@@ -1,12 +1,12 @@
-import csv
 import json
+import re
 import zipfile
 import xml.etree.ElementTree as ET
 
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
 XLSX = "specs/ETQ.xlsx"
-INPUTS_CSV = "specs/excel_prototype/analysis/step1_inputs_with_tooltips_ui_notes.csv"
+FIELD_REGISTRY = "src/model/fieldRegistry.ts"
 OUT_JSON = "specs/excel_prototype/analysis/excel_baseline_specimen.json"
 OUT_TS = "src/model/parity/excelBaselineSpecimen.ts"
 
@@ -30,7 +30,12 @@ def cell_value(cell, sst):
     return v.text
 
 
-def parse_numeric_cells(sheet_xml, refs, sst):
+def load_input_cells():
+    field_registry = open(FIELD_REGISTRY, encoding="utf-8").read()
+    return re.findall(r'^\s*(B\d+):\s+"[^"]+",?$', field_registry, flags=re.MULTILINE)
+
+
+def parse_input_cells(sheet_xml, refs, sst):
     sh = ET.fromstring(sheet_xml)
     out = {}
     for r in refs:
@@ -85,24 +90,13 @@ def main():
         sheet3 = zf.read("xl/worksheets/sheet3.xml")
         sheet4 = zf.read("xl/worksheets/sheet4.xml")
 
-    input_cells = [r["cell"] for r in csv.DictReader(open(INPUTS_CSV))]
-    raw_inputs = parse_numeric_cells(sheet1, input_cells, sst)
-
-    # preserve strings for text cells from CSV specimen
-    with zipfile.ZipFile(XLSX) as zf:
-        sst = get_sst(zf)
-        sh1 = ET.fromstring(zf.read("xl/worksheets/sheet1.xml"))
-        text_cells = set(["B33", "B38", "B43", "B48", "B53", "B60", "B65", "B70", "B110", "B115", "B120", "B127", "B132", "B137"])
-        for cell in text_cells:
-            c = sh1.find(f"m:sheetData/m:row/m:c[@r='{cell}']", NS)
-            v = cell_value(c, sst)
-            raw_inputs[cell] = "" if v is None else str(v)
+    raw_inputs = parse_input_cells(sheet1, load_input_cells(), sst)
 
     ages = row_series(sheet3, 3, sst)
-    cash_norm = row_series(sheet3, 203, sst)
-    nw_norm = row_series(sheet3, 204, sst)
-    cash_early = row_series(sheet4, 203, sst)
-    nw_early = row_series(sheet4, 204, sst)
+    cash_norm = row_series(sheet3, 247, sst)
+    nw_norm = row_series(sheet3, 248, sst)
+    cash_early = row_series(sheet4, 247, sst)
+    nw_early = row_series(sheet4, 248, sst)
 
     # Use RetEarly_Engine!B3 as source of early retirement age.
     sh4 = ET.fromstring(sheet4)

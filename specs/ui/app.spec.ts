@@ -15,6 +15,12 @@ const selectors = {
   mortgageBalance: 'input[data-field-id="housing.01Residence.mortgage.balance"]',
   mortgageInterest: 'input[data-field-id="housing.01Residence.mortgage.interestRateAnnual"]',
   mortgageRepayment: 'input[data-field-id="housing.01Residence.mortgage.monthlyRepayment"]',
+  propertyName: 'input[data-field-id="properties.01.displayName"]',
+  property2Name: 'input[data-field-id="properties.02.displayName"]',
+  property3Name: 'input[data-field-id="properties.03.displayName"]',
+  property4Name: 'input[data-field-id="properties.04.displayName"]',
+  property5Name: 'input[data-field-id="properties.05.displayName"]',
+  propertyAnnualCost: 'input[data-field-id="properties.01.annualOperatingCost"]',
   dependentName: 'input[data-field-id="dependents.01.displayName"]',
   dependent2Name: 'input[data-field-id="dependents.02.displayName"]',
   dependent3Name: 'input[data-field-id="dependents.03.displayName"]',
@@ -88,6 +94,32 @@ test("reveals dependent slots up to five through the existing add-dependent flow
   await expect(page.locator(selectors.dependent5Name)).toBeVisible();
 });
 
+test("reveals property slots up to five through the existing add-property flow", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  await expect(page.locator(selectors.property2Name)).toHaveCount(0);
+  await expect(page.locator(selectors.property4Name)).toHaveCount(0);
+  await expect(page.locator(selectors.property5Name)).toHaveCount(0);
+
+  await fillAndBlur(page, selectors.propertyName, "Sliema");
+  await expect(page.locator(selectors.propertyAnnualCost)).toBeVisible();
+  await page.locator(".add-property-btn").last().click();
+  await expect(page.locator(selectors.property2Name)).toBeVisible();
+
+  await fillAndBlur(page, selectors.property2Name, "Gzira");
+  await page.locator(".add-property-btn").last().click();
+  await expect(page.locator(selectors.property3Name)).toBeVisible();
+
+  await fillAndBlur(page, selectors.property3Name, "Qormi");
+  await page.locator(".add-property-btn").last().click();
+  await expect(page.locator(selectors.property4Name)).toBeVisible();
+
+  await fillAndBlur(page, selectors.property4Name, "Gudja");
+  await page.locator(".add-property-btn").last().click();
+  await expect(page.locator(selectors.property5Name)).toBeVisible();
+});
+
 test("tab order stays in visible dependent field order as groups appear", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "DEEPER DIVE" }).click();
@@ -151,6 +183,7 @@ test("living expenses default to single-total entry and expanded mode aggregates
 
 test("load sample data restores dependents 4 and 5 from the Excel specimen", async ({ page }) => {
   await loadSampleData(page);
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await expect(page.locator(selectors.dependent4Name)).toBeVisible();
   await expect(page.locator(selectors.dependent4Name)).toHaveValue("Stephen");
@@ -161,6 +194,21 @@ test("load sample data restores dependents 4 and 5 from the Excel specimen", asy
   await expect(page.locator(selectors.dependent5Name)).toHaveValue("Jane");
   await expect(page.locator('input[data-field-id="dependents.05.annualCost"]')).toHaveValue(/2,860/);
   await expect(page.locator('input[data-field-id="dependents.05.supportYearsRemaining"]')).toHaveValue("6");
+});
+
+test("load sample data restores properties 4 and 5 from the Excel specimen", async ({ page }) => {
+  await loadSampleData(page);
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  await expect(page.locator(selectors.property4Name)).toBeVisible();
+  await expect(page.locator(selectors.property4Name)).toHaveValue("Gudja");
+  await expect(page.locator('input[data-field-id="properties.04.marketValue"]')).toHaveValue(/80,000/);
+  await expect(page.locator('input[data-field-id="properties.04.rentalIncomeNetAnnual"]')).toHaveValue(/5,000/);
+
+  await expect(page.locator(selectors.property5Name)).toBeVisible();
+  await expect(page.locator(selectors.property5Name)).toHaveValue("Marsa");
+  await expect(page.locator('input[data-field-id="properties.05.marketValue"]')).toHaveValue(/120,000/);
+  await expect(page.locator('input[data-field-id="properties.05.rentalIncomeNetAnnual"]')).toHaveValue(/6,500/);
 });
 
 test("equivalent living-expense totals keep downstream projections unchanged across entry modes", async ({ page }) => {
@@ -287,7 +335,7 @@ test("net-worth section opens independently and keeps scenario selection in sync
 test("cash chart zero-line emphasis follows the active cash scenario only", async ({ page }) => {
   await loadSampleData(page);
 
-  await fillAndBlur(page, selectors.earlyRetAge, "53");
+  await fillAndBlur(page, selectors.earlyRetAge, "51");
   await page.getByRole("button", { name: "Open cash flow" }).click();
 
   await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "true");

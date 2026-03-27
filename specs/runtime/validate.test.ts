@@ -72,6 +72,24 @@ test("validation enforces property-loan companion fields", () => {
   );
 });
 
+test("validation applies the same property-loan rules to the fifth slot", () => {
+  const fields = createEmptyFieldState();
+  fields[PROPERTY_RUNTIME_GROUPS[4].nameField] = "Marsa";
+  fields[PROPERTY_RUNTIME_GROUPS[4].valueField] = 120_000;
+  fields[PROPERTY_RUNTIME_GROUPS[4].loanBalanceField] = 9_524;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === PROPERTY_RUNTIME_GROUPS[4].loanRateField && message.severity === "error"),
+    true
+  );
+  assert.equal(
+    messages.some((message) => message.fieldId === PROPERTY_RUNTIME_GROUPS[4].loanRepaymentField && message.severity === "error"),
+    true
+  );
+});
+
 test("validation rejects one-off events outside the active projection window", () => {
   const fields = createEmptyFieldState();
   fields[RUNTIME_FIELDS.currentAge] = 48;

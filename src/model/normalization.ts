@@ -1,8 +1,8 @@
-import { DEPENDENT_GROUPS_BY_CELL } from "./inputSchema";
+import { DEPENDENT_GROUPS_BY_CELL, PROPERTY_GROUPS_BY_CELL } from "./inputSchema";
 import { EffectiveInputs, InputCell, RawInputValue, RawInputs } from "./types";
 
-const PROPERTY_VALUE_CELLS = ["B61", "B66", "B71"] as const satisfies readonly InputCell[];
-const PROPERTY_LIQUIDATION_CELLS = ["B176", "B177", "B178"] as const satisfies readonly InputCell[];
+const PROPERTY_VALUE_CELLS = PROPERTY_GROUPS_BY_CELL.map((group) => group.valueCell) as readonly InputCell[];
+const PROPERTY_LIQUIDATION_CELLS = PROPERTY_GROUPS_BY_CELL.map((group) => group.liquidationRankCell) as readonly InputCell[];
 
 export interface LiquidationPriorityOptions {
   manualOverrideActive?: boolean;
@@ -41,7 +41,7 @@ export function deriveDefaultLiquidationPriority(raw: RawInputs): number[] {
   const values = PROPERTY_VALUE_CELLS.map((cell) => toNumber(raw[cell]));
   const indexed = values.map((v, i) => ({ v, i }));
   indexed.sort((a, b) => a.v - b.v);
-  const rank = [0, 0, 0];
+  const rank = values.map(() => 0);
   indexed.forEach((x, idx) => {
     rank[x.i] = idx + 1;
   });
@@ -72,7 +72,7 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
   const ageNow = toNumber(raw.B4);
   const statutoryRetirementAge = toBoundedNumber(raw.B19, 50, 70);
   const liveUntilMinimum = ageNow > 0 ? ageNow + 1 : 19;
-  const liveUntilAge = toBoundedNumber(raw.B144, liveUntilMinimum, 120);
+  const liveUntilAge = toBoundedNumber(raw.B166, liveUntilMinimum, 120);
 
   return {
     ageNow,
@@ -94,73 +94,53 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
       yearsToSupport: toNumber(raw[group.yearsCell])
     })),
 
-    properties: [
-      {
-        name: toTrimmedString(raw.B60),
-        value: toNumber(raw.B61),
-        annualCosts: toNumber(raw.B62),
-        rentalIncome: toNumber(raw.B76),
-        loanBalance: toNumber(raw.B88),
-        loanRate: toNumber(raw.B89),
-        loanRepaymentMonthly: toNumber(raw.B90)
-      },
-      {
-        name: toTrimmedString(raw.B65),
-        value: toNumber(raw.B66),
-        annualCosts: toNumber(raw.B67),
-        rentalIncome: toNumber(raw.B77),
-        loanBalance: toNumber(raw.B93),
-        loanRate: toNumber(raw.B94),
-        loanRepaymentMonthly: toNumber(raw.B95)
-      },
-      {
-        name: toTrimmedString(raw.B70),
-        value: toNumber(raw.B71),
-        annualCosts: toNumber(raw.B72),
-        rentalIncome: toNumber(raw.B78),
-        loanBalance: toNumber(raw.B98),
-        loanRate: toNumber(raw.B99),
-        loanRepaymentMonthly: toNumber(raw.B100)
-      }
-    ],
+    properties: PROPERTY_GROUPS_BY_CELL.map((group) => ({
+      name: toTrimmedString(raw[group.nameCell]),
+      value: toNumber(raw[group.valueCell]),
+      annualCosts: toNumber(raw[group.annualCostsCell]),
+      rentalIncome: toNumber(raw[group.rentalIncomeCell]),
+      loanBalance: toNumber(raw[group.loanBalanceCell]),
+      loanRate: toNumber(raw[group.loanRateCell]),
+      loanRepaymentMonthly: toNumber(raw[group.loanRepaymentCell])
+    })),
 
-    otherWorkIncomeAnnual: toNumber(raw.B80),
-    otherWorkUntilAge: toNumber(raw.B81),
-    creditCardBalance: toNumber(raw.B85),
-    otherLoanBalance: toNumber(raw.B103),
-    otherLoanRate: toNumber(raw.B104),
-    otherLoanRepaymentMonthly: toNumber(raw.B105),
+    otherWorkIncomeAnnual: toNumber(raw.B92),
+    otherWorkUntilAge: toNumber(raw.B93),
+    creditCardBalance: toNumber(raw.B97),
+    otherLoanBalance: toNumber(raw.B125),
+    otherLoanRate: toNumber(raw.B126),
+    otherLoanRepaymentMonthly: toNumber(raw.B127),
 
     incomeEvents: [
-      { name: toTrimmedString(raw.B110), amount: toNumber(raw.B111), year: toNumber(raw.B112) },
-      { name: toTrimmedString(raw.B115), amount: toNumber(raw.B116), year: toNumber(raw.B117) },
-      { name: toTrimmedString(raw.B120), amount: toNumber(raw.B121), year: toNumber(raw.B122) }
+      { name: toTrimmedString(raw.B132), amount: toNumber(raw.B133), year: toNumber(raw.B134) },
+      { name: toTrimmedString(raw.B137), amount: toNumber(raw.B138), year: toNumber(raw.B139) },
+      { name: toTrimmedString(raw.B142), amount: toNumber(raw.B143), year: toNumber(raw.B144) }
     ],
     expenseEvents: [
-      { name: toTrimmedString(raw.B127), amount: toNumber(raw.B128), year: toNumber(raw.B129) },
-      { name: toTrimmedString(raw.B132), amount: toNumber(raw.B133), year: toNumber(raw.B134) },
-      { name: toTrimmedString(raw.B137), amount: toNumber(raw.B138), year: toNumber(raw.B139) }
+      { name: toTrimmedString(raw.B149), amount: toNumber(raw.B150), year: toNumber(raw.B151) },
+      { name: toTrimmedString(raw.B154), amount: toNumber(raw.B155), year: toNumber(raw.B156) },
+      { name: toTrimmedString(raw.B159), amount: toNumber(raw.B160), year: toNumber(raw.B161) }
     ],
 
     liveUntilAge,
-    spendAdjustTo65: toNumber(raw.B147),
-    spendAdjust66To75: toNumber(raw.B148),
-    spendAdjustFrom76: toNumber(raw.B149),
-    postRetIncomeAnnual: toNumber(raw.B151),
-    postRetIncomeFromAge: toNumber(raw.B152),
-    postRetIncomeToAge: toNumber(raw.B153),
+    spendAdjustTo65: toNumber(raw.B169),
+    spendAdjust66To75: toNumber(raw.B170),
+    spendAdjustFrom76: toNumber(raw.B171),
+    postRetIncomeAnnual: toNumber(raw.B173),
+    postRetIncomeFromAge: toNumber(raw.B174),
+    postRetIncomeToAge: toNumber(raw.B175),
 
-    inflation: toNumber(raw.B155),
-    propertyAppreciation: toNumber(raw.B157),
-    cashRate: toNumber(raw.B159),
-    stockReturn: toNumber(raw.B161),
-    salaryGrowth: toNumber(raw.B163),
-    rentalIncomeGrowth: toNumber(raw.B165),
+    inflation: toNumber(raw.B177),
+    propertyAppreciation: toNumber(raw.B179),
+    cashRate: toNumber(raw.B181),
+    stockReturn: toNumber(raw.B183),
+    salaryGrowth: toNumber(raw.B185),
+    rentalIncomeGrowth: toNumber(raw.B187),
 
-    pensionReductionPerYearEarly: toNumber(raw.B167),
-    cashBuffer: toNumber(raw.B169),
-    stockSellingCosts: toNumber(raw.B171),
-    propertyDisposalCosts: toNumber(raw.B173),
+    pensionReductionPerYearEarly: toNumber(raw.B189),
+    cashBuffer: toNumber(raw.B191),
+    stockSellingCosts: toNumber(raw.B193),
+    propertyDisposalCosts: toNumber(raw.B195),
 
     liquidationPriority: resolveLiquidationPriority(raw, options)
   };
