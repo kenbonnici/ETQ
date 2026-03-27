@@ -2376,6 +2376,7 @@ function renderInputs(): void {
     const orderedDefs = getOrderedDefinitions(defs);
     let html = "";
     let prevTop = "";
+    let prevMid = "";
     let prevSub = "";
     let liquidationRendered = false;
     let subgroupCardOpen = false;
@@ -2403,10 +2404,12 @@ function renderInputs(): void {
       if (tail.length === 0) {
         closeSubgroupCard();
         prevTop = "";
+        prevMid = "";
         prevSub = "";
       } else {
         const top = tail[0] ?? "";
-        const sub = tail.slice(1).join(" > ");
+        const mid = tail.length > 2 ? (tail[1] ?? "") : "";
+        const sub = tail.length > 2 ? tail.slice(2).join(" > ") : tail.slice(1).join(" > ");
         if (top && top !== prevTop) {
           closeSubgroupCard();
           const suppressTopHeading = top.toLowerCase() === "other post-retirement income";
@@ -2414,6 +2417,13 @@ function renderInputs(): void {
             html += `<h3 class="group-top">${top}</h3>`;
           }
           prevTop = top;
+          prevMid = "";
+          prevSub = "";
+        }
+        if (mid && mid !== prevMid) {
+          closeSubgroupCard();
+          html += `<h4 class="group-mid">${mid}</h4>`;
+          prevMid = mid;
           prevSub = "";
         }
         if (sub && sub !== prevSub) {

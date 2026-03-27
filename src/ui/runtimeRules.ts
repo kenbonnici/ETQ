@@ -414,8 +414,7 @@ function expenseEventSlotVisible(values: RuntimeValues, group: typeof EXPENSE_EV
 export function getDynamicFieldLabel(def: InputDefinition, values: RuntimeValues): string {
   const propertyByRentalIncomeField = PROPERTY_RUNTIME_GROUPS.find((group) => group.rentalIncomeField === def.fieldId);
   if (propertyByRentalIncomeField) {
-    const name = String(values[propertyByRentalIncomeField.nameField] ?? "").trim();
-    return name ? `Rental income: ${name}` : "Rental income:";
+    return "Net annual rental income";
   }
   if (def.fieldId === RUNTIME_FIELDS.generalInflation) return "General inflation";
   const propertyByRankField = PROPERTY_RUNTIME_GROUPS.find((group) => group.liquidationRankField === def.fieldId);
@@ -427,6 +426,19 @@ export function getDynamicFieldLabel(def: InputDefinition, values: RuntimeValues
 
 export function getDynamicGroupTail(def: InputDefinition, values: RuntimeValues): string[] {
   const tail = [...def.groupTail];
+  const propertyByRentalIncomeField = PROPERTY_RUNTIME_GROUPS.find((group) => group.rentalIncomeField === def.fieldId);
+  if (propertyByRentalIncomeField) {
+    const name = String(values[propertyByRentalIncomeField.nameField] ?? "").trim();
+    tail[0] = "Other income";
+    tail[1] = "Rental income from properties";
+    tail[2] = name || propertyByRentalIncomeField.fallbackName;
+    return tail;
+  }
+  if (def.fieldId === OTHER_WORK_FIELDS.income || def.fieldId === OTHER_WORK_FIELDS.untilAge) {
+    tail[0] = "Other income";
+    tail[1] = "Other work income";
+    return tail;
+  }
   const propertyLoanGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.loanFields.includes(def.fieldId));
   if (!propertyLoanGroup) return tail;
   const name = String(values[propertyLoanGroup.nameField] ?? "").trim();

@@ -1351,6 +1351,15 @@ body {
   letter-spacing: 0.01em;
 }
 
+.group-mid {
+  margin: 10px 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #51616f;
+}
+
 .group-item-card {
   margin: 8px 0 12px;
   padding: 10px 12px 12px;
@@ -1409,6 +1418,10 @@ body {
   background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
 }
 
+.section-deeper-dive .group-mid {
+  color: #49688f;
+}
+
 .section-deeper-dive .group-item-card-header {
   border-bottom-color: #d5e0ef;
   background: #edf4fd;
@@ -1423,6 +1436,10 @@ body {
 .section-finer-details .group-item-card {
   border-color: #ded4ec;
   background: linear-gradient(180deg, #fbf8ff 0%, #ffffff 100%);
+}
+
+.section-finer-details .group-mid {
+  color: #6b4d94;
 }
 
 .section-finer-details .group-item-card-header {
