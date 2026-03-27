@@ -61,6 +61,23 @@ test("Excel adapter round-trips and specimen parity still passes", () => {
   assert.equal(runSpecimenParity().overallPass, true);
 });
 
+test("specimen early parity depends on the workbook early-retirement age, not statutory age", () => {
+  const expectedEarly = EXCEL_BASELINE_SPECIMEN.excel_outputs.cashSeriesEarly as unknown as number[];
+  const correct = runModel(SPECIMEN_FIELDS, SPECIMEN_UI_STATE);
+  const forcedStatutory = runModel(SPECIMEN_FIELDS, {
+    ...SPECIMEN_UI_STATE,
+    earlyRetirementAge: Number(SPECIMEN_FIELDS[RUNTIME_FIELDS.statutoryRetirementAge])
+  });
+
+  const maxAbsEarlyDeltaWhenForcedToStatutory = Math.max(...forcedStatutory.outputs.cashSeriesEarly.map(
+    (value, idx) => Math.abs(value - expectedEarly[idx])
+  ));
+
+  assert.equal(correct.outputs.cashSeriesNorm.length, forcedStatutory.outputs.cashSeriesNorm.length);
+  assert.deepEqual(forcedStatutory.outputs.cashSeriesNorm, correct.outputs.cashSeriesNorm);
+  assert.equal(maxAbsEarlyDeltaWhenForcedToStatutory > 1_000, true);
+});
+
 test("input definitions preserve row order and derive cells from semantic field ids", () => {
   assert.deepEqual(
     INPUT_DEFINITIONS.map((def) => def.row),

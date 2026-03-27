@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
@@ -209,6 +210,12 @@ test("load sample data restores properties 4 and 5 from the Excel specimen", asy
   await expect(page.locator(selectors.property5Name)).toHaveValue("Marsa");
   await expect(page.locator('input[data-field-id="properties.05.marketValue"]')).toHaveValue(/120,000/);
   await expect(page.locator('input[data-field-id="properties.05.rentalIncomeNetAnnual"]')).toHaveValue(/6,500/);
+});
+
+test("load sample data restores the workbook early-retirement age", async ({ page }) => {
+  await loadSampleData(page);
+
+  await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(EXCEL_BASELINE_SPECIMEN.early_retirement_age));
 });
 
 test("deep dive keeps investment properties together before other income and property loans", async ({ page }) => {

@@ -1841,8 +1841,9 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
   spinner.max = String(statutory);
   const raw = spinner.value.trim();
   if (defaultIfEmpty && raw === "") {
-    uiState.earlyRetirementAge = statutory;
-    spinner.value = String(statutory);
+    const seeded = Number.isFinite(uiState.earlyRetirementAge) ? uiState.earlyRetirementAge : statutory;
+    uiState.earlyRetirementAge = Math.max(minRetirementAge, Math.min(statutory, seeded));
+    spinner.value = String(uiState.earlyRetirementAge);
     updateEarlyRetirementButtons(statutory);
     updateRetireCheckButton(statutory);
     return;
@@ -2235,13 +2236,13 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
     syncVisibleRuntimeGroupsFromState();
     uiState.manualPropertyLiquidationOrder = false;
 
-    const statutory = getStatutoryAge();
-    if (statutory !== null) {
-      uiState.earlyRetirementAge = statutory;
+    const fromPayload = Number(payload.early_retirement_age);
+    if (Number.isFinite(fromPayload) && fromPayload >= 18) {
+      uiState.earlyRetirementAge = Math.round(fromPayload);
     } else {
-      const fromPayload = Number(payload.early_retirement_age);
-      if (Number.isFinite(fromPayload) && fromPayload >= 18) {
-        uiState.earlyRetirementAge = Math.round(fromPayload);
+      const statutory = getStatutoryAge();
+      if (statutory !== null) {
+        uiState.earlyRetirementAge = statutory;
       }
     }
 
