@@ -178,29 +178,7 @@ for (const group of EXPENSE_EVENT_RUNTIME_GROUPS) {
 }
 
 export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, number>>> = {
-  [RUNTIME_FIELDS.statutoryRetirementAge]: 3.9,
-  [OTHER_WORK_FIELDS.income]: 66.1,
-  [OTHER_WORK_FIELDS.untilAge]: 66.2,
-  [PROPERTY_RUNTIME_GROUPS[0].rentalIncomeField]: 66.3,
-  [PROPERTY_RUNTIME_GROUPS[1].rentalIncomeField]: 66.4,
-  [PROPERTY_RUNTIME_GROUPS[2].rentalIncomeField]: 66.5,
-  [PROPERTY_RUNTIME_GROUPS[3].rentalIncomeField]: 66.6,
-  [PROPERTY_RUNTIME_GROUPS[4].rentalIncomeField]: 66.7,
-  [PROPERTY_RUNTIME_GROUPS[0].loanBalanceField]: 74.1,
-  [PROPERTY_RUNTIME_GROUPS[0].loanRateField]: 74.2,
-  [PROPERTY_RUNTIME_GROUPS[0].loanRepaymentField]: 74.3,
-  [PROPERTY_RUNTIME_GROUPS[1].loanBalanceField]: 74.4,
-  [PROPERTY_RUNTIME_GROUPS[1].loanRateField]: 74.5,
-  [PROPERTY_RUNTIME_GROUPS[1].loanRepaymentField]: 74.6,
-  [PROPERTY_RUNTIME_GROUPS[2].loanBalanceField]: 74.7,
-  [PROPERTY_RUNTIME_GROUPS[2].loanRateField]: 74.8,
-  [PROPERTY_RUNTIME_GROUPS[2].loanRepaymentField]: 74.9,
-  [PROPERTY_RUNTIME_GROUPS[3].loanBalanceField]: 75.0,
-  [PROPERTY_RUNTIME_GROUPS[3].loanRateField]: 75.1,
-  [PROPERTY_RUNTIME_GROUPS[3].loanRepaymentField]: 75.2,
-  [PROPERTY_RUNTIME_GROUPS[4].loanBalanceField]: 75.3,
-  [PROPERTY_RUNTIME_GROUPS[4].loanRateField]: 75.4,
-  [PROPERTY_RUNTIME_GROUPS[4].loanRepaymentField]: 75.5
+  [RUNTIME_FIELDS.statutoryRetirementAge]: 3.9
 };
 
 export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([

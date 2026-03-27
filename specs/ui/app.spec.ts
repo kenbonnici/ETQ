@@ -211,6 +211,29 @@ test("load sample data restores properties 4 and 5 from the Excel specimen", asy
   await expect(page.locator('input[data-field-id="properties.05.rentalIncomeNetAnnual"]')).toHaveValue(/6,500/);
 });
 
+test("deep dive keeps investment properties together before other income and property loans", async ({ page }) => {
+  await loadSampleData(page);
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  const topHeadings = await page.locator(".section-deeper-dive .group-top").allTextContents();
+  expect(topHeadings.filter((heading) => heading.trim() === "Investment Properties")).toHaveLength(1);
+
+  const visibleFieldIds = await page.locator(".section-deeper-dive .field[data-field-id]").evaluateAll((fields) => (
+    fields.map((field) => field.getAttribute("data-field-id") ?? "").filter((fieldId) => fieldId.length > 0)
+  ));
+  const position = (fieldId: string): number => visibleFieldIds.indexOf(fieldId);
+
+  expect(position("properties.05.annualOperatingCost")).toBeGreaterThan(-1);
+  expect(position("properties.01.rentalIncomeNetAnnual")).toBeGreaterThan(-1);
+  expect(position("income.otherWork.netAnnual")).toBeGreaterThan(-1);
+  expect(position("debts.creditCards.balance")).toBeGreaterThan(-1);
+  expect(position("properties.01.loan.balance")).toBeGreaterThan(-1);
+  expect(position("properties.05.annualOperatingCost")).toBeLessThan(position("properties.01.rentalIncomeNetAnnual"));
+  expect(position("properties.01.rentalIncomeNetAnnual")).toBeLessThan(position("income.otherWork.netAnnual"));
+  expect(position("income.otherWork.netAnnual")).toBeLessThan(position("debts.creditCards.balance"));
+  expect(position("debts.creditCards.balance")).toBeLessThan(position("properties.01.loan.balance"));
+});
+
 test("equivalent living-expense totals keep downstream projections unchanged across entry modes", async ({ page }) => {
   await loadSampleData(page);
   await fillAndBlur(page, selectors.livingExpenses, "60000");
