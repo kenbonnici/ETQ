@@ -2358,16 +2358,39 @@ function renderInputs(): void {
     return `<section class="input-section ${sectionClass}"><button type="button" class="section-toggle" data-section="${title}">${open ? `Hide ${title}` : title}</button>${open ? controlsHtml : ""}</section>`;
   };
 
+  const getSubgroupSummary = (sub: string): string => {
+    const dependentGroup = DEPENDENT_RUNTIME_GROUPS.find((group) => group.label === sub);
+    if (dependentGroup) {
+      const value = fieldState[dependentGroup.nameField];
+      return typeof value === "string" ? value.trim() : "";
+    }
+    const propertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
+    if (propertyGroup) {
+      const value = fieldState[propertyGroup.nameField];
+      return typeof value === "string" ? value.trim() : "";
+    }
+    return "";
+  };
+
   const controls = (defs: InputDefinition[]) => {
     const orderedDefs = getOrderedDefinitions(defs);
     let html = "";
     let prevTop = "";
     let prevSub = "";
     let liquidationRendered = false;
+    let subgroupCardOpen = false;
+
+    const closeSubgroupCard = () => {
+      if (!subgroupCardOpen) return;
+      html += `</div>`;
+      subgroupCardOpen = false;
+    };
+
     for (const def of orderedDefs) {
       if (!fieldVisible(fieldState, def.fieldId, { visibleDependents, visibleProperties, visibleIncomeEvents, visibleExpenseEvents })) continue;
       if (PROPERTY_LIQUIDATION_CELLS.has(def.fieldId)) {
         if (!liquidationRendered) {
+          closeSubgroupCard();
           const controlHtml = renderPropertyLiquidationOrderControl();
           if (controlHtml) {
             html += controlHtml;
@@ -2378,12 +2401,14 @@ function renderInputs(): void {
       }
       const tail = getDynamicGroupTail(def, fieldState).map((s) => s.trim()).filter((s) => s.length > 0);
       if (tail.length === 0) {
+        closeSubgroupCard();
         prevTop = "";
         prevSub = "";
       } else {
         const top = tail[0] ?? "";
         const sub = tail.slice(1).join(" > ");
         if (top && top !== prevTop) {
+          closeSubgroupCard();
           const suppressTopHeading = top.toLowerCase() === "other post-retirement income";
           if (!suppressTopHeading) {
             html += `<h3 class="group-top">${top}</h3>`;
@@ -2392,7 +2417,16 @@ function renderInputs(): void {
           prevSub = "";
         }
         if (sub && sub !== prevSub) {
-          html += `<h4 class="group-sub">${sub}</h4>`;
+          closeSubgroupCard();
+          const summary = getSubgroupSummary(sub);
+          html += `
+            <div class="group-item-card">
+              <div class="group-item-card-header">
+                <h4 class="group-sub">${sub}</h4>
+                ${summary ? `<span class="group-item-card-summary">${escapeHtml(summary)}</span>` : ""}
+              </div>
+          `;
+          subgroupCardOpen = true;
           prevSub = sub;
         }
       }
@@ -2432,6 +2466,7 @@ function renderInputs(): void {
         html += `<button type="button" class="add-event-btn" data-next-expense-event="3">Add another expense event</button>`;
       }
     }
+    closeSubgroupCard();
     return html;
   };
 
