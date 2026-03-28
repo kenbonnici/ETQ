@@ -1587,9 +1587,8 @@ body {
   cursor: grab;
 }
 
-.liquidation-item.is-disabled {
-  cursor: not-allowed;
-  opacity: 0.75;
+.liquidation-item.is-static {
+  cursor: default;
 }
 
 .liquidation-item.is-dragging {
@@ -1635,28 +1634,70 @@ body {
   white-space: nowrap;
 }
 
-.liquidation-action-btn {
-  border: 1px solid #d8e1db;
-  background: #ffffff;
+.liquidation-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 112px;
+  padding: 0;
+  border: 0;
+  background: transparent;
   color: #475569;
-  border-radius: 999px;
-  min-width: 88px;
-  padding: 5px 12px;
-  font-size: 11px;
-  font-weight: 500;
+  font: inherit;
+  cursor: pointer;
   white-space: nowrap;
-  text-align: center;
 }
 
-.liquidation-action-btn:hover {
-  border-color: #c7d2cb;
-  background: #f8fafc;
+.liquidation-toggle-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: #475569;
+}
+
+.liquidation-toggle-track {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  border-radius: 999px;
+  background: #d7e0da;
+  box-shadow: inset 0 0 0 1px #c7d2cb;
+  transition: background-color 120ms ease;
+}
+
+.liquidation-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.14);
+  transition: transform 120ms ease;
+}
+
+.liquidation-toggle.is-on .liquidation-toggle-label {
   color: #334155;
 }
 
-.liquidation-action-btn:focus-visible {
+.liquidation-toggle.is-on .liquidation-toggle-track {
+  background: #b7cec3;
+  box-shadow: inset 0 0 0 1px #9fb8ac;
+}
+
+.liquidation-toggle.is-on .liquidation-toggle-thumb {
+  transform: translateX(14px);
+}
+
+.liquidation-toggle:hover .liquidation-toggle-label {
+  color: #334155;
+}
+
+.liquidation-toggle:focus-visible {
   outline: 2px solid #0f766e;
   outline-offset: 2px;
+  border-radius: 999px;
 }
 
 .liquidation-empty {

@@ -2176,16 +2176,30 @@ function renderLiquidationRow(
   const value = asNumber(fieldState[cfg.valueField]);
   const valueText = `${currentCurrencySymbol()}${Math.round(value).toLocaleString("en-US")}`;
   const canDrag = action === "exclude" && rank !== null;
+  const isSellable = action === "exclude";
   const rankHtml = rank === null
     ? `<span class="liquidation-rank liquidation-rank--empty" aria-hidden="true">•</span>`
     : `<span class="liquidation-rank">${rank}</span>`;
-  const actionLabel = action === "exclude" ? "Never sell" : "can sell";
+  const stateLabel = isSellable ? "Sellable" : "Never sell";
   return `
-      <li class="liquidation-item ${canDrag ? "" : "is-disabled"}" data-liquidation-idx="${cfg.idx}" draggable="${canDrag ? "true" : "false"}">
+      <li class="liquidation-item ${canDrag ? "" : "is-static"}" data-liquidation-idx="${cfg.idx}" draggable="${canDrag ? "true" : "false"}">
         ${rankHtml}
         <span class="liquidation-name">${escapeHtml(name)}</span>
         <span class="liquidation-value">${escapeHtml(valueText)}</span>
-        <button type="button" class="liquidation-action-btn" data-liquidation-action="${action}" data-liquidation-idx="${cfg.idx}">${actionLabel}</button>
+        <button
+          type="button"
+          class="liquidation-toggle ${isSellable ? "is-on" : "is-off"}"
+          role="switch"
+          aria-checked="${isSellable ? "true" : "false"}"
+          aria-label="${isSellable ? "Mark" : "Mark"} ${escapeHtml(name)} as ${isSellable ? "never sell" : "sellable"}"
+          data-liquidation-action="${action}"
+          data-liquidation-idx="${cfg.idx}"
+        >
+          <span class="liquidation-toggle-label">${stateLabel}</span>
+          <span class="liquidation-toggle-track" aria-hidden="true">
+            <span class="liquidation-toggle-thumb"></span>
+          </span>
+        </button>
       </li>
     `;
 }
@@ -2202,7 +2216,7 @@ function renderPropertyLiquidationOrderControl(): string {
   return `
     <div class="liquidation-reorder" data-liquidation-reorder="true" data-drag-enabled="${canDrag ? "true" : "false"}">
       <div class="liquidation-title">Asset liquidation order</div>
-      <small class="liquidation-help">Drag sellable properties to reorder. Mark a property as Never sell to exclude it from liquidation.</small>
+      <small class="liquidation-help">Drag sellable properties to reorder. Turn Sellable off for properties you would never liquidate.</small>
       <div class="liquidation-section" data-liquidation-zone="sellable">
         ${sellableRows ? `<ul class="liquidation-list">${sellableContent}</ul>` : sellableContent}
       </div>
@@ -2850,7 +2864,7 @@ function renderInputs(): void {
     });
   });
 
-  inputsPanel.querySelectorAll<HTMLButtonElement>(".liquidation-action-btn").forEach((btn) => {
+  inputsPanel.querySelectorAll<HTMLButtonElement>(".liquidation-toggle").forEach((btn) => {
     btn.addEventListener("click", () => {
       const propertyIdx = Number(btn.dataset.liquidationIdx);
       if (!Number.isFinite(propertyIdx)) return;
