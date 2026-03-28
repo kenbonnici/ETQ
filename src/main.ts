@@ -2179,7 +2179,7 @@ function renderLiquidationRow(
   const rankHtml = rank === null
     ? `<span class="liquidation-rank liquidation-rank--empty" aria-hidden="true">•</span>`
     : `<span class="liquidation-rank">${rank}</span>`;
-  const actionLabel = action === "exclude" ? "Never sell" : "Include in liquidation";
+  const actionLabel = action === "exclude" ? "Never sell" : "can sell";
   return `
       <li class="liquidation-item ${canDrag ? "" : "is-disabled"}" data-liquidation-idx="${cfg.idx}" draggable="${canDrag ? "true" : "false"}">
         ${rankHtml}
@@ -2201,14 +2201,12 @@ function renderPropertyLiquidationOrderControl(): string {
   const excludedContent = excludedRows || `<div class="liquidation-empty">All active properties are currently sellable.</div>`;
   return `
     <div class="liquidation-reorder" data-liquidation-reorder="true" data-drag-enabled="${canDrag ? "true" : "false"}">
-      <div class="liquidation-title">Property liquidation order</div>
+      <div class="liquidation-title">Asset liquidation order</div>
       <small class="liquidation-help">Drag sellable properties to reorder. Mark a property as Never sell to exclude it from liquidation.</small>
       <div class="liquidation-section" data-liquidation-zone="sellable">
-        <div class="liquidation-section-title">Sellable properties</div>
         ${sellableRows ? `<ul class="liquidation-list">${sellableContent}</ul>` : sellableContent}
       </div>
       <div class="liquidation-section" data-liquidation-zone="never-sell">
-        <div class="liquidation-section-title">Never sell</div>
         ${excludedRows ? `<ul class="liquidation-list liquidation-list--excluded">${excludedContent}</ul>` : excludedContent}
       </div>
     </div>

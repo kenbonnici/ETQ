@@ -1563,14 +1563,8 @@ body {
 
 .liquidation-section + .liquidation-section {
   margin-top: 10px;
-}
-
-.liquidation-section-title {
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #64748b;
+  padding-top: 10px;
+  border-top: 1px solid #e2e8f0;
 }
 
 .liquidation-list {
@@ -1642,19 +1636,22 @@ body {
 }
 
 .liquidation-action-btn {
-  border: 1px solid #cbd5e1;
-  background: #f8fafc;
-  color: #0f172a;
+  border: 1px solid #d8e1db;
+  background: #ffffff;
+  color: #475569;
   border-radius: 999px;
-  padding: 5px 10px;
+  min-width: 88px;
+  padding: 5px 12px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
+  text-align: center;
 }
 
 .liquidation-action-btn:hover {
-  border-color: #94a3b8;
-  background: #f1f5f9;
+  border-color: #c7d2cb;
+  background: #f8fafc;
+  color: #334155;
 }
 
 .liquidation-action-btn:focus-visible {
