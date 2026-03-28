@@ -2180,7 +2180,6 @@ function renderLiquidationRow(
   const rankHtml = rank === null
     ? `<span class="liquidation-rank liquidation-rank--empty" aria-hidden="true">•</span>`
     : `<span class="liquidation-rank">${rank}</span>`;
-  const stateLabel = isSellable ? "Sellable" : "Never sell";
   return `
       <li class="liquidation-item ${canDrag ? "" : "is-static"}" data-liquidation-idx="${cfg.idx}" draggable="${canDrag ? "true" : "false"}">
         ${rankHtml}
@@ -2191,11 +2190,11 @@ function renderLiquidationRow(
           class="liquidation-toggle ${isSellable ? "is-on" : "is-off"}"
           role="switch"
           aria-checked="${isSellable ? "true" : "false"}"
-          aria-label="${isSellable ? "Mark" : "Mark"} ${escapeHtml(name)} as ${isSellable ? "never sell" : "sellable"}"
+          aria-label="${escapeHtml(name)}: liquidation ${isSellable ? "enabled" : "disabled"}"
           data-liquidation-action="${action}"
           data-liquidation-idx="${cfg.idx}"
         >
-          <span class="liquidation-toggle-label">${stateLabel}</span>
+          <span class="liquidation-toggle-label">Liquidate</span>
           <span class="liquidation-toggle-track" aria-hidden="true">
             <span class="liquidation-toggle-thumb"></span>
           </span>
@@ -2216,7 +2215,7 @@ function renderPropertyLiquidationOrderControl(): string {
   return `
     <div class="liquidation-reorder" data-liquidation-reorder="true" data-drag-enabled="${canDrag ? "true" : "false"}">
       <div class="liquidation-title">Asset liquidation order</div>
-      <small class="liquidation-help">Drag sellable properties to reorder. Turn Sellable off for properties you would never liquidate.</small>
+      <small class="liquidation-help">Drag sellable properties to reorder. Turn Liquidate off for properties you would never liquidate.</small>
       <div class="liquidation-section" data-liquidation-zone="sellable">
         ${sellableRows ? `<ul class="liquidation-list">${sellableContent}</ul>` : sellableContent}
       </div>
