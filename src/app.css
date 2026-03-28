@@ -1584,10 +1584,17 @@ body {
   border-radius: 9px;
   padding: 7px 9px;
   background: #ffffff;
+  transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
 
 .liquidation-item.is-static {
   cursor: default;
+}
+
+.liquidation-item.just-moved {
+  border-color: #9fb8ac;
+  background: #f4faf7;
+  box-shadow: 0 0 0 2px rgba(159, 184, 172, 0.18);
 }
 
 .liquidation-rank {
