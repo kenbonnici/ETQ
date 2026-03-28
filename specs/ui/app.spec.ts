@@ -234,6 +234,20 @@ test("finer details honors workbook liquidation order and lets users exclude a p
   await expect(page.locator('[data-liquidation-zone="never-sell"] .liquidation-item')).toHaveCount(0);
 });
 
+test("liquidation up and down controls reorder sellable assets precisely", async ({ page }) => {
+  await loadSampleData(page);
+  await page.getByRole("button", { name: "FINER DETAILS" }).click();
+
+  const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
+  await expect(sellableItems).toHaveText(["Gudja", "Marsa", "Gzira", "Qormi", "Sliema"]);
+
+  await page.locator('[data-liquidation-move="down"][data-liquidation-idx="3"]').click();
+  await expect(sellableItems).toHaveText(["Marsa", "Gudja", "Gzira", "Qormi", "Sliema"]);
+
+  await page.locator('[data-liquidation-move="up"][data-liquidation-idx="2"]').click();
+  await expect(sellableItems).toHaveText(["Marsa", "Gudja", "Qormi", "Gzira", "Sliema"]);
+});
+
 test("load sample data restores the workbook early-retirement age", async ({ page }) => {
   await loadSampleData(page);
 

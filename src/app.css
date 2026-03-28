@@ -1577,27 +1577,17 @@ body {
 
 .liquidation-item {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto auto;
+  grid-template-columns: 24px minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 8px;
   border: 1px solid #d5e0d8;
   border-radius: 9px;
   padding: 7px 9px;
   background: #ffffff;
-  cursor: grab;
 }
 
 .liquidation-item.is-static {
   cursor: default;
-}
-
-.liquidation-item.is-dragging {
-  opacity: 0.55;
-}
-
-.liquidation-item.is-drop-target {
-  border-color: #5c8f80;
-  background: #eef7f3;
 }
 
 .liquidation-rank {
@@ -1632,6 +1622,45 @@ body {
   color: #475569;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.liquidation-reorder-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.liquidation-move-btn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #d8e1db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.liquidation-move-btn:hover:not(:disabled) {
+  border-color: #c7d2cb;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.liquidation-move-btn:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.liquidation-move-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.liquidation-reorder-placeholder {
+  width: 60px;
+  display: inline-block;
 }
 
 .liquidation-toggle {

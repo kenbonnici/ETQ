@@ -2170,21 +2170,42 @@ function persistPropertyLiquidationOrder(order: ReturnType<typeof activeProperty
 function renderLiquidationRow(
   cfg: (typeof PROPERTY_RUNTIME_GROUPS)[number],
   rank: number | null,
-  action: "exclude" | "include"
+  action: "exclude" | "include",
+  options: { moveUpDisabled?: boolean; moveDownDisabled?: boolean } = {}
 ): string {
   const name = String(fieldState[cfg.nameField] ?? "").trim() || cfg.fallbackName;
   const value = asNumber(fieldState[cfg.valueField]);
   const valueText = `${currentCurrencySymbol()}${Math.round(value).toLocaleString("en-US")}`;
-  const canDrag = action === "exclude" && rank !== null;
   const isSellable = action === "exclude";
   const rankHtml = rank === null
     ? `<span class="liquidation-rank liquidation-rank--empty" aria-hidden="true">•</span>`
     : `<span class="liquidation-rank">${rank}</span>`;
+  const reorderControls = isSellable ? `
+        <div class="liquidation-reorder-controls" aria-label="Reorder ${escapeHtml(name)}">
+          <button
+            type="button"
+            class="liquidation-move-btn"
+            data-liquidation-move="up"
+            data-liquidation-idx="${cfg.idx}"
+            aria-label="Move ${escapeHtml(name)} up"
+            ${options.moveUpDisabled ? "disabled" : ""}
+          >↑</button>
+          <button
+            type="button"
+            class="liquidation-move-btn"
+            data-liquidation-move="down"
+            data-liquidation-idx="${cfg.idx}"
+            aria-label="Move ${escapeHtml(name)} down"
+            ${options.moveDownDisabled ? "disabled" : ""}
+          >↓</button>
+        </div>
+      ` : `<span class="liquidation-reorder-placeholder" aria-hidden="true"></span>`;
   return `
-      <li class="liquidation-item ${canDrag ? "" : "is-static"}" data-liquidation-idx="${cfg.idx}" draggable="${canDrag ? "true" : "false"}">
+      <li class="liquidation-item ${isSellable ? "" : "is-static"}" data-liquidation-idx="${cfg.idx}">
         ${rankHtml}
         <span class="liquidation-name">${escapeHtml(name)}</span>
         <span class="liquidation-value">${escapeHtml(valueText)}</span>
+        ${reorderControls}
         <button
           type="button"
           class="liquidation-toggle ${isSellable ? "is-on" : "is-off"}"
@@ -2207,15 +2228,17 @@ function renderPropertyLiquidationOrderControl(): string {
   const active = activePropertyConfigs(fieldState);
   if (active.length === 0) return "";
   const { sellable, excluded } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
-  const canDrag = sellable.length > 1;
-  const sellableRows = sellable.map((cfg, idx) => renderLiquidationRow(cfg, idx + 1, "exclude")).join("");
+  const sellableRows = sellable.map((cfg, idx) => renderLiquidationRow(cfg, idx + 1, "exclude", {
+    moveUpDisabled: idx === 0,
+    moveDownDisabled: idx === sellable.length - 1
+  })).join("");
   const excludedRows = excluded.map((cfg) => renderLiquidationRow(cfg, null, "include")).join("");
   const sellableContent = sellableRows || `<div class="liquidation-empty">No properties will be liquidated.</div>`;
   const excludedContent = excludedRows || `<div class="liquidation-empty">All active properties are currently sellable.</div>`;
   return `
-    <div class="liquidation-reorder" data-liquidation-reorder="true" data-drag-enabled="${canDrag ? "true" : "false"}">
+    <div class="liquidation-reorder" data-liquidation-reorder="true">
       <div class="liquidation-title">Asset liquidation order</div>
-      <small class="liquidation-help">Drag sellable properties to reorder. Turn Liquidate off for properties you would never liquidate.</small>
+      <small class="liquidation-help">Use the arrows to reorder sellable properties. Turn Liquidate off for properties you would never liquidate.</small>
       <div class="liquidation-section" data-liquidation-zone="sellable">
         ${sellableRows ? `<ul class="liquidation-list">${sellableContent}</ul>` : sellableContent}
       </div>
@@ -2887,69 +2910,28 @@ function renderInputs(): void {
     });
   });
 
-  const liquidationRoot = inputsPanel.querySelector<HTMLElement>('[data-liquidation-reorder="true"]');
-  if (liquidationRoot && liquidationRoot.dataset.dragEnabled === "true") {
-    let draggingIdx: number | null = null;
-    const items = Array.from(liquidationRoot.querySelectorAll<HTMLElement>('[data-liquidation-zone="sellable"] .liquidation-item'));
+  inputsPanel.querySelectorAll<HTMLButtonElement>(".liquidation-move-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const propertyIdx = Number(btn.dataset.liquidationIdx);
+      const direction = btn.dataset.liquidationMove;
+      if (!Number.isFinite(propertyIdx) || (direction !== "up" && direction !== "down")) return;
 
-    const clearDropMarkers = () => {
-      items.forEach((item) => item.classList.remove("is-drop-target"));
-    };
+      const active = activePropertyConfigs(fieldState);
+      const { sellable: order } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
+      const fromPos = order.findIndex((cfg) => cfg.idx === propertyIdx);
+      if (fromPos < 0) return;
+      const toPos = direction === "up" ? fromPos - 1 : fromPos + 1;
+      if (toPos < 0 || toPos >= order.length) return;
 
-    items.forEach((item) => {
-      item.addEventListener("dragstart", (ev) => {
-        draggingIdx = Number(item.dataset.liquidationIdx);
-        item.classList.add("is-dragging");
-        if (ev.dataTransfer) {
-          ev.dataTransfer.effectAllowed = "move";
-          ev.dataTransfer.setData("text/plain", String(draggingIdx));
-        }
-      });
+      const [moved] = order.splice(fromPos, 1);
+      order.splice(toPos, 0, moved);
 
-      item.addEventListener("dragend", () => {
-        item.classList.remove("is-dragging");
-        clearDropMarkers();
-        draggingIdx = null;
-      });
-
-      item.addEventListener("dragover", (ev) => {
-        if (draggingIdx === null) return;
-        ev.preventDefault();
-        clearDropMarkers();
-        item.classList.add("is-drop-target");
-      });
-
-      item.addEventListener("dragleave", () => {
-        item.classList.remove("is-drop-target");
-      });
-
-      item.addEventListener("drop", (ev) => {
-        ev.preventDefault();
-        item.classList.remove("is-drop-target");
-        if (draggingIdx === null) return;
-        const targetIdx = Number(item.dataset.liquidationIdx);
-        if (!Number.isFinite(targetIdx) || targetIdx === draggingIdx) return;
-
-        const active = activePropertyConfigs(fieldState);
-        const { sellable: order } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
-        const fromPos = order.findIndex((cfg) => cfg.idx === draggingIdx);
-        const toBasePos = order.findIndex((cfg) => cfg.idx === targetIdx);
-        if (fromPos < 0 || toBasePos < 0) return;
-
-        const rect = item.getBoundingClientRect();
-        const insertAfter = ev.clientY > rect.top + rect.height / 2;
-        const toPos = toBasePos + (insertAfter ? 1 : 0);
-        const [moved] = order.splice(fromPos, 1);
-        const normalizedToPos = toPos > fromPos ? toPos - 1 : toPos;
-        order.splice(Math.max(0, Math.min(order.length, normalizedToPos)), 0, moved);
-
-        persistPropertyLiquidationOrder(order, active);
-        setRetireCheckMessage(null);
-        queueRecalc();
-        renderInputs();
-      });
+      persistPropertyLiquidationOrder(order, active);
+      setRetireCheckMessage(null);
+      queueRecalc();
+      renderInputs();
     });
-  }
+  });
 
   restorePanelCursorState(cursorState);
   renderValidationState(latestValidationMessages);
