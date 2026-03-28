@@ -370,6 +370,11 @@ interface ExcelSpecimenPayload {
   raw_inputs?: Partial<Record<string, unknown>>;
 }
 
+const SAMPLE_DATA_NUMERIC_OVERRIDES: Readonly<Partial<Record<FieldId, number>>> = {
+  [RUNTIME_FIELDS.minimumCashBuffer]: 50_000,
+  [RUNTIME_FIELDS.legacyAmount]: 1_000_000
+};
+
 interface ChartHoverData {
   ages: number[];
   years: number[];
@@ -2226,6 +2231,10 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
         const n = Number(nextRaw);
         fieldState[def.fieldId] = Number.isFinite(n) ? applyFieldNumericConstraint(def.fieldId, n) : null;
       }
+    }
+
+    for (const [fieldId, value] of Object.entries(SAMPLE_DATA_NUMERIC_OVERRIDES) as Array<[FieldId, number]>) {
+      fieldState[fieldId] = applyFieldNumericConstraint(fieldId, value);
     }
 
     syncVisibleRuntimeGroupsFromState();

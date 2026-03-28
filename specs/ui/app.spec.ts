@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
 
-const LEGACY_AWARE_RETIREMENT_AGE = 54;
+const LEGACY_AWARE_RETIREMENT_AGE = 52;
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
@@ -228,8 +228,9 @@ test("legacy input sits between cash buffer and selling costs in finer details w
   await page.getByRole("button", { name: "FINER DETAILS" }).click();
 
   await expect(page.locator(selectors.minimumCashBuffer)).toBeVisible();
+  await expect(page.locator(selectors.minimumCashBuffer)).toHaveValue(/50,000/);
   await expect(page.locator(selectors.legacyAmount)).toBeVisible();
-  await expect(page.locator(selectors.legacyAmount)).toHaveValue(/3,000,000/);
+  await expect(page.locator(selectors.legacyAmount)).toHaveValue(/1,000,000/);
 
   await page.locator(selectors.minimumCashBuffer).focus();
   await page.locator(selectors.minimumCashBuffer).press("Tab");
