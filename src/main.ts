@@ -32,7 +32,7 @@ import {
   anyValue,
   asNumber,
   buildPropertyLiquidationAssignments,
-  buildPropertyLiquidationOrder,
+  buildPropertyLiquidationBuckets,
   buildTimelineMilestones,
   collectSpecificLabelsByYear,
   deriveRuntimeVisibilityState,
@@ -42,6 +42,7 @@ import {
   fieldVisible,
   getDynamicFieldLabel,
   getDynamicGroupTail,
+  hasExplicitPropertyLiquidationPreferences,
   hasRetireCheckEssentialErrors,
   isBlank,
   isDuplicateLiquidationRank,
@@ -2166,28 +2167,50 @@ function persistPropertyLiquidationOrder(order: ReturnType<typeof activeProperty
   }
 }
 
+function renderLiquidationRow(
+  cfg: (typeof PROPERTY_RUNTIME_GROUPS)[number],
+  rank: number | null,
+  action: "exclude" | "include"
+): string {
+  const name = String(fieldState[cfg.nameField] ?? "").trim() || cfg.fallbackName;
+  const value = asNumber(fieldState[cfg.valueField]);
+  const valueText = `${currentCurrencySymbol()}${Math.round(value).toLocaleString("en-US")}`;
+  const canDrag = action === "exclude" && rank !== null;
+  const rankHtml = rank === null
+    ? `<span class="liquidation-rank liquidation-rank--empty" aria-hidden="true">•</span>`
+    : `<span class="liquidation-rank">${rank}</span>`;
+  const actionLabel = action === "exclude" ? "Never sell" : "Include in liquidation";
+  return `
+      <li class="liquidation-item ${canDrag ? "" : "is-disabled"}" data-liquidation-idx="${cfg.idx}" draggable="${canDrag ? "true" : "false"}">
+        ${rankHtml}
+        <span class="liquidation-name">${escapeHtml(name)}</span>
+        <span class="liquidation-value">${escapeHtml(valueText)}</span>
+        <button type="button" class="liquidation-action-btn" data-liquidation-action="${action}" data-liquidation-idx="${cfg.idx}">${actionLabel}</button>
+      </li>
+    `;
+}
+
 function renderPropertyLiquidationOrderControl(): string {
   const active = activePropertyConfigs(fieldState);
   if (active.length === 0) return "";
-  const ordered = buildPropertyLiquidationOrder(fieldState, active, uiState.manualPropertyLiquidationOrder);
-  const canDrag = ordered.length > 1;
-  const rows = ordered.map((cfg, idx) => {
-    const name = String(fieldState[cfg.nameField] ?? "").trim() || cfg.fallbackName;
-    const value = asNumber(fieldState[cfg.valueField]);
-    const valueText = `${currentCurrencySymbol()}${Math.round(value).toLocaleString("en-US")}`;
-    return `
-      <li class="liquidation-item ${canDrag ? "" : "is-disabled"}" data-liquidation-idx="${cfg.idx}" draggable="${canDrag ? "true" : "false"}">
-        <span class="liquidation-rank">${idx + 1}</span>
-        <span class="liquidation-name">${escapeHtml(name)}</span>
-        <span class="liquidation-value">${escapeHtml(valueText)}</span>
-      </li>
-    `;
-  }).join("");
+  const { sellable, excluded } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
+  const canDrag = sellable.length > 1;
+  const sellableRows = sellable.map((cfg, idx) => renderLiquidationRow(cfg, idx + 1, "exclude")).join("");
+  const excludedRows = excluded.map((cfg) => renderLiquidationRow(cfg, null, "include")).join("");
+  const sellableContent = sellableRows || `<div class="liquidation-empty">No properties will be liquidated.</div>`;
+  const excludedContent = excludedRows || `<div class="liquidation-empty">All active properties are currently sellable.</div>`;
   return `
     <div class="liquidation-reorder" data-liquidation-reorder="true" data-drag-enabled="${canDrag ? "true" : "false"}">
       <div class="liquidation-title">Property liquidation order</div>
-      <small class="liquidation-help">${canDrag ? "Drag to reorder. Top sells first." : "Add at least two properties to reorder."}</small>
-      <ul class="liquidation-list">${rows}</ul>
+      <small class="liquidation-help">Drag sellable properties to reorder. Mark a property as Never sell to exclude it from liquidation.</small>
+      <div class="liquidation-section" data-liquidation-zone="sellable">
+        <div class="liquidation-section-title">Sellable properties</div>
+        ${sellableRows ? `<ul class="liquidation-list">${sellableContent}</ul>` : sellableContent}
+      </div>
+      <div class="liquidation-section" data-liquidation-zone="never-sell">
+        <div class="liquidation-section-title">Never sell</div>
+        ${excludedRows ? `<ul class="liquidation-list liquidation-list--excluded">${excludedContent}</ul>` : excludedContent}
+      </div>
     </div>
   `;
 }
@@ -2238,7 +2261,7 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
     }
 
     syncVisibleRuntimeGroupsFromState();
-    uiState.manualPropertyLiquidationOrder = false;
+    uiState.manualPropertyLiquidationOrder = hasExplicitPropertyLiquidationPreferences(fieldState);
 
     const fromPayload = Number(payload.early_retirement_age);
     if (Number.isFinite(fromPayload) && fromPayload >= 18) {
@@ -2829,10 +2852,34 @@ function renderInputs(): void {
     });
   });
 
+  inputsPanel.querySelectorAll<HTMLButtonElement>(".liquidation-action-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const propertyIdx = Number(btn.dataset.liquidationIdx);
+      if (!Number.isFinite(propertyIdx)) return;
+      const active = activePropertyConfigs(fieldState);
+      const target = active.find((group) => group.idx === propertyIdx);
+      if (!target) return;
+
+      const { sellable } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
+      const action = btn.dataset.liquidationAction;
+      if (action === "exclude") {
+        persistPropertyLiquidationOrder(sellable.filter((group) => group.idx !== propertyIdx), active);
+      } else if (action === "include" && !sellable.some((group) => group.idx === propertyIdx)) {
+        persistPropertyLiquidationOrder([...sellable, target], active);
+      } else {
+        return;
+      }
+
+      setRetireCheckMessage(null);
+      queueRecalc();
+      renderInputs();
+    });
+  });
+
   const liquidationRoot = inputsPanel.querySelector<HTMLElement>('[data-liquidation-reorder="true"]');
   if (liquidationRoot && liquidationRoot.dataset.dragEnabled === "true") {
     let draggingIdx: number | null = null;
-    const items = Array.from(liquidationRoot.querySelectorAll<HTMLElement>(".liquidation-item"));
+    const items = Array.from(liquidationRoot.querySelectorAll<HTMLElement>('[data-liquidation-zone="sellable"] .liquidation-item'));
 
     const clearDropMarkers = () => {
       items.forEach((item) => item.classList.remove("is-drop-target"));
@@ -2873,7 +2920,7 @@ function renderInputs(): void {
         if (!Number.isFinite(targetIdx) || targetIdx === draggingIdx) return;
 
         const active = activePropertyConfigs(fieldState);
-        const order = buildPropertyLiquidationOrder(fieldState, active, uiState.manualPropertyLiquidationOrder);
+        const { sellable: order } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
         const fromPos = order.findIndex((cfg) => cfg.idx === draggingIdx);
         const toBasePos = order.findIndex((cfg) => cfg.idx === targetIdx);
         if (fromPos < 0 || toBasePos < 0) return;

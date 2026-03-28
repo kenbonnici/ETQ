@@ -13,10 +13,12 @@ import { FieldState } from "../../src/model/types";
 import { INPUT_DEFINITIONS } from "../../src/ui/inputDefinitions";
 import {
   buildPropertyLiquidationAssignments,
+  buildPropertyLiquidationBuckets,
   buildPropertyLiquidationOrder,
   buildTimelineMilestones,
   deriveRuntimeVisibilityState,
   fieldVisible,
+  hasExplicitPropertyLiquidationPreferences,
   hasRetireCheckEssentialErrors,
   isOutOfRangeLiquidationRank,
   isDuplicateLiquidationRank,
@@ -240,11 +242,12 @@ test("property liquidation order preserves duplicate-rank guardrails and only ap
   fields[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField] = 5;
   const manualOrder = buildPropertyLiquidationOrder(fields, PROPERTY_RUNTIME_GROUPS.slice(), true);
   assert.deepEqual(manualOrder.map((group) => group.idx), [1, 0, 2, 3, 4]);
+  assert.equal(hasExplicitPropertyLiquidationPreferences(fields), true);
 
   const assignments = buildPropertyLiquidationAssignments(manualOrder, PROPERTY_RUNTIME_GROUPS.slice());
   assert.deepEqual(
-    assignments.filter((assignment) => assignment.value !== null).map((assignment) => assignment.value),
-    [1, 2, 3, 4, 5]
+    assignments.map((assignment) => assignment.value),
+    [0, 0, 0, 0, 0, 1, 2, 3, 4, 5]
   );
 });
 
@@ -323,6 +326,24 @@ test("manual liquidation order stays fixed across value edits and blank entries 
     buildPropertyLiquidationOrder(fields, PROPERTY_RUNTIME_GROUPS.slice(), true).map((group) => group.idx),
     [1, 0, 2, 3, 4]
   );
+});
+
+test("manual liquidation buckets separate sellable and never-sell properties", () => {
+  const fields = createEmptyFieldState();
+  fields[PROPERTY_RUNTIME_GROUPS[0].nameField] = "P1";
+  fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 300_000;
+  fields[PROPERTY_RUNTIME_GROUPS[1].nameField] = "P2";
+  fields[PROPERTY_RUNTIME_GROUPS[1].valueField] = 150_000;
+  fields[PROPERTY_RUNTIME_GROUPS[2].nameField] = "P3";
+  fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 220_000;
+
+  fields[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField] = 2;
+  fields[PROPERTY_RUNTIME_GROUPS[1].liquidationRankField] = 1;
+  fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = 0;
+
+  const buckets = buildPropertyLiquidationBuckets(fields, PROPERTY_RUNTIME_GROUPS.slice(0, 3), true);
+  assert.deepEqual(buckets.sellable.map((group) => group.idx), [1, 0]);
+  assert.deepEqual(buckets.excluded.map((group) => group.idx), [2]);
 });
 
 test("property value edits trigger inputs-panel rerenders so liquidation rows stay fresh", () => {

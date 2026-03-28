@@ -1556,6 +1556,23 @@ body {
   font-size: 11px;
 }
 
+.liquidation-section {
+  display: grid;
+  gap: 6px;
+}
+
+.liquidation-section + .liquidation-section {
+  margin-top: 10px;
+}
+
+.liquidation-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
 .liquidation-list {
   list-style: none;
   margin: 0;
@@ -1566,7 +1583,7 @@ body {
 
 .liquidation-item {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-columns: 24px minmax(0, 1fr) auto auto;
   align-items: center;
   gap: 8px;
   border: 1px solid #d5e0d8;
@@ -1603,6 +1620,11 @@ body {
   justify-content: center;
 }
 
+.liquidation-rank--empty {
+  background: transparent;
+  color: #94a3b8;
+}
+
 .liquidation-name {
   font-size: 13px;
   color: #0f172a;
@@ -1617,6 +1639,36 @@ body {
   color: #475569;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
+}
+
+.liquidation-action-btn {
+  border: 1px solid #cbd5e1;
+  background: #f8fafc;
+  color: #0f172a;
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.liquidation-action-btn:hover {
+  border-color: #94a3b8;
+  background: #f1f5f9;
+}
+
+.liquidation-action-btn:focus-visible {
+  outline: 2px solid #0f766e;
+  outline-offset: 2px;
+}
+
+.liquidation-empty {
+  border: 1px dashed #d5e0d8;
+  border-radius: 9px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #64748b;
+  background: #fcfdfc;
 }
 
 .field {

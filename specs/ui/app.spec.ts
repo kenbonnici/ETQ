@@ -217,6 +217,23 @@ test("load sample data restores properties 4 and 5 from the Excel specimen", asy
   await expect(page.locator('input[data-field-id="properties.05.rentalIncomeNetAnnual"]')).toHaveValue(/6,500/);
 });
 
+test("finer details honors workbook liquidation order and lets users exclude a property from liquidation", async ({ page }) => {
+  await loadSampleData(page);
+  await page.getByRole("button", { name: "FINER DETAILS" }).click();
+
+  const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
+  await expect(sellableItems).toHaveText(["Gudja", "Marsa", "Gzira", "Qormi", "Sliema"]);
+  await expect(page.locator('[data-liquidation-zone="never-sell"] .liquidation-item')).toHaveCount(0);
+
+  await page.locator('[data-liquidation-zone="sellable"] [data-liquidation-action="exclude"][data-liquidation-idx="3"]').click();
+  await expect(page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name')).toHaveText(["Marsa", "Gzira", "Qormi", "Sliema"]);
+  await expect(page.locator('[data-liquidation-zone="never-sell"] .liquidation-item .liquidation-name')).toHaveText(["Gudja"]);
+
+  await page.locator('[data-liquidation-zone="never-sell"] [data-liquidation-action="include"][data-liquidation-idx="3"]').click();
+  await expect(page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name')).toHaveText(["Marsa", "Gzira", "Qormi", "Sliema", "Gudja"]);
+  await expect(page.locator('[data-liquidation-zone="never-sell"] .liquidation-item')).toHaveCount(0);
+});
+
 test("load sample data restores the workbook early-retirement age", async ({ page }) => {
   await loadSampleData(page);
 

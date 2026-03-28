@@ -40,6 +40,11 @@ export interface PropertyRuntimeConfig {
   allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
 }
 
+export interface PropertyLiquidationBuckets {
+  sellable: PropertyRuntimeConfig[];
+  excluded: PropertyRuntimeConfig[];
+}
+
 export interface TimelineYearEvent {
   label: string;
   amount: number | null;
@@ -464,14 +469,26 @@ export function defaultPropertyOrder(values: RuntimeValues, active: PropertyRunt
   return [...active].sort((a, b) => (asNumber(values[a.valueField]) - asNumber(values[b.valueField])) || (a.idx - b.idx));
 }
 
-export function buildPropertyLiquidationOrder(
+export function hasExplicitPropertyLiquidationPreferences(values: RuntimeValues): boolean {
+  return PROPERTY_RUNTIME_GROUPS.some((group) => !isBlank(values[group.liquidationRankField]));
+}
+
+export function buildPropertyLiquidationBuckets(
   values: RuntimeValues,
   active: PropertyRuntimeConfig[],
   manualOverrideActive: boolean
-): PropertyRuntimeConfig[] {
-  if (active.length <= 1) return [...active];
-  if (!manualOverrideActive) return defaultPropertyOrder(values, active);
-  const ranked = active
+): PropertyLiquidationBuckets {
+  if (active.length === 0) {
+    return { sellable: [], excluded: [] };
+  }
+  if (!manualOverrideActive) {
+    return {
+      sellable: defaultPropertyOrder(values, active),
+      excluded: []
+    };
+  }
+
+  const sellable = active
     .filter((group) => {
       const rank = parsePropertyRank(values, group.liquidationRankField);
       return rank !== null && rank > 0;
@@ -481,8 +498,17 @@ export function buildPropertyLiquidationOrder(
       const rankB = parsePropertyRank(values, b.liquidationRankField) ?? 0;
       return (rankA - rankB) || (a.idx - b.idx);
     });
-  const unranked = active.filter((group) => !ranked.includes(group));
-  return [...ranked, ...unranked];
+  const excluded = active.filter((group) => !sellable.includes(group));
+  return { sellable, excluded };
+}
+
+export function buildPropertyLiquidationOrder(
+  values: RuntimeValues,
+  active: PropertyRuntimeConfig[],
+  manualOverrideActive: boolean
+): PropertyRuntimeConfig[] {
+  const { sellable, excluded } = buildPropertyLiquidationBuckets(values, active, manualOverrideActive);
+  return [...sellable, ...excluded];
 }
 
 export function syncManualPropertyOrderForNewProperties(
@@ -517,7 +543,7 @@ export function buildPropertyLiquidationAssignments(
   const assignments: Array<{ fieldId: FieldId; value: number | null }> = [];
   const activeSet = new Set(active.map((group) => group.idx));
   for (const group of PROPERTY_RUNTIME_GROUPS) {
-    if (activeSet.has(group.idx)) assignments.push({ fieldId: group.liquidationRankField, value: null });
+    if (activeSet.has(group.idx)) assignments.push({ fieldId: group.liquidationRankField, value: 0 });
   }
   order.forEach((group, idx) => {
     assignments.push({ fieldId: group.liquidationRankField, value: idx + 1 });
