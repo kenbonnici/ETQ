@@ -2358,6 +2358,20 @@ function renderInputs(): void {
         </section>
       `;
     }
+    if (title === "FINER DETAILS") {
+      return `
+        <section class="input-section ${sectionClass}">
+          <div class="section-header-row">
+            <button type="button" class="section-toggle" data-section="${title}">${open ? `Hide ${title}` : title}</button>
+            <div class="finer-default-actions section-header-actions">
+              <button type="button" class="quickstart-clear-btn" id="clear-finer-defaults-btn">Clear Data</button>
+              <button type="button" class="quickstart-load-btn" id="load-finer-defaults-btn">Load Defaults</button>
+            </div>
+          </div>
+          ${open ? controlsHtml : ""}
+        </section>
+      `;
+    }
     return `<section class="input-section ${sectionClass}"><button type="button" class="section-toggle" data-section="${title}">${open ? `Hide ${title}` : title}</button>${open ? controlsHtml : ""}</section>`;
   };
 
@@ -2486,12 +2500,6 @@ function renderInputs(): void {
   const quickHtml = controls(grouped["QUICK START"]);
   const deeperHtml = controls(grouped["DEEPER DIVE"]);
   const finerHtml = controls(grouped["FINER DETAILS"]);
-  const finerActionsHtml = `
-    <div class="finer-default-actions section-header-actions">
-      <button type="button" class="quickstart-clear-btn" id="clear-finer-defaults-btn">Clear Data</button>
-      <button type="button" class="quickstart-load-btn" id="load-finer-defaults-btn">Load Defaults</button>
-    </div>
-  `;
   const currencySelectHtml = `
     <label class="field currency-selector">
       <span>Currency</span>
@@ -2503,7 +2511,7 @@ function renderInputs(): void {
   inputsPanel.innerHTML =
     block("QUICK START", true, false, currencySelectHtml + quickHtml, "section-quick-start") +
     block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml, "section-deeper-dive") +
-    block("FINER DETAILS", sectionState.finerOpen, true, finerActionsHtml + finerHtml, "section-finer-details");
+    block("FINER DETAILS", sectionState.finerOpen, true, finerHtml, "section-finer-details");
 
   const currencySelector = inputsPanel.querySelector<HTMLSelectElement>("#currency-selector");
   if (currencySelector) {

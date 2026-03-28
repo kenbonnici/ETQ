@@ -1263,6 +1263,10 @@ body {
   margin: 0 0 10px;
 }
 
+.section-header-row .finer-default-actions {
+  margin: 0;
+}
+
 .quickstart-load-btn {
   flex: 0 0 auto;
   height: 35px;
@@ -1466,6 +1470,11 @@ body {
   text-transform: uppercase;
   cursor: pointer;
   margin-bottom: 14px;
+}
+
+.section-header-row .section-toggle {
+  flex: 1 1 auto;
+  margin-bottom: 0;
 }
 
 .section-deeper-dive .section-toggle {
