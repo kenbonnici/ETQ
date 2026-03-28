@@ -31,8 +31,9 @@ export const RUNTIME_FIELDS = {
   rentalIncomeAnnualIncrease: INPUT_DEFINITION_BY_CELL.B187.fieldId,
   pensionReductionPerYearEarly: INPUT_DEFINITION_BY_CELL.B189.fieldId,
   minimumCashBuffer: INPUT_DEFINITION_BY_CELL.B191.fieldId,
-  stockSellingCostRate: INPUT_DEFINITION_BY_CELL.B193.fieldId,
-  propertyDisposalCostRate: INPUT_DEFINITION_BY_CELL.B195.fieldId
+  legacyAmount: INPUT_DEFINITION_BY_CELL.B193.fieldId,
+  stockSellingCostRate: INPUT_DEFINITION_BY_CELL.B195.fieldId,
+  propertyDisposalCostRate: INPUT_DEFINITION_BY_CELL.B197.fieldId
 } as const satisfies Record<string, FieldId>;
 
 export const HOME_FIELDS = {

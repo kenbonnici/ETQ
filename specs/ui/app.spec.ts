@@ -1,6 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
 
+const LEGACY_AWARE_RETIREMENT_AGE = 54;
+
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
   earlyRetAge: "#early-ret-age",
@@ -16,6 +18,9 @@ const selectors = {
   mortgageBalance: 'input[data-field-id="housing.01Residence.mortgage.balance"]',
   mortgageInterest: 'input[data-field-id="housing.01Residence.mortgage.interestRateAnnual"]',
   mortgageRepayment: 'input[data-field-id="housing.01Residence.mortgage.monthlyRepayment"]',
+  minimumCashBuffer: 'input[data-field-id="liquidity.minimumCashBuffer"]',
+  legacyAmount: 'input[data-field-id="planning.legacyAmount"]',
+  stockSellingCostRate: 'input[data-field-id="liquidation.stockSellingCostRate"]',
   propertyName: 'input[data-field-id="properties.01.displayName"]',
   property2Name: 'input[data-field-id="properties.02.displayName"]',
   property3Name: 'input[data-field-id="properties.03.displayName"]',
@@ -216,6 +221,32 @@ test("load sample data restores the workbook early-retirement age", async ({ pag
   await loadSampleData(page);
 
   await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(EXCEL_BASELINE_SPECIMEN.early_retirement_age));
+});
+
+test("legacy input sits between cash buffer and selling costs in finer details with the expected tab order", async ({ page }) => {
+  await loadSampleData(page);
+  await page.getByRole("button", { name: "FINER DETAILS" }).click();
+
+  await expect(page.locator(selectors.minimumCashBuffer)).toBeVisible();
+  await expect(page.locator(selectors.legacyAmount)).toBeVisible();
+  await expect(page.locator(selectors.legacyAmount)).toHaveValue(/3,000,000/);
+
+  await page.locator(selectors.minimumCashBuffer).focus();
+  await page.locator(selectors.minimumCashBuffer).press("Tab");
+  await expectActiveElement(page, selectors.legacyAmount);
+
+  await page.locator(selectors.legacyAmount).press("Tab");
+  await expectActiveElement(page, selectors.stockSellingCostRate);
+});
+
+test("enough to quit search advances to the first age that satisfies the legacy-aware rule", async ({ page }) => {
+  await loadSampleData(page);
+  await fillAndBlur(page, selectors.earlyRetAge, "48");
+
+  await page.getByRole("button", { name: "Enough to quit?" }).click();
+
+  await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(LEGACY_AWARE_RETIREMENT_AGE));
+  await expect(page.locator("#retire-check-result")).toContainText(`retire at ${LEGACY_AWARE_RETIREMENT_AGE}`);
 });
 
 test("deep dive keeps investment properties together before other income and orders other loans cleanly", async ({ page }) => {

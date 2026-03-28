@@ -100,7 +100,6 @@ const networthExpandedGroups = new Set<string>(["networth-properties", "networth
 
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
-const RETIREMENT_CASH_FLOOR_EPSILON = 1e-6;
 const TIMELINE_ROW_HEIGHT_DEFAULT = 20;
 const TIMELINE_ROW_GAP_EXTRA = 2;
 const TIMELINE_ENDCAP_CLEARANCE = 18;
@@ -1799,12 +1798,7 @@ function findEarliestRetirementAgeBeforeStatutory(statutory: number): number | n
 
   for (let candidateAge = candidateStartAge; candidateAge <= candidateEndAge; candidateAge += 1) {
     const candidateResult = runModel(fieldState, { ...uiState, earlyRetirementAge: candidateAge });
-    const startIndex = candidateResult.outputs.ages.findIndex((age) => Math.round(age) >= candidateAge);
-    if (startIndex < 0) continue;
-    const staysNonNegative = candidateResult.outputs.cashSeriesEarly
-      .slice(startIndex)
-      .every((cash) => cash >= -RETIREMENT_CASH_FLOOR_EPSILON);
-    if (staysNonNegative) return candidateAge;
+    if (candidateResult.outputs.scenarioEarly.retirementSuccessful) return candidateAge;
   }
 
   return null;

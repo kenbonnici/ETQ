@@ -1233,6 +1233,18 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 193,
+    fieldId: "planning.legacyAmount",
+    label: "Legacy amount",
+    section: "FINER DETAILS",
+    groupPath: "FINER DETAILS",
+    groupTail: [],
+    tooltip: "Wealth to preserve for your heirs",
+    uiNote: "",
+    sampleValue: "0",
+    type: "number"
+  },
+  {
+    row: 195,
     fieldId: "liquidation.stockSellingCostRate",
     label: "Stock market selling costs",
     section: "FINER DETAILS",
@@ -1244,7 +1256,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 195,
+    row: 197,
     fieldId: "liquidation.propertyDisposalCostRate",
     label: "Property disposal costs",
     section: "FINER DETAILS",
@@ -1256,7 +1268,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 198,
+    row: 200,
     fieldId: "properties.01.liquidationPriority",
     label: "Sliema",
     section: "FINER DETAILS",
@@ -1268,7 +1280,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 199,
+    row: 201,
     fieldId: "properties.02.liquidationPriority",
     label: "Gzira",
     section: "FINER DETAILS",
@@ -1280,7 +1292,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 200,
+    row: 202,
     fieldId: "properties.03.liquidationPriority",
     label: "Qormi",
     section: "FINER DETAILS",
@@ -1292,7 +1304,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 201,
+    row: 203,
     fieldId: "properties.04.liquidationPriority",
     label: "Gudja",
     section: "FINER DETAILS",
@@ -1304,7 +1316,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 202,
+    row: 204,
     fieldId: "properties.05.liquidationPriority",
     label: "Marsa",
     section: "FINER DETAILS",

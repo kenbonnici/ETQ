@@ -690,6 +690,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
     points,
     cashSeries: points.map((p) => p.cash),
     netWorthSeries: points.map((p) => p.netWorth),
+    retirementSuccessful: false,
     milestoneHints,
     cashFlow: {
       openingCash: openingCashSeries,

@@ -68,6 +68,7 @@ export interface EffectiveInputs {
 
   pensionReductionPerYearEarly: number;
   cashBuffer: number;
+  legacyAmount: number;
   stockSellingCosts: number;
   propertyDisposalCosts: number;
 
@@ -132,6 +133,7 @@ export interface ScenarioOutputs {
   points: ProjectionPoint[];
   cashSeries: number[];
   netWorthSeries: number[];
+  retirementSuccessful: boolean;
   milestoneHints: ScenarioMilestoneHint[];
   cashFlow: ScenarioCashFlowRows;
   netWorth: ScenarioNetWorthRows;

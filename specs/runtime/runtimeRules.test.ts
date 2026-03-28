@@ -50,6 +50,7 @@ const DEFAULT_VISIBILITY: RuntimeVisibilityState = {
   visibleIncomeEvents: 1,
   visibleExpenseEvents: 1
 };
+const LEGACY_AWARE_RETIREMENT_AGE = 54;
 
 function cloneFields(fields: FieldState): FieldState {
   return { ...fields };
@@ -87,13 +88,51 @@ test("input definitions preserve row order and derive cells from semantic field 
       55, 60, 61, 62, 65, 66, 67, 70, 71, 72, 75, 76, 77, 80, 81, 82, 86, 87, 88, 89, 90, 92, 93, 97, 100,
       101, 102, 105, 106, 107, 110, 111, 112, 115, 116, 117, 120, 121, 122, 125, 126, 127, 132, 133, 134,
       137, 138, 139, 142, 143, 144, 149, 150, 151, 154, 155, 156, 159, 160, 161, 166, 169, 170, 171, 173,
-      174, 175, 177, 179, 181, 183, 185, 187, 189, 191, 193, 195, 198, 199, 200, 201, 202
+      174, 175, 177, 179, 181, 183, 185, 187, 189, 191, 193, 195, 197, 200, 201, 202, 203, 204
     ]
   );
 
   for (const def of INPUT_DEFINITIONS) {
     assert.equal(def.cell, FIELD_ID_TO_CELL[def.fieldId]);
   }
+});
+
+test("blank legacy normalizes to zero and specimen parity captures the shifted workbook cells", () => {
+  const blankFields = createEmptyFieldState();
+
+  assert.equal(normalizeInputs(fieldStateToRawInputs(blankFields)).legacyAmount, 0);
+  assert.equal(SPECIMEN_FIELDS[RUNTIME_FIELDS.legacyAmount], 3_000_000);
+  assert.equal(SPECIMEN_FIELDS[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField], 5);
+  assert.equal(SPECIMEN_FIELDS[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField], 2);
+});
+
+test("retirement success requires both the cash buffer and the end-age legacy target", () => {
+  const workbookCachedAge = runModel(SPECIMEN_FIELDS, SPECIMEN_UI_STATE);
+  assert.equal(workbookCachedAge.outputs.scenarioEarly.retirementSuccessful, false);
+
+  const legacyAwareSuccess = runModel(SPECIMEN_FIELDS, {
+    ...SPECIMEN_UI_STATE,
+    earlyRetirementAge: LEGACY_AWARE_RETIREMENT_AGE
+  });
+  assert.equal(legacyAwareSuccess.outputs.scenarioEarly.retirementSuccessful, true);
+
+  const oneYearEarlier = runModel(SPECIMEN_FIELDS, {
+    ...SPECIMEN_UI_STATE,
+    earlyRetirementAge: LEGACY_AWARE_RETIREMENT_AGE - 1
+  });
+  assert.equal(oneYearEarlier.outputs.scenarioEarly.retirementSuccessful, false);
+
+  const higherLegacyFields = cloneFields(SPECIMEN_FIELDS);
+  const finalNetWorth = legacyAwareSuccess.outputs.scenarioEarly.netWorthSeries[
+    legacyAwareSuccess.outputs.scenarioEarly.netWorthSeries.length - 1
+  ] ?? 0;
+  higherLegacyFields[RUNTIME_FIELDS.legacyAmount] = finalNetWorth + 1;
+
+  const legacyShortfall = runModel(higherLegacyFields, {
+    ...SPECIMEN_UI_STATE,
+    earlyRetirementAge: LEGACY_AWARE_RETIREMENT_AGE
+  });
+  assert.equal(legacyShortfall.outputs.scenarioEarly.retirementSuccessful, false);
 });
 
 test("validation and retire-check gating still key off semantic core fields", () => {

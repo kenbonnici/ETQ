@@ -100,13 +100,14 @@ export const CELL_TO_FIELD_ID = {
   B187: "assumptions.rentalIncomeGrowthRateAnnual",
   B189: "retirement.earlyPensionReductionPerYear",
   B191: "liquidity.minimumCashBuffer",
-  B193: "liquidation.stockSellingCostRate",
-  B195: "liquidation.propertyDisposalCostRate",
-  B198: "properties.01.liquidationPriority",
-  B199: "properties.02.liquidationPriority",
-  B200: "properties.03.liquidationPriority",
-  B201: "properties.04.liquidationPriority",
-  B202: "properties.05.liquidationPriority"
+  B193: "planning.legacyAmount",
+  B195: "liquidation.stockSellingCostRate",
+  B197: "liquidation.propertyDisposalCostRate",
+  B200: "properties.01.liquidationPriority",
+  B201: "properties.02.liquidationPriority",
+  B202: "properties.03.liquidationPriority",
+  B203: "properties.04.liquidationPriority",
+  B204: "properties.05.liquidationPriority"
 } as const;
 
 export type InputCell = keyof typeof CELL_TO_FIELD_ID;

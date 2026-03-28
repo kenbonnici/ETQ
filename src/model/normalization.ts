@@ -139,8 +139,9 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
 
     pensionReductionPerYearEarly: toNumber(raw.B189),
     cashBuffer: toNumber(raw.B191),
-    stockSellingCosts: toNumber(raw.B193),
-    propertyDisposalCosts: toNumber(raw.B195),
+    legacyAmount: toNumber(raw.B193),
+    stockSellingCosts: toNumber(raw.B195),
+    propertyDisposalCosts: toNumber(raw.B197),
 
     liquidationPriority: resolveLiquidationPriority(raw, options)
   };

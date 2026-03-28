@@ -4,7 +4,7 @@ import { runScenarioEarly } from "./engines/runScenarioEarly";
 import { runScenarioNorm } from "./engines/runScenarioNorm";
 import { INPUT_DEFINITION_BY_CELL, ValidationMessage } from "./inputSchema";
 import { materializeLiquidationPriorityInputs, normalizeInputs } from "./normalization";
-import { ModelOutputs, ModelUiState, FieldState } from "./types";
+import { EffectiveInputs, ModelOutputs, ModelUiState, FieldState, ScenarioOutputs } from "./types";
 import { clamp } from "./components/finance";
 import { resolveProjectionTiming } from "./projectionTiming";
 import { validateRawInputs } from "./validate";
@@ -14,6 +14,19 @@ export interface RunModelResult {
   validationMessages: ValidationMessage[];
   canCollapseDeeperDive: boolean;
   canCollapseFinerDetails: boolean;
+}
+
+const RETIREMENT_SUCCESS_EPSILON = 1e-6;
+
+function withRetirementSuccess(scenario: ScenarioOutputs, inputs: EffectiveInputs): ScenarioOutputs {
+  const cashBufferSatisfied = scenario.cashSeries.every((cash) => cash + RETIREMENT_SUCCESS_EPSILON >= inputs.cashBuffer);
+  const finalNetWorth = scenario.netWorthSeries[scenario.netWorthSeries.length - 1] ?? Number.NEGATIVE_INFINITY;
+  const legacySatisfied = finalNetWorth + RETIREMENT_SUCCESS_EPSILON >= inputs.legacyAmount;
+
+  return {
+    ...scenario,
+    retirementSuccessful: cashBufferSatisfied && legacySatisfied
+  };
 }
 
 export function runModel(fields: FieldState, uiState: ModelUiState): RunModelResult {
@@ -39,8 +52,8 @@ export function runModel(fields: FieldState, uiState: ModelUiState): RunModelRes
   });
   const projectionTiming = resolveProjectionTiming(new Date(), uiState.projectionMonthOverride ?? null);
 
-  const scenarioNorm = runScenarioNorm(normalized, projectionTiming);
-  const scenarioEarly = runScenarioEarly(normalized, earlyRetirementAge, projectionTiming);
+  const scenarioNorm = withRetirementSuccess(runScenarioNorm(normalized, projectionTiming), normalized);
+  const scenarioEarly = withRetirementSuccess(runScenarioEarly(normalized, earlyRetirementAge, projectionTiming), normalized);
 
   const outputs: ModelOutputs = {
     ages: scenarioNorm.points.map((p) => p.age),
