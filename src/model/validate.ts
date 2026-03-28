@@ -45,12 +45,12 @@ function pushMessage(
 function projectionEndYear(raw: RawInputs): number | null {
   const ageNow = asNumber(raw.B4);
   const endAge = asNumber(raw.B166);
-  if (ageNow === null || endAge === null || endAge <= ageNow) return null;
-  return new Date().getFullYear() + Math.round(endAge - ageNow);
+  if (ageNow === null || endAge === null || endAge < ageNow) return null;
+  return new Date().getFullYear() + Math.max(0, Math.round(endAge - ageNow - 1));
 }
 
 function nextProjectionYear(): number {
-  return new Date().getFullYear() + 1;
+  return new Date().getFullYear();
 }
 
 function monthlyInterestDue(balance: number, annualRate: number): number {
@@ -109,8 +109,8 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
     pushMessage(messages, "B19", "error", "Statutory retirement age must be greater than your current age.", true);
   }
 
-  if (ageNow !== null && lifeExpectancy !== null && lifeExpectancy <= ageNow) {
-    pushMessage(messages, "B166", "error", "Plan to live until age must be greater than current age.", true);
+  if (ageNow !== null && lifeExpectancy !== null && lifeExpectancy < ageNow) {
+    pushMessage(messages, "B166", "error", "Plan to live until age must be current age or later.", true);
   }
 
   if (lifeExpectancy !== null && lifeExpectancy > 100) {
@@ -153,7 +153,7 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
     const years = asNumber(raw[dep.yearsCell]);
     if (years === null || !Number.isInteger(years) || years <= 0) {
       pushMessage(messages, dep.yearsCell, "error", "Years to support must be a whole number greater than 0.");
-    } else if (ageNow !== null && lifeExpectancy !== null && years > lifeExpectancy - ageNow) {
+    } else if (ageNow !== null && lifeExpectancy !== null && years > Math.max(1, lifeExpectancy - ageNow)) {
       pushMessage(messages, dep.yearsCell, "error", "Years to support cannot extend beyond the projection horizon.");
     }
   }
@@ -202,8 +202,8 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
     if (untilAge === null || !Number.isInteger(untilAge)) {
       pushMessage(messages, OTHER_WORK_GROUP_BY_CELL.untilAgeCell, "error", "Continue other work until age is required when other work income is entered.");
     } else {
-      if (ageNow !== null && untilAge <= ageNow) {
-        pushMessage(messages, OTHER_WORK_GROUP_BY_CELL.untilAgeCell, "error", "Other work end age must be greater than current age.");
+      if (ageNow !== null && untilAge < ageNow) {
+        pushMessage(messages, OTHER_WORK_GROUP_BY_CELL.untilAgeCell, "error", "Other work end age must be current age or later.");
       }
       if (lifeExpectancy !== null && untilAge > lifeExpectancy) {
         pushMessage(messages, OTHER_WORK_GROUP_BY_CELL.untilAgeCell, "error", "Other work end age cannot exceed the projection horizon.");
@@ -264,8 +264,8 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
       if (fromAge > toAge) {
         pushMessage(messages, POST_RETIREMENT_INCOME_GROUP_BY_CELL.toAgeCell, "error", "To age must be greater than or equal to from age.");
       }
-      if (ageNow !== null && fromAge <= ageNow) {
-        pushMessage(messages, POST_RETIREMENT_INCOME_GROUP_BY_CELL.fromAgeCell, "error", "From age must be greater than current age.");
+      if (ageNow !== null && fromAge < ageNow) {
+        pushMessage(messages, POST_RETIREMENT_INCOME_GROUP_BY_CELL.fromAgeCell, "error", "From age must be current age or later.");
       }
       if (lifeExpectancy !== null && toAge > lifeExpectancy) {
         pushMessage(messages, POST_RETIREMENT_INCOME_GROUP_BY_CELL.toAgeCell, "error", "To age cannot exceed the projection horizon.");

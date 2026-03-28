@@ -97,7 +97,7 @@ test("validation rejects one-off events outside the active projection window", (
   fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
   fields[EXPENSE_EVENT_RUNTIME_GROUPS[0].nameField] = "School fees";
   fields[EXPENSE_EVENT_RUNTIME_GROUPS[0].amountField] = 10_000;
-  fields[EXPENSE_EVENT_RUNTIME_GROUPS[0].yearField] = new Date().getFullYear();
+  fields[EXPENSE_EVENT_RUNTIME_GROUPS[0].yearField] = new Date().getFullYear() - 1;
 
   const messages = messagesFor(fields);
 

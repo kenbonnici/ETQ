@@ -71,7 +71,7 @@ export function materializeLiquidationPriorityInputs(
 export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOptions = {}): EffectiveInputs {
   const ageNow = toNumber(raw.B4);
   const statutoryRetirementAge = toBoundedNumber(raw.B19, 50, 70);
-  const liveUntilMinimum = ageNow > 0 ? ageNow + 1 : 19;
+  const liveUntilMinimum = ageNow > 0 ? ageNow : 19;
   const liveUntilAge = toBoundedNumber(raw.B166, liveUntilMinimum, 120);
 
   return {

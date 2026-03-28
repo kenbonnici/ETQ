@@ -4,6 +4,7 @@ import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpe
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
   earlyRetAge: "#early-ret-age",
+  projectionMonth: "#projection-month",
   currencySelector: "#currency-selector",
   livingExpenses: 'input[data-field-id="spending.livingExpenses.annual"]',
   livingExpensesExpandedMode: '[data-living-expenses-mode="expanded"]',
@@ -216,6 +217,14 @@ test("load sample data restores the workbook early-retirement age", async ({ pag
   await loadSampleData(page);
 
   await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(EXCEL_BASELINE_SPECIMEN.early_retirement_age));
+});
+
+test("load sample data restores the workbook projection month override", async ({ page }) => {
+  await loadSampleData(page);
+
+  await expect(page.locator(selectors.projectionMonth)).toHaveValue(
+    String(EXCEL_BASELINE_SPECIMEN.projection_month_override ?? "")
+  );
 });
 
 test("deep dive keeps investment properties together before other income and orders other loans cleanly", async ({ page }) => {

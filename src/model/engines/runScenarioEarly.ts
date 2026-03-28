@@ -1,6 +1,11 @@
 import { EffectiveInputs, ScenarioOutputs } from "../types";
+import { ProjectionTiming } from "../projectionTiming";
 import { runScenario } from "./runScenario";
 
-export function runScenarioEarly(inputs: EffectiveInputs, earlyRetirementAge: number): ScenarioOutputs {
-  return runScenario(inputs, { retirementAge: earlyRetirementAge });
+export function runScenarioEarly(
+  inputs: EffectiveInputs,
+  earlyRetirementAge: number,
+  timing: ProjectionTiming
+): ScenarioOutputs {
+  return runScenario(inputs, { retirementAge: earlyRetirementAge }, timing);
 }

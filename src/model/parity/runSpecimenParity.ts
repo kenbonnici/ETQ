@@ -13,7 +13,8 @@ export function runSpecimenParity(): ParityReport {
     deeperDiveOpen: true,
     finerDetailsOpen: true,
     earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age,
-    manualPropertyLiquidationOrder: false
+    manualPropertyLiquidationOrder: false,
+    projectionMonthOverride: EXCEL_BASELINE_SPECIMEN.projection_month_override ?? null
   });
 
   const ages = result.outputs.ages;

@@ -83,6 +83,18 @@ def row_series(sheet_xml, row_number, sst):
     return [v for _, v in pairs]
 
 
+def numeric_cell(sheet_xml, ref, sst):
+    sh = ET.fromstring(sheet_xml)
+    cell = sh.find(f"m:sheetData/m:row/m:c[@r='{ref}']", NS)
+    value = cell_value(cell, sst)
+    if value is None or str(value).strip() == "":
+        return None
+    try:
+        return float(value)
+    except Exception:
+        return None
+
+
 def main():
     with zipfile.ZipFile(XLSX) as zf:
         sst = get_sst(zf)
@@ -92,11 +104,14 @@ def main():
 
     raw_inputs = parse_input_cells(sheet1, load_input_cells(), sst)
 
+    years = row_series(sheet3, 2, sst)
     ages = row_series(sheet3, 3, sst)
     cash_norm = row_series(sheet3, 247, sst)
     nw_norm = row_series(sheet3, 248, sst)
     cash_early = row_series(sheet4, 247, sst)
     nw_early = row_series(sheet4, 248, sst)
+    mth_rem = numeric_cell(sheet1, "B205", sst)
+    projection_month_override = int(round(13 - mth_rem)) if mth_rem is not None else None
 
     # Use RetEarly_Engine!B3 as source of early retirement age.
     sh4 = ET.fromstring(sheet4)
@@ -107,8 +122,10 @@ def main():
     payload = {
         "scenario_name": "excel_specimen",
         "early_retirement_age": early_age,
+        "projection_month_override": projection_month_override,
         "raw_inputs": raw_inputs,
         "excel_outputs": {
+            "years": years,
             "ages": ages,
             "cashSeriesEarly": cash_early,
             "cashSeriesNorm": cash_norm,

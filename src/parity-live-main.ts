@@ -8,8 +8,10 @@ const LIVE_PARITY_TOLERANCE = Number.isFinite(parsedTolerance) ? parsedTolerance
 
 type LiveExtract = {
   early: number;
+  projection_month_override?: number | null;
   raw: Record<string, unknown>;
   exp: {
+    years: number[];
     ages: number[];
     cashE: number[];
     cashN: number[];
@@ -40,7 +42,8 @@ const model = runModel(rawInputsToFieldState(input.raw as RawInputs), {
   deeperDiveOpen: true,
   finerDetailsOpen: true,
   earlyRetirementAge: input.early,
-  manualPropertyLiquidationOrder: false
+  manualPropertyLiquidationOrder: false,
+  projectionMonthOverride: input.projection_month_override ?? null
 }).outputs;
 
 const dCashE = model.cashSeriesEarly.map((v, i) => v - input.exp.cashE[i]);
@@ -58,7 +61,7 @@ const age95 = findAgeIndex(input.exp.ages, 95);
 
 function lineForIndex(label: string, i: number, deltas: number[]) {
   if (i < 0) return `${label}: n/a`;
-  return `${label}: idx=${i} year=${2027 + i} age=${input.exp.ages[i]} delta=${deltas[i].toFixed(2)}`;
+  return `${label}: idx=${i} year=${input.exp.years[i]} age=${input.exp.ages[i]} delta=${deltas[i].toFixed(2)}`;
 }
 
 const maxAbsDelta = Math.max(

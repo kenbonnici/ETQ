@@ -75,7 +75,8 @@ let uiState: ModelUiState = {
   deeperDiveOpen: false,
   finerDetailsOpen: false,
   earlyRetirementAge: 65,
-  manualPropertyLiquidationOrder: false
+  manualPropertyLiquidationOrder: false,
+  projectionMonthOverride: null
 };
 
 let debounceHandle: number | null = null;
@@ -126,12 +127,17 @@ const STEPPER_CONFIG = FIELD_STEPPER_STEPS;
 const STEP_DECIMALS = FIELD_STEPPER_DECIMALS;
 const LIVING_EXPENSES_FIELD_ID = RUNTIME_FIELDS.annualLivingExpenses;
 const LIVING_EXPENSES_DEF = INPUT_DEFINITION_BY_FIELD_ID[LIVING_EXPENSES_FIELD_ID];
+const PROJECTION_MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"] as const;
+const currentProjectionMonth = new Date().getMonth() + 1;
+const projectionMonthOptionsHtml = PROJECTION_MONTH_LABELS.map(
+  (label, idx) => `<option value="${idx + 1}">${label}</option>`
+).join("");
 
 function getDynamicMinConstraint(fieldId: FieldId): number | null {
   if (fieldId !== RUNTIME_FIELDS.lifeExpectancyAge) return null;
   const currentAge = getCurrentAge();
   if (currentAge === null) return null;
-  return currentAge + 1;
+  return currentAge;
 }
 
 function applyFieldNumericConstraint(fieldId: FieldId, value: number | null): number | null {
@@ -179,6 +185,13 @@ app.innerHTML = `
           <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Early retirement age" />
           <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase early retirement age">+</button>
         </div>
+        <label class="projection-month-control" for="projection-month">
+          <span class="retirement-stepper-label">Projection month</span>
+          <select id="projection-month" aria-label="Projection month">
+            <option value="">Auto (${PROJECTION_MONTH_LABELS[currentProjectionMonth - 1]})</option>
+            ${projectionMonthOptionsHtml}
+          </select>
+        </label>
       </header>
       <article class="chart-card" id="cash-chart-card">
         <div id="charts-anchor" class="scroll-anchor" aria-hidden="true"></div>
@@ -271,6 +284,7 @@ const inputsPanel = document.getElementById("inputs-panel") as HTMLDivElement;
 const spinner = document.getElementById("early-ret-age") as HTMLInputElement;
 const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonElement;
 const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
+const projectionMonthSelect = document.getElementById("projection-month") as HTMLSelectElement;
 const retireCheckResult = document.getElementById("retire-check-result") as HTMLParagraphElement;
 const retireCheckButton = document.getElementById("retire-check-btn") as HTMLButtonElement;
 const openCashflowButton = document.getElementById("open-cashflow-btn") as HTMLButtonElement;
@@ -367,6 +381,7 @@ interface TimelineYearEvent {
 
 interface ExcelSpecimenPayload {
   early_retirement_age?: number;
+  projection_month_override?: number | null;
   raw_inputs?: Partial<Record<string, unknown>>;
 }
 
@@ -1753,6 +1768,11 @@ function getStatutoryAge(): number | null {
   return Math.round(capped);
 }
 
+function syncProjectionMonthControl(): void {
+  const override = uiState.projectionMonthOverride;
+  projectionMonthSelect.value = Number.isFinite(override) ? String(override) : "";
+}
+
 function updateEarlyRetirementButtons(statutory: number | null): void {
   if (statutory === null) {
     spinnerDown.disabled = true;
@@ -2245,9 +2265,15 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
         uiState.earlyRetirementAge = statutory;
       }
     }
+    const projectionMonthOverride = Number(payload.projection_month_override);
+    uiState.projectionMonthOverride =
+      Number.isFinite(projectionMonthOverride) && projectionMonthOverride >= 1 && projectionMonthOverride <= 12
+        ? Math.round(projectionMonthOverride)
+        : null;
 
     setRetireCheckMessage(null);
     syncEarlyRetirementControl(true);
+    syncProjectionMonthControl();
     renderInputs();
     queueRecalc();
   } catch (error) {
@@ -3445,6 +3471,18 @@ spinner.addEventListener("blur", () => {
 spinnerDown.addEventListener("click", () => adjustEarlyRetirementAge(-1));
 spinnerUp.addEventListener("click", () => adjustEarlyRetirementAge(1));
 
+projectionMonthSelect.addEventListener("change", () => {
+  const raw = projectionMonthSelect.value.trim();
+  const parsed = Number(raw);
+  uiState.projectionMonthOverride =
+    Number.isFinite(parsed) && parsed >= 1 && parsed <= 12
+      ? Math.round(parsed)
+      : null;
+  syncProjectionMonthControl();
+  setRetireCheckMessage(null);
+  queueRecalc();
+});
+
 openCashflowButton.addEventListener("mousedown", (event) => {
   event.preventDefault();
 });
@@ -3580,8 +3618,8 @@ retireCheckButton.addEventListener("click", () => {
   spinner.value = String(canRetAge);
   updateEarlyRetirementButtons(statutory);
   const currentAge = getCurrentAge();
-  const positiveMessage = currentAge !== null && canRetAge === currentAge + 1
-    ? "Yes! You can retire next year!"
+  const positiveMessage = currentAge !== null && canRetAge === currentAge
+    ? "Yes! You can retire now!"
     : `Not quite, but you can retire at ${canRetAge}`;
   setRetireCheckMessage(positiveMessage, "positive");
   queueRecalc();
@@ -3603,5 +3641,6 @@ if (typeof ResizeObserver !== "undefined") {
 resetCashflowExpandedGroups("collapsed");
 resetNetworthExpandedGroups("collapsed");
 syncProjectionSectionVisibility();
+syncProjectionMonthControl();
 renderInputs();
 recalc();

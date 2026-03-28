@@ -6,6 +6,7 @@ import { INPUT_DEFINITION_BY_CELL, ValidationMessage } from "./inputSchema";
 import { materializeLiquidationPriorityInputs, normalizeInputs } from "./normalization";
 import { ModelOutputs, ModelUiState, FieldState } from "./types";
 import { clamp } from "./components/finance";
+import { resolveProjectionTiming } from "./projectionTiming";
 import { validateRawInputs } from "./validate";
 
 export interface RunModelResult {
@@ -36,9 +37,10 @@ export function runModel(fields: FieldState, uiState: ModelUiState): RunModelRes
   const normalized = normalizeInputs(activation.activatedInputs, {
     manualOverrideActive: uiState.manualPropertyLiquidationOrder
   });
+  const projectionTiming = resolveProjectionTiming(new Date(), uiState.projectionMonthOverride ?? null);
 
-  const scenarioNorm = runScenarioNorm(normalized);
-  const scenarioEarly = runScenarioEarly(normalized, earlyRetirementAge);
+  const scenarioNorm = runScenarioNorm(normalized, projectionTiming);
+  const scenarioEarly = runScenarioEarly(normalized, earlyRetirementAge, projectionTiming);
 
   const outputs: ModelOutputs = {
     ages: scenarioNorm.points.map((p) => p.age),

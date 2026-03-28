@@ -1,6 +1,7 @@
 import { EffectiveInputs, NamedProjectionSeries, ProjectionPoint, ScenarioOutputs } from "../types";
 import { buildTimeline } from "../timeline";
 import { fv, safePow, yearlyLoanPayment, clamp } from "../components/finance";
+import { ProjectionTiming } from "../projectionTiming";
 
 interface ScenarioConfig {
   retirementAge: number;
@@ -39,6 +40,14 @@ function nperMonths(balance: number, annualRate: number, monthlyRepayment: numbe
 
 function inflationFactor(inf: number, idx: number): number {
   return safePow(1 + inf, idx);
+}
+
+function firstYearFactor(timing: ProjectionTiming, idx: number): number {
+  return idx === 0 ? timing.proRate : 1;
+}
+
+function assetGrowthExponent(timing: ProjectionTiming, idx: number): number {
+  return idx + timing.proRate;
 }
 
 function computePensionReduction(inputs: EffectiveInputs, earlyRetirementAge: number): number {
@@ -200,8 +209,8 @@ function stagePropertyOrder(priority: number[], currentValues: number[]): number
   return byRank;
 }
 
-export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): ScenarioOutputs {
-  const timeline = buildTimeline(inputs.ageNow, inputs.liveUntilAge);
+export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, timing: ProjectionTiming): ScenarioOutputs {
+  const timeline = buildTimeline(inputs.ageNow, inputs.liveUntilAge, timing.currentYear);
   const n = timeline.ages.length;
 
   const pensionReduction = computePensionReduction(inputs, config.retirementAge);
@@ -252,30 +261,31 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     const age = timeline.ages[idx];
     const year = timeline.years[idx];
     const infFactor = inflationFactor(inputs.inflation, idx);
+    const proRate = firstYearFactor(timing, idx);
 
     const salary =
       age < Math.min(inputs.statutoryRetirementAge, config.retirementAge)
-        ? inputs.netIncomeAnnual * safePow(1 + inputs.salaryGrowth, idx)
+        ? inputs.netIncomeAnnual * safePow(1 + inputs.salaryGrowth, idx) * proRate
         : 0;
     salarySeries[idx] = salary;
 
-    const otherWork = age <= inputs.otherWorkUntilAge ? inputs.otherWorkIncomeAnnual * infFactor : 0;
+    const otherWork = age <= inputs.otherWorkUntilAge ? inputs.otherWorkIncomeAnnual * infFactor * proRate : 0;
     otherWorkSeries[idx] = otherWork;
 
     let rental = 0;
     for (let p = 0; p < inputs.properties.length; p += 1) {
-      const r = inputs.properties[p].rentalIncome * safePow(1 + inputs.rentalIncomeGrowth, idx);
+      const r = inputs.properties[p].rentalIncome * timing.proRate * safePow(1 + inputs.rentalIncomeGrowth, idx);
       propertyRentalSeries[p][idx] = r;
       rental += r;
     }
 
-    const basePension = age >= inputs.statutoryRetirementAge ? inputs.pensionAnnual * infFactor : 0;
-    const adjustedPension = Math.max(0, basePension - pensionReduction * infFactor);
+    const basePension = age >= inputs.statutoryRetirementAge ? inputs.pensionAnnual * infFactor * proRate : 0;
+    const adjustedPension = Math.max(0, basePension - pensionReduction * infFactor * proRate);
     statutoryPensionSeries[idx] = adjustedPension;
 
     const postRetIncome =
       age >= inputs.postRetIncomeFromAge && age <= inputs.postRetIncomeToAge
-        ? inputs.postRetIncomeAnnual * infFactor
+        ? inputs.postRetIncomeAnnual * infFactor * proRate
         : 0;
     postRetIncomeSeries[idx] = postRetIncome;
 
@@ -290,27 +300,28 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
 
     const inflowsBeforeInterest = salary + otherWork + rental + adjustedPension + postRetIncome + incomeEvents;
 
-    let livingExpense = inputs.livingExpensesAnnual * infFactor;
-    if (age <= 65) livingExpense += inputs.spendAdjustTo65 * inputs.livingExpensesAnnual * infFactor;
-    if (age > 65 && age <= 75) livingExpense += inputs.spendAdjust66To75 * inputs.livingExpensesAnnual * infFactor;
-    if (age > 75) livingExpense += inputs.spendAdjustFrom76 * inputs.livingExpensesAnnual * infFactor;
+    const livingExpenseBase = inputs.livingExpensesAnnual * infFactor * proRate;
+    let livingExpense = livingExpenseBase;
+    if (age <= 65) livingExpense += inputs.spendAdjustTo65 * livingExpenseBase;
+    if (age > 65 && age <= 75) livingExpense += inputs.spendAdjust66To75 * livingExpenseBase;
+    if (age > 75) livingExpense += inputs.spendAdjustFrom76 * livingExpenseBase;
     livingExpensesSeries[idx] = livingExpense;
 
     let outflows = livingExpense;
-    const housingRent = inputs.housingRentAnnual * infFactor;
+    const housingRent = inputs.housingRentAnnual * infFactor * proRate;
     housingRentSeries[idx] = housingRent;
     outflows += housingRent;
 
     for (let d = 0; d < inputs.dependents.length; d += 1) {
       const dependent = inputs.dependents[d];
       if (!dependent.name) continue;
-      const cost = idx < dependent.yearsToSupport ? dependent.annualCost * infFactor : 0;
+      const cost = idx < dependent.yearsToSupport ? dependent.annualCost * infFactor * proRate : 0;
       dependentCostSeries[d][idx] = cost;
       outflows += cost;
     }
 
     for (let p = 0; p < inputs.properties.length; p += 1) {
-      const c = inputs.properties[p].annualCosts * infFactor;
+      const c = inputs.properties[p].annualCosts * infFactor * proRate;
       propertyAnnualCostSeries[p][idx] = c;
       outflows += c;
     }
@@ -320,16 +331,28 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     creditCardClearanceSeries[idx] = creditCardClearance;
     outflows += creditCardClearance;
 
-    const homeLoanRepayment = yearlyLoanPayment(homeMonthsTotal, inputs.homeLoanRepaymentMonthly, idx);
+    const homeLoanRepayment = yearlyLoanPayment(
+      homeMonthsTotal,
+      inputs.homeLoanRepaymentMonthly,
+      idx,
+      timing.monthsRemaining,
+      timing.monthOffset
+    );
     homeLoanRepaymentSeries[idx] = homeLoanRepayment;
     outflows += homeLoanRepayment;
     for (let p = 0; p < inputs.properties.length; p += 1) {
-      const repayment = yearlyLoanPayment(propertyMonthsTotals[p], inputs.properties[p].loanRepaymentMonthly, idx);
+      const repayment = yearlyLoanPayment(
+        propertyMonthsTotals[p],
+        inputs.properties[p].loanRepaymentMonthly,
+        idx,
+        timing.monthsRemaining,
+        timing.monthOffset
+      );
       outflows += repayment;
       propertyLoanSeries[p][idx] = Math.max(
         fv(
           inputs.properties[p].loanRate / 12,
-          (idx + 1) * 12,
+          (idx + 1) * 12 + timing.monthOffset,
           inputs.properties[p].loanRepaymentMonthly,
           -inputs.properties[p].loanBalance
         ),
@@ -337,7 +360,13 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
       );
       propertyLoanRepaymentSeries[p][idx] = repayment;
     }
-    const otherLoanRepayment = yearlyLoanPayment(otherLoanMonthsTotal, inputs.otherLoanRepaymentMonthly, idx);
+    const otherLoanRepayment = yearlyLoanPayment(
+      otherLoanMonthsTotal,
+      inputs.otherLoanRepaymentMonthly,
+      idx,
+      timing.monthsRemaining,
+      timing.monthOffset
+    );
     otherLoanRepaymentSeries[idx] = otherLoanRepayment;
     outflows += otherLoanRepayment;
 
@@ -360,20 +389,30 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig): Sc
     cashBfwd = cashCfwd;
 
     homeValueSeries[idx] =
-      inputs.homeValue > 0 ? inputs.homeValue * safePow(1 + inputs.propertyAppreciation, idx + 1) : 0;
-    stockBaseSeries[idx] = inputs.stocksBalance * safePow(1 + inputs.stockReturn, idx + 1);
+      inputs.homeValue > 0 ? inputs.homeValue * safePow(1 + inputs.propertyAppreciation, assetGrowthExponent(timing, idx)) : 0;
+    stockBaseSeries[idx] = inputs.stocksBalance * safePow(1 + inputs.stockReturn, assetGrowthExponent(timing, idx));
 
     for (let p = 0; p < inputs.properties.length; p += 1) {
       propertyValueSeries[p][idx] =
-        inputs.properties[p].value * safePow(1 + inputs.propertyAppreciation, idx + 1);
+        inputs.properties[p].value * safePow(1 + inputs.propertyAppreciation, assetGrowthExponent(timing, idx));
     }
 
     homeLoanSeries[idx] = Math.max(
-      fv(inputs.homeLoanRate / 12, (idx + 1) * 12, inputs.homeLoanRepaymentMonthly, -inputs.homeLoanBalance),
+      fv(
+        inputs.homeLoanRate / 12,
+        (idx + 1) * 12 + timing.monthOffset,
+        inputs.homeLoanRepaymentMonthly,
+        -inputs.homeLoanBalance
+      ),
       0
     );
     otherLoanSeries[idx] = Math.max(
-      fv(inputs.otherLoanRate / 12, (idx + 1) * 12, inputs.otherLoanRepaymentMonthly, -inputs.otherLoanBalance),
+      fv(
+        inputs.otherLoanRate / 12,
+        (idx + 1) * 12 + timing.monthOffset,
+        inputs.otherLoanRepaymentMonthly,
+        -inputs.otherLoanBalance
+      ),
       0
     );
   }

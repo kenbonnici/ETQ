@@ -301,6 +301,12 @@ body {
   margin-left: auto;
 }
 
+.projection-month-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .retirement-stepper-label {
   font-size: 14px;
   font-weight: 800;
@@ -316,6 +322,18 @@ body {
   font-weight: 700;
   padding: 8px 6px;
   text-align: center;
+}
+
+.retirement-control select {
+  min-width: 132px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #b8c8bb;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #0f172a;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .retirement-control input[type="number"] {
@@ -1987,6 +2005,11 @@ small {
 
   .retirement-stepper {
     margin-left: 0;
+  }
+
+  .projection-month-control {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .retire-check-result {

@@ -5,8 +5,10 @@ import type { RawInputs } from "./model/types";
 
 type LiveExtract = {
   early: number;
+  projection_month_override?: number | null;
   raw: Record<string, unknown>;
   exp: {
+    years: number[];
     ages: number[];
     cashE: number[];
     cashN: number[];
@@ -20,7 +22,8 @@ const outputs = runModel(rawInputsToFieldState(input.raw as RawInputs), {
   deeperDiveOpen: true,
   finerDetailsOpen: true,
   earlyRetirementAge: input.early,
-  manualPropertyLiquidationOrder: false
+  manualPropertyLiquidationOrder: false,
+  projectionMonthOverride: input.projection_month_override ?? null
 }).outputs;
 
 const fmt = (n: number) => n.toFixed(2);
@@ -45,7 +48,7 @@ const header = [
 console.log(header.join(","));
 
 for (let i = 0; i < input.exp.ages.length; i += 1) {
-  const year = 2027 + i;
+  const year = input.exp.years[i];
   const age = input.exp.ages[i];
 
   const xCashE = input.exp.cashE[i];

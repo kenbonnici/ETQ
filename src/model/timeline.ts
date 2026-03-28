@@ -4,17 +4,17 @@ export interface Timeline {
   ages: number[];
 }
 
-export function buildTimeline(ageNow: number, endAge: number, nowDate: Date = new Date()): Timeline {
-  const startAge = ageNow + 1;
-  const maxAge = Math.max(startAge, endAge);
-  const startYear = nowDate.getFullYear() + 1;
+export function buildTimeline(ageNow: number, endAge: number, currentYear: number = new Date().getFullYear()): Timeline {
+  const startAge = ageNow;
+  const periods = Math.max(1, endAge - ageNow);
+  const startYear = currentYear;
 
   const ages: number[] = [];
   const years: number[] = [];
   const yearIndices: number[] = [];
 
-  for (let age = startAge, i = 0; age <= maxAge; age += 1, i += 1) {
-    ages.push(age);
+  for (let i = 0; i < periods; i += 1) {
+    ages.push(startAge + i);
     years.push(startYear + i);
     yearIndices.push(i);
   }

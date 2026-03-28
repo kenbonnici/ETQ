@@ -41,7 +41,8 @@ const SPECIMEN_UI_STATE = {
   deeperDiveOpen: true,
   finerDetailsOpen: true,
   earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age,
-  manualPropertyLiquidationOrder: false
+  manualPropertyLiquidationOrder: false,
+  projectionMonthOverride: EXCEL_BASELINE_SPECIMEN.projection_month_override ?? null
 };
 const DEFAULT_VISIBILITY: RuntimeVisibilityState = {
   visibleDependents: 1,
@@ -378,7 +379,8 @@ test("normalization and scenario outputs include dependent slots four and five",
     deeperDiveOpen: true,
     finerDetailsOpen: true,
     earlyRetirementAge: 55,
-    manualPropertyLiquidationOrder: false
+    manualPropertyLiquidationOrder: false,
+    projectionMonthOverride: 1
   });
 
   assert.equal(result.outputs.scenarioNorm.cashFlow.dependentsCost.length, 5);

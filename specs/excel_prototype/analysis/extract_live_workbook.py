@@ -1,10 +1,11 @@
 import json
+import os
 import re
 from pathlib import Path
 
 from openpyxl import load_workbook
 
-XLSX_PATH = Path("specs/ETQ.xlsx")
+XLSX_PATH = Path(os.environ.get("ETQ_XLSX_PATH", "specs/ETQ.xlsx"))
 FIELD_REGISTRY_PATH = Path("src/model/fieldRegistry.ts")
 OUT_PATH = Path("/tmp/etq_live_extract.json")
 
@@ -38,11 +39,17 @@ def main() -> None:
     ws_inputs = wb["Inputs"]
     ws_norm = wb["RetNorm_Engine"]
     ws_early = wb["RetEarly_Engine"]
+    month_remaining = ws_inputs["B205"].value
+    projection_month_override = None
+    if isinstance(month_remaining, (int, float)):
+        projection_month_override = int(round(13 - float(month_remaining)))
 
     payload = {
         "early": int(float(ws_early["B3"].value)),
+        "projection_month_override": projection_month_override,
         "raw": load_raw_inputs(ws_inputs),
         "exp": {
+            "years": read_ages_and_series(ws_norm, 2),
             "ages": read_ages_and_series(ws_norm, 3),
             "cashE": read_ages_and_series(ws_early, 247),
             "cashN": read_ages_and_series(ws_norm, 247),

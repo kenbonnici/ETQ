@@ -10,10 +10,16 @@ export function fv(rate: number, nper: number, pmt: number, pv: number): number 
   return -(pv * v + pmt * (v - 1) / rate);
 }
 
-export function yearlyLoanPayment(monthsRemaining: number, monthlyRepayment: number, yearIndex: number): number {
-  const paidBefore = Math.max(0, yearIndex * 12);
+export function yearlyLoanPayment(
+  monthsRemaining: number,
+  monthlyRepayment: number,
+  yearIndex: number,
+  firstYearMonthsRemaining: number,
+  monthOffset: number
+): number {
+  const paidBefore = yearIndex === 0 ? 0 : (yearIndex * 12 + monthOffset);
   const remainingAtYearStart = Math.max(0, monthsRemaining - paidBefore);
-  const monthsPaidThisYear = Math.min(12, remainingAtYearStart);
+  const monthsPaidThisYear = Math.min(yearIndex === 0 ? firstYearMonthsRemaining : 12, remainingAtYearStart);
   return monthsPaidThisYear * monthlyRepayment;
 }
 

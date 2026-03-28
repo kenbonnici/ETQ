@@ -12,6 +12,7 @@ export interface ModelUiState {
   finerDetailsOpen: boolean;
   earlyRetirementAge: number;
   manualPropertyLiquidationOrder: boolean;
+  projectionMonthOverride?: number | null;
 }
 
 export interface EffectiveInputs {
