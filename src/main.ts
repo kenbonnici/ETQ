@@ -2488,7 +2488,7 @@ function renderInputs(): void {
   const finerHtml = controls(grouped["FINER DETAILS"]);
   const finerActionsHtml = `
     <div class="finer-default-actions section-header-actions">
-      <button type="button" class="quickstart-clear-btn" id="clear-finer-defaults-btn">Clear Defaults</button>
+      <button type="button" class="quickstart-clear-btn" id="clear-finer-defaults-btn">Clear Data</button>
       <button type="button" class="quickstart-load-btn" id="load-finer-defaults-btn">Load Defaults</button>
     </div>
   `;
