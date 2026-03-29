@@ -1,14 +1,18 @@
 import json
 import re
+import shutil
+import subprocess
+import tempfile
 import zipfile
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
 NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main"}
 
-XLSX = "specs/ETQ.xlsx"
+XLSX = Path("specs/ETQ.xlsx")
 FIELD_REGISTRY = "src/model/fieldRegistry.ts"
-OUT_JSON = "specs/excel_prototype/analysis/excel_baseline_specimen.json"
-OUT_TS = "src/model/parity/excelBaselineSpecimen.ts"
+OUT_JSON = Path("specs/excel_prototype/analysis/excel_baseline_specimen.json")
+OUT_TS = Path("src/model/parity/excelBaselineSpecimen.ts")
 
 
 def get_sst(zf):
@@ -95,8 +99,34 @@ def numeric_cell(sheet_xml, ref, sst):
         return None
 
 
+def recalc_workbook(source_path: Path) -> Path:
+    tmpdir = Path(tempfile.mkdtemp(prefix="etq-baseline-"))
+    in_dir = tmpdir / "in"
+    out_dir = tmpdir / "out"
+    in_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    source_copy = in_dir / source_path.name
+    shutil.copy2(source_path, source_copy)
+    subprocess.run(
+        [
+            "soffice",
+            "--headless",
+            "--convert-to",
+            "xlsx",
+            "--outdir",
+            str(out_dir),
+            str(source_copy),
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return out_dir / source_path.name
+
+
 def main():
-    with zipfile.ZipFile(XLSX) as zf:
+    recalc_path = recalc_workbook(XLSX)
+    with zipfile.ZipFile(recalc_path) as zf:
         sst = get_sst(zf)
         sheet1 = zf.read("xl/worksheets/sheet1.xml")
         sheet3 = zf.read("xl/worksheets/sheet3.xml")
@@ -106,10 +136,10 @@ def main():
 
     years = row_series(sheet3, 2, sst)
     ages = row_series(sheet3, 3, sst)
-    cash_norm = row_series(sheet3, 373, sst)
-    nw_norm = row_series(sheet3, 374, sst)
-    cash_early = row_series(sheet4, 373, sst)
-    nw_early = row_series(sheet4, 374, sst)
+    cash_norm = row_series(sheet3, 379, sst)
+    nw_norm = row_series(sheet3, 380, sst)
+    cash_early = row_series(sheet4, 379, sst)
+    nw_early = row_series(sheet4, 380, sst)
     mth_rem = numeric_cell(sheet1, "B266", sst)
     projection_month_override = int(round(13 - mth_rem)) if mth_rem is not None else None
 
@@ -134,11 +164,11 @@ def main():
         },
     }
 
-    with open(OUT_JSON, "w") as f:
+    with OUT_JSON.open("w") as f:
         json.dump(payload, f, indent=2)
 
     # Also generate a TS constant for model-side harness.
-    with open(OUT_TS, "w") as f:
+    with OUT_TS.open("w") as f:
         f.write("export const EXCEL_BASELINE_SPECIMEN = ")
         json.dump(payload, f, indent=2)
         f.write(" as const;\n")

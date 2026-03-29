@@ -117,7 +117,7 @@ test("blank legacy normalizes to zero and specimen parity captures the shifted w
 
 test("retirement success requires both the cash buffer and the end-age legacy target", () => {
   const workbookCachedAge = runModel(SPECIMEN_FIELDS, SPECIMEN_UI_STATE);
-  assert.equal(workbookCachedAge.outputs.scenarioEarly.retirementSuccessful, false);
+  assert.equal(workbookCachedAge.outputs.scenarioEarly.retirementSuccessful, true);
 
   const legacyAwareSuccess = runModel(SPECIMEN_FIELDS, {
     ...SPECIMEN_UI_STATE,
@@ -526,7 +526,7 @@ test("normalization and scenario outputs include property slots four and five", 
   assert.equal(result.outputs.scenarioNorm.cashFlow.rentalIncomeByProperty.length, 5);
   assert.equal(result.outputs.scenarioNorm.cashFlow.rentalIncomeByProperty[3].label, "Gudja");
   assert.equal(result.outputs.scenarioNorm.cashFlow.rentalIncomeByProperty[4].label, "Marsa");
-  assert.equal(result.outputs.scenarioNorm.netWorth.properties.length, 6);
+  assert.equal(result.outputs.scenarioNorm.netWorth.properties.length, 11);
   assert.equal(result.outputs.scenarioNorm.netWorth.properties[4].label, "Gudja");
   assert.equal(result.outputs.scenarioNorm.netWorth.properties[5].label, "Marsa");
 });

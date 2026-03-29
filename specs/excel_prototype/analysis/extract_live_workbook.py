@@ -1,6 +1,9 @@
 import json
 import os
 import re
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 
 from openpyxl import load_workbook
@@ -34,8 +37,33 @@ def load_raw_inputs(inputs_ws) -> dict:
     return raw
 
 
+def recalc_workbook(source_path: Path) -> Path:
+    tmpdir = Path(tempfile.mkdtemp(prefix="etq-live-"))
+    in_dir = tmpdir / "in"
+    out_dir = tmpdir / "out"
+    in_dir.mkdir(parents=True, exist_ok=True)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    source_copy = in_dir / source_path.name
+    shutil.copy2(source_path, source_copy)
+    subprocess.run(
+        [
+            "soffice",
+            "--headless",
+            "--convert-to",
+            "xlsx",
+            "--outdir",
+            str(out_dir),
+            str(source_copy),
+        ],
+        check=True,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    return out_dir / source_path.name
+
+
 def main() -> None:
-    wb = load_workbook(XLSX_PATH, data_only=True)
+    wb = load_workbook(recalc_workbook(XLSX_PATH), data_only=True)
     ws_inputs = wb["Inputs"]
     ws_norm = wb["RetNorm_Engine"]
     ws_early = wb["RetEarly_Engine"]
@@ -51,10 +79,10 @@ def main() -> None:
         "exp": {
             "years": read_ages_and_series(ws_norm, 2),
             "ages": read_ages_and_series(ws_norm, 3),
-            "cashE": read_ages_and_series(ws_early, 373),
-            "cashN": read_ages_and_series(ws_norm, 373),
-            "nwE": read_ages_and_series(ws_early, 374),
-            "nwN": read_ages_and_series(ws_norm, 374),
+            "cashE": read_ages_and_series(ws_early, 379),
+            "cashN": read_ages_and_series(ws_norm, 379),
+            "nwE": read_ages_and_series(ws_early, 380),
+            "nwN": read_ages_and_series(ws_norm, 380),
         },
     }
 

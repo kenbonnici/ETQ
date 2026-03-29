@@ -605,6 +605,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       finalCashSeries[i] +
       homeValueSeries[i] +
       sumAt(adjustedPropertyValues, i) +
+      sumAt(adjustedAssetOfValueValues, i) +
       stockStage.cfwd[i] -
       homeLoanSeries[i] -
       sumAt(adjustedPropertyLoans, i) -
@@ -862,6 +863,11 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
           key: `property-asset-${idx}`,
           label: property.name.trim() || `Property ${idx + 1}`,
           values: [...adjustedPropertyValues[idx]]
+        })),
+        ...inputs.assetsOfValue.map((asset, idx) => ({
+          key: `asset-of-value-${idx}`,
+          label: asset.name.trim() || `Asset ${idx + 1}`,
+          values: [...adjustedAssetOfValueValues[idx]]
         }))
       ],
       loans: [
