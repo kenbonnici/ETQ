@@ -310,6 +310,7 @@ test("finer details honors workbook liquidation order and lets users exclude a p
     "Qormi",
     "Sliema"
   ]);
+  await expect(page.locator('[data-liquidation-zone="sellable"] .liquidation-item[data-liquidation-idx="3"]')).toHaveClass(/just-moved/);
   await expect(page.locator('[data-liquidation-zone="never-sell"] .liquidation-item')).toHaveCount(0);
 });
 

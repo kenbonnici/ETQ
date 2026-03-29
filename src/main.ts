@@ -82,7 +82,7 @@ let uiState: ModelUiState = {
 
 let debounceHandle: number | null = null;
 let pendingFocusFieldId: FieldId | null = null;
-let pendingLiquidationControl: { propertyIdx: number; direction: "up" | "down"; pulse: boolean } | null = null;
+let pendingLiquidationControl: { propertyIdx: number; control: "up" | "down" | "toggle"; pulse: boolean } | null = null;
 let selectedCurrency = "EUR";
 let stepperHoldTimeout: number | null = null;
 let stepperHoldInterval: number | null = null;
@@ -649,11 +649,15 @@ function restorePendingLiquidationControl(): void {
   pendingLiquidationControl = null;
   if (!pending) return;
 
-  const button = inputsPanel.querySelector<HTMLButtonElement>(
-    `[data-liquidation-move="${pending.direction}"][data-liquidation-idx="${pending.propertyIdx}"]`
-  ) ?? inputsPanel.querySelector<HTMLButtonElement>(
-    `[data-liquidation-idx="${pending.propertyIdx}"].liquidation-toggle`
-  );
+  const button = pending.control === "toggle"
+    ? inputsPanel.querySelector<HTMLButtonElement>(
+      `[data-liquidation-idx="${pending.propertyIdx}"].liquidation-toggle`
+    )
+    : inputsPanel.querySelector<HTMLButtonElement>(
+      `[data-liquidation-move="${pending.control}"][data-liquidation-idx="${pending.propertyIdx}"]`
+    ) ?? inputsPanel.querySelector<HTMLButtonElement>(
+      `[data-liquidation-idx="${pending.propertyIdx}"].liquidation-toggle`
+    );
   if (!button) return;
 
   button.focus({ preventScroll: true });
@@ -2992,6 +2996,7 @@ function renderInputs(): void {
         return;
       }
 
+      pendingLiquidationControl = { propertyIdx, control: "toggle", pulse: true };
       setRetireCheckMessage(null);
       queueRecalc();
       renderInputs();
@@ -3014,7 +3019,7 @@ function renderInputs(): void {
       const [moved] = order.splice(fromPos, 1);
       order.splice(toPos, 0, moved);
 
-      pendingLiquidationControl = { propertyIdx, direction, pulse: true };
+      pendingLiquidationControl = { propertyIdx, control: direction, pulse: true };
       persistPropertyLiquidationOrder(order, active);
       setRetireCheckMessage(null);
       queueRecalc();
