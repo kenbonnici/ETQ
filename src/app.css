@@ -793,6 +793,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
   font-size: 14px;
   font-weight: 500;
   color: #15342f;
@@ -838,7 +839,16 @@ body {
   border: 0;
   background: transparent;
   padding: 4px 0;
+  justify-content: flex-start;
+  text-align: left;
   cursor: pointer;
+}
+
+.cashflow-row-toggle-text,
+.cashflow-row-label-copy {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
 }
 
 .cashflow-row-toggle-icon {
