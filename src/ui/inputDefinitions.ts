@@ -524,7 +524,187 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 86,
+    row: 87,
+    fieldId: "assetsOfValue.01.displayName",
+    label: "Name",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 1",
+    groupTail: ["Other Assets of Value", "Asset 1"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "Jewelry",
+    type: "text"
+  },
+  {
+    row: 88,
+    fieldId: "assetsOfValue.01.marketValue",
+    label: "Market value",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 1",
+    groupTail: ["Other Assets of Value", "Asset 1"],
+    tooltip: "",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "50000",
+    type: "number"
+  },
+  {
+    row: 89,
+    fieldId: "assetsOfValue.01.appreciationRateAnnual",
+    label: "Annual appreciation / depreciation",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 1",
+    groupTail: ["Other Assets of Value", "Asset 1"],
+    tooltip: "Positive if asset value grows, negative if asset depreciates",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "0.02",
+    type: "percent"
+  },
+  {
+    row: 92,
+    fieldId: "assetsOfValue.02.displayName",
+    label: "Name",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 2",
+    groupTail: ["Other Assets of Value", "Asset 2"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "Car",
+    type: "text"
+  },
+  {
+    row: 93,
+    fieldId: "assetsOfValue.02.marketValue",
+    label: "Market value",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 2",
+    groupTail: ["Other Assets of Value", "Asset 2"],
+    tooltip: "",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "40000",
+    type: "number"
+  },
+  {
+    row: 94,
+    fieldId: "assetsOfValue.02.appreciationRateAnnual",
+    label: "Annual appreciation / depreciation",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 2",
+    groupTail: ["Other Assets of Value", "Asset 2"],
+    tooltip: "Positive if asset value grows, negative if asset depreciates",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "-0.05",
+    type: "percent"
+  },
+  {
+    row: 97,
+    fieldId: "assetsOfValue.03.displayName",
+    label: "Name",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 3",
+    groupTail: ["Other Assets of Value", "Asset 3"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "Painting",
+    type: "text"
+  },
+  {
+    row: 98,
+    fieldId: "assetsOfValue.03.marketValue",
+    label: "Market value",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 3",
+    groupTail: ["Other Assets of Value", "Asset 3"],
+    tooltip: "",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "20000",
+    type: "number"
+  },
+  {
+    row: 99,
+    fieldId: "assetsOfValue.03.appreciationRateAnnual",
+    label: "Annual appreciation / depreciation",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 3",
+    groupTail: ["Other Assets of Value", "Asset 3"],
+    tooltip: "Positive if asset value grows, negative if asset depreciates",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "0.03",
+    type: "percent"
+  },
+  {
+    row: 102,
+    fieldId: "assetsOfValue.04.displayName",
+    label: "Name",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 4",
+    groupTail: ["Other Assets of Value", "Asset 4"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "Boat",
+    type: "text"
+  },
+  {
+    row: 103,
+    fieldId: "assetsOfValue.04.marketValue",
+    label: "Market value",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 4",
+    groupTail: ["Other Assets of Value", "Asset 4"],
+    tooltip: "",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "180000",
+    type: "number"
+  },
+  {
+    row: 104,
+    fieldId: "assetsOfValue.04.appreciationRateAnnual",
+    label: "Annual appreciation / depreciation",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 4",
+    groupTail: ["Other Assets of Value", "Asset 4"],
+    tooltip: "Positive if asset value grows, negative if asset depreciates",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "-0.05",
+    type: "percent"
+  },
+  {
+    row: 107,
+    fieldId: "assetsOfValue.05.displayName",
+    label: "Name",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 5",
+    groupTail: ["Other Assets of Value", "Asset 5"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "Antiques",
+    type: "text"
+  },
+  {
+    row: 108,
+    fieldId: "assetsOfValue.05.marketValue",
+    label: "Market value",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 5",
+    groupTail: ["Other Assets of Value", "Asset 5"],
+    tooltip: "",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "82000",
+    type: "number"
+  },
+  {
+    row: 109,
+    fieldId: "assetsOfValue.05.appreciationRateAnnual",
+    label: "Annual appreciation / depreciation",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Other Assets of Value > Asset 5",
+    groupTail: ["Other Assets of Value", "Asset 5"],
+    tooltip: "Positive if asset value grows, negative if asset depreciates",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "0.02",
+    type: "percent"
+  },
+  {
+    row: 113,
     fieldId: "properties.01.rentalIncomeNetAnnual",
     label: "Rental income: Sliema",
     section: "DEEPER DIVE",
@@ -536,7 +716,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 87,
+    row: 114,
     fieldId: "properties.02.rentalIncomeNetAnnual",
     label: "Rental income: Gzira",
     section: "DEEPER DIVE",
@@ -548,7 +728,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 88,
+    row: 115,
     fieldId: "properties.03.rentalIncomeNetAnnual",
     label: "Rental income: Qormi",
     section: "DEEPER DIVE",
@@ -560,7 +740,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 89,
+    row: 116,
     fieldId: "properties.04.rentalIncomeNetAnnual",
     label: "Rental income: Gudja",
     section: "DEEPER DIVE",
@@ -572,7 +752,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 90,
+    row: 117,
     fieldId: "properties.05.rentalIncomeNetAnnual",
     label: "Rental income: Marsa",
     section: "DEEPER DIVE",
@@ -584,7 +764,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 92,
+    row: 119,
     fieldId: "income.otherWork.netAnnual",
     label: "Other work income (net annual)",
     section: "DEEPER DIVE",
@@ -596,7 +776,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 93,
+    row: 120,
     fieldId: "income.otherWork.endAge",
     label: "Continue other work until age",
     section: "DEEPER DIVE",
@@ -608,235 +788,415 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 97,
+    row: 124,
     fieldId: "debts.creditCards.balance",
     label: "Credit card balances",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans",
-    groupTail: ["Other loans"],
+    groupPath: "DEEPER DIVE > Loans",
+    groupTail: ["Loans"],
     tooltip: "Assumed cleared in Year 1. Leave blank if none",
     uiNote: "",
     sampleValue: "1000",
     type: "number"
   },
   {
-    row: 100,
+    row: 127,
     fieldId: "properties.01.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Sliema Property",
-    groupTail: ["Other loans", "Sliema Property"],
+    groupPath: "DEEPER DIVE > Loans > Sliema Property",
+    groupTail: ["Loans", "Sliema Property"],
     tooltip: "Enter 0 or leave blank if none",
     uiNote: "",
     sampleValue: "50000",
     type: "number"
   },
   {
-    row: 101,
+    row: 128,
     fieldId: "properties.01.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Sliema Property",
-    groupTail: ["Other loans", "Sliema Property"],
+    groupPath: "DEEPER DIVE > Loans > Sliema Property",
+    groupTail: ["Loans", "Sliema Property"],
     tooltip: "",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
   },
   {
-    row: 102,
+    row: 129,
     fieldId: "properties.01.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Sliema Property",
-    groupTail: ["Other loans", "Sliema Property"],
+    groupPath: "DEEPER DIVE > Loans > Sliema Property",
+    groupTail: ["Loans", "Sliema Property"],
     tooltip: "",
     uiNote: "",
     sampleValue: "500",
     type: "number"
   },
   {
-    row: 105,
+    row: 132,
     fieldId: "properties.02.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Gzira Property",
-    groupTail: ["Other loans", "Gzira Property"],
+    groupPath: "DEEPER DIVE > Loans > Gzira Property",
+    groupTail: ["Loans", "Gzira Property"],
     tooltip: "Enter 0 or leave blank if none",
     uiNote: "",
     sampleValue: "8500",
     type: "number"
   },
   {
-    row: 106,
+    row: 133,
     fieldId: "properties.02.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Gzira Property",
-    groupTail: ["Other loans", "Gzira Property"],
+    groupPath: "DEEPER DIVE > Loans > Gzira Property",
+    groupTail: ["Loans", "Gzira Property"],
     tooltip: "",
     uiNote: "",
     sampleValue: "0.02",
     type: "percent"
   },
   {
-    row: 107,
+    row: 134,
     fieldId: "properties.02.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Gzira Property",
-    groupTail: ["Other loans", "Gzira Property"],
+    groupPath: "DEEPER DIVE > Loans > Gzira Property",
+    groupTail: ["Loans", "Gzira Property"],
     tooltip: "",
     uiNote: "",
     sampleValue: "200",
     type: "number"
   },
   {
-    row: 110,
+    row: 137,
     fieldId: "properties.03.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Qormi Property",
-    groupTail: ["Other loans", "Qormi Property"],
+    groupPath: "DEEPER DIVE > Loans > Qormi Property",
+    groupTail: ["Loans", "Qormi Property"],
     tooltip: "Enter 0 or leave blank if none",
     uiNote: "",
     sampleValue: "15000",
     type: "number"
   },
   {
-    row: 111,
+    row: 138,
     fieldId: "properties.03.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Qormi Property",
-    groupTail: ["Other loans", "Qormi Property"],
+    groupPath: "DEEPER DIVE > Loans > Qormi Property",
+    groupTail: ["Loans", "Qormi Property"],
     tooltip: "",
     uiNote: "",
     sampleValue: "0.05",
     type: "percent"
   },
   {
-    row: 112,
+    row: 139,
     fieldId: "properties.03.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Qormi Property",
-    groupTail: ["Other loans", "Qormi Property"],
+    groupPath: "DEEPER DIVE > Loans > Qormi Property",
+    groupTail: ["Loans", "Qormi Property"],
     tooltip: "",
     uiNote: "",
     sampleValue: "250",
     type: "number"
   },
   {
-    row: 115,
+    row: 142,
     fieldId: "properties.04.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Gudja Property",
-    groupTail: ["Other loans", "Gudja Property"],
+    groupPath: "DEEPER DIVE > Loans > Gudja Property",
+    groupTail: ["Loans", "Gudja Property"],
     tooltip: "Enter 0 or leave blank if none",
     uiNote: "",
     sampleValue: "4680",
     type: "number"
   },
   {
-    row: 116,
+    row: 143,
     fieldId: "properties.04.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Gudja Property",
-    groupTail: ["Other loans", "Gudja Property"],
+    groupPath: "DEEPER DIVE > Loans > Gudja Property",
+    groupTail: ["Loans", "Gudja Property"],
     tooltip: "",
     uiNote: "",
     sampleValue: "0.02",
     type: "percent"
   },
   {
-    row: 117,
+    row: 144,
     fieldId: "properties.04.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Gudja Property",
-    groupTail: ["Other loans", "Gudja Property"],
+    groupPath: "DEEPER DIVE > Loans > Gudja Property",
+    groupTail: ["Loans", "Gudja Property"],
     tooltip: "",
     uiNote: "",
     sampleValue: "80",
     type: "number"
   },
   {
-    row: 120,
+    row: 147,
     fieldId: "properties.05.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Marsa Property",
-    groupTail: ["Other loans", "Marsa Property"],
+    groupPath: "DEEPER DIVE > Loans > Marsa Property",
+    groupTail: ["Loans", "Marsa Property"],
     tooltip: "Enter 0 or leave blank if none",
     uiNote: "",
     sampleValue: "9524",
     type: "number"
   },
   {
-    row: 121,
+    row: 148,
     fieldId: "properties.05.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Marsa Property",
-    groupTail: ["Other loans", "Marsa Property"],
+    groupPath: "DEEPER DIVE > Loans > Marsa Property",
+    groupTail: ["Loans", "Marsa Property"],
     tooltip: "",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
   },
   {
-    row: 122,
+    row: 149,
     fieldId: "properties.05.loan.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Marsa Property",
-    groupTail: ["Other loans", "Marsa Property"],
+    groupPath: "DEEPER DIVE > Loans > Marsa Property",
+    groupTail: ["Loans", "Marsa Property"],
     tooltip: "",
     uiNote: "",
     sampleValue: "120",
     type: "number"
   },
   {
-    row: 125,
-    fieldId: "debts.other.balance",
+    row: 152,
+    fieldId: "assetsOfValue.01.loan.balance",
     label: "Balance",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Other loan",
-    groupTail: ["Other loans", "Other loan"],
-    tooltip: "Leave blank if none",
+    groupPath: "DEEPER DIVE > Loans > Jewelry",
+    groupTail: ["Loans", "Jewelry"],
+    tooltip: "Enter 0 or leave blank if none",
     uiNote: "",
-    sampleValue: "4000",
+    sampleValue: "2500",
     type: "number"
   },
   {
-    row: 126,
-    fieldId: "debts.other.interestRateAnnual",
+    row: 153,
+    fieldId: "assetsOfValue.01.loan.interestRateAnnual",
     label: "Interest rate",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Other loan",
-    groupTail: ["Other loans", "Other loan"],
+    groupPath: "DEEPER DIVE > Loans > Jewelry",
+    groupTail: ["Loans", "Jewelry"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "0.03",
+    type: "percent"
+  },
+  {
+    row: 154,
+    fieldId: "assetsOfValue.01.loan.monthlyRepayment",
+    label: "Monthly repayment",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Jewelry",
+    groupTail: ["Loans", "Jewelry"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "75",
+    type: "number"
+  },
+  {
+    row: 157,
+    fieldId: "assetsOfValue.02.loan.balance",
+    label: "Balance",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Car",
+    groupTail: ["Loans", "Car"],
+    tooltip: "Enter 0 or leave blank if none",
+    uiNote: "",
+    sampleValue: "6000",
+    type: "number"
+  },
+  {
+    row: 158,
+    fieldId: "assetsOfValue.02.loan.interestRateAnnual",
+    label: "Interest rate",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Car",
+    groupTail: ["Loans", "Car"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "0.02",
+    type: "percent"
+  },
+  {
+    row: 159,
+    fieldId: "assetsOfValue.02.loan.monthlyRepayment",
+    label: "Monthly repayment",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Car",
+    groupTail: ["Loans", "Car"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "86",
+    type: "number"
+  },
+  {
+    row: 162,
+    fieldId: "assetsOfValue.03.loan.balance",
+    label: "Balance",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Painting",
+    groupTail: ["Loans", "Painting"],
+    tooltip: "Enter 0 or leave blank if none",
+    uiNote: "",
+    sampleValue: "7500",
+    type: "number"
+  },
+  {
+    row: 163,
+    fieldId: "assetsOfValue.03.loan.interestRateAnnual",
+    label: "Interest rate",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Painting",
+    groupTail: ["Loans", "Painting"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "0.05",
+    type: "percent"
+  },
+  {
+    row: 164,
+    fieldId: "assetsOfValue.03.loan.monthlyRepayment",
+    label: "Monthly repayment",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Painting",
+    groupTail: ["Loans", "Painting"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "125",
+    type: "number"
+  },
+  {
+    row: 167,
+    fieldId: "assetsOfValue.04.loan.balance",
+    label: "Balance",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Boat",
+    groupTail: ["Loans", "Boat"],
+    tooltip: "Enter 0 or leave blank if none",
+    uiNote: "",
+    sampleValue: "40000",
+    type: "number"
+  },
+  {
+    row: 168,
+    fieldId: "assetsOfValue.04.loan.interestRateAnnual",
+    label: "Interest rate",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Boat",
+    groupTail: ["Loans", "Boat"],
     tooltip: "",
     uiNote: "",
     sampleValue: "0.06",
     type: "percent"
   },
   {
-    row: 127,
+    row: 169,
+    fieldId: "assetsOfValue.04.loan.monthlyRepayment",
+    label: "Monthly repayment",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Boat",
+    groupTail: ["Loans", "Boat"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "624",
+    type: "number"
+  },
+  {
+    row: 172,
+    fieldId: "assetsOfValue.05.loan.balance",
+    label: "Balance",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Antiques",
+    groupTail: ["Loans", "Antiques"],
+    tooltip: "Enter 0 or leave blank if none",
+    uiNote: "",
+    sampleValue: "3800",
+    type: "number"
+  },
+  {
+    row: 173,
+    fieldId: "assetsOfValue.05.loan.interestRateAnnual",
+    label: "Interest rate",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Antiques",
+    groupTail: ["Loans", "Antiques"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "0.03",
+    type: "percent"
+  },
+  {
+    row: 174,
+    fieldId: "assetsOfValue.05.loan.monthlyRepayment",
+    label: "Monthly repayment",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Antiques",
+    groupTail: ["Loans", "Antiques"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "110",
+    type: "number"
+  },
+  {
+    row: 177,
+    fieldId: "debts.other.balance",
+    label: "Balance",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Other loan",
+    groupTail: ["Loans", "Other loan"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "4000",
+    type: "number"
+  },
+  {
+    row: 178,
+    fieldId: "debts.other.interestRateAnnual",
+    label: "Interest rate",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Loans > Other loan",
+    groupTail: ["Loans", "Other loan"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "0.06",
+    type: "percent"
+  },
+  {
+    row: 179,
     fieldId: "debts.other.monthlyRepayment",
     label: "Monthly repayment",
     section: "DEEPER DIVE",
-    groupPath: "DEEPER DIVE > Other loans > Other loan",
-    groupTail: ["Other loans", "Other loan"],
+    groupPath: "DEEPER DIVE > Loans > Other loan",
+    groupTail: ["Loans", "Other loan"],
     tooltip: "",
     uiNote: "",
     sampleValue: "50",
     type: "number"
   },
   {
-    row: 132,
+    row: 184,
     fieldId: "cashflowEvents.income.01.name",
     label: "Name",
     section: "DEEPER DIVE",
@@ -848,7 +1208,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "text"
   },
   {
-    row: 133,
+    row: 185,
     fieldId: "cashflowEvents.income.01.amount",
     label: "Amount",
     section: "DEEPER DIVE",
@@ -860,7 +1220,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 134,
+    row: 186,
     fieldId: "cashflowEvents.income.01.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -872,7 +1232,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 137,
+    row: 189,
     fieldId: "cashflowEvents.income.02.name",
     label: "Name",
     section: "DEEPER DIVE",
@@ -884,7 +1244,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "text"
   },
   {
-    row: 138,
+    row: 190,
     fieldId: "cashflowEvents.income.02.amount",
     label: "Amount",
     section: "DEEPER DIVE",
@@ -896,7 +1256,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 139,
+    row: 191,
     fieldId: "cashflowEvents.income.02.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -908,7 +1268,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 142,
+    row: 194,
     fieldId: "cashflowEvents.income.03.name",
     label: "Name",
     section: "DEEPER DIVE",
@@ -920,7 +1280,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "text"
   },
   {
-    row: 143,
+    row: 195,
     fieldId: "cashflowEvents.income.03.amount",
     label: "Amount",
     section: "DEEPER DIVE",
@@ -932,7 +1292,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 144,
+    row: 196,
     fieldId: "cashflowEvents.income.03.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -944,7 +1304,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 149,
+    row: 201,
     fieldId: "cashflowEvents.expense.01.name",
     label: "Name",
     section: "DEEPER DIVE",
@@ -956,7 +1316,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "text"
   },
   {
-    row: 150,
+    row: 202,
     fieldId: "cashflowEvents.expense.01.amount",
     label: "Amount",
     section: "DEEPER DIVE",
@@ -968,7 +1328,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 151,
+    row: 203,
     fieldId: "cashflowEvents.expense.01.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -980,7 +1340,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 154,
+    row: 206,
     fieldId: "cashflowEvents.expense.02.name",
     label: "Name",
     section: "DEEPER DIVE",
@@ -992,7 +1352,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "text"
   },
   {
-    row: 155,
+    row: 207,
     fieldId: "cashflowEvents.expense.02.amount",
     label: "Amount",
     section: "DEEPER DIVE",
@@ -1004,7 +1364,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 156,
+    row: 208,
     fieldId: "cashflowEvents.expense.02.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -1016,7 +1376,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 159,
+    row: 211,
     fieldId: "cashflowEvents.expense.03.name",
     label: "Name",
     section: "DEEPER DIVE",
@@ -1028,7 +1388,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "text"
   },
   {
-    row: 160,
+    row: 212,
     fieldId: "cashflowEvents.expense.03.amount",
     label: "Amount",
     section: "DEEPER DIVE",
@@ -1040,7 +1400,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 161,
+    row: 213,
     fieldId: "cashflowEvents.expense.03.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -1052,7 +1412,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 166,
+    row: 218,
     fieldId: "planning.lifeExpectancyAge",
     label: "Plan to live until age",
     section: "FINER DETAILS",
@@ -1064,7 +1424,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 169,
+    row: 221,
     fieldId: "spending.adjustments.pre65.deltaRate",
     label: "From now to 65",
     section: "FINER DETAILS",
@@ -1076,7 +1436,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 170,
+    row: 222,
     fieldId: "spending.adjustments.age66To75.deltaRate",
     label: "From 66 to 75",
     section: "FINER DETAILS",
@@ -1088,7 +1448,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 171,
+    row: 223,
     fieldId: "spending.adjustments.age76Plus.deltaRate",
     label: "From age 76",
     section: "FINER DETAILS",
@@ -1100,7 +1460,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 173,
+    row: 225,
     fieldId: "income.postRetirementSupplement.annual",
     label: "Other post-retirement income",
     section: "FINER DETAILS",
@@ -1112,7 +1472,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 174,
+    row: 226,
     fieldId: "income.postRetirementSupplement.startAge",
     label: "From age",
     section: "FINER DETAILS",
@@ -1124,7 +1484,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 175,
+    row: 227,
     fieldId: "income.postRetirementSupplement.endAge",
     label: "To age",
     section: "FINER DETAILS",
@@ -1136,7 +1496,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 177,
+    row: 229,
     fieldId: "assumptions.generalInflationRateAnnual",
     label: "General inflation",
     section: "FINER DETAILS",
@@ -1148,7 +1508,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 179,
+    row: 231,
     fieldId: "assumptions.propertyAppreciationRateAnnual",
     label: "Property annual appreciation",
     section: "FINER DETAILS",
@@ -1160,7 +1520,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 181,
+    row: 233,
     fieldId: "assumptions.cashYieldRateAnnual",
     label: "Cash interest rate",
     section: "FINER DETAILS",
@@ -1172,7 +1532,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 183,
+    row: 235,
     fieldId: "assumptions.equityReturnRateAnnual",
     label: "Stock market return",
     section: "FINER DETAILS",
@@ -1184,7 +1544,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 185,
+    row: 237,
     fieldId: "assumptions.salaryGrowthRateAnnual",
     label: "Salary annual growth rate",
     section: "FINER DETAILS",
@@ -1196,7 +1556,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 187,
+    row: 239,
     fieldId: "assumptions.rentalIncomeGrowthRateAnnual",
     label: "Rental income annual increase",
     section: "FINER DETAILS",
@@ -1208,7 +1568,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 189,
+    row: 241,
     fieldId: "retirement.earlyPensionReductionPerYear",
     label: "Pension reduction per year early",
     section: "FINER DETAILS",
@@ -1220,7 +1580,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 191,
+    row: 243,
     fieldId: "liquidity.minimumCashBuffer",
     label: "Cash buffer at any time",
     section: "FINER DETAILS",
@@ -1232,7 +1592,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 193,
+    row: 245,
     fieldId: "planning.legacyAmount",
     label: "Legacy amount",
     section: "FINER DETAILS",
@@ -1244,7 +1604,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 195,
+    row: 247,
     fieldId: "liquidation.stockSellingCostRate",
     label: "Stock market selling costs",
     section: "FINER DETAILS",
@@ -1256,7 +1616,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 197,
+    row: 249,
     fieldId: "liquidation.propertyDisposalCostRate",
     label: "Property disposal costs",
     section: "FINER DETAILS",
@@ -1268,63 +1628,135 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 200,
+    row: 251,
+    fieldId: "liquidation.otherAssetDisposalCostRate",
+    label: "Other assets disposal costs",
+    section: "FINER DETAILS",
+    groupPath: "FINER DETAILS",
+    groupTail: [],
+    tooltip: "Agency, tax, and other fees",
+    uiNote: "",
+    sampleValue: "0.02",
+    type: "percent"
+  },
+  {
+    row: 254,
     fieldId: "properties.01.liquidationPriority",
     label: "Sliema",
     section: "FINER DETAILS",
-    groupPath: "FINER DETAILS > Property liquidation order",
-    groupTail: ["Property liquidation order"],
+    groupPath: "FINER DETAILS > Asset liquidation order",
+    groupTail: ["Asset liquidation order"],
     tooltip: "0 = would never sell",
     uiNote: "",
-    sampleValue: "5",
+    sampleValue: "10",
     type: "integer"
   },
   {
-    row: 201,
+    row: 255,
     fieldId: "properties.02.liquidationPriority",
     label: "Gzira",
     section: "FINER DETAILS",
-    groupPath: "FINER DETAILS > Property liquidation order",
-    groupTail: ["Property liquidation order"],
+    groupPath: "FINER DETAILS > Asset liquidation order",
+    groupTail: ["Asset liquidation order"],
     tooltip: "",
     uiNote: "",
-    sampleValue: "3",
+    sampleValue: "7",
     type: "integer"
   },
   {
-    row: 202,
+    row: 256,
     fieldId: "properties.03.liquidationPriority",
     label: "Qormi",
     section: "FINER DETAILS",
-    groupPath: "FINER DETAILS > Property liquidation order",
-    groupTail: ["Property liquidation order"],
+    groupPath: "FINER DETAILS > Asset liquidation order",
+    groupTail: ["Asset liquidation order"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "9",
+    type: "integer"
+  },
+  {
+    row: 257,
+    fieldId: "properties.04.liquidationPriority",
+    label: "Gudja",
+    section: "FINER DETAILS",
+    groupPath: "FINER DETAILS > Asset liquidation order",
+    groupTail: ["Asset liquidation order"],
     tooltip: "",
     uiNote: "",
     sampleValue: "4",
     type: "integer"
   },
   {
-    row: 203,
-    fieldId: "properties.04.liquidationPriority",
-    label: "Gudja",
+    row: 258,
+    fieldId: "properties.05.liquidationPriority",
+    label: "Marsa",
     section: "FINER DETAILS",
-    groupPath: "FINER DETAILS > Property liquidation order",
-    groupTail: ["Property liquidation order"],
+    groupPath: "FINER DETAILS > Asset liquidation order",
+    groupTail: ["Asset liquidation order"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "6",
+    type: "integer"
+  },
+  {
+    row: 259,
+    fieldId: "assetsOfValue.01.liquidationPriority",
+    label: "Jewelry",
+    section: "FINER DETAILS",
+    groupPath: "FINER DETAILS > Asset liquidation order",
+    groupTail: ["Asset liquidation order"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "3",
+    type: "integer"
+  },
+  {
+    row: 260,
+    fieldId: "assetsOfValue.02.liquidationPriority",
+    label: "Car",
+    section: "FINER DETAILS",
+    groupPath: "FINER DETAILS > Asset liquidation order",
+    groupTail: ["Asset liquidation order"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "2",
+    type: "integer"
+  },
+  {
+    row: 261,
+    fieldId: "assetsOfValue.03.liquidationPriority",
+    label: "Painting",
+    section: "FINER DETAILS",
+    groupPath: "FINER DETAILS > Asset liquidation order",
+    groupTail: ["Asset liquidation order"],
     tooltip: "",
     uiNote: "",
     sampleValue: "1",
     type: "integer"
   },
   {
-    row: 204,
-    fieldId: "properties.05.liquidationPriority",
-    label: "Marsa",
+    row: 262,
+    fieldId: "assetsOfValue.04.liquidationPriority",
+    label: "Boat",
     section: "FINER DETAILS",
-    groupPath: "FINER DETAILS > Property liquidation order",
-    groupTail: ["Property liquidation order"],
+    groupPath: "FINER DETAILS > Asset liquidation order",
+    groupTail: ["Asset liquidation order"],
     tooltip: "",
     uiNote: "",
-    sampleValue: "2",
+    sampleValue: "8",
+    type: "integer"
+  },
+  {
+    row: 263,
+    fieldId: "assetsOfValue.05.liquidationPriority",
+    label: "Antiques",
+    section: "FINER DETAILS",
+    groupPath: "FINER DETAILS > Asset liquidation order",
+    groupTail: ["Asset liquidation order"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "5",
     type: "integer"
   }
 ];

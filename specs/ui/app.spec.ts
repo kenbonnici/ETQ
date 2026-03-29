@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
 
-const LEGACY_AWARE_RETIREMENT_AGE = 52;
+const LEGACY_AWARE_RETIREMENT_AGE = 50;
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
@@ -27,6 +27,12 @@ const selectors = {
   property4Name: 'input[data-field-id="properties.04.displayName"]',
   property5Name: 'input[data-field-id="properties.05.displayName"]',
   propertyAnnualCost: 'input[data-field-id="properties.01.annualOperatingCost"]',
+  assetName: 'input[data-field-id="assetsOfValue.01.displayName"]',
+  asset2Name: 'input[data-field-id="assetsOfValue.02.displayName"]',
+  asset3Name: 'input[data-field-id="assetsOfValue.03.displayName"]',
+  asset4Name: 'input[data-field-id="assetsOfValue.04.displayName"]',
+  asset5Name: 'input[data-field-id="assetsOfValue.05.displayName"]',
+  assetAppreciation: 'input[data-field-id="assetsOfValue.01.appreciationRateAnnual"]',
   dependentName: 'input[data-field-id="dependents.01.displayName"]',
   dependent2Name: 'input[data-field-id="dependents.02.displayName"]',
   dependent3Name: 'input[data-field-id="dependents.03.displayName"]',
@@ -126,6 +132,32 @@ test("reveals property slots up to five through the existing add-property flow",
   await expect(page.locator(selectors.property5Name)).toBeVisible();
 });
 
+test("reveals asset slots up to five through the existing add-asset flow", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  await expect(page.locator(selectors.asset2Name)).toHaveCount(0);
+  await expect(page.locator(selectors.asset4Name)).toHaveCount(0);
+  await expect(page.locator(selectors.asset5Name)).toHaveCount(0);
+
+  await fillAndBlur(page, selectors.assetName, "Jewelry");
+  await expect(page.locator(selectors.assetAppreciation)).toBeVisible();
+  await page.locator(".add-asset-btn").last().click();
+  await expect(page.locator(selectors.asset2Name)).toBeVisible();
+
+  await fillAndBlur(page, selectors.asset2Name, "Car");
+  await page.locator(".add-asset-btn").last().click();
+  await expect(page.locator(selectors.asset3Name)).toBeVisible();
+
+  await fillAndBlur(page, selectors.asset3Name, "Painting");
+  await page.locator(".add-asset-btn").last().click();
+  await expect(page.locator(selectors.asset4Name)).toBeVisible();
+
+  await fillAndBlur(page, selectors.asset4Name, "Boat");
+  await page.locator(".add-asset-btn").last().click();
+  await expect(page.locator(selectors.asset5Name)).toBeVisible();
+});
+
 test("tab order stays in visible dependent field order as groups appear", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "DEEPER DIVE" }).click();
@@ -217,20 +249,67 @@ test("load sample data restores properties 4 and 5 from the Excel specimen", asy
   await expect(page.locator('input[data-field-id="properties.05.rentalIncomeNetAnnual"]')).toHaveValue(/6,500/);
 });
 
+test("load sample data restores assets of value 4 and 5 from the Excel specimen", async ({ page }) => {
+  await loadSampleData(page);
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  await expect(page.locator(selectors.asset4Name)).toBeVisible();
+  await expect(page.locator(selectors.asset4Name)).toHaveValue("Boat");
+  await expect(page.locator('input[data-field-id="assetsOfValue.04.marketValue"]')).toHaveValue(/180,000/);
+  await expect(page.locator('input[data-field-id="assetsOfValue.04.appreciationRateAnnual"]')).toHaveValue(/-5.00%/);
+
+  await expect(page.locator(selectors.asset5Name)).toBeVisible();
+  await expect(page.locator(selectors.asset5Name)).toHaveValue("Antiques");
+  await expect(page.locator('input[data-field-id="assetsOfValue.05.marketValue"]')).toHaveValue(/82,000/);
+  await expect(page.locator('input[data-field-id="assetsOfValue.05.appreciationRateAnnual"]')).toHaveValue(/2.00%/);
+});
+
 test("finer details honors workbook liquidation order and lets users exclude a property from liquidation", async ({ page }) => {
   await loadSampleData(page);
   await page.getByRole("button", { name: "FINER DETAILS" }).click();
 
   const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
-  await expect(sellableItems).toHaveText(["Gudja", "Marsa", "Gzira", "Qormi", "Sliema"]);
+  await expect(sellableItems).toHaveText([
+    "Painting",
+    "Car",
+    "Jewelry",
+    "Gudja",
+    "Antiques",
+    "Marsa",
+    "Gzira",
+    "Boat",
+    "Qormi",
+    "Sliema"
+  ]);
   await expect(page.locator('[data-liquidation-zone="never-sell"] .liquidation-item')).toHaveCount(0);
 
   await page.locator('[data-liquidation-zone="sellable"] [data-liquidation-action="exclude"][data-liquidation-idx="3"]').click();
-  await expect(page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name')).toHaveText(["Marsa", "Gzira", "Qormi", "Sliema"]);
+  await expect(page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name')).toHaveText([
+    "Painting",
+    "Car",
+    "Jewelry",
+    "Antiques",
+    "Marsa",
+    "Gzira",
+    "Boat",
+    "Qormi",
+    "Sliema"
+  ]);
   await expect(page.locator('[data-liquidation-zone="never-sell"] .liquidation-item .liquidation-name')).toHaveText(["Gudja"]);
 
   await page.locator('[data-liquidation-zone="never-sell"] [data-liquidation-action="include"][data-liquidation-idx="3"]').click();
-  await expect(page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name')).toHaveText(["Marsa", "Gzira", "Qormi", "Sliema", "Gudja"]);
+  await expect(page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name')).toHaveText([
+    "Painting",
+    "Car",
+    "Jewelry",
+    "Antiques",
+    "Marsa",
+    "Gzira",
+    "Boat",
+    "Qormi",
+    "Sliema",
+    "Gudja"
+  ]);
   await expect(page.locator('[data-liquidation-zone="never-sell"] .liquidation-item')).toHaveCount(0);
 });
 
@@ -239,13 +318,46 @@ test("liquidation up and down controls reorder sellable assets precisely", async
   await page.getByRole("button", { name: "FINER DETAILS" }).click();
 
   const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
-  await expect(sellableItems).toHaveText(["Gudja", "Marsa", "Gzira", "Qormi", "Sliema"]);
+  await expect(sellableItems).toHaveText([
+    "Painting",
+    "Car",
+    "Jewelry",
+    "Gudja",
+    "Antiques",
+    "Marsa",
+    "Gzira",
+    "Boat",
+    "Qormi",
+    "Sliema"
+  ]);
 
   await page.locator('[data-liquidation-move="down"][data-liquidation-idx="3"]').click();
-  await expect(sellableItems).toHaveText(["Marsa", "Gudja", "Gzira", "Qormi", "Sliema"]);
+  await expect(sellableItems).toHaveText([
+    "Painting",
+    "Car",
+    "Jewelry",
+    "Antiques",
+    "Gudja",
+    "Marsa",
+    "Gzira",
+    "Boat",
+    "Qormi",
+    "Sliema"
+  ]);
 
   await page.locator('[data-liquidation-move="up"][data-liquidation-idx="2"]').click();
-  await expect(sellableItems).toHaveText(["Marsa", "Gudja", "Qormi", "Gzira", "Sliema"]);
+  await expect(sellableItems).toHaveText([
+    "Painting",
+    "Car",
+    "Jewelry",
+    "Antiques",
+    "Gudja",
+    "Marsa",
+    "Gzira",
+    "Qormi",
+    "Boat",
+    "Sliema"
+  ]);
 });
 
 test("load sample data restores the workbook early-retirement age", async ({ page }) => {
@@ -287,6 +399,7 @@ test("deep dive keeps investment properties together before other income and ord
 
   const topHeadings = await page.locator(".section-deeper-dive .group-top").allTextContents();
   expect(topHeadings.filter((heading) => heading.trim() === "Investment Properties")).toHaveLength(1);
+  expect(topHeadings.filter((heading) => heading.trim() === "Other Assets of Value")).toHaveLength(1);
 
   const visibleFieldIds = await page.locator(".section-deeper-dive .field[data-field-id]").evaluateAll((fields) => (
     fields.map((field) => field.getAttribute("data-field-id") ?? "").filter((fieldId) => fieldId.length > 0)
@@ -295,13 +408,17 @@ test("deep dive keeps investment properties together before other income and ord
 
   expect(position("properties.05.annualOperatingCost")).toBeGreaterThan(-1);
   expect(position("properties.01.rentalIncomeNetAnnual")).toBeGreaterThan(-1);
+  expect(position("assetsOfValue.05.appreciationRateAnnual")).toBeGreaterThan(-1);
   expect(position("income.otherWork.netAnnual")).toBeGreaterThan(-1);
   expect(position("debts.creditCards.balance")).toBeGreaterThan(-1);
   expect(position("properties.01.loan.balance")).toBeGreaterThan(-1);
+  expect(position("assetsOfValue.01.loan.balance")).toBeGreaterThan(-1);
   expect(position("properties.05.annualOperatingCost")).toBeLessThan(position("properties.01.rentalIncomeNetAnnual"));
   expect(position("properties.01.rentalIncomeNetAnnual")).toBeLessThan(position("income.otherWork.netAnnual"));
-  expect(position("income.otherWork.netAnnual")).toBeLessThan(position("properties.01.loan.balance"));
-  expect(position("properties.05.loan.monthlyRepayment")).toBeLessThan(position("debts.creditCards.balance"));
+  expect(position("income.otherWork.netAnnual")).toBeLessThan(position("debts.creditCards.balance"));
+  expect(position("debts.creditCards.balance")).toBeLessThan(position("properties.01.loan.balance"));
+  expect(position("properties.05.loan.monthlyRepayment")).toBeLessThan(position("assetsOfValue.01.loan.balance"));
+  expect(position("assetsOfValue.05.loan.monthlyRepayment")).toBeLessThan(position("debts.other.balance"));
   expect(position("debts.creditCards.balance")).toBeLessThan(position("debts.other.balance"));
 });
 
@@ -429,7 +546,7 @@ test("net-worth section opens independently and keeps scenario selection in sync
 test("cash chart zero-line emphasis follows the active cash scenario only", async ({ page }) => {
   await loadSampleData(page);
 
-  await fillAndBlur(page, selectors.earlyRetAge, "51");
+  await fillAndBlur(page, selectors.earlyRetAge, "48");
   await page.getByRole("button", { name: "Open cash flow" }).click();
 
   await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "true");

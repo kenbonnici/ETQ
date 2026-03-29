@@ -4,10 +4,12 @@ import type { RawInputValue } from "../model/types";
 import type { ValidationMessage } from "../model/inputSchema";
 import type { InputDefinition } from "./inputDefinitions";
 import {
+  ASSET_OF_VALUE_RUNTIME_GROUPS,
   DEPENDENT_RUNTIME_GROUPS,
   EXPENSE_EVENT_RUNTIME_GROUPS,
   HOME_FIELDS,
   INCOME_EVENT_RUNTIME_GROUPS,
+  LIQUIDATION_ASSET_RUNTIME_GROUPS,
   OTHER_LOAN_FIELDS,
   OTHER_WORK_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
@@ -20,6 +22,7 @@ export type RuntimeValues = Partial<Record<FieldId, RawInputValue>>;
 export interface RuntimeVisibilityState {
   visibleDependents: number;
   visibleProperties: number;
+  visibleAssetsOfValue: number;
   visibleIncomeEvents: number;
   visibleExpenseEvents: number;
 }
@@ -27,6 +30,7 @@ export interface RuntimeVisibilityState {
 export interface PropertyRuntimeConfig {
   idx: number;
   fallbackName: string;
+  assetKind: "property";
   nameField: FieldId;
   valueField: FieldId;
   annualCostsField: FieldId;
@@ -41,9 +45,27 @@ export interface PropertyRuntimeConfig {
 }
 
 export interface PropertyLiquidationBuckets {
-  sellable: PropertyRuntimeConfig[];
-  excluded: PropertyRuntimeConfig[];
+  sellable: LiquidationAssetRuntimeConfig[];
+  excluded: LiquidationAssetRuntimeConfig[];
 }
+
+export interface AssetOfValueRuntimeConfig {
+  idx: number;
+  fallbackName: string;
+  assetKind: "assetOfValue";
+  nameField: FieldId;
+  valueField: FieldId;
+  appreciationRateField: FieldId;
+  loanBalanceField: FieldId;
+  loanRateField: FieldId;
+  loanRepaymentField: FieldId;
+  liquidationRankField: FieldId;
+  coreFields: readonly [FieldId, FieldId, FieldId];
+  loanFields: readonly [FieldId, FieldId, FieldId];
+  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
+}
+
+export type LiquidationAssetRuntimeConfig = (typeof LIQUIDATION_ASSET_RUNTIME_GROUPS)[number];
 
 export interface TimelineYearEvent {
   label: string;
@@ -94,6 +116,7 @@ export const FIELD_STEPPER_STEPS: Readonly<Partial<Record<FieldId, number>>> = {
   [RUNTIME_FIELDS.legacyAmount]: 1000,
   [RUNTIME_FIELDS.stockSellingCostRate]: 0.001,
   [RUNTIME_FIELDS.propertyDisposalCostRate]: 0.001,
+  [RUNTIME_FIELDS.otherAssetDisposalCostRate]: 0.001,
   [HOME_FIELDS.mortgageInterestRateAnnual]: 0.001,
   [OTHER_LOAN_FIELDS.interestRateAnnual]: 0.001
 };
@@ -107,6 +130,14 @@ for (const group of PROPERTY_RUNTIME_GROUPS) {
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.valueField] = 1000;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.annualCostsField] = 100;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.rentalIncomeField] = 100;
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanBalanceField] = 100;
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanRateField] = 0.001;
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanRepaymentField] = 10;
+}
+
+for (const group of ASSET_OF_VALUE_RUNTIME_GROUPS) {
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.valueField] = 1000;
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.appreciationRateField] = 0.001;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanBalanceField] = 100;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanRateField] = 0.001;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanRepaymentField] = 10;
@@ -156,6 +187,7 @@ export const FIELD_STEPPER_DECIMALS: Readonly<Partial<Record<FieldId, number>>> 
   [RUNTIME_FIELDS.legacyAmount]: 0,
   [RUNTIME_FIELDS.stockSellingCostRate]: 3,
   [RUNTIME_FIELDS.propertyDisposalCostRate]: 3,
+  [RUNTIME_FIELDS.otherAssetDisposalCostRate]: 3,
   [HOME_FIELDS.mortgageInterestRateAnnual]: 3,
   [OTHER_LOAN_FIELDS.interestRateAnnual]: 3
 };
@@ -169,6 +201,14 @@ for (const group of PROPERTY_RUNTIME_GROUPS) {
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.valueField] = 0;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.annualCostsField] = 0;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.rentalIncomeField] = 0;
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanBalanceField] = 0;
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanRateField] = 3;
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanRepaymentField] = 0;
+}
+
+for (const group of ASSET_OF_VALUE_RUNTIME_GROUPS) {
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.valueField] = 0;
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.appreciationRateField] = 3;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanBalanceField] = 0;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanRateField] = 3;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanRepaymentField] = 0;
@@ -194,8 +234,10 @@ export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
   HOME_FIELDS.mortgageBalance,
   ...DEPENDENT_RUNTIME_GROUPS.map((group) => group.nameField),
   ...PROPERTY_RUNTIME_GROUPS.flatMap((group) => [group.nameField, group.valueField]),
+  ...ASSET_OF_VALUE_RUNTIME_GROUPS.flatMap((group) => [group.nameField, group.valueField]),
   OTHER_WORK_FIELDS.income,
   ...PROPERTY_RUNTIME_GROUPS.map((group) => group.loanBalanceField),
+  ...ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.loanBalanceField),
   OTHER_LOAN_FIELDS.balance,
   INCOME_EVENT_RUNTIME_GROUPS[0].nameField,
   INCOME_EVENT_RUNTIME_GROUPS[1].nameField,
@@ -207,7 +249,7 @@ export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
 ]);
 
 export const PROPERTY_LIQUIDATION_FIELDS = new Set<FieldId>(
-  PROPERTY_RUNTIME_GROUPS.map((group) => group.liquidationRankField)
+  LIQUIDATION_ASSET_RUNTIME_GROUPS.map((group) => group.liquidationRankField)
 );
 
 export const RETIRE_CHECK_REQUIRED_FIELDS = new Set<FieldId>([
@@ -243,6 +285,7 @@ export function deriveRuntimeVisibilityState(values: RuntimeValues): RuntimeVisi
   return {
     visibleDependents: deriveVisibleGroupCount(values, DEPENDENT_RUNTIME_GROUPS.map((group) => group.fields)),
     visibleProperties: deriveVisibleGroupCount(values, PROPERTY_RUNTIME_GROUPS.map((group) => group.coreFields)),
+    visibleAssetsOfValue: deriveVisibleGroupCount(values, ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.coreFields)),
     visibleIncomeEvents: deriveVisibleGroupCount(values, INCOME_EVENT_RUNTIME_GROUPS.map((group) => group.fields)),
     visibleExpenseEvents: deriveVisibleGroupCount(values, EXPENSE_EVENT_RUNTIME_GROUPS.map((group) => group.fields))
   };
@@ -252,7 +295,10 @@ export function getRuntimeFieldValue(values: RuntimeValues, fieldId: FieldId): R
   return values[fieldId];
 }
 
-export function getPropertyName(values: RuntimeValues, group: PropertyRuntimeConfig): string {
+export function getPropertyName(
+  values: RuntimeValues,
+  group: Pick<PropertyRuntimeConfig | AssetOfValueRuntimeConfig, "nameField" | "fallbackName">
+): string {
   return String(values[group.nameField] ?? "").trim() || group.fallbackName;
 }
 
@@ -263,10 +309,14 @@ export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, next
   if (PROPERTY_RUNTIME_GROUPS.some((group) => group.valueField === fieldId)) {
     return asNumber(prevValue) !== asNumber(nextValue);
   }
+  if (ASSET_OF_VALUE_RUNTIME_GROUPS.some((group) => group.valueField === fieldId)) {
+    return asNumber(prevValue) !== asNumber(nextValue);
+  }
   if (
     fieldId === HOME_FIELDS.mortgageBalance
     || fieldId === OTHER_LOAN_FIELDS.balance
     || PROPERTY_RUNTIME_GROUPS.some((group) => group.loanBalanceField === fieldId)
+    || ASSET_OF_VALUE_RUNTIME_GROUPS.some((group) => group.loanBalanceField === fieldId)
     || DEPENDENT_RUNTIME_GROUPS.some((group) => group.nameField === fieldId)
     || INCOME_EVENT_RUNTIME_GROUPS.some((group) => group.nameField === fieldId)
     || EXPENSE_EVENT_RUNTIME_GROUPS.some((group) => group.nameField === fieldId)
@@ -274,6 +324,9 @@ export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, next
     return isBlank(prevValue) !== isBlank(nextValue);
   }
   if (PROPERTY_RUNTIME_GROUPS.some((group) => group.nameField === fieldId)) {
+    return String(prevValue ?? "") !== String(nextValue ?? "");
+  }
+  if (ASSET_OF_VALUE_RUNTIME_GROUPS.some((group) => group.nameField === fieldId)) {
     return String(prevValue ?? "") !== String(nextValue ?? "");
   }
   return false;
@@ -292,14 +345,14 @@ export function isOutOfRangeLiquidationRank(fieldId: FieldId, nextValue: unknown
   if (nextValue === null || nextValue === undefined || String(nextValue).trim() === "") return false;
   const rank = Number(nextValue);
   if (!Number.isInteger(rank)) return true;
-  return rank < 0 || rank > PROPERTY_RUNTIME_GROUPS.length;
+  return rank < 0 || rank > LIQUIDATION_ASSET_RUNTIME_GROUPS.length;
 }
 
 export function isDuplicateLiquidationRank(values: RuntimeValues, fieldId: FieldId, nextValue: unknown): boolean {
   if (!PROPERTY_LIQUIDATION_FIELDS.has(fieldId)) return false;
   const rank = Number(nextValue);
   if (!Number.isInteger(rank) || rank <= 0) return false;
-  for (const group of PROPERTY_RUNTIME_GROUPS) {
+  for (const group of LIQUIDATION_ASSET_RUNTIME_GROUPS) {
     if (group.liquidationRankField === fieldId) continue;
     const existing = Number(values[group.liquidationRankField]);
     if (Number.isInteger(existing) && existing > 0 && existing === rank) {
@@ -357,12 +410,34 @@ export function fieldVisible(
     }
   }
 
+  for (const group of ASSET_OF_VALUE_RUNTIME_GROUPS) {
+    if (fieldId === group.nameField && group.idx > 0) {
+      return assetOfValueSlotVisible(values, group, visibility.visibleAssetsOfValue);
+    }
+    if (fieldId === group.valueField || fieldId === group.appreciationRateField) {
+      return assetOfValueSlotVisible(values, group, visibility.visibleAssetsOfValue) && !isBlank(values[group.nameField]);
+    }
+    if (fieldId === group.loanBalanceField) {
+      return !isBlank(values[group.nameField]);
+    }
+    if (fieldId === group.loanRateField || fieldId === group.loanRepaymentField) {
+      return !isBlank(values[group.nameField]) && !isBlank(values[group.loanBalanceField]);
+    }
+    if (fieldId === group.liquidationRankField) {
+      return anyValue(values, group.coreFields);
+    }
+  }
+
   if (fieldId === OTHER_LOAN_FIELDS.interestRateAnnual || fieldId === OTHER_LOAN_FIELDS.monthlyRepayment) {
     return !isBlank(values[OTHER_LOAN_FIELDS.balance]);
   }
 
   if (fieldId === RUNTIME_FIELDS.propertyDisposalCostRate) {
     return asNumber(values[HOME_FIELDS.homeValue]) > 0 || PROPERTY_RUNTIME_GROUPS.some((group) => anyValue(values, group.coreFields));
+  }
+
+  if (fieldId === RUNTIME_FIELDS.otherAssetDisposalCostRate) {
+    return ASSET_OF_VALUE_RUNTIME_GROUPS.some((group) => anyValue(values, group.coreFields));
   }
 
   if (fieldId === RUNTIME_FIELDS.propertyAnnualAppreciation) {
@@ -411,6 +486,14 @@ function propertySlotVisible(values: RuntimeValues, group: PropertyRuntimeConfig
   return group.idx === 0 || visibleProperties >= group.idx + 1 || anyValue(values, group.coreFields);
 }
 
+function assetOfValueSlotVisible(
+  values: RuntimeValues,
+  group: AssetOfValueRuntimeConfig,
+  visibleAssetsOfValue: number
+): boolean {
+  return group.idx === 0 || visibleAssetsOfValue >= group.idx + 1 || anyValue(values, group.coreFields);
+}
+
 function incomeEventSlotVisible(values: RuntimeValues, group: typeof INCOME_EVENT_RUNTIME_GROUPS[number], visibleIncomeEvents: number): boolean {
   return group.idx === 0 || visibleIncomeEvents >= group.idx + 1 || anyValue(values, group.fields);
 }
@@ -425,7 +508,7 @@ export function getDynamicFieldLabel(def: InputDefinition, values: RuntimeValues
     return String(values[propertyByRentalIncomeField.nameField] ?? "").trim() || propertyByRentalIncomeField.fallbackName;
   }
   if (def.fieldId === RUNTIME_FIELDS.generalInflation) return "General inflation";
-  const propertyByRankField = PROPERTY_RUNTIME_GROUPS.find((group) => group.liquidationRankField === def.fieldId);
+  const propertyByRankField = LIQUIDATION_ASSET_RUNTIME_GROUPS.find((group) => group.liquidationRankField === def.fieldId);
   if (propertyByRankField) {
     return String(values[propertyByRankField.nameField] ?? "").trim() || propertyByRankField.fallbackName;
   }
@@ -446,15 +529,22 @@ export function getDynamicGroupTail(def: InputDefinition, values: RuntimeValues)
     return tail;
   }
   const propertyLoanGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.loanFields.includes(def.fieldId));
-  if (!propertyLoanGroup) return tail;
-  const name = String(values[propertyLoanGroup.nameField] ?? "").trim();
-  tail[0] = "Other property loans";
-  tail[1] = name ? `${name} Property` : propertyLoanGroup.fallbackName;
+  if (propertyLoanGroup) {
+    const name = String(values[propertyLoanGroup.nameField] ?? "").trim();
+    tail[0] = "Loans";
+    tail[1] = name ? `${name} Property` : propertyLoanGroup.fallbackName;
+    return tail;
+  }
+  const assetLoanGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.loanFields.includes(def.fieldId));
+  if (!assetLoanGroup) return tail;
+  const name = String(values[assetLoanGroup.nameField] ?? "").trim();
+  tail[0] = "Loans";
+  tail[1] = name || assetLoanGroup.fallbackName;
   return tail;
 }
 
-export function activePropertyConfigs(values: RuntimeValues): PropertyRuntimeConfig[] {
-  return PROPERTY_RUNTIME_GROUPS.filter((group) => anyValue(values, group.coreFields));
+export function activePropertyConfigs(values: RuntimeValues): LiquidationAssetRuntimeConfig[] {
+  return LIQUIDATION_ASSET_RUNTIME_GROUPS.filter((group) => anyValue(values, group.coreFields));
 }
 
 export function parsePropertyRank(values: RuntimeValues, fieldId: FieldId): number | null {
@@ -465,17 +555,22 @@ export function parsePropertyRank(values: RuntimeValues, fieldId: FieldId): numb
   return Math.trunc(rank);
 }
 
-export function defaultPropertyOrder(values: RuntimeValues, active: PropertyRuntimeConfig[]): PropertyRuntimeConfig[] {
-  return [...active].sort((a, b) => (asNumber(values[a.valueField]) - asNumber(values[b.valueField])) || (a.idx - b.idx));
+export function defaultPropertyOrder(
+  values: RuntimeValues,
+  active: LiquidationAssetRuntimeConfig[]
+): LiquidationAssetRuntimeConfig[] {
+  return [...active].sort((a, b) =>
+    (asNumber(values[a.valueField]) - asNumber(values[b.valueField])) || (a.liquidationIdx - b.liquidationIdx)
+  );
 }
 
 export function hasExplicitPropertyLiquidationPreferences(values: RuntimeValues): boolean {
-  return PROPERTY_RUNTIME_GROUPS.some((group) => !isBlank(values[group.liquidationRankField]));
+  return LIQUIDATION_ASSET_RUNTIME_GROUPS.some((group) => !isBlank(values[group.liquidationRankField]));
 }
 
 export function buildPropertyLiquidationBuckets(
   values: RuntimeValues,
-  active: PropertyRuntimeConfig[],
+  active: LiquidationAssetRuntimeConfig[],
   manualOverrideActive: boolean
 ): PropertyLiquidationBuckets {
   if (active.length === 0) {
@@ -496,7 +591,7 @@ export function buildPropertyLiquidationBuckets(
     .sort((a, b) => {
       const rankA = parsePropertyRank(values, a.liquidationRankField) ?? 0;
       const rankB = parsePropertyRank(values, b.liquidationRankField) ?? 0;
-      return (rankA - rankB) || (a.idx - b.idx);
+      return (rankA - rankB) || (a.liquidationIdx - b.liquidationIdx);
     });
   const excluded = active.filter((group) => !sellable.includes(group));
   return { sellable, excluded };
@@ -504,9 +599,9 @@ export function buildPropertyLiquidationBuckets(
 
 export function buildPropertyLiquidationOrder(
   values: RuntimeValues,
-  active: PropertyRuntimeConfig[],
+  active: LiquidationAssetRuntimeConfig[],
   manualOverrideActive: boolean
-): PropertyRuntimeConfig[] {
+): LiquidationAssetRuntimeConfig[] {
   const { sellable, excluded } = buildPropertyLiquidationBuckets(values, active, manualOverrideActive);
   return [...sellable, ...excluded];
 }
@@ -528,7 +623,7 @@ export function syncManualPropertyOrderForNewProperties(
   let nextRank = ranked.length > 0 ? (ranked[ranked.length - 1].rank ?? 0) : 0;
   const updates: Array<{ fieldId: FieldId; value: number }> = [];
   for (const group of active) {
-    if (previousActivePropertyIndices.has(group.idx)) continue;
+    if (previousActivePropertyIndices.has(group.liquidationIdx)) continue;
     if (!isBlank(values[group.liquidationRankField])) continue;
     nextRank += 1;
     updates.push({ fieldId: group.liquidationRankField, value: nextRank });
@@ -537,13 +632,13 @@ export function syncManualPropertyOrderForNewProperties(
 }
 
 export function buildPropertyLiquidationAssignments(
-  order: PropertyRuntimeConfig[],
-  active: PropertyRuntimeConfig[]
+  order: LiquidationAssetRuntimeConfig[],
+  active: LiquidationAssetRuntimeConfig[]
 ): Array<{ fieldId: FieldId; value: number | null }> {
   const assignments: Array<{ fieldId: FieldId; value: number | null }> = [];
-  const activeSet = new Set(active.map((group) => group.idx));
-  for (const group of PROPERTY_RUNTIME_GROUPS) {
-    if (activeSet.has(group.idx)) assignments.push({ fieldId: group.liquidationRankField, value: 0 });
+  const activeSet = new Set(active.map((group) => group.liquidationIdx));
+  for (const group of LIQUIDATION_ASSET_RUNTIME_GROUPS) {
+    if (activeSet.has(group.liquidationIdx)) assignments.push({ fieldId: group.liquidationRankField, value: 0 });
   }
   order.forEach((group, idx) => {
     assignments.push({ fieldId: group.liquidationRankField, value: idx + 1 });

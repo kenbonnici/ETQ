@@ -1,5 +1,6 @@
 import { FieldId } from "../model/fieldRegistry";
 import {
+  ASSET_OF_VALUE_GROUPS,
   DEPENDENT_GROUPS,
   EXPENSE_EVENT_GROUPS,
   HOME_LOAN_GROUP,
@@ -19,21 +20,22 @@ export const RUNTIME_FIELDS = {
   statutoryRetirementAge: INPUT_DEFINITION_BY_CELL.B19.fieldId,
   annualPensionAtRetirement: INPUT_DEFINITION_BY_CELL.B21.fieldId,
   annualLivingExpenses: INPUT_DEFINITION_BY_CELL.B25.fieldId,
-  lifeExpectancyAge: INPUT_DEFINITION_BY_CELL.B166.fieldId,
-  spendingAdjustmentPre65: INPUT_DEFINITION_BY_CELL.B169.fieldId,
-  spendingAdjustment66To75: INPUT_DEFINITION_BY_CELL.B170.fieldId,
-  spendingAdjustment76Plus: INPUT_DEFINITION_BY_CELL.B171.fieldId,
-  generalInflation: INPUT_DEFINITION_BY_CELL.B177.fieldId,
-  propertyAnnualAppreciation: INPUT_DEFINITION_BY_CELL.B179.fieldId,
-  cashInterestRate: INPUT_DEFINITION_BY_CELL.B181.fieldId,
-  stockMarketReturn: INPUT_DEFINITION_BY_CELL.B183.fieldId,
-  salaryAnnualGrowthRate: INPUT_DEFINITION_BY_CELL.B185.fieldId,
-  rentalIncomeAnnualIncrease: INPUT_DEFINITION_BY_CELL.B187.fieldId,
-  pensionReductionPerYearEarly: INPUT_DEFINITION_BY_CELL.B189.fieldId,
-  minimumCashBuffer: INPUT_DEFINITION_BY_CELL.B191.fieldId,
-  legacyAmount: INPUT_DEFINITION_BY_CELL.B193.fieldId,
-  stockSellingCostRate: INPUT_DEFINITION_BY_CELL.B195.fieldId,
-  propertyDisposalCostRate: INPUT_DEFINITION_BY_CELL.B197.fieldId
+  lifeExpectancyAge: INPUT_DEFINITION_BY_CELL.B218.fieldId,
+  spendingAdjustmentPre65: INPUT_DEFINITION_BY_CELL.B221.fieldId,
+  spendingAdjustment66To75: INPUT_DEFINITION_BY_CELL.B222.fieldId,
+  spendingAdjustment76Plus: INPUT_DEFINITION_BY_CELL.B223.fieldId,
+  generalInflation: INPUT_DEFINITION_BY_CELL.B229.fieldId,
+  propertyAnnualAppreciation: INPUT_DEFINITION_BY_CELL.B231.fieldId,
+  cashInterestRate: INPUT_DEFINITION_BY_CELL.B233.fieldId,
+  stockMarketReturn: INPUT_DEFINITION_BY_CELL.B235.fieldId,
+  salaryAnnualGrowthRate: INPUT_DEFINITION_BY_CELL.B237.fieldId,
+  rentalIncomeAnnualIncrease: INPUT_DEFINITION_BY_CELL.B239.fieldId,
+  pensionReductionPerYearEarly: INPUT_DEFINITION_BY_CELL.B241.fieldId,
+  minimumCashBuffer: INPUT_DEFINITION_BY_CELL.B243.fieldId,
+  legacyAmount: INPUT_DEFINITION_BY_CELL.B245.fieldId,
+  stockSellingCostRate: INPUT_DEFINITION_BY_CELL.B247.fieldId,
+  propertyDisposalCostRate: INPUT_DEFINITION_BY_CELL.B249.fieldId,
+  otherAssetDisposalCostRate: INPUT_DEFINITION_BY_CELL.B251.fieldId
 } as const satisfies Record<string, FieldId>;
 
 export const HOME_FIELDS = {
@@ -80,6 +82,7 @@ export const DEPENDENT_RUNTIME_GROUPS = DEPENDENT_GROUPS.map((group, idx) => ({
 export const PROPERTY_RUNTIME_GROUPS = PROPERTY_GROUPS.map((group, idx) => ({
   idx,
   fallbackName: `Property ${idx + 1}`,
+  assetKind: "property" as const,
   nameField: group.nameField,
   valueField: group.valueField,
   annualCostsField: group.annualCostsField,
@@ -111,10 +114,60 @@ export const PROPERTY_RUNTIME_GROUPS = PROPERTY_GROUPS.map((group, idx) => ({
   loanRateField: FieldId;
   loanRepaymentField: FieldId;
   liquidationRankField: FieldId;
+  assetKind: "property";
   coreFields: readonly [FieldId, FieldId, FieldId];
   loanFields: readonly [FieldId, FieldId, FieldId];
   allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
 }>;
+
+export const ASSET_OF_VALUE_RUNTIME_GROUPS = ASSET_OF_VALUE_GROUPS.map((group, idx) => ({
+  idx,
+  fallbackName: `Asset ${idx + 1}`,
+  assetKind: "assetOfValue" as const,
+  nameField: group.nameField,
+  valueField: group.valueField,
+  appreciationRateField: group.appreciationRateField,
+  loanBalanceField: group.loanBalanceField,
+  loanRateField: group.loanRateField,
+  loanRepaymentField: group.loanRepaymentField,
+  liquidationRankField: group.liquidationRankField,
+  coreFields: [group.nameField, group.valueField, group.appreciationRateField] as const,
+  loanFields: [group.loanBalanceField, group.loanRateField, group.loanRepaymentField] as const,
+  allFields: [
+    group.nameField,
+    group.valueField,
+    group.appreciationRateField,
+    group.loanBalanceField,
+    group.loanRateField,
+    group.loanRepaymentField,
+    group.liquidationRankField
+  ] as const
+})) as ReadonlyArray<{
+  idx: number;
+  fallbackName: string;
+  assetKind: "assetOfValue";
+  nameField: FieldId;
+  valueField: FieldId;
+  appreciationRateField: FieldId;
+  loanBalanceField: FieldId;
+  loanRateField: FieldId;
+  loanRepaymentField: FieldId;
+  liquidationRankField: FieldId;
+  coreFields: readonly [FieldId, FieldId, FieldId];
+  loanFields: readonly [FieldId, FieldId, FieldId];
+  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
+}>;
+
+export const LIQUIDATION_ASSET_RUNTIME_GROUPS = [
+  ...PROPERTY_RUNTIME_GROUPS.map((group) => ({
+    ...group,
+    liquidationIdx: group.idx
+  })),
+  ...ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => ({
+    ...group,
+    liquidationIdx: PROPERTY_RUNTIME_GROUPS.length + group.idx
+  }))
+] as const;
 
 export const INCOME_EVENT_RUNTIME_GROUPS = INCOME_EVENT_GROUPS.map((group, idx) => ({
   idx,

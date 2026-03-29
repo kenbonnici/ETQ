@@ -3,6 +3,8 @@ import assert from "node:assert/strict";
 
 import { CELL_TO_FIELD_ID, FIELD_ID_TO_CELL, FieldId, InputCell } from "../../src/model/fieldRegistry";
 import {
+  ASSET_OF_VALUE_GROUPS,
+  ASSET_OF_VALUE_GROUPS_BY_CELL,
   ALLOW_NEGATIVE_FIELDS,
   ALLOW_NEGATIVE_INPUT_CELLS,
   COERCED_NUMERIC_BOUNDS,
@@ -68,8 +70,10 @@ test("field and cell group exports round-trip without drift", () => {
   assert.equal(DEPENDENT_GROUPS_BY_CELL.length, 5);
   assert.equal(PROPERTY_GROUPS.length, 5);
   assert.equal(PROPERTY_GROUPS_BY_CELL.length, 5);
-  assert.equal(LIQUIDATION_RANK_FIELDS.length, 5);
-  assert.equal(LIQUIDATION_RANK_CELLS.length, 5);
+  assert.equal(ASSET_OF_VALUE_GROUPS.length, 5);
+  assert.equal(ASSET_OF_VALUE_GROUPS_BY_CELL.length, 5);
+  assert.equal(LIQUIDATION_RANK_FIELDS.length, 10);
+  assert.equal(LIQUIDATION_RANK_CELLS.length, 10);
 
   assert.deepEqual(
     DEPENDENT_GROUPS_BY_CELL,
@@ -108,6 +112,30 @@ test("field and cell group exports round-trip without drift", () => {
       valueField: CELL_TO_FIELD_ID[group.valueCell],
       annualCostsField: CELL_TO_FIELD_ID[group.annualCostsCell],
       rentalIncomeField: CELL_TO_FIELD_ID[group.rentalIncomeCell],
+      loanBalanceField: CELL_TO_FIELD_ID[group.loanBalanceCell],
+      loanRateField: CELL_TO_FIELD_ID[group.loanRateCell],
+      loanRepaymentField: CELL_TO_FIELD_ID[group.loanRepaymentCell],
+      liquidationRankField: CELL_TO_FIELD_ID[group.liquidationRankCell]
+    }))
+  );
+  assert.deepEqual(
+    ASSET_OF_VALUE_GROUPS_BY_CELL,
+    ASSET_OF_VALUE_GROUPS.map((group) => ({
+      nameCell: FIELD_ID_TO_CELL[group.nameField],
+      valueCell: FIELD_ID_TO_CELL[group.valueField],
+      appreciationRateCell: FIELD_ID_TO_CELL[group.appreciationRateField],
+      loanBalanceCell: FIELD_ID_TO_CELL[group.loanBalanceField],
+      loanRateCell: FIELD_ID_TO_CELL[group.loanRateField],
+      loanRepaymentCell: FIELD_ID_TO_CELL[group.loanRepaymentField],
+      liquidationRankCell: FIELD_ID_TO_CELL[group.liquidationRankField]
+    }))
+  );
+  assert.deepEqual(
+    ASSET_OF_VALUE_GROUPS,
+    ASSET_OF_VALUE_GROUPS_BY_CELL.map((group) => ({
+      nameField: CELL_TO_FIELD_ID[group.nameCell],
+      valueField: CELL_TO_FIELD_ID[group.valueCell],
+      appreciationRateField: CELL_TO_FIELD_ID[group.appreciationRateCell],
       loanBalanceField: CELL_TO_FIELD_ID[group.loanBalanceCell],
       loanRateField: CELL_TO_FIELD_ID[group.loanRateCell],
       loanRepaymentField: CELL_TO_FIELD_ID[group.loanRepaymentCell],

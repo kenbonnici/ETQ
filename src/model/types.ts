@@ -41,6 +41,15 @@ export interface EffectiveInputs {
     loanRepaymentMonthly: number;
   }>;
 
+  assetsOfValue: Array<{
+    name: string;
+    value: number;
+    appreciationRate: number;
+    loanBalance: number;
+    loanRate: number;
+    loanRepaymentMonthly: number;
+  }>;
+
   otherWorkIncomeAnnual: number;
   otherWorkUntilAge: number;
   creditCardBalance: number;
@@ -71,6 +80,7 @@ export interface EffectiveInputs {
   legacyAmount: number;
   stockSellingCosts: number;
   propertyDisposalCosts: number;
+  otherAssetDisposalCosts: number;
 
   liquidationPriority: Array<number>; // 0 means never sell.
 }

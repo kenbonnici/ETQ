@@ -1,4 +1,5 @@
 import {
+  ASSET_OF_VALUE_GROUPS_BY_CELL,
   DEPENDENT_GROUPS_BY_CELL,
   HOME_LOAN_GROUP_BY_CELL,
   INCOME_EVENT_GROUPS_BY_CELL,
@@ -66,6 +67,24 @@ function applyDependencyPruning(target: RawInputs): void {
 
     if (!(asNumber(target[property.loanBalanceCell]) > 0)) {
       clearCells(target, [property.loanRateCell, property.loanRepaymentCell]);
+    }
+  }
+
+  for (const asset of ASSET_OF_VALUE_GROUPS_BY_CELL) {
+    if (isBlank(target[asset.nameCell])) {
+      clearCells(target, [
+        asset.valueCell,
+        asset.appreciationRateCell,
+        asset.loanBalanceCell,
+        asset.loanRateCell,
+        asset.loanRepaymentCell,
+        asset.liquidationRankCell
+      ]);
+      continue;
+    }
+
+    if (!(asNumber(target[asset.loanBalanceCell]) > 0)) {
+      clearCells(target, [asset.loanRateCell, asset.loanRepaymentCell]);
     }
   }
 

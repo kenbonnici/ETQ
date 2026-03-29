@@ -17,6 +17,7 @@ import {
 import { EXCEL_BASELINE_SPECIMEN } from "./model/parity/excelBaselineSpecimen";
 import { FieldId, ModelUiState, RawInputValue, ScenarioOutputs } from "./model/types";
 import {
+  ASSET_OF_VALUE_RUNTIME_GROUPS,
   DEPENDENT_RUNTIME_GROUPS,
   EXPENSE_EVENT_RUNTIME_GROUPS,
   HOME_FIELDS,
@@ -313,6 +314,8 @@ let visibleDependents = 1;
 const dependentFieldSets = DEPENDENT_RUNTIME_GROUPS.map((group) => group.fields);
 let visibleProperties = 1;
 const propertyFieldSets = PROPERTY_RUNTIME_GROUPS.map((group) => group.coreFields);
+let visibleAssetsOfValue = 1;
+const assetOfValueFieldSets = ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.coreFields);
 const PROPERTY_LIQUIDATION_CELLS = PROPERTY_LIQUIDATION_FIELDS;
 const FINER_DETAILS_FIELD_IDS = FINER_DETAILS_FIELDS;
 let visibleIncomeEvents = 1;
@@ -614,6 +617,7 @@ function syncVisibleRuntimeGroupsFromState(): void {
   const visibility = deriveRuntimeVisibilityState(fieldState);
   visibleDependents = visibility.visibleDependents;
   visibleProperties = visibility.visibleProperties;
+  visibleAssetsOfValue = visibility.visibleAssetsOfValue;
   visibleIncomeEvents = visibility.visibleIncomeEvents;
   visibleExpenseEvents = visibility.visibleExpenseEvents;
 }
@@ -864,7 +868,13 @@ function getVisibleInputOrder(): FieldId[] {
     ...getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === "FINER DETAILS"))
   ];
   return ordered
-    .filter((def) => fieldVisible(fieldState, def.fieldId, { visibleDependents, visibleProperties, visibleIncomeEvents, visibleExpenseEvents }) && !PROPERTY_LIQUIDATION_CELLS.has(def.fieldId))
+    .filter((def) => fieldVisible(fieldState, def.fieldId, {
+      visibleDependents,
+      visibleProperties,
+      visibleAssetsOfValue,
+      visibleIncomeEvents,
+      visibleExpenseEvents
+    }) && !PROPERTY_LIQUIDATION_CELLS.has(def.fieldId))
     .map((def) => def.fieldId);
 }
 
@@ -1345,7 +1355,7 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
     projectionGroup("outflows", "Outflows", cashFlow.totalOutflows, 0, [
       projectionLeaf("credit-cards-cleared", "Credit cards cleared", cashFlow.creditCardsCleared, 1),
       projectionLeaf("home-loan-repayment", "Home loan repayment", cashFlow.homeLoanRepayment, 1),
-      projectionGroup("outflows-property-loans", "Property loan repayments", sumProjectionSeries(cashFlow.propertyLoanRepayments.map((row) => row.values), yearCount), 1, propertyLoanChildren),
+      projectionGroup("outflows-property-loans", "Property and asset loan repayments", sumProjectionSeries(cashFlow.propertyLoanRepayments.map((row) => row.values), yearCount), 1, propertyLoanChildren),
       projectionLeaf("other-loan-repayment", "Other loan repayment", cashFlow.otherLoanRepayment, 1),
       projectionGroup("outflows-dependents", "Dependents cost", sumProjectionSeries(cashFlow.dependentsCost.map((row) => row.values), yearCount), 1, dependentChildren),
       projectionLeaf("housing-rent", "Housing rent", cashFlow.housingRent, 1),
@@ -1389,7 +1399,7 @@ function buildNetworthNodes(scenario: ScenarioOutputs): ProjectionNode[] {
     ], "total", true),
     projectionGroup(
       "networth-properties",
-      "Properties",
+      "Properties & assets",
       propertyValues,
       0,
       propertyChildren,
@@ -2198,7 +2208,7 @@ function persistPropertyLiquidationOrder(order: ReturnType<typeof activeProperty
 }
 
 function renderLiquidationRow(
-  cfg: (typeof PROPERTY_RUNTIME_GROUPS)[number],
+  cfg: ReturnType<typeof activePropertyConfigs>[number],
   rank: number | null,
   action: "exclude" | "include",
   options: { moveUpDisabled?: boolean; moveDownDisabled?: boolean } = {}
@@ -2216,7 +2226,7 @@ function renderLiquidationRow(
             type="button"
             class="liquidation-move-btn"
             data-liquidation-move="up"
-            data-liquidation-idx="${cfg.idx}"
+            data-liquidation-idx="${cfg.liquidationIdx}"
             aria-label="Move ${escapeHtml(name)} up"
             ${options.moveUpDisabled ? "disabled" : ""}
           >↑</button>
@@ -2224,14 +2234,14 @@ function renderLiquidationRow(
             type="button"
             class="liquidation-move-btn"
             data-liquidation-move="down"
-            data-liquidation-idx="${cfg.idx}"
+            data-liquidation-idx="${cfg.liquidationIdx}"
             aria-label="Move ${escapeHtml(name)} down"
             ${options.moveDownDisabled ? "disabled" : ""}
           >↓</button>
         </div>
       ` : `<span class="liquidation-reorder-placeholder" aria-hidden="true"></span>`;
   return `
-      <li class="liquidation-item ${isSellable ? "" : "is-static"}" data-liquidation-idx="${cfg.idx}">
+      <li class="liquidation-item ${isSellable ? "" : "is-static"}" data-liquidation-idx="${cfg.liquidationIdx}">
         ${rankHtml}
         <span class="liquidation-name">${escapeHtml(name)}</span>
         <span class="liquidation-value">${escapeHtml(valueText)}</span>
@@ -2243,7 +2253,7 @@ function renderLiquidationRow(
           aria-checked="${isSellable ? "true" : "false"}"
           aria-label="${escapeHtml(name)}: liquidation ${isSellable ? "enabled" : "disabled"}"
           data-liquidation-action="${action}"
-          data-liquidation-idx="${cfg.idx}"
+          data-liquidation-idx="${cfg.liquidationIdx}"
         >
           <span class="liquidation-toggle-label">Liquidate</span>
           <span class="liquidation-toggle-track" aria-hidden="true">
@@ -2263,12 +2273,12 @@ function renderPropertyLiquidationOrderControl(): string {
     moveDownDisabled: idx === sellable.length - 1
   })).join("");
   const excludedRows = excluded.map((cfg) => renderLiquidationRow(cfg, null, "include")).join("");
-  const sellableContent = sellableRows || `<div class="liquidation-empty">No properties will be liquidated.</div>`;
-  const excludedContent = excludedRows || `<div class="liquidation-empty">All active properties are currently sellable.</div>`;
+  const sellableContent = sellableRows || `<div class="liquidation-empty">No assets will be liquidated.</div>`;
+  const excludedContent = excludedRows || `<div class="liquidation-empty">All active assets are currently sellable.</div>`;
   return `
     <div class="liquidation-reorder" data-liquidation-reorder="true">
       <div class="liquidation-title">Asset liquidation order</div>
-      <small class="liquidation-help">Use the arrows to reorder sellable properties. Turn Liquidate off for properties you would never liquidate.</small>
+      <small class="liquidation-help">Use the arrows to reorder sellable assets. Turn Liquidate off for assets you would never liquidate.</small>
       <div class="liquidation-section" data-liquidation-zone="sellable">
         ${sellableRows ? `<ul class="liquidation-list">${sellableContent}</ul>` : sellableContent}
       </div>
@@ -2403,6 +2413,7 @@ function renderInputs(): void {
   const cursorState = capturePanelCursorState();
   visibleDependents = expandVisibleGroupCount(visibleDependents, dependentFieldSets);
   visibleProperties = expandVisibleGroupCount(visibleProperties, propertyFieldSets);
+  visibleAssetsOfValue = expandVisibleGroupCount(visibleAssetsOfValue, assetOfValueFieldSets);
   if (anyValue(fieldState, incomeEvent3Fields)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 3);
   else if (anyValue(fieldState, incomeEvent2Fields)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 2);
   if (anyValue(fieldState, expenseEvent3Fields)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 3);
@@ -2418,7 +2429,7 @@ function renderInputs(): void {
     }
     queueRecalc();
   }
-  previousActivePropertyIndices = new Set(activePropertyConfigs(fieldState).map((group) => group.idx));
+  previousActivePropertyIndices = new Set(activePropertyConfigs(fieldState).map((group) => group.liquidationIdx));
   const grouped = {
     "QUICK START": INPUT_DEFINITIONS.filter((d) => d.section === "QUICK START"),
     "DEEPER DIVE": INPUT_DEFINITIONS.filter((d) => d.section === "DEEPER DIVE"),
@@ -2473,6 +2484,11 @@ function renderInputs(): void {
       const value = fieldState[propertyGroup.nameField];
       return typeof value === "string" ? value.trim() : "";
     }
+    const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
+    if (assetOfValueGroup) {
+      const value = fieldState[assetOfValueGroup.nameField];
+      return typeof value === "string" ? value.trim() : "";
+    }
     return "";
   };
 
@@ -2492,7 +2508,13 @@ function renderInputs(): void {
     };
 
     for (const def of orderedDefs) {
-      if (!fieldVisible(fieldState, def.fieldId, { visibleDependents, visibleProperties, visibleIncomeEvents, visibleExpenseEvents })) continue;
+      if (!fieldVisible(fieldState, def.fieldId, {
+        visibleDependents,
+        visibleProperties,
+        visibleAssetsOfValue,
+        visibleIncomeEvents,
+        visibleExpenseEvents
+      })) continue;
       if (PROPERTY_LIQUIDATION_CELLS.has(def.fieldId)) {
         if (!liquidationRendered) {
           closeSubgroupCard();
@@ -2566,6 +2588,15 @@ function renderInputs(): void {
         && !isBlank(fieldState[propertyGroup.nameField])
       ) {
         html += `<button type="button" class="add-property-btn" data-next-property="${propertyGroup.idx + 2}">Add another property</button>`;
+      }
+      const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.appreciationRateField === def.fieldId);
+      if (
+        assetOfValueGroup
+        && assetOfValueGroup.idx < ASSET_OF_VALUE_RUNTIME_GROUPS.length - 1
+        && visibleAssetsOfValue < assetOfValueGroup.idx + 2
+        && !isBlank(fieldState[assetOfValueGroup.nameField])
+      ) {
+        html += `<button type="button" class="add-asset-btn" data-next-asset="${assetOfValueGroup.idx + 2}">Add another asset</button>`;
       }
       if (def.fieldId === INCOME_EVENT_RUNTIME_GROUPS[0].yearField && visibleIncomeEvents < 2 && !isBlank(fieldState[INCOME_EVENT_RUNTIME_GROUPS[0].nameField])) {
         html += `<button type="button" class="add-event-btn" data-next-income-event="2">Add another income event</button>`;
@@ -2900,6 +2931,16 @@ function renderInputs(): void {
     });
   });
 
+  inputsPanel.querySelectorAll<HTMLButtonElement>(".add-asset-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = Number(btn.dataset.nextAsset);
+      if (Number.isFinite(next)) {
+        visibleAssetsOfValue = Math.max(visibleAssetsOfValue, Math.min(ASSET_OF_VALUE_RUNTIME_GROUPS.length, next));
+        renderInputs();
+      }
+    });
+  });
+
   inputsPanel.querySelectorAll<HTMLButtonElement>(".add-event-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       const nextIncome = Number(btn.dataset.nextIncomeEvent);
@@ -2921,14 +2962,14 @@ function renderInputs(): void {
       const propertyIdx = Number(btn.dataset.liquidationIdx);
       if (!Number.isFinite(propertyIdx)) return;
       const active = activePropertyConfigs(fieldState);
-      const target = active.find((group) => group.idx === propertyIdx);
+      const target = active.find((group) => group.liquidationIdx === propertyIdx);
       if (!target) return;
 
       const { sellable } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
       const action = btn.dataset.liquidationAction;
       if (action === "exclude") {
-        persistPropertyLiquidationOrder(sellable.filter((group) => group.idx !== propertyIdx), active);
-      } else if (action === "include" && !sellable.some((group) => group.idx === propertyIdx)) {
+        persistPropertyLiquidationOrder(sellable.filter((group) => group.liquidationIdx !== propertyIdx), active);
+      } else if (action === "include" && !sellable.some((group) => group.liquidationIdx === propertyIdx)) {
         persistPropertyLiquidationOrder([...sellable, target], active);
       } else {
         return;
@@ -2948,7 +2989,7 @@ function renderInputs(): void {
 
       const active = activePropertyConfigs(fieldState);
       const { sellable: order } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
-      const fromPos = order.findIndex((cfg) => cfg.idx === propertyIdx);
+      const fromPos = order.findIndex((cfg) => cfg.liquidationIdx === propertyIdx);
       if (fromPos < 0) return;
       const toPos = direction === "up" ? fromPos - 1 : fromPos + 1;
       if (toPos < 0 || toPos >= order.length) return;

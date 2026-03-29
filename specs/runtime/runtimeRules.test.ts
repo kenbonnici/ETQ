@@ -27,10 +27,12 @@ import {
   syncManualPropertyOrderForNewProperties
 } from "../../src/ui/runtimeRules";
 import {
+  ASSET_OF_VALUE_RUNTIME_GROUPS,
   DEPENDENT_RUNTIME_GROUPS,
   EXPENSE_EVENT_RUNTIME_GROUPS,
   HOME_FIELDS,
   INCOME_EVENT_RUNTIME_GROUPS,
+  LIQUIDATION_ASSET_RUNTIME_GROUPS,
   OTHER_LOAN_FIELDS,
   OTHER_WORK_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
@@ -49,10 +51,11 @@ const SPECIMEN_UI_STATE = {
 const DEFAULT_VISIBILITY: RuntimeVisibilityState = {
   visibleDependents: 1,
   visibleProperties: 1,
+  visibleAssetsOfValue: 1,
   visibleIncomeEvents: 1,
   visibleExpenseEvents: 1
 };
-const LEGACY_AWARE_RETIREMENT_AGE = 54;
+const LEGACY_AWARE_RETIREMENT_AGE = 50;
 
 function cloneFields(fields: FieldState): FieldState {
   return { ...fields };
@@ -87,10 +90,12 @@ test("input definitions preserve row order and derive cells from semantic field 
     INPUT_DEFINITIONS.map((def) => def.row),
     [
       4, 6, 8, 10, 12, 15, 16, 17, 19, 21, 23, 25, 33, 34, 35, 38, 39, 40, 43, 44, 45, 48, 49, 50, 53, 54,
-      55, 60, 61, 62, 65, 66, 67, 70, 71, 72, 75, 76, 77, 80, 81, 82, 86, 87, 88, 89, 90, 92, 93, 97, 100,
-      101, 102, 105, 106, 107, 110, 111, 112, 115, 116, 117, 120, 121, 122, 125, 126, 127, 132, 133, 134,
-      137, 138, 139, 142, 143, 144, 149, 150, 151, 154, 155, 156, 159, 160, 161, 166, 169, 170, 171, 173,
-      174, 175, 177, 179, 181, 183, 185, 187, 189, 191, 193, 195, 197, 200, 201, 202, 203, 204
+      55, 60, 61, 62, 65, 66, 67, 70, 71, 72, 75, 76, 77, 80, 81, 82, 87, 88, 89, 92, 93, 94, 97, 98, 99,
+      102, 103, 104, 107, 108, 109, 113, 114, 115, 116, 117, 119, 120, 124, 127, 128, 129, 132, 133, 134,
+      137, 138, 139, 142, 143, 144, 147, 148, 149, 152, 153, 154, 157, 158, 159, 162, 163, 164, 167, 168,
+      169, 172, 173, 174, 177, 178, 179, 184, 185, 186, 189, 190, 191, 194, 195, 196, 201, 202, 203, 206,
+      207, 208, 211, 212, 213, 218, 221, 222, 223, 225, 226, 227, 229, 231, 233, 235, 237, 239, 241, 243,
+      245, 247, 249, 251, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263
     ]
   );
 
@@ -103,9 +108,11 @@ test("blank legacy normalizes to zero and specimen parity captures the shifted w
   const blankFields = createEmptyFieldState();
 
   assert.equal(normalizeInputs(fieldStateToRawInputs(blankFields)).legacyAmount, 0);
-  assert.equal(SPECIMEN_FIELDS[RUNTIME_FIELDS.legacyAmount], 3_000_000);
-  assert.equal(SPECIMEN_FIELDS[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField], 5);
-  assert.equal(SPECIMEN_FIELDS[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField], 2);
+  assert.equal(SPECIMEN_FIELDS[RUNTIME_FIELDS.legacyAmount], 1_000_000);
+  assert.equal(SPECIMEN_FIELDS[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField], 10);
+  assert.equal(SPECIMEN_FIELDS[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField], 6);
+  assert.equal(SPECIMEN_FIELDS[ASSET_OF_VALUE_RUNTIME_GROUPS[0].liquidationRankField], 3);
+  assert.equal(SPECIMEN_FIELDS[ASSET_OF_VALUE_RUNTIME_GROUPS[4].liquidationRankField], 5);
 });
 
 test("retirement success requires both the cash buffer and the end-age legacy target", () => {
@@ -169,6 +176,13 @@ test("visibility rules stay semantic for dependents, properties, and loans", () 
   fields[PROPERTY_RUNTIME_GROUPS[0].loanBalanceField] = 100_000;
   assert.equal(fieldVisible(fields, PROPERTY_RUNTIME_GROUPS[0].loanRateField, DEFAULT_VISIBILITY), true);
 
+  assert.equal(fieldVisible(fields, ASSET_OF_VALUE_RUNTIME_GROUPS[0].loanBalanceField, DEFAULT_VISIBILITY), false);
+  fields[ASSET_OF_VALUE_RUNTIME_GROUPS[0].nameField] = "Jewelry";
+  assert.equal(fieldVisible(fields, ASSET_OF_VALUE_RUNTIME_GROUPS[0].appreciationRateField, DEFAULT_VISIBILITY), true);
+  assert.equal(fieldVisible(fields, ASSET_OF_VALUE_RUNTIME_GROUPS[0].loanRateField, DEFAULT_VISIBILITY), false);
+  fields[ASSET_OF_VALUE_RUNTIME_GROUPS[0].loanBalanceField] = 2_500;
+  assert.equal(fieldVisible(fields, ASSET_OF_VALUE_RUNTIME_GROUPS[0].loanRateField, DEFAULT_VISIBILITY), true);
+
   assert.equal(fieldVisible(fields, OTHER_LOAN_FIELDS.interestRateAnnual, DEFAULT_VISIBILITY), false);
   fields[OTHER_LOAN_FIELDS.balance] = 2_000;
   assert.equal(fieldVisible(fields, OTHER_LOAN_FIELDS.interestRateAnnual, DEFAULT_VISIBILITY), true);
@@ -189,7 +203,7 @@ test("property liquidation order preserves duplicate-rank guardrails and only ap
   fields[PROPERTY_RUNTIME_GROUPS[1].nameField] = "P2";
   fields[PROPERTY_RUNTIME_GROUPS[1].valueField] = 150_000;
 
-  const active = PROPERTY_RUNTIME_GROUPS.slice(0, 2);
+  const active = LIQUIDATION_ASSET_RUNTIME_GROUPS.slice(0, 2);
   const defaultOrder = buildPropertyLiquidationOrder(fields, active, false);
   assert.deepEqual(defaultOrder.map((group) => group.idx), [1, 0]);
 
@@ -202,11 +216,15 @@ test("property liquidation order preserves duplicate-rank guardrails and only ap
   );
   assert.equal(
     isOutOfRangeLiquidationRank(PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 6),
-    true
+    false
   );
   assert.equal(
-    isOutOfRangeLiquidationRank(PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 5),
+    isOutOfRangeLiquidationRank(PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 10),
     false
+  );
+  assert.equal(
+    isOutOfRangeLiquidationRank(PROPERTY_RUNTIME_GROUPS[0].liquidationRankField, 11),
+    true
   );
   assert.equal(
     isOutOfRangeLiquidationRank(RUNTIME_FIELDS.statutoryRetirementAge, 65),
@@ -240,11 +258,11 @@ test("property liquidation order preserves duplicate-rank guardrails and only ap
   fields[PROPERTY_RUNTIME_GROUPS[2].liquidationRankField] = 3;
   fields[PROPERTY_RUNTIME_GROUPS[3].liquidationRankField] = 4;
   fields[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField] = 5;
-  const manualOrder = buildPropertyLiquidationOrder(fields, PROPERTY_RUNTIME_GROUPS.slice(), true);
+  const manualOrder = buildPropertyLiquidationOrder(fields, LIQUIDATION_ASSET_RUNTIME_GROUPS.slice(0, 5), true);
   assert.deepEqual(manualOrder.map((group) => group.idx), [1, 0, 2, 3, 4]);
   assert.equal(hasExplicitPropertyLiquidationPreferences(fields), true);
 
-  const assignments = buildPropertyLiquidationAssignments(manualOrder, PROPERTY_RUNTIME_GROUPS.slice());
+  const assignments = buildPropertyLiquidationAssignments(manualOrder, LIQUIDATION_ASSET_RUNTIME_GROUPS.slice(0, 5));
   assert.deepEqual(
     assignments.map((assignment) => assignment.value),
     [0, 0, 0, 0, 0, 1, 2, 3, 4, 5]
@@ -272,19 +290,19 @@ test("auto liquidation order re-sorts from current property values after repeate
 
   assert.deepEqual(
     normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
-    [5, 3, 4, 1, 2]
+    [5, 3, 4, 1, 2, 0, 0, 0, 0, 0]
   );
 
   fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 100_000;
   assert.deepEqual(
     normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
-    [2, 4, 5, 1, 3]
+    [2, 4, 5, 1, 3, 0, 0, 0, 0, 0]
   );
 
   fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 50_000;
   assert.deepEqual(
     normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
-    [3, 5, 1, 2, 4]
+    [3, 5, 1, 2, 4, 0, 0, 0, 0, 0]
   );
 });
 
@@ -309,7 +327,7 @@ test("manual liquidation order stays fixed across value edits and blank entries 
 
   assert.deepEqual(
     normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: true }).liquidationPriority,
-    [2, 1, 0, 0, 0]
+    [2, 1, 0, 0, 0, 0, 0, 0, 0, 0]
   );
 
   fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 50_000;
@@ -320,10 +338,10 @@ test("manual liquidation order stays fixed across value edits and blank entries 
 
   assert.deepEqual(
     normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: true }).liquidationPriority,
-    [2, 1, 0, 0, 0]
+    [2, 1, 0, 0, 0, 0, 0, 0, 0, 0]
   );
   assert.deepEqual(
-    buildPropertyLiquidationOrder(fields, PROPERTY_RUNTIME_GROUPS.slice(), true).map((group) => group.idx),
+    buildPropertyLiquidationOrder(fields, LIQUIDATION_ASSET_RUNTIME_GROUPS.slice(0, 5), true).map((group) => group.idx),
     [1, 0, 2, 3, 4]
   );
 });
@@ -403,6 +421,16 @@ test("runtime visibility state stays collapsed until later slots actually contai
   assert.equal(deriveRuntimeVisibilityState(propertyFields).visibleProperties, 4);
   propertyFields[PROPERTY_RUNTIME_GROUPS[4].nameField] = "Marsa";
   assert.equal(deriveRuntimeVisibilityState(propertyFields).visibleProperties, 5);
+
+  const assetFields = createEmptyFieldState();
+  assetFields[ASSET_OF_VALUE_RUNTIME_GROUPS[1].nameField] = "Car";
+  assert.equal(deriveRuntimeVisibilityState(assetFields).visibleAssetsOfValue, 2);
+  assetFields[ASSET_OF_VALUE_RUNTIME_GROUPS[2].appreciationRateField] = 0.03;
+  assert.equal(deriveRuntimeVisibilityState(assetFields).visibleAssetsOfValue, 3);
+  assetFields[ASSET_OF_VALUE_RUNTIME_GROUPS[3].valueField] = 180_000;
+  assert.equal(deriveRuntimeVisibilityState(assetFields).visibleAssetsOfValue, 4);
+  assetFields[ASSET_OF_VALUE_RUNTIME_GROUPS[4].nameField] = "Antiques";
+  assert.equal(deriveRuntimeVisibilityState(assetFields).visibleAssetsOfValue, 5);
 
   const incomeEventFields = createEmptyFieldState();
   incomeEventFields[INCOME_EVENT_RUNTIME_GROUPS[1].yearField] = 2031;
@@ -501,6 +529,51 @@ test("normalization and scenario outputs include property slots four and five", 
   assert.equal(result.outputs.scenarioNorm.netWorth.properties.length, 6);
   assert.equal(result.outputs.scenarioNorm.netWorth.properties[4].label, "Gudja");
   assert.equal(result.outputs.scenarioNorm.netWorth.properties[5].label, "Marsa");
+});
+
+test("normalization and output reporting include assets of value in the combined liquidation pool", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.annualLivingExpenses] = 50_000;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[ASSET_OF_VALUE_RUNTIME_GROUPS[3].nameField] = "Boat";
+  fields[ASSET_OF_VALUE_RUNTIME_GROUPS[3].valueField] = 180_000;
+  fields[ASSET_OF_VALUE_RUNTIME_GROUPS[3].appreciationRateField] = -0.05;
+  fields[ASSET_OF_VALUE_RUNTIME_GROUPS[4].nameField] = "Antiques";
+  fields[ASSET_OF_VALUE_RUNTIME_GROUPS[4].valueField] = 82_000;
+  fields[ASSET_OF_VALUE_RUNTIME_GROUPS[4].appreciationRateField] = 0.02;
+
+  const normalized = normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false });
+  assert.equal(normalized.assetsOfValue.length, 5);
+  assert.deepEqual(normalized.assetsOfValue[3], {
+    name: "Boat",
+    value: 180_000,
+    appreciationRate: -0.05,
+    loanBalance: 0,
+    loanRate: 0,
+    loanRepaymentMonthly: 0
+  });
+  assert.deepEqual(normalized.assetsOfValue[4], {
+    name: "Antiques",
+    value: 82_000,
+    appreciationRate: 0.02,
+    loanBalance: 0,
+    loanRate: 0,
+    loanRepaymentMonthly: 0
+  });
+
+  const result = runModel(fields, {
+    deeperDiveOpen: true,
+    finerDetailsOpen: true,
+    earlyRetirementAge: 55,
+    manualPropertyLiquidationOrder: false
+  });
+
+  assert.equal(result.outputs.scenarioNorm.cashFlow.liquidationsByProperty.length, 10);
+  assert.equal(result.outputs.scenarioNorm.cashFlow.liquidationsByProperty[8].label, "Boat");
+  assert.equal(result.outputs.scenarioNorm.cashFlow.liquidationsByProperty[9].label, "Antiques");
+  assert.equal(result.outputs.scenarioNorm.netWorth.loans[10].label, "Antiques loan");
 });
 
 test("main.ts runtime DOM wiring is field-id based", () => {

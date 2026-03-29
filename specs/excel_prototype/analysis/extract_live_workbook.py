@@ -39,7 +39,7 @@ def main() -> None:
     ws_inputs = wb["Inputs"]
     ws_norm = wb["RetNorm_Engine"]
     ws_early = wb["RetEarly_Engine"]
-    month_remaining = ws_inputs["B205"].value
+    month_remaining = ws_inputs["B266"].value
     projection_month_override = None
     if isinstance(month_remaining, (int, float)):
         projection_month_override = int(round(13 - float(month_remaining)))
@@ -51,10 +51,10 @@ def main() -> None:
         "exp": {
             "years": read_ages_and_series(ws_norm, 2),
             "ages": read_ages_and_series(ws_norm, 3),
-            "cashE": read_ages_and_series(ws_early, 247),
-            "cashN": read_ages_and_series(ws_norm, 247),
-            "nwE": read_ages_and_series(ws_early, 248),
-            "nwN": read_ages_and_series(ws_norm, 248),
+            "cashE": read_ages_and_series(ws_early, 373),
+            "cashN": read_ages_and_series(ws_norm, 373),
+            "nwE": read_ages_and_series(ws_early, 374),
+            "nwN": read_ages_and_series(ws_norm, 374),
         },
     }
 
