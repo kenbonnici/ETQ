@@ -479,13 +479,10 @@ function formatAxisCurrencyParts(
     };
   }
   const scaled = Math.abs(value) / axisUnit.div;
-  const rounded = Number(scaled.toFixed(axisDecimals));
+  const rounded = Math.round(scaled);
   return {
     prefix,
-    amount: `${rounded.toLocaleString("en-US", {
-      minimumFractionDigits: axisDecimals,
-      maximumFractionDigits: axisDecimals
-    })}${axisUnit.suffix}`
+    amount: `${rounded.toLocaleString("en-US")}${axisUnit.suffix}`
   };
 }
 
@@ -1053,9 +1050,7 @@ function formatImpact(amount: number | null): string {
   const sign = amount < 0 ? "-" : "";
   const symbol = currentCurrencySymbol();
   if (abs >= 1_000_000) {
-    const scaled = abs / 1_000_000;
-    const digits = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
-    return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}m`;
+    return `${sign}${symbol}${Math.round(abs / 1_000_000).toLocaleString("en-US")}m`;
   }
   const k = Math.round(abs / 1000);
   return `${sign}${symbol}${k.toLocaleString("en-US")}k`;
@@ -1066,19 +1061,13 @@ function formatCurrencyCompact(value: number): string {
   const sign = value < 0 ? "-" : "";
   const symbol = currentCurrencySymbol();
   if (abs >= 1_000_000_000) {
-    const scaled = abs / 1_000_000_000;
-    const digits = scaled >= 10 ? 1 : 2;
-    return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}b`;
+    return `${sign}${symbol}${Math.round(abs / 1_000_000_000).toLocaleString("en-US")}b`;
   }
   if (abs >= 1_000_000) {
-    const scaled = abs / 1_000_000;
-    const digits = scaled >= 10 ? 1 : 2;
-    return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}m`;
+    return `${sign}${symbol}${Math.round(abs / 1_000_000).toLocaleString("en-US")}m`;
   }
   if (abs >= 1_000) {
-    const scaled = abs / 1_000;
-    const digits = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
-    return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}k`;
+    return `${sign}${symbol}${Math.round(abs / 1_000).toLocaleString("en-US")}k`;
   }
   return `${sign}${symbol}${Math.round(abs).toLocaleString("en-US")}`;
 }
@@ -1088,11 +1077,7 @@ function formatCurrencyPrecise(value: number): string {
   const abs = Math.abs(value);
   const sign = value < 0 ? "-" : "";
   const symbol = currentCurrencySymbol();
-  const maxFractionDigits = abs >= 1000 ? 0 : 2;
-  return `${sign}${symbol}${abs.toLocaleString("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: maxFractionDigits
-  })}`;
+  return `${sign}${symbol}${Math.round(abs).toLocaleString("en-US")}`;
 }
 
 type TooltipValueMode = "full" | "compact";
@@ -1104,15 +1089,12 @@ function formatCurrencyCompactTooltip(value: number, unit: TooltipCompactUnit): 
   const sign = value < 0 ? "-" : "";
   const symbol = currentCurrencySymbol();
   if (unit === "b") {
-    const scaled = abs / 1_000_000_000;
-    return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}b`;
+    return `${sign}${symbol}${Math.round(abs / 1_000_000_000).toLocaleString("en-US")}b`;
   }
   if (unit === "m") {
-    const scaled = abs / 1_000_000;
-    return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}m`;
+    return `${sign}${symbol}${Math.round(abs / 1_000_000).toLocaleString("en-US")}m`;
   }
-  const scaled = abs / 1_000;
-  return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}k`;
+  return `${sign}${symbol}${Math.round(abs / 1_000).toLocaleString("en-US")}k`;
 }
 
 function formatTooltipCurrency(value: number, mode: TooltipValueMode, compactUnit: TooltipCompactUnit): string {
