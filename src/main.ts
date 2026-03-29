@@ -2979,7 +2979,15 @@ function renderInputs(): void {
       if (action === "exclude") {
         persistPropertyLiquidationOrder(sellable.filter((group) => group.liquidationIdx !== propertyIdx), active);
       } else if (action === "include" && !sellable.some((group) => group.liquidationIdx === propertyIdx)) {
-        persistPropertyLiquidationOrder([...sellable, target], active);
+        const nextOrder = [...sellable];
+        const targetValue = asNumber(fieldState[target.valueField]);
+        const insertAt = nextOrder.findIndex((group) => {
+          const groupValue = asNumber(fieldState[group.valueField]);
+          return groupValue > targetValue || (groupValue === targetValue && group.liquidationIdx > target.liquidationIdx);
+        });
+        if (insertAt < 0) nextOrder.push(target);
+        else nextOrder.splice(insertAt, 0, target);
+        persistPropertyLiquidationOrder(nextOrder, active);
       } else {
         return;
       }

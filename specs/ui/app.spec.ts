@@ -302,13 +302,13 @@ test("finer details honors workbook liquidation order and lets users exclude a p
     "Painting",
     "Car",
     "Jewelry",
+    "Gudja",
     "Antiques",
     "Marsa",
     "Gzira",
     "Boat",
     "Qormi",
-    "Sliema",
-    "Gudja"
+    "Sliema"
   ]);
   await expect(page.locator('[data-liquidation-zone="never-sell"] .liquidation-item')).toHaveCount(0);
 });
