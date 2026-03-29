@@ -1324,9 +1324,17 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
       projectionLeaf(series.key, series.label, series.values, 2)
     )
   ];
-  const propertyLoanChildren = cashFlow.propertyLoanRepayments.map((series) =>
-    projectionLeaf(series.key, series.label, series.values, 2)
-  );
+  const propertyLoanChildren = [
+    ...cashFlow.propertyLoanRepayments.map((series) =>
+      projectionLeaf(
+        series.key,
+        /property$/i.test(series.label) ? series.label : `${series.label} property`,
+        series.values,
+        2
+      )
+    ),
+    projectionLeaf("other-loan-repayment", "Other loan", cashFlow.otherLoanRepayment, 2)
+  ];
   const dependentChildren = cashFlow.dependentsCost.map((series) =>
     projectionLeaf(series.key, series.label, series.values, 2)
   );
@@ -1355,8 +1363,10 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
     projectionGroup("outflows", "Outflows", cashFlow.totalOutflows, 0, [
       projectionLeaf("credit-cards-cleared", "Credit cards cleared", cashFlow.creditCardsCleared, 1),
       projectionLeaf("home-loan-repayment", "Home loan repayment", cashFlow.homeLoanRepayment, 1),
-      projectionGroup("outflows-property-loans", "Property and asset loan repayments", sumProjectionSeries(cashFlow.propertyLoanRepayments.map((row) => row.values), yearCount), 1, propertyLoanChildren),
-      projectionLeaf("other-loan-repayment", "Other loan repayment", cashFlow.otherLoanRepayment, 1),
+      projectionGroup("outflows-property-loans", "Loan repayments", sumProjectionSeries([
+        ...cashFlow.propertyLoanRepayments.map((row) => row.values),
+        cashFlow.otherLoanRepayment
+      ], yearCount), 1, propertyLoanChildren),
       projectionGroup("outflows-dependents", "Dependents cost", sumProjectionSeries(cashFlow.dependentsCost.map((row) => row.values), yearCount), 1, dependentChildren),
       projectionLeaf("housing-rent", "Housing rent", cashFlow.housingRent, 1),
       projectionGroup("outflows-property-costs", "Other property costs", sumProjectionSeries(cashFlow.propertyCosts.map((row) => row.values), yearCount), 1, propertyCostChildren),
