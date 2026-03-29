@@ -1050,7 +1050,9 @@ function formatImpact(amount: number | null): string {
   const sign = amount < 0 ? "-" : "";
   const symbol = currentCurrencySymbol();
   if (abs >= 1_000_000) {
-    return `${sign}${symbol}${Math.round(abs / 1_000_000).toLocaleString("en-US")}m`;
+    const scaled = abs / 1_000_000;
+    const digits = scaled >= 100 ? 0 : scaled >= 10 ? 1 : 2;
+    return `${sign}${symbol}${Number(scaled.toFixed(digits)).toLocaleString("en-US")}m`;
   }
   const k = Math.round(abs / 1000);
   return `${sign}${symbol}${k.toLocaleString("en-US")}k`;
@@ -1083,23 +1085,38 @@ function formatCurrencyPrecise(value: number): string {
 type TooltipValueMode = "full" | "compact";
 type TooltipCompactUnit = "k" | "m" | "b";
 
+function formatTooltipCurrencyPrecise(value: number): string {
+  if (!Number.isFinite(value)) return "—";
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : "";
+  const symbol = currentCurrencySymbol();
+  const maxFractionDigits = abs >= 1000 ? 0 : 2;
+  return `${sign}${symbol}${abs.toLocaleString("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: maxFractionDigits
+  })}`;
+}
+
 function formatCurrencyCompactTooltip(value: number, unit: TooltipCompactUnit): string {
   if (!Number.isFinite(value)) return "—";
   const abs = Math.abs(value);
   const sign = value < 0 ? "-" : "";
   const symbol = currentCurrencySymbol();
   if (unit === "b") {
-    return `${sign}${symbol}${Math.round(abs / 1_000_000_000).toLocaleString("en-US")}b`;
+    const scaled = abs / 1_000_000_000;
+    return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}b`;
   }
   if (unit === "m") {
-    return `${sign}${symbol}${Math.round(abs / 1_000_000).toLocaleString("en-US")}m`;
+    const scaled = abs / 1_000_000;
+    return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}m`;
   }
-  return `${sign}${symbol}${Math.round(abs / 1_000).toLocaleString("en-US")}k`;
+  const scaled = abs / 1_000;
+  return `${sign}${symbol}${scaled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}k`;
 }
 
 function formatTooltipCurrency(value: number, mode: TooltipValueMode, compactUnit: TooltipCompactUnit): string {
   if (!Number.isFinite(value)) return "—";
-  return mode === "compact" ? formatCurrencyCompactTooltip(value, compactUnit) : formatCurrencyPrecise(value);
+  return mode === "compact" ? formatCurrencyCompactTooltip(value, compactUnit) : formatTooltipCurrencyPrecise(value);
 }
 
 function chooseTooltipValueMode(values: number[]): TooltipValueMode {
