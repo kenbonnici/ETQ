@@ -244,6 +244,7 @@ export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, numb
 };
 
 export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
+  RUNTIME_FIELDS.stockMarketInvestments,
   HOME_FIELDS.homeValue,
   HOME_FIELDS.mortgageBalance,
   ...DEPENDENT_RUNTIME_GROUPS.map((group) => group.nameField),
@@ -322,6 +323,7 @@ export function getPropertyName(
 }
 
 export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, nextValue: unknown): boolean {
+  if (fieldId === RUNTIME_FIELDS.stockMarketInvestments) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === HOME_FIELDS.homeValue) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === OTHER_WORK_FIELDS.income) return isNonZeroNumber(prevValue) !== isNonZeroNumber(nextValue);
   if (fieldId === POST_RETIREMENT_INCOME_FIELDS.amount) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
@@ -488,6 +490,9 @@ export function fieldVisible(
   }
 
   for (const group of STOCK_MARKET_CRASH_RUNTIME_GROUPS) {
+    if (!stockMarketCrashInputsEnabled(values) && (fieldId === group.yearField || fieldId === group.dropField || fieldId === group.recoveryField)) {
+      return false;
+    }
     if (fieldId === group.yearField && group.idx > 0) {
       return stockMarketCrashSlotVisible(values, group, visibility.visibleStockMarketCrashes);
     }
@@ -530,6 +535,10 @@ function incomeEventSlotVisible(values: RuntimeValues, group: typeof INCOME_EVEN
 
 function expenseEventSlotVisible(values: RuntimeValues, group: typeof EXPENSE_EVENT_RUNTIME_GROUPS[number], visibleExpenseEvents: number): boolean {
   return group.idx === 0 || visibleExpenseEvents >= group.idx + 1 || anyValue(values, group.fields);
+}
+
+function stockMarketCrashInputsEnabled(values: RuntimeValues): boolean {
+  return asNumber(values[RUNTIME_FIELDS.stockMarketInvestments]) > 0;
 }
 
 function stockMarketCrashSlotVisible(

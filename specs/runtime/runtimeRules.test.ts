@@ -194,7 +194,10 @@ test("visibility rules stay semantic for dependents, properties, and loans", () 
   fields[POST_RETIREMENT_INCOME_FIELDS.amount] = 12_000;
   assert.equal(fieldVisible(fields, POST_RETIREMENT_INCOME_FIELDS.fromAge, DEFAULT_VISIBILITY), true);
 
+  assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField, DEFAULT_VISIBILITY), false);
   assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField, DEFAULT_VISIBILITY), false);
+  fields[RUNTIME_FIELDS.stockMarketInvestments] = 100_000;
+  assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField, DEFAULT_VISIBILITY), true);
   fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField] = new Date().getFullYear() + 1;
   assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField, DEFAULT_VISIBILITY), true);
 
@@ -497,6 +500,14 @@ test("normalization and scenario outputs include stock market crash slots and ap
   assert.equal(Math.abs((stockSeries[1] ?? 0) - 88) < 1e-9, true);
   assert.equal(Math.abs((stockSeries[2] ?? 0) - (88 * (1 + recoveryRate))) < 1e-9, true);
   assert.equal(Math.abs((stockSeries[3] ?? 0) - 110) < 1e-9, true);
+});
+
+test("stock market investments trigger structural rerenders for crash visibility", () => {
+  assert.equal(shouldRerenderOnInput(RUNTIME_FIELDS.stockMarketInvestments, "", ""), false);
+  assert.equal(shouldRerenderOnInput(RUNTIME_FIELDS.stockMarketInvestments, "", 0), false);
+  assert.equal(shouldRerenderOnInput(RUNTIME_FIELDS.stockMarketInvestments, "", 100), true);
+  assert.equal(shouldRerenderOnInput(RUNTIME_FIELDS.stockMarketInvestments, 100, 200), false);
+  assert.equal(shouldRerenderOnInput(RUNTIME_FIELDS.stockMarketInvestments, 100, 0), true);
 });
 
 test("normalization and scenario outputs include dependent slots four and five", () => {

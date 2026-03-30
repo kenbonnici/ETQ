@@ -21,6 +21,7 @@ const selectors = {
   minimumCashBuffer: 'input[data-field-id="liquidity.minimumCashBuffer"]',
   legacyAmount: 'input[data-field-id="planning.legacyAmount"]',
   stockSellingCostRate: 'input[data-field-id="liquidation.stockSellingCostRate"]',
+  stockMarketInvestments: 'input[data-field-id="assets.equities.marketValue"]',
   propertyName: 'input[data-field-id="properties.01.displayName"]',
   property2Name: 'input[data-field-id="properties.02.displayName"]',
   property3Name: 'input[data-field-id="properties.03.displayName"]',
@@ -168,9 +169,12 @@ test("reveals stock market crash slots progressively and only shows crash detail
   await page.goto("/");
   await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
-  await expect(page.locator(selectors.stockMarketCrash1Year)).toBeVisible();
+  await expect(page.locator(selectors.stockMarketCrash1Year)).toHaveCount(0);
   await expect(page.locator(selectors.stockMarketCrash1Drop)).toHaveCount(0);
   await expect(page.locator(selectors.stockMarketCrash2Year)).toHaveCount(0);
+
+  await fillAndBlur(page, selectors.stockMarketInvestments, "100000");
+  await expect(page.locator(selectors.stockMarketCrash1Year)).toBeVisible();
 
   await fillAndBlur(page, selectors.stockMarketCrash1Year, String(new Date().getFullYear() + 1));
   await expect(page.locator(selectors.stockMarketCrash1Drop)).toBeVisible();
