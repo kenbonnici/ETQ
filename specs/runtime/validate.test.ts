@@ -166,3 +166,48 @@ test("validation rejects stock market crash years beyond the projection horizon"
     true
   );
 });
+
+test("validation rejects duplicate stock market crash years", () => {
+  const fields = createEmptyFieldState();
+  const crashYear = new Date().getFullYear() + 2;
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField] = crashYear;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField] = 0.2;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].recoveryField] = 2;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[1].yearField] = crashYear;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[1].dropField] = 0.15;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[1].recoveryField] = 1;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === STOCK_MARKET_CRASH_RUNTIME_GROUPS[1].yearField && message.message.includes("unique")),
+    true
+  );
+});
+
+test("validation rejects overlapping stock market crash recovery windows", () => {
+  const fields = createEmptyFieldState();
+  const crashYear = new Date().getFullYear() + 2;
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField] = crashYear;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField] = 0.2;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].recoveryField] = 3;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[1].yearField] = crashYear + 3;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[1].dropField] = 0.15;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[1].recoveryField] = 1;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some(
+      (message) => message.fieldId === STOCK_MARKET_CRASH_RUNTIME_GROUPS[1].yearField
+        && message.message.includes("fully recovered")
+    ),
+    true
+  );
+});

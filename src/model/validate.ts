@@ -318,6 +318,43 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
     }
   }
 
+  const activeCrashWindows = STOCK_MARKET_CRASH_GROUPS_BY_CELL.map((crash) => {
+    const year = asNumber(raw[crash.yearCell]);
+    const recoveryYears = asNumber(raw[crash.recoveryCell]);
+    if (year === null || !Number.isInteger(year) || recoveryYears === null || !Number.isInteger(recoveryYears) || recoveryYears <= 0) {
+      return null;
+    }
+    return {
+      yearCell: crash.yearCell,
+      year,
+      recoveryYears
+    };
+  }).filter((crash): crash is { yearCell: InputCell; year: number; recoveryYears: number } => crash !== null);
+
+  const seenCrashYears = new Map<number, InputCell>();
+  for (const crash of activeCrashWindows) {
+    const duplicateYearCell = seenCrashYears.get(crash.year);
+    if (duplicateYearCell !== undefined) {
+      pushMessage(messages, crash.yearCell, "error", "Crash year must be unique.");
+      continue;
+    }
+    seenCrashYears.set(crash.year, crash.yearCell);
+  }
+
+  const sortedCrashWindows = [...activeCrashWindows].sort((a, b) => a.year - b.year);
+  for (let idx = 1; idx < sortedCrashWindows.length; idx += 1) {
+    const previous = sortedCrashWindows[idx - 1];
+    const current = sortedCrashWindows[idx];
+    if (current.year <= previous.year + previous.recoveryYears) {
+      pushMessage(
+        messages,
+        current.yearCell,
+        "error",
+        "Crash year must be after the previous crash has fully recovered."
+      );
+    }
+  }
+
   if ((asNumber(raw[POST_RETIREMENT_INCOME_GROUP_BY_CELL.amountCell]) ?? 0) > 0) {
     const fromAge = asNumber(raw[POST_RETIREMENT_INCOME_GROUP_BY_CELL.fromAgeCell]);
     const toAge = asNumber(raw[POST_RETIREMENT_INCOME_GROUP_BY_CELL.toAgeCell]);
