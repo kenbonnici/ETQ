@@ -101,6 +101,18 @@ type EventGroupByCell = {
   yearCell: InputCell;
 };
 
+type StockMarketCrashGroup = {
+  yearField: FieldId;
+  dropField: FieldId;
+  recoveryField: FieldId;
+};
+
+type StockMarketCrashGroupByCell = {
+  yearCell: InputCell;
+  dropCell: InputCell;
+  recoveryCell: InputCell;
+};
+
 type HomeLoanGroup = {
   homeValueField: FieldId;
   rentField: FieldId;
@@ -199,6 +211,14 @@ function eventGroupToCells(group: EventGroup): EventGroupByCell {
     nameCell: FIELD_ID_TO_CELL[group.nameField],
     amountCell: FIELD_ID_TO_CELL[group.amountField],
     yearCell: FIELD_ID_TO_CELL[group.yearField]
+  };
+}
+
+function stockMarketCrashGroupToCells(group: StockMarketCrashGroup): StockMarketCrashGroupByCell {
+  return {
+    yearCell: FIELD_ID_TO_CELL[group.yearField],
+    dropCell: FIELD_ID_TO_CELL[group.dropField],
+    recoveryCell: FIELD_ID_TO_CELL[group.recoveryField]
   };
 }
 
@@ -396,6 +416,21 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "cashflowEvents.expense.02.year": { integer: true },
   "cashflowEvents.expense.03.amount": { nonNegative: true },
   "cashflowEvents.expense.03.year": { integer: true },
+  "stockMarketCrashes.01.year": { integer: true },
+  "stockMarketCrashes.01.dropPercentage": { clampBounds: { min: 0.05, max: 0.9 } },
+  "stockMarketCrashes.01.recoveryYears": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "stockMarketCrashes.02.year": { integer: true },
+  "stockMarketCrashes.02.dropPercentage": { clampBounds: { min: 0.05, max: 0.9 } },
+  "stockMarketCrashes.02.recoveryYears": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "stockMarketCrashes.03.year": { integer: true },
+  "stockMarketCrashes.03.dropPercentage": { clampBounds: { min: 0.05, max: 0.9 } },
+  "stockMarketCrashes.03.recoveryYears": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "stockMarketCrashes.04.year": { integer: true },
+  "stockMarketCrashes.04.dropPercentage": { clampBounds: { min: 0.05, max: 0.9 } },
+  "stockMarketCrashes.04.recoveryYears": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
+  "stockMarketCrashes.05.year": { integer: true },
+  "stockMarketCrashes.05.dropPercentage": { clampBounds: { min: 0.05, max: 0.9 } },
+  "stockMarketCrashes.05.recoveryYears": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
   "planning.lifeExpectancyAge": { required: true, integer: true, nonNegative: true, clampBounds: { min: 19, max: 120 }, warningBounds: { max: 100 } },
   "spending.adjustments.pre65.deltaRate": { allowNegative: true, warningBounds: { min: -0.5, max: 1 } },
   "spending.adjustments.age66To75.deltaRate": { allowNegative: true, warningBounds: { min: -0.5, max: 1 } },
@@ -655,6 +690,38 @@ export const EXPENSE_EVENT_GROUPS = [
 ] as Array<EventGroup>;
 
 export const EXPENSE_EVENT_GROUPS_BY_CELL = EXPENSE_EVENT_GROUPS.map(eventGroupToCells) as Array<EventGroupByCell>;
+
+export const STOCK_MARKET_CRASH_GROUPS = [
+  {
+    yearField: "stockMarketCrashes.01.year",
+    dropField: "stockMarketCrashes.01.dropPercentage",
+    recoveryField: "stockMarketCrashes.01.recoveryYears"
+  },
+  {
+    yearField: "stockMarketCrashes.02.year",
+    dropField: "stockMarketCrashes.02.dropPercentage",
+    recoveryField: "stockMarketCrashes.02.recoveryYears"
+  },
+  {
+    yearField: "stockMarketCrashes.03.year",
+    dropField: "stockMarketCrashes.03.dropPercentage",
+    recoveryField: "stockMarketCrashes.03.recoveryYears"
+  },
+  {
+    yearField: "stockMarketCrashes.04.year",
+    dropField: "stockMarketCrashes.04.dropPercentage",
+    recoveryField: "stockMarketCrashes.04.recoveryYears"
+  },
+  {
+    yearField: "stockMarketCrashes.05.year",
+    dropField: "stockMarketCrashes.05.dropPercentage",
+    recoveryField: "stockMarketCrashes.05.recoveryYears"
+  }
+] as Array<StockMarketCrashGroup>;
+
+export const STOCK_MARKET_CRASH_GROUPS_BY_CELL = STOCK_MARKET_CRASH_GROUPS.map(
+  stockMarketCrashGroupToCells
+) as Array<StockMarketCrashGroupByCell>;
 
 export const HOME_LOAN_GROUP = {
   homeValueField: "housing.01Residence.marketValue",

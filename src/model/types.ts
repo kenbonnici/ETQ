@@ -59,6 +59,7 @@ export interface EffectiveInputs {
 
   incomeEvents: Array<{ name: string; amount: number; year: number }>;
   expenseEvents: Array<{ name: string; amount: number; year: number }>;
+  stockMarketCrashes: Array<{ year: number; dropPercentage: number; recoveryYears: number }>;
 
   liveUntilAge: number;
   spendAdjustTo65: number;

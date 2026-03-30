@@ -14,7 +14,8 @@ import {
   OTHER_WORK_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
   PROPERTY_RUNTIME_GROUPS,
-  RUNTIME_FIELDS
+  RUNTIME_FIELDS,
+  STOCK_MARKET_CRASH_RUNTIME_GROUPS
 } from "./runtimeFields";
 
 export type RuntimeValues = Partial<Record<FieldId, RawInputValue>>;
@@ -25,6 +26,7 @@ export interface RuntimeVisibilityState {
   visibleAssetsOfValue: number;
   visibleIncomeEvents: number;
   visibleExpenseEvents: number;
+  visibleStockMarketCrashes: number;
 }
 
 export interface PropertyRuntimeConfig {
@@ -153,6 +155,12 @@ for (const group of EXPENSE_EVENT_RUNTIME_GROUPS) {
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.yearField] = 1;
 }
 
+for (const group of STOCK_MARKET_CRASH_RUNTIME_GROUPS) {
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.yearField] = 1;
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.dropField] = 0.01;
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.recoveryField] = 1;
+}
+
 export const FIELD_STEPPER_DECIMALS: Readonly<Partial<Record<FieldId, number>>> = {
   [RUNTIME_FIELDS.currentAge]: 0,
   [RUNTIME_FIELDS.currentNetIncomeAnnual]: 0,
@@ -224,6 +232,12 @@ for (const group of EXPENSE_EVENT_RUNTIME_GROUPS) {
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.yearField] = 0;
 }
 
+for (const group of STOCK_MARKET_CRASH_RUNTIME_GROUPS) {
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.yearField] = 0;
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.dropField] = 3;
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.recoveryField] = 0;
+}
+
 export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, number>>> = {
   [RUNTIME_FIELDS.statutoryRetirementAge]: 3.9,
   ["debts.creditCards.balance" as FieldId]: 124.5
@@ -245,6 +259,7 @@ export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
   EXPENSE_EVENT_RUNTIME_GROUPS[0].nameField,
   EXPENSE_EVENT_RUNTIME_GROUPS[1].nameField,
   EXPENSE_EVENT_RUNTIME_GROUPS[2].nameField,
+  ...STOCK_MARKET_CRASH_RUNTIME_GROUPS.map((group) => group.yearField),
   POST_RETIREMENT_INCOME_FIELDS.amount
 ]);
 
@@ -287,7 +302,11 @@ export function deriveRuntimeVisibilityState(values: RuntimeValues): RuntimeVisi
     visibleProperties: deriveVisibleGroupCount(values, PROPERTY_RUNTIME_GROUPS.map((group) => group.coreFields)),
     visibleAssetsOfValue: deriveVisibleGroupCount(values, ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.coreFields)),
     visibleIncomeEvents: deriveVisibleGroupCount(values, INCOME_EVENT_RUNTIME_GROUPS.map((group) => group.fields)),
-    visibleExpenseEvents: deriveVisibleGroupCount(values, EXPENSE_EVENT_RUNTIME_GROUPS.map((group) => group.fields))
+    visibleExpenseEvents: deriveVisibleGroupCount(values, EXPENSE_EVENT_RUNTIME_GROUPS.map((group) => group.fields)),
+    visibleStockMarketCrashes: deriveVisibleGroupCount(
+      values,
+      STOCK_MARKET_CRASH_RUNTIME_GROUPS.map((group) => group.revealFields)
+    )
   };
 }
 
@@ -320,6 +339,7 @@ export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, next
     || DEPENDENT_RUNTIME_GROUPS.some((group) => group.nameField === fieldId)
     || INCOME_EVENT_RUNTIME_GROUPS.some((group) => group.nameField === fieldId)
     || EXPENSE_EVENT_RUNTIME_GROUPS.some((group) => group.nameField === fieldId)
+    || STOCK_MARKET_CRASH_RUNTIME_GROUPS.some((group) => group.yearField === fieldId)
   ) {
     return isBlank(prevValue) !== isBlank(nextValue);
   }
@@ -467,6 +487,16 @@ export function fieldVisible(
     }
   }
 
+  for (const group of STOCK_MARKET_CRASH_RUNTIME_GROUPS) {
+    if (fieldId === group.yearField && group.idx > 0) {
+      return stockMarketCrashSlotVisible(values, group, visibility.visibleStockMarketCrashes);
+    }
+    if (fieldId === group.dropField || fieldId === group.recoveryField) {
+      return stockMarketCrashSlotVisible(values, group, visibility.visibleStockMarketCrashes)
+        && !isBlank(values[group.yearField]);
+    }
+  }
+
   if (fieldId === OTHER_WORK_FIELDS.untilAge) {
     return !isBlank(values[OTHER_WORK_FIELDS.income]) && asNumber(values[OTHER_WORK_FIELDS.income]) !== 0;
   }
@@ -500,6 +530,14 @@ function incomeEventSlotVisible(values: RuntimeValues, group: typeof INCOME_EVEN
 
 function expenseEventSlotVisible(values: RuntimeValues, group: typeof EXPENSE_EVENT_RUNTIME_GROUPS[number], visibleExpenseEvents: number): boolean {
   return group.idx === 0 || visibleExpenseEvents >= group.idx + 1 || anyValue(values, group.fields);
+}
+
+function stockMarketCrashSlotVisible(
+  values: RuntimeValues,
+  group: typeof STOCK_MARKET_CRASH_RUNTIME_GROUPS[number],
+  visibleStockMarketCrashes: number
+): boolean {
+  return group.idx === 0 || visibleStockMarketCrashes >= group.idx + 1 || anyValue(values, group.revealFields);
 }
 
 export function getDynamicFieldLabel(def: InputDefinition, values: RuntimeValues): string {

@@ -1413,6 +1413,186 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 218,
+    fieldId: "stockMarketCrashes.01.year",
+    label: "Year",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 1",
+    groupTail: ["Stock market crash scenarios", "Crash 1"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "",
+    type: "integer"
+  },
+  {
+    row: 219,
+    fieldId: "stockMarketCrashes.01.dropPercentage",
+    label: "% drop",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 1",
+    groupTail: ["Stock market crash scenarios", "Crash 1"],
+    tooltip: "Min 5%, max 90%",
+    uiNote: "Hide until user enters crash year",
+    sampleValue: "0.15",
+    type: "percent"
+  },
+  {
+    row: 220,
+    fieldId: "stockMarketCrashes.01.recoveryYears",
+    label: "Time to recover",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 1",
+    groupTail: ["Stock market crash scenarios", "Crash 1"],
+    tooltip: "Years for market to recover to the previous high just before crash",
+    uiNote: "Hide until user enters crash year",
+    sampleValue: "1",
+    type: "integer"
+  },
+  {
+    row: 223,
+    fieldId: "stockMarketCrashes.02.year",
+    label: "Year",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 2",
+    groupTail: ["Stock market crash scenarios", "Crash 2"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "",
+    type: "integer"
+  },
+  {
+    row: 224,
+    fieldId: "stockMarketCrashes.02.dropPercentage",
+    label: "% drop",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 2",
+    groupTail: ["Stock market crash scenarios", "Crash 2"],
+    tooltip: "Min 5%, max 90%",
+    uiNote: "Hide until user enters crash year",
+    sampleValue: "0.2",
+    type: "percent"
+  },
+  {
+    row: 225,
+    fieldId: "stockMarketCrashes.02.recoveryYears",
+    label: "Time to recover",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 2",
+    groupTail: ["Stock market crash scenarios", "Crash 2"],
+    tooltip: "Years for market to recover to the previous high just before crash",
+    uiNote: "Hide until user enters crash year",
+    sampleValue: "3",
+    type: "integer"
+  },
+  {
+    row: 228,
+    fieldId: "stockMarketCrashes.03.year",
+    label: "Year",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 3",
+    groupTail: ["Stock market crash scenarios", "Crash 3"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "",
+    type: "integer"
+  },
+  {
+    row: 229,
+    fieldId: "stockMarketCrashes.03.dropPercentage",
+    label: "% drop",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 3",
+    groupTail: ["Stock market crash scenarios", "Crash 3"],
+    tooltip: "Min 5%, max 90%",
+    uiNote: "Hide until user enters crash year",
+    sampleValue: "0.08",
+    type: "percent"
+  },
+  {
+    row: 230,
+    fieldId: "stockMarketCrashes.03.recoveryYears",
+    label: "Time to recover",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 3",
+    groupTail: ["Stock market crash scenarios", "Crash 3"],
+    tooltip: "Years for market to recover to the previous high just before crash",
+    uiNote: "Hide until user enters crash year",
+    sampleValue: "5",
+    type: "integer"
+  },
+  {
+    row: 233,
+    fieldId: "stockMarketCrashes.04.year",
+    label: "Year",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 4",
+    groupTail: ["Stock market crash scenarios", "Crash 4"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "2042",
+    type: "integer"
+  },
+  {
+    row: 234,
+    fieldId: "stockMarketCrashes.04.dropPercentage",
+    label: "% drop",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 4",
+    groupTail: ["Stock market crash scenarios", "Crash 4"],
+    tooltip: "Min 5%, max 90%",
+    uiNote: "Hide until user enters crash year",
+    sampleValue: "0.18",
+    type: "percent"
+  },
+  {
+    row: 235,
+    fieldId: "stockMarketCrashes.04.recoveryYears",
+    label: "Time to recover",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 4",
+    groupTail: ["Stock market crash scenarios", "Crash 4"],
+    tooltip: "Years for market to recover to the previous high just before crash",
+    uiNote: "Hide until user enters crash year",
+    sampleValue: "3",
+    type: "integer"
+  },
+  {
+    row: 238,
+    fieldId: "stockMarketCrashes.05.year",
+    label: "Year",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 5",
+    groupTail: ["Stock market crash scenarios", "Crash 5"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "",
+    type: "integer"
+  },
+  {
+    row: 239,
+    fieldId: "stockMarketCrashes.05.dropPercentage",
+    label: "% drop",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 5",
+    groupTail: ["Stock market crash scenarios", "Crash 5"],
+    tooltip: "Min 5%, max 90%",
+    uiNote: "Hide until user enters crash year",
+    sampleValue: "0.28",
+    type: "percent"
+  },
+  {
+    row: 240,
+    fieldId: "stockMarketCrashes.05.recoveryYears",
+    label: "Time to recover",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 5",
+    groupTail: ["Stock market crash scenarios", "Crash 5"],
+    tooltip: "Years for market to recover to the previous high just before crash",
+    uiNote: "Hide until user enters crash year",
+    sampleValue: "2",
+    type: "integer"
+  },
+  {
+    row: 244,
     fieldId: "planning.lifeExpectancyAge",
     label: "Plan to live until age",
     section: "FINER DETAILS",
@@ -1424,7 +1604,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 221,
+    row: 247,
     fieldId: "spending.adjustments.pre65.deltaRate",
     label: "From now to 65",
     section: "FINER DETAILS",
@@ -1436,7 +1616,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 222,
+    row: 248,
     fieldId: "spending.adjustments.age66To75.deltaRate",
     label: "From 66 to 75",
     section: "FINER DETAILS",
@@ -1448,7 +1628,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 223,
+    row: 249,
     fieldId: "spending.adjustments.age76Plus.deltaRate",
     label: "From age 76",
     section: "FINER DETAILS",
@@ -1460,7 +1640,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 225,
+    row: 251,
     fieldId: "income.postRetirementSupplement.annual",
     label: "Other post-retirement income",
     section: "FINER DETAILS",
@@ -1472,31 +1652,31 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 226,
+    row: 252,
     fieldId: "income.postRetirementSupplement.startAge",
     label: "From age",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Other post-retirement income",
     groupTail: ["Other post-retirement income"],
     tooltip: "",
-    uiNote: "Only show if value>0 entered in B173",
+    uiNote: "Only show if value > 0 is entered above",
     sampleValue: "58",
     type: "integer"
   },
   {
-    row: 227,
+    row: 253,
     fieldId: "income.postRetirementSupplement.endAge",
     label: "To age",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Other post-retirement income",
     groupTail: ["Other post-retirement income"],
     tooltip: "",
-    uiNote: "Only show if value>0 entered in B173",
+    uiNote: "Only show if value > 0 is entered above",
     sampleValue: "69",
     type: "integer"
   },
   {
-    row: 229,
+    row: 255,
     fieldId: "assumptions.generalInflationRateAnnual",
     label: "General inflation",
     section: "FINER DETAILS",
@@ -1508,7 +1688,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 231,
+    row: 257,
     fieldId: "assumptions.propertyAppreciationRateAnnual",
     label: "Property annual appreciation",
     section: "FINER DETAILS",
@@ -1520,7 +1700,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 233,
+    row: 259,
     fieldId: "assumptions.cashYieldRateAnnual",
     label: "Cash interest rate",
     section: "FINER DETAILS",
@@ -1532,7 +1712,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 235,
+    row: 261,
     fieldId: "assumptions.equityReturnRateAnnual",
     label: "Stock market return",
     section: "FINER DETAILS",
@@ -1544,7 +1724,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 237,
+    row: 263,
     fieldId: "assumptions.salaryGrowthRateAnnual",
     label: "Salary annual growth rate",
     section: "FINER DETAILS",
@@ -1556,7 +1736,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 239,
+    row: 265,
     fieldId: "assumptions.rentalIncomeGrowthRateAnnual",
     label: "Rental income annual increase",
     section: "FINER DETAILS",
@@ -1568,7 +1748,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 241,
+    row: 267,
     fieldId: "retirement.earlyPensionReductionPerYear",
     label: "Pension reduction per year early",
     section: "FINER DETAILS",
@@ -1580,7 +1760,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 243,
+    row: 269,
     fieldId: "liquidity.minimumCashBuffer",
     label: "Cash buffer at any time",
     section: "FINER DETAILS",
@@ -1588,11 +1768,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     groupTail: [],
     tooltip: "Emergency reserve",
     uiNote: "",
-    sampleValue: "40000",
+    sampleValue: "50000",
     type: "number"
   },
   {
-    row: 245,
+    row: 271,
     fieldId: "planning.legacyAmount",
     label: "Legacy amount",
     section: "FINER DETAILS",
@@ -1604,7 +1784,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 247,
+    row: 273,
     fieldId: "liquidation.stockSellingCostRate",
     label: "Stock market selling costs",
     section: "FINER DETAILS",
@@ -1616,7 +1796,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 249,
+    row: 275,
     fieldId: "liquidation.propertyDisposalCostRate",
     label: "Property disposal costs",
     section: "FINER DETAILS",
@@ -1628,7 +1808,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 251,
+    row: 277,
     fieldId: "liquidation.otherAssetDisposalCostRate",
     label: "Other assets disposal costs",
     section: "FINER DETAILS",
@@ -1640,7 +1820,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 254,
+    row: 280,
     fieldId: "properties.01.liquidationPriority",
     label: "Sliema",
     section: "FINER DETAILS",
@@ -1652,7 +1832,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 255,
+    row: 281,
     fieldId: "properties.02.liquidationPriority",
     label: "Gzira",
     section: "FINER DETAILS",
@@ -1664,7 +1844,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 256,
+    row: 282,
     fieldId: "properties.03.liquidationPriority",
     label: "Qormi",
     section: "FINER DETAILS",
@@ -1676,7 +1856,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 257,
+    row: 283,
     fieldId: "properties.04.liquidationPriority",
     label: "Gudja",
     section: "FINER DETAILS",
@@ -1688,7 +1868,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 258,
+    row: 284,
     fieldId: "properties.05.liquidationPriority",
     label: "Marsa",
     section: "FINER DETAILS",
@@ -1700,7 +1880,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 259,
+    row: 285,
     fieldId: "assetsOfValue.01.liquidationPriority",
     label: "Jewelry",
     section: "FINER DETAILS",
@@ -1712,7 +1892,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 260,
+    row: 286,
     fieldId: "assetsOfValue.02.liquidationPriority",
     label: "Car",
     section: "FINER DETAILS",
@@ -1724,7 +1904,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 261,
+    row: 287,
     fieldId: "assetsOfValue.03.liquidationPriority",
     label: "Painting",
     section: "FINER DETAILS",
@@ -1736,7 +1916,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 262,
+    row: 288,
     fieldId: "assetsOfValue.04.liquidationPriority",
     label: "Boat",
     section: "FINER DETAILS",
@@ -1748,7 +1928,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 263,
+    row: 289,
     fieldId: "assetsOfValue.05.liquidationPriority",
     label: "Antiques",
     section: "FINER DETAILS",

@@ -9,7 +9,8 @@ import {
   OTHER_WORK_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
   PROPERTY_RUNTIME_GROUPS,
-  RUNTIME_FIELDS
+  RUNTIME_FIELDS,
+  STOCK_MARKET_CRASH_RUNTIME_GROUPS
 } from "../../src/ui/runtimeFields";
 
 function messagesFor(fields: ReturnType<typeof createEmptyFieldState>) {
@@ -126,6 +127,42 @@ test("validation enforces post-retirement and other-work age bounds", () => {
   );
   assert.equal(
     messages.some((message) => message.fieldId === POST_RETIREMENT_INCOME_FIELDS.toAge && message.severity === "error"),
+    true
+  );
+});
+
+test("validation requires a complete stock market crash entry once any crash field is used", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField] = new Date().getFullYear() + 1;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField && message.severity === "error"),
+    true
+  );
+  assert.equal(
+    messages.some((message) => message.fieldId === STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].recoveryField && message.severity === "error"),
+    true
+  );
+});
+
+test("validation rejects stock market crash years beyond the projection horizon", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 50;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField] = new Date().getFullYear() + 5;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField] = 0.2;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].recoveryField] = 2;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField && message.severity === "error"),
     true
   );
 });

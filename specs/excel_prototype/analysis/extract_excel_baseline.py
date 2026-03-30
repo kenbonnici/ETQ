@@ -140,7 +140,7 @@ def main():
     nw_norm = row_series(sheet3, 380, sst)
     cash_early = row_series(sheet4, 379, sst)
     nw_early = row_series(sheet4, 380, sst)
-    mth_rem = numeric_cell(sheet1, "B266", sst)
+    mth_rem = numeric_cell(sheet1, "B292", sst)
     projection_month_override = int(round(13 - mth_rem)) if mth_rem is not None else None
 
     # Use RetEarly_Engine!B3 as source of early retirement age.

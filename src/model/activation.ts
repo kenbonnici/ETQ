@@ -7,7 +7,8 @@ import {
   OTHER_LOAN_GROUP_BY_CELL,
   OTHER_WORK_GROUP_BY_CELL,
   POST_RETIREMENT_INCOME_GROUP_BY_CELL,
-  PROPERTY_GROUPS_BY_CELL
+  PROPERTY_GROUPS_BY_CELL,
+  STOCK_MARKET_CRASH_GROUPS_BY_CELL
 } from "./inputSchema";
 import { fieldStateToRawInputs, rawInputsToFieldState } from "./excelAdapter";
 import { FieldState, InputCell, ModelUiState, RawInputs } from "./types";
@@ -105,6 +106,12 @@ function applyDependencyPruning(target: RawInputs): void {
   for (const event of EXPENSE_EVENT_GROUPS_BY_CELL) {
     if (isBlank(target[event.nameCell])) {
       clearCells(target, [event.amountCell, event.yearCell]);
+    }
+  }
+
+  for (const crash of STOCK_MARKET_CRASH_GROUPS_BY_CELL) {
+    if (isBlank(target[crash.yearCell])) {
+      clearCells(target, [crash.dropCell, crash.recoveryCell]);
     }
   }
 

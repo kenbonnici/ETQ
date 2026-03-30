@@ -1,4 +1,9 @@
-import { ASSET_OF_VALUE_GROUPS_BY_CELL, DEPENDENT_GROUPS_BY_CELL, PROPERTY_GROUPS_BY_CELL } from "./inputSchema";
+import {
+  ASSET_OF_VALUE_GROUPS_BY_CELL,
+  DEPENDENT_GROUPS_BY_CELL,
+  PROPERTY_GROUPS_BY_CELL,
+  STOCK_MARKET_CRASH_GROUPS_BY_CELL
+} from "./inputSchema";
 import { EffectiveInputs, InputCell, RawInputValue, RawInputs } from "./types";
 
 const LIQUIDATION_VALUE_CELLS = [
@@ -78,7 +83,7 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
   const ageNow = toNumber(raw.B4);
   const statutoryRetirementAge = toBoundedNumber(raw.B19, 50, 70);
   const liveUntilMinimum = ageNow > 0 ? ageNow : 19;
-  const liveUntilAge = toBoundedNumber(raw.B218, liveUntilMinimum, 120);
+  const liveUntilAge = toBoundedNumber(raw.B244, liveUntilMinimum, 120);
 
   return {
     ageNow,
@@ -136,28 +141,33 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
       { name: toTrimmedString(raw.B206), amount: toNumber(raw.B207), year: toNumber(raw.B208) },
       { name: toTrimmedString(raw.B211), amount: toNumber(raw.B212), year: toNumber(raw.B213) }
     ],
+    stockMarketCrashes: STOCK_MARKET_CRASH_GROUPS_BY_CELL.map((group) => ({
+      year: toNumber(raw[group.yearCell]),
+      dropPercentage: toNumber(raw[group.dropCell]),
+      recoveryYears: toNumber(raw[group.recoveryCell])
+    })),
 
     liveUntilAge,
-    spendAdjustTo65: toNumber(raw.B221),
-    spendAdjust66To75: toNumber(raw.B222),
-    spendAdjustFrom76: toNumber(raw.B223),
-    postRetIncomeAnnual: toNumber(raw.B225),
-    postRetIncomeFromAge: toNumber(raw.B226),
-    postRetIncomeToAge: toNumber(raw.B227),
+    spendAdjustTo65: toNumber(raw.B247),
+    spendAdjust66To75: toNumber(raw.B248),
+    spendAdjustFrom76: toNumber(raw.B249),
+    postRetIncomeAnnual: toNumber(raw.B251),
+    postRetIncomeFromAge: toNumber(raw.B252),
+    postRetIncomeToAge: toNumber(raw.B253),
 
-    inflation: toNumber(raw.B229),
-    propertyAppreciation: toNumber(raw.B231),
-    cashRate: toNumber(raw.B233),
-    stockReturn: toNumber(raw.B235),
-    salaryGrowth: toNumber(raw.B237),
-    rentalIncomeGrowth: toNumber(raw.B239),
+    inflation: toNumber(raw.B255),
+    propertyAppreciation: toNumber(raw.B257),
+    cashRate: toNumber(raw.B259),
+    stockReturn: toNumber(raw.B261),
+    salaryGrowth: toNumber(raw.B263),
+    rentalIncomeGrowth: toNumber(raw.B265),
 
-    pensionReductionPerYearEarly: toNumber(raw.B241),
-    cashBuffer: toNumber(raw.B243),
-    legacyAmount: toNumber(raw.B245),
-    stockSellingCosts: toNumber(raw.B247),
-    propertyDisposalCosts: toNumber(raw.B249),
-    otherAssetDisposalCosts: toNumber(raw.B251),
+    pensionReductionPerYearEarly: toNumber(raw.B267),
+    cashBuffer: toNumber(raw.B269),
+    legacyAmount: toNumber(raw.B271),
+    stockSellingCosts: toNumber(raw.B273),
+    propertyDisposalCosts: toNumber(raw.B275),
+    otherAssetDisposalCosts: toNumber(raw.B277),
 
     liquidationPriority: resolveLiquidationPriority(raw, options)
   };

@@ -26,7 +26,8 @@ import {
   OTHER_WORK_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
   PROPERTY_RUNTIME_GROUPS,
-  RUNTIME_FIELDS
+  RUNTIME_FIELDS,
+  STOCK_MARKET_CRASH_RUNTIME_GROUPS
 } from "./ui/runtimeFields";
 import {
   activePropertyConfigs,
@@ -326,6 +327,8 @@ let visibleExpenseEvents = 1;
 const expenseEvent1Fields = EXPENSE_EVENT_RUNTIME_GROUPS[0].fields;
 const expenseEvent2Fields = EXPENSE_EVENT_RUNTIME_GROUPS[1].fields;
 const expenseEvent3Fields = EXPENSE_EVENT_RUNTIME_GROUPS[2].fields;
+let visibleStockMarketCrashes = 1;
+const stockMarketCrashFieldSets = STOCK_MARKET_CRASH_RUNTIME_GROUPS.map((group) => group.revealFields);
 const displayOrderOverride = FIELD_DISPLAY_ORDER_OVERRIDE;
 const STRUCTURAL_RERENDER_CELLS = STRUCTURAL_RERENDER_FIELDS;
 let livingExpensesMode: LivingExpensesMode = "single";
@@ -617,6 +620,7 @@ function syncVisibleRuntimeGroupsFromState(): void {
   visibleAssetsOfValue = visibility.visibleAssetsOfValue;
   visibleIncomeEvents = visibility.visibleIncomeEvents;
   visibleExpenseEvents = visibility.visibleExpenseEvents;
+  visibleStockMarketCrashes = visibility.visibleStockMarketCrashes;
 }
 
 function expandVisibleGroupCount(
@@ -874,7 +878,8 @@ function getVisibleInputOrder(): FieldId[] {
       visibleProperties,
       visibleAssetsOfValue,
       visibleIncomeEvents,
-      visibleExpenseEvents
+      visibleExpenseEvents,
+      visibleStockMarketCrashes
     }) && !PROPERTY_LIQUIDATION_CELLS.has(def.fieldId))
     .map((def) => def.fieldId);
 }
@@ -2431,6 +2436,7 @@ function renderInputs(): void {
   else if (anyValue(fieldState, incomeEvent2Fields)) visibleIncomeEvents = Math.max(visibleIncomeEvents, 2);
   if (anyValue(fieldState, expenseEvent3Fields)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 3);
   else if (anyValue(fieldState, expenseEvent2Fields)) visibleExpenseEvents = Math.max(visibleExpenseEvents, 2);
+  visibleStockMarketCrashes = expandVisibleGroupCount(visibleStockMarketCrashes, stockMarketCrashFieldSets);
   const appendedOrder = syncManualPropertyOrderForNewProperties(
     fieldState,
     previousActivePropertyIndices,
@@ -2526,7 +2532,8 @@ function renderInputs(): void {
         visibleProperties,
         visibleAssetsOfValue,
         visibleIncomeEvents,
-        visibleExpenseEvents
+        visibleExpenseEvents,
+        visibleStockMarketCrashes
       })) continue;
       if (PROPERTY_LIQUIDATION_CELLS.has(def.fieldId)) {
         if (!liquidationRendered) {
@@ -2622,6 +2629,15 @@ function renderInputs(): void {
       }
       if (def.fieldId === EXPENSE_EVENT_RUNTIME_GROUPS[1].yearField && visibleExpenseEvents < 3 && !isBlank(fieldState[EXPENSE_EVENT_RUNTIME_GROUPS[1].nameField])) {
         html += `<button type="button" class="add-event-btn" data-next-expense-event="3">Add another expense event</button>`;
+      }
+      const stockMarketCrashGroup = STOCK_MARKET_CRASH_RUNTIME_GROUPS.find((group) => group.recoveryField === def.fieldId);
+      if (
+        stockMarketCrashGroup
+        && stockMarketCrashGroup.idx < STOCK_MARKET_CRASH_RUNTIME_GROUPS.length - 1
+        && visibleStockMarketCrashes < stockMarketCrashGroup.idx + 2
+        && !isBlank(fieldState[stockMarketCrashGroup.yearField])
+      ) {
+        html += `<button type="button" class="add-stock-market-crash-btn" data-next-stock-market-crash="${stockMarketCrashGroup.idx + 2}">Add another stock market crash</button>`;
       }
     }
     closeSubgroupCard();
@@ -2965,6 +2981,16 @@ function renderInputs(): void {
       const nextExpense = Number(btn.dataset.nextExpenseEvent);
       if (Number.isFinite(nextExpense)) {
         visibleExpenseEvents = Math.max(visibleExpenseEvents, Math.min(3, nextExpense));
+        renderInputs();
+      }
+    });
+  });
+
+  inputsPanel.querySelectorAll<HTMLButtonElement>(".add-stock-market-crash-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = Number(btn.dataset.nextStockMarketCrash);
+      if (Number.isFinite(next)) {
+        visibleStockMarketCrashes = Math.max(visibleStockMarketCrashes, Math.min(STOCK_MARKET_CRASH_RUNTIME_GROUPS.length, next));
         renderInputs();
       }
     });

@@ -13,7 +13,8 @@ import {
   OTHER_WORK_GROUP_BY_CELL,
   PROJECTION_GATE_CELLS,
   POST_RETIREMENT_INCOME_GROUP_BY_CELL,
-  PROPERTY_GROUPS_BY_CELL
+  PROPERTY_GROUPS_BY_CELL,
+  STOCK_MARKET_CRASH_GROUPS_BY_CELL
 } from "./inputSchema";
 import { fieldStateToRawInputs } from "./excelAdapter";
 import { FieldState, InputCell, RawInputs } from "./types";
@@ -45,7 +46,7 @@ function pushMessage(
 
 function projectionEndYear(raw: RawInputs): number | null {
   const ageNow = asNumber(raw.B4);
-  const endAge = asNumber(raw.B218);
+  const endAge = asNumber(raw.B244);
   if (ageNow === null || endAge === null || endAge < ageNow) return null;
   return new Date().getFullYear() + Math.max(0, Math.round(endAge - ageNow - 1));
 }
@@ -103,7 +104,7 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   }
 
   const ageNow = asNumber(raw.B4);
-  const lifeExpectancy = asNumber(raw.B218);
+  const lifeExpectancy = asNumber(raw.B244);
   const statutoryAge = asNumber(raw.B19);
   if (ageNow !== null && statutoryAge !== null && ageNow >= statutoryAge) {
     pushMessage(messages, "B4", "error", "Your age must be less than statutory retirement age.", true);
@@ -111,11 +112,11 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   }
 
   if (ageNow !== null && lifeExpectancy !== null && lifeExpectancy < ageNow) {
-    pushMessage(messages, "B218", "error", "Plan to live until age must be current age or later.", true);
+    pushMessage(messages, "B244", "error", "Plan to live until age must be current age or later.", true);
   }
 
   if (lifeExpectancy !== null && lifeExpectancy > 100) {
-    pushMessage(messages, "B218", "warning", "Planning past age 100 is allowed, but double-check that horizon.");
+    pushMessage(messages, "B244", "warning", "Planning past age 100 is allowed, but double-check that horizon.");
   }
 
   if (asNumber(raw.B12) !== null && (asNumber(raw.B12) ?? 0) > 0 && (asNumber(raw.B23) ?? 0) > 0) {
@@ -290,6 +291,33 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
     }
   }
 
+  for (const crash of STOCK_MARKET_CRASH_GROUPS_BY_CELL) {
+    const hasAny = !isBlank(raw[crash.yearCell]) || !isBlank(raw[crash.dropCell]) || !isBlank(raw[crash.recoveryCell]);
+    if (!hasAny) continue;
+
+    const year = asNumber(raw[crash.yearCell]);
+    if (year === null || !Number.isInteger(year)) {
+      pushMessage(messages, crash.yearCell, "error", "Crash year must be a whole calendar year.");
+    } else {
+      if (year < minYear) {
+        pushMessage(messages, crash.yearCell, "error", `Crash year must be ${minYear} or later.`);
+      }
+      if (maxYear !== null && year > maxYear) {
+        pushMessage(messages, crash.yearCell, "error", "Crash year cannot exceed the projection horizon.");
+      }
+    }
+
+    const drop = asNumber(raw[crash.dropCell]);
+    if (drop === null) {
+      pushMessage(messages, crash.dropCell, "error", "Crash % drop is required when a stock market crash year is entered.");
+    }
+
+    const recoveryYears = asNumber(raw[crash.recoveryCell]);
+    if (recoveryYears === null || !Number.isInteger(recoveryYears) || recoveryYears <= 0) {
+      pushMessage(messages, crash.recoveryCell, "error", "Time to recover must be a whole number greater than 0.");
+    }
+  }
+
   if ((asNumber(raw[POST_RETIREMENT_INCOME_GROUP_BY_CELL.amountCell]) ?? 0) > 0) {
     const fromAge = asNumber(raw[POST_RETIREMENT_INCOME_GROUP_BY_CELL.fromAgeCell]);
     const toAge = asNumber(raw[POST_RETIREMENT_INCOME_GROUP_BY_CELL.toAgeCell]);
@@ -313,9 +341,9 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   }
 
   const spendAdjustments = [
-    { cell: "B221" as const, label: getCellLabel("B221") },
-    { cell: "B222" as const, label: getCellLabel("B222") },
-    { cell: "B223" as const, label: getCellLabel("B223") }
+    { cell: "B247" as const, label: getCellLabel("B247") },
+    { cell: "B248" as const, label: getCellLabel("B248") },
+    { cell: "B249" as const, label: getCellLabel("B249") }
   ];
   for (const adjustment of spendAdjustments) {
     const value = asNumber(raw[adjustment.cell]);
@@ -341,17 +369,17 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   }
 
   const startingLiquidAssets = (asNumber(raw.B8) ?? 0) + (asNumber(raw.B10) ?? 0);
-  const cashBuffer = asNumber(raw.B243) ?? 0;
+  const cashBuffer = asNumber(raw.B269) ?? 0;
   if (cashBuffer > 0 && startingLiquidAssets > 0 && cashBuffer > startingLiquidAssets) {
-    pushMessage(messages, "B243", "warning", "Cash buffer exceeds starting cash plus stock balances.");
+    pushMessage(messages, "B269", "warning", "Cash buffer exceeds starting cash plus stock balances.");
   }
 
   const annualPension = asNumber(raw.B21) ?? 0;
-  const pensionReduction = asNumber(raw.B241) ?? 0;
+  const pensionReduction = asNumber(raw.B267) ?? 0;
   if (annualPension > 0 && pensionReduction > 0 && ageNow !== null && statutoryAge !== null) {
     const maxYearsEarly = Math.max(0, statutoryAge - ageNow);
     if (pensionReduction * maxYearsEarly > annualPension) {
-      pushMessage(messages, "B241", "warning", "Maximum early-retirement reduction would fully eliminate the pension.");
+      pushMessage(messages, "B267", "warning", "Maximum early-retirement reduction would fully eliminate the pension.");
     }
   }
 

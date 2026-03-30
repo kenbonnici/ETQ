@@ -67,7 +67,7 @@ def main() -> None:
     ws_inputs = wb["Inputs"]
     ws_norm = wb["RetNorm_Engine"]
     ws_early = wb["RetEarly_Engine"]
-    month_remaining = ws_inputs["B266"].value
+    month_remaining = ws_inputs["B292"].value
     projection_month_override = None
     if isinstance(month_remaining, (int, float)):
         projection_month_override = int(round(13 - float(month_remaining)))

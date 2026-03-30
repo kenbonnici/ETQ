@@ -36,7 +36,9 @@ import {
   REQUIRED_CORE_CELLS,
   REQUIRED_CORE_FIELDS,
   SKIP_REVEAL_CRITICAL_CELLS,
-  SKIP_REVEAL_CRITICAL_FIELDS
+  SKIP_REVEAL_CRITICAL_FIELDS,
+  STOCK_MARKET_CRASH_GROUPS,
+  STOCK_MARKET_CRASH_GROUPS_BY_CELL
 } from "../../src/model/inputSchema";
 
 function mapFieldRecordToCells<T>(record: Partial<Record<FieldId, T>>): Partial<Record<InputCell, T>> {
@@ -72,6 +74,8 @@ test("field and cell group exports round-trip without drift", () => {
   assert.equal(PROPERTY_GROUPS_BY_CELL.length, 5);
   assert.equal(ASSET_OF_VALUE_GROUPS.length, 5);
   assert.equal(ASSET_OF_VALUE_GROUPS_BY_CELL.length, 5);
+  assert.equal(STOCK_MARKET_CRASH_GROUPS.length, 5);
+  assert.equal(STOCK_MARKET_CRASH_GROUPS_BY_CELL.length, 5);
   assert.equal(LIQUIDATION_RANK_FIELDS.length, 10);
   assert.equal(LIQUIDATION_RANK_CELLS.length, 10);
 
@@ -157,6 +161,14 @@ test("field and cell group exports round-trip without drift", () => {
       nameCell: FIELD_ID_TO_CELL[group.nameField],
       amountCell: FIELD_ID_TO_CELL[group.amountField],
       yearCell: FIELD_ID_TO_CELL[group.yearField]
+    }))
+  );
+  assert.deepEqual(
+    STOCK_MARKET_CRASH_GROUPS_BY_CELL,
+    STOCK_MARKET_CRASH_GROUPS.map((group) => ({
+      yearCell: FIELD_ID_TO_CELL[group.yearField],
+      dropCell: FIELD_ID_TO_CELL[group.dropField],
+      recoveryCell: FIELD_ID_TO_CELL[group.recoveryField]
     }))
   );
 });

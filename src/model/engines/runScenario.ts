@@ -68,6 +68,17 @@ function computePensionReduction(inputs: EffectiveInputs, earlyRetirementAge: nu
   return yearsEarly * inputs.pensionReductionPerYearEarly;
 }
 
+function stockGrowthRateForYear(inputs: EffectiveInputs, year: number): number {
+  for (const crash of inputs.stockMarketCrashes) {
+    if (!(crash.year > 0 && crash.dropPercentage > 0 && crash.recoveryYears > 0)) continue;
+    if (year === crash.year) return -crash.dropPercentage;
+    if (year > crash.year && year <= crash.year + crash.recoveryYears) {
+      return safePow(1 / (1 - crash.dropPercentage), 1 / crash.recoveryYears) - 1;
+    }
+  }
+  return inputs.stockReturn;
+}
+
 function propertyOrder(_priority: number[], currentValues: number[]): number[] {
   const indexed = currentValues.map((v, i) => ({ i, v }));
   indexed.sort((a, b) => a.v - b.v);
@@ -119,7 +130,8 @@ function stageTrigger(req: number[], t: number): boolean {
 function computeStockStage(
   required: number[],
   stockBaseSeries: number[],
-  stockReturn: number,
+  years: number[],
+  stockGrowthRateByYear: (year: number) => number,
   stockDisposalCost: number
 ): StageSeries {
   const n = required.length;
@@ -139,7 +151,7 @@ function computeStockStage(
     const grossSold = clamp(grossRequired, 0, bfwd[i]);
     disposal[i] = -grossSold;
 
-    growth[i] = i === 0 ? 0 : (bfwd[i] + disposal[i]) * stockReturn;
+    growth[i] = i === 0 ? 0 : (bfwd[i] + disposal[i]) * stockGrowthRateByYear(years[i]);
     cfwd[i] = bfwd[i] + disposal[i] + growth[i];
 
     disposalCosts[i] = disposal[i] * stockDisposalCost;
@@ -425,7 +437,11 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
 
     homeValueSeries[idx] =
       inputs.homeValue > 0 ? inputs.homeValue * safePow(1 + inputs.propertyAppreciation, assetGrowthExponent(timing, idx)) : 0;
-    stockBaseSeries[idx] = inputs.stocksBalance * safePow(1 + inputs.stockReturn, assetGrowthExponent(timing, idx));
+    if (idx === 0) {
+      stockBaseSeries[idx] = inputs.stocksBalance * safePow(1 + inputs.stockReturn, assetGrowthExponent(timing, idx));
+    } else {
+      stockBaseSeries[idx] = stockBaseSeries[idx - 1] * (1 + stockGrowthRateForYear(inputs, year));
+    }
 
     for (let p = 0; p < inputs.properties.length; p += 1) {
       propertyValueSeries[p][idx] =
@@ -463,7 +479,8 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
   const stockStage = computeStockStage(
     row69,
     stockBaseSeries,
-    inputs.stockReturn,
+    timeline.years,
+    (year) => stockGrowthRateForYear(inputs, year),
     inputs.stockSellingCosts
   ); // rows 74..79
 

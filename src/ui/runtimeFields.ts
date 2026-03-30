@@ -9,7 +9,8 @@ import {
   OTHER_LOAN_GROUP,
   OTHER_WORK_GROUP,
   POST_RETIREMENT_INCOME_GROUP,
-  PROPERTY_GROUPS
+  PROPERTY_GROUPS,
+  STOCK_MARKET_CRASH_GROUPS
 } from "../model/inputSchema";
 
 export const RUNTIME_FIELDS = {
@@ -20,22 +21,22 @@ export const RUNTIME_FIELDS = {
   statutoryRetirementAge: INPUT_DEFINITION_BY_CELL.B19.fieldId,
   annualPensionAtRetirement: INPUT_DEFINITION_BY_CELL.B21.fieldId,
   annualLivingExpenses: INPUT_DEFINITION_BY_CELL.B25.fieldId,
-  lifeExpectancyAge: INPUT_DEFINITION_BY_CELL.B218.fieldId,
-  spendingAdjustmentPre65: INPUT_DEFINITION_BY_CELL.B221.fieldId,
-  spendingAdjustment66To75: INPUT_DEFINITION_BY_CELL.B222.fieldId,
-  spendingAdjustment76Plus: INPUT_DEFINITION_BY_CELL.B223.fieldId,
-  generalInflation: INPUT_DEFINITION_BY_CELL.B229.fieldId,
-  propertyAnnualAppreciation: INPUT_DEFINITION_BY_CELL.B231.fieldId,
-  cashInterestRate: INPUT_DEFINITION_BY_CELL.B233.fieldId,
-  stockMarketReturn: INPUT_DEFINITION_BY_CELL.B235.fieldId,
-  salaryAnnualGrowthRate: INPUT_DEFINITION_BY_CELL.B237.fieldId,
-  rentalIncomeAnnualIncrease: INPUT_DEFINITION_BY_CELL.B239.fieldId,
-  pensionReductionPerYearEarly: INPUT_DEFINITION_BY_CELL.B241.fieldId,
-  minimumCashBuffer: INPUT_DEFINITION_BY_CELL.B243.fieldId,
-  legacyAmount: INPUT_DEFINITION_BY_CELL.B245.fieldId,
-  stockSellingCostRate: INPUT_DEFINITION_BY_CELL.B247.fieldId,
-  propertyDisposalCostRate: INPUT_DEFINITION_BY_CELL.B249.fieldId,
-  otherAssetDisposalCostRate: INPUT_DEFINITION_BY_CELL.B251.fieldId
+  lifeExpectancyAge: INPUT_DEFINITION_BY_CELL.B244.fieldId,
+  spendingAdjustmentPre65: INPUT_DEFINITION_BY_CELL.B247.fieldId,
+  spendingAdjustment66To75: INPUT_DEFINITION_BY_CELL.B248.fieldId,
+  spendingAdjustment76Plus: INPUT_DEFINITION_BY_CELL.B249.fieldId,
+  generalInflation: INPUT_DEFINITION_BY_CELL.B255.fieldId,
+  propertyAnnualAppreciation: INPUT_DEFINITION_BY_CELL.B257.fieldId,
+  cashInterestRate: INPUT_DEFINITION_BY_CELL.B259.fieldId,
+  stockMarketReturn: INPUT_DEFINITION_BY_CELL.B261.fieldId,
+  salaryAnnualGrowthRate: INPUT_DEFINITION_BY_CELL.B263.fieldId,
+  rentalIncomeAnnualIncrease: INPUT_DEFINITION_BY_CELL.B265.fieldId,
+  pensionReductionPerYearEarly: INPUT_DEFINITION_BY_CELL.B267.fieldId,
+  minimumCashBuffer: INPUT_DEFINITION_BY_CELL.B269.fieldId,
+  legacyAmount: INPUT_DEFINITION_BY_CELL.B271.fieldId,
+  stockSellingCostRate: INPUT_DEFINITION_BY_CELL.B273.fieldId,
+  propertyDisposalCostRate: INPUT_DEFINITION_BY_CELL.B275.fieldId,
+  otherAssetDisposalCostRate: INPUT_DEFINITION_BY_CELL.B277.fieldId
 } as const satisfies Record<string, FieldId>;
 
 export const HOME_FIELDS = {
@@ -199,4 +200,22 @@ export const EXPENSE_EVENT_RUNTIME_GROUPS = EXPENSE_EVENT_GROUPS.map((group, idx
   amountField: FieldId;
   yearField: FieldId;
   fields: readonly [FieldId, FieldId, FieldId];
+}>;
+
+export const STOCK_MARKET_CRASH_RUNTIME_GROUPS = STOCK_MARKET_CRASH_GROUPS.map((group, idx) => ({
+  idx,
+  label: `Crash ${idx + 1}`,
+  yearField: group.yearField,
+  dropField: group.dropField,
+  recoveryField: group.recoveryField,
+  fields: [group.yearField, group.dropField, group.recoveryField] as const,
+  revealFields: [group.yearField] as const
+})) as ReadonlyArray<{
+  idx: number;
+  label: string;
+  yearField: FieldId;
+  dropField: FieldId;
+  recoveryField: FieldId;
+  fields: readonly [FieldId, FieldId, FieldId];
+  revealFields: readonly [FieldId];
 }>;

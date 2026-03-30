@@ -39,6 +39,12 @@ const selectors = {
   dependent4Name: 'input[data-field-id="dependents.04.displayName"]',
   dependent5Name: 'input[data-field-id="dependents.05.displayName"]',
   dependentAnnualCost: 'input[data-field-id="dependents.01.annualCost"]',
+  stockMarketCrash1Year: 'input[data-field-id="stockMarketCrashes.01.year"]',
+  stockMarketCrash1Drop: 'input[data-field-id="stockMarketCrashes.01.dropPercentage"]',
+  stockMarketCrash1Recovery: 'input[data-field-id="stockMarketCrashes.01.recoveryYears"]',
+  stockMarketCrash2Year: 'input[data-field-id="stockMarketCrashes.02.year"]',
+  stockMarketCrash4Year: 'input[data-field-id="stockMarketCrashes.04.year"]',
+  stockMarketCrash4Drop: 'input[data-field-id="stockMarketCrashes.04.dropPercentage"]',
   cashChart: "#cash-chart",
   networthChart: "#nw-chart",
   cashflowScroll: "#cashflow-table-panel .cashflow-table-scroll",
@@ -158,6 +164,22 @@ test("reveals asset slots up to five through the existing add-asset flow", async
   await expect(page.locator(selectors.asset5Name)).toBeVisible();
 });
 
+test("reveals stock market crash slots progressively and only shows crash details after the year is entered", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  await expect(page.locator(selectors.stockMarketCrash1Year)).toBeVisible();
+  await expect(page.locator(selectors.stockMarketCrash1Drop)).toHaveCount(0);
+  await expect(page.locator(selectors.stockMarketCrash2Year)).toHaveCount(0);
+
+  await fillAndBlur(page, selectors.stockMarketCrash1Year, String(new Date().getFullYear() + 1));
+  await expect(page.locator(selectors.stockMarketCrash1Drop)).toBeVisible();
+  await expect(page.locator(selectors.stockMarketCrash1Recovery)).toBeVisible();
+
+  await page.locator(".add-stock-market-crash-btn").last().click();
+  await expect(page.locator(selectors.stockMarketCrash2Year)).toBeVisible();
+});
+
 test("tab order stays in visible dependent field order as groups appear", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("button", { name: "DEEPER DIVE" }).click();
@@ -262,6 +284,16 @@ test("load sample data restores assets of value 4 and 5 from the Excel specimen"
   await expect(page.locator(selectors.asset5Name)).toHaveValue("Antiques");
   await expect(page.locator('input[data-field-id="assetsOfValue.05.marketValue"]')).toHaveValue(/82,000/);
   await expect(page.locator('input[data-field-id="assetsOfValue.05.appreciationRateAnnual"]')).toHaveValue(/2.00%/);
+});
+
+test("load sample data restores the active stock market crash scenario from the Excel specimen", async ({ page }) => {
+  await loadSampleData(page);
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  await expect(page.locator(selectors.stockMarketCrash4Year)).toBeVisible();
+  await expect(page.locator(selectors.stockMarketCrash4Year)).toHaveValue("2042");
+  await expect(page.locator(selectors.stockMarketCrash4Drop)).toHaveValue(/18.00%/);
+  await expect(page.locator(selectors.stockMarketCrash2Year)).toBeVisible();
 });
 
 test("finer details honors workbook liquidation order and lets users exclude a property from liquidation", async ({ page }) => {

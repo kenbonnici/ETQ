@@ -37,7 +37,8 @@ import {
   OTHER_WORK_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
   PROPERTY_RUNTIME_GROUPS,
-  RUNTIME_FIELDS
+  RUNTIME_FIELDS,
+  STOCK_MARKET_CRASH_RUNTIME_GROUPS
 } from "../../src/ui/runtimeFields";
 
 const SPECIMEN_FIELDS = rawInputsToFieldState(EXCEL_BASELINE_SPECIMEN.raw_inputs);
@@ -53,7 +54,8 @@ const DEFAULT_VISIBILITY: RuntimeVisibilityState = {
   visibleProperties: 1,
   visibleAssetsOfValue: 1,
   visibleIncomeEvents: 1,
-  visibleExpenseEvents: 1
+  visibleExpenseEvents: 1,
+  visibleStockMarketCrashes: 1
 };
 const LEGACY_AWARE_RETIREMENT_AGE = 50;
 
@@ -94,8 +96,9 @@ test("input definitions preserve row order and derive cells from semantic field 
       102, 103, 104, 107, 108, 109, 113, 114, 115, 116, 117, 119, 120, 124, 127, 128, 129, 132, 133, 134,
       137, 138, 139, 142, 143, 144, 147, 148, 149, 152, 153, 154, 157, 158, 159, 162, 163, 164, 167, 168,
       169, 172, 173, 174, 177, 178, 179, 184, 185, 186, 189, 190, 191, 194, 195, 196, 201, 202, 203, 206,
-      207, 208, 211, 212, 213, 218, 221, 222, 223, 225, 226, 227, 229, 231, 233, 235, 237, 239, 241, 243,
-      245, 247, 249, 251, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263
+      207, 208, 211, 212, 213, 218, 219, 220, 223, 224, 225, 228, 229, 230, 233, 234, 235, 238, 239, 240,
+      244, 247, 248, 249, 251, 252, 253, 255, 257, 259, 261, 263, 265, 267, 269, 271, 273, 275, 277, 280,
+      281, 282, 283, 284, 285, 286, 287, 288, 289
     ]
   );
 
@@ -190,6 +193,10 @@ test("visibility rules stay semantic for dependents, properties, and loans", () 
   assert.equal(fieldVisible(fields, POST_RETIREMENT_INCOME_FIELDS.fromAge, DEFAULT_VISIBILITY), false);
   fields[POST_RETIREMENT_INCOME_FIELDS.amount] = 12_000;
   assert.equal(fieldVisible(fields, POST_RETIREMENT_INCOME_FIELDS.fromAge, DEFAULT_VISIBILITY), true);
+
+  assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField, DEFAULT_VISIBILITY), false);
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField] = new Date().getFullYear() + 1;
+  assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField, DEFAULT_VISIBILITY), true);
 
   assert.equal(fieldVisible(fields, HOME_FIELDS.housingRentAnnual, DEFAULT_VISIBILITY), true);
   fields[HOME_FIELDS.homeValue] = 500_000;
@@ -443,6 +450,53 @@ test("runtime visibility state stays collapsed until later slots actually contai
   assert.equal(deriveRuntimeVisibilityState(expenseEventFields).visibleExpenseEvents, 2);
   expenseEventFields[EXPENSE_EVENT_RUNTIME_GROUPS[2].yearField] = 2035;
   assert.equal(deriveRuntimeVisibilityState(expenseEventFields).visibleExpenseEvents, 3);
+
+  const stockMarketCrashFields = createEmptyFieldState();
+  stockMarketCrashFields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[1].dropField] = 0.2;
+  assert.equal(deriveRuntimeVisibilityState(stockMarketCrashFields).visibleStockMarketCrashes, 1);
+  stockMarketCrashFields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[3].yearField] = new Date().getFullYear() + 4;
+  assert.equal(deriveRuntimeVisibilityState(stockMarketCrashFields).visibleStockMarketCrashes, 4);
+});
+
+test("normalization and scenario outputs include stock market crash slots and apply crash recovery rates", () => {
+  const currentYear = new Date().getFullYear();
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.annualLivingExpenses] = 0;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[RUNTIME_FIELDS.stockMarketReturn] = 0.1;
+  fields["assets.equities.marketValue"] = 100;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField] = currentYear + 1;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField] = 0.2;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].recoveryField] = 2;
+
+  const normalized = normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false });
+  assert.equal(normalized.stockMarketCrashes.length, 5);
+  assert.deepEqual(normalized.stockMarketCrashes[0], {
+    year: currentYear + 1,
+    dropPercentage: 0.2,
+    recoveryYears: 2
+  });
+
+  const result = runModel(fields, {
+    deeperDiveOpen: true,
+    finerDetailsOpen: true,
+    earlyRetirementAge: 65,
+    manualPropertyLiquidationOrder: false,
+    projectionMonthOverride: 1
+  });
+
+  const stockSeries = result.outputs.scenarioNorm.netWorth.stockMarketEquity;
+  const recoveryRate = Math.sqrt(1 / (1 - 0.2)) - 1;
+  assert.ok(stockSeries[0] !== undefined);
+  assert.ok(stockSeries[1] !== undefined);
+  assert.ok(stockSeries[2] !== undefined);
+  assert.ok(stockSeries[3] !== undefined);
+  assert.equal(Math.abs((stockSeries[0] ?? 0) - 110) < 1e-9, true);
+  assert.equal(Math.abs((stockSeries[1] ?? 0) - 88) < 1e-9, true);
+  assert.equal(Math.abs((stockSeries[2] ?? 0) - (88 * (1 + recoveryRate))) < 1e-9, true);
+  assert.equal(Math.abs((stockSeries[3] ?? 0) - 110) < 1e-9, true);
 });
 
 test("normalization and scenario outputs include dependent slots four and five", () => {
