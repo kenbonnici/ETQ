@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
 
-const LEGACY_AWARE_RETIREMENT_AGE = 50;
+const LEGACY_AWARE_RETIREMENT_AGE = 51;
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
@@ -291,9 +291,12 @@ test("load sample data restores the active stock market crash scenario from the 
   await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await expect(page.locator(selectors.stockMarketCrash4Year)).toBeVisible();
-  await expect(page.locator(selectors.stockMarketCrash4Year)).toHaveValue("2042");
+  await expect(page.locator(selectors.stockMarketCrash4Year)).toHaveValue("2045");
   await expect(page.locator(selectors.stockMarketCrash4Drop)).toHaveValue(/18.00%/);
   await expect(page.locator(selectors.stockMarketCrash2Year)).toBeVisible();
+  await expect(page.locator(selectors.stockMarketCrash2Year)).toHaveValue("2032");
+  await expect(page.locator('input[data-field-id="stockMarketCrashes.05.year"]')).toBeVisible();
+  await expect(page.locator('input[data-field-id="stockMarketCrashes.05.year"]')).toHaveValue("2050");
 });
 
 test("finer details honors workbook liquidation order and lets users exclude a property from liquidation", async ({ page }) => {

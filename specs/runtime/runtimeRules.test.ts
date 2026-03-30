@@ -57,7 +57,7 @@ const DEFAULT_VISIBILITY: RuntimeVisibilityState = {
   visibleExpenseEvents: 1,
   visibleStockMarketCrashes: 1
 };
-const LEGACY_AWARE_RETIREMENT_AGE = 50;
+const LEGACY_AWARE_RETIREMENT_AGE = 51;
 
 function cloneFields(fields: FieldState): FieldState {
   return { ...fields };
@@ -120,7 +120,7 @@ test("blank legacy normalizes to zero and specimen parity captures the shifted w
 
 test("retirement success requires both the cash buffer and the end-age legacy target", () => {
   const workbookCachedAge = runModel(SPECIMEN_FIELDS, SPECIMEN_UI_STATE);
-  assert.equal(workbookCachedAge.outputs.scenarioEarly.retirementSuccessful, true);
+  assert.equal(workbookCachedAge.outputs.scenarioEarly.retirementSuccessful, false);
 
   const legacyAwareSuccess = runModel(SPECIMEN_FIELDS, {
     ...SPECIMEN_UI_STATE,
