@@ -310,11 +310,15 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
     const drop = asNumber(raw[crash.dropCell]);
     if (drop === null) {
       pushMessage(messages, crash.dropCell, "error", "Crash % drop is required when a stock market crash year is entered.");
+    } else if (drop > 0.5) {
+      pushMessage(messages, crash.dropCell, "warning", "Crash % drop is unusually severe for planning assumptions.");
     }
 
     const recoveryYears = asNumber(raw[crash.recoveryCell]);
     if (recoveryYears === null || !Number.isInteger(recoveryYears) || recoveryYears <= 0) {
       pushMessage(messages, crash.recoveryCell, "error", "Time to recover must be a whole number greater than 0.");
+    } else if (recoveryYears > 10) {
+      pushMessage(messages, crash.recoveryCell, "warning", "Time to recover is unusually long for planning assumptions.");
     }
   }
 

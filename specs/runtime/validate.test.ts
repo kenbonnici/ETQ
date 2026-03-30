@@ -211,3 +211,32 @@ test("validation rejects overlapping stock market crash recovery windows", () =>
     true
   );
 });
+
+test("validation warns on unusually severe or slow stock market crash assumptions", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField] = new Date().getFullYear() + 2;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField] = 0.55;
+  fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].recoveryField] = 11;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some(
+      (message) => message.fieldId === STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField
+        && message.severity === "warning"
+        && message.message.includes("unusually severe")
+    ),
+    true
+  );
+  assert.equal(
+    messages.some(
+      (message) => message.fieldId === STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].recoveryField
+        && message.severity === "warning"
+        && message.message.includes("unusually long")
+    ),
+    true
+  );
+});
