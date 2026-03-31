@@ -4,6 +4,7 @@
   --ink: #0f172a;
   --muted: #475569;
   --line: #d6e0d9;
+  --line-soft: #e4ebe6;
   --accent: #0f766e;
 }
 
@@ -32,8 +33,9 @@ body {
 .right,
 .timeline-panel {
   background: var(--panel);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-soft);
   border-radius: 12px;
+  box-shadow: 0 6px 18px rgb(15 23 42 / 0.035);
 }
 
 .left {
@@ -79,7 +81,7 @@ body {
   margin: 0;
   font-size: 13px;
   font-weight: 800;
-  color: #35564d;
+  color: #24453d;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -139,11 +141,11 @@ body {
   left: -10px;
   top: 50%;
   transform: translate(-100%, -50%);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
   font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
   line-height: 1.15;
-  color: #2b5b50;
+  color: #1f463d;
   letter-spacing: 0.01em;
   padding: 0;
   white-space: nowrap;
@@ -154,11 +156,11 @@ body {
   left: 10px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
   line-height: 1.2;
-  color: #4f6c63;
+  color: #37584f;
   padding: 0;
   white-space: nowrap;
 }
@@ -184,11 +186,11 @@ body {
   left: -10px;
   top: 50%;
   transform: translate(-100%, -50%);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 800;
   font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
   line-height: 1.2;
-  color: #4f6c63;
+  color: #34544b;
   display: inline-flex;
   flex: 0 0 auto;
   background: transparent;
@@ -211,10 +213,10 @@ body {
 
 .timeline-item-label {
   position: relative;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 13px;
+  font-weight: 600;
   font-family: "Segoe UI", "Aptos", "Inter", sans-serif;
-  color: #304d45;
+  color: #203b34;
   line-height: var(--timeline-row-height);
   white-space: nowrap;
   overflow: hidden;
@@ -271,9 +273,12 @@ body {
 
 .timeline-empty {
   margin: 0;
-  padding: 10px;
-  font-size: 12px;
-  color: #6a7f78;
+  padding: 14px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #37584f;
+  background: linear-gradient(180deg, #f4f8f6 0%, #ffffff 100%);
 }
 
 .retirement-control {
@@ -284,7 +289,7 @@ body {
   gap: 12px;
   padding: 8px 12px;
   background: #f8faf9;
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-soft);
   border-radius: 8px;
 }
 
@@ -996,12 +1001,16 @@ body {
 .cashflow-empty {
   padding: 28px;
   font-size: 14px;
-  font-weight: 600;
-  color: #60736d;
+  font-weight: 700;
+  line-height: 1.45;
+  color: #35574e;
+  background: linear-gradient(180deg, #f3f7f5 0%, #ffffff 100%);
+  border: 1px solid #dbe4df;
+  border-radius: 12px;
 }
 
 .chart-card {
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-soft);
   border-radius: 10px;
   padding: 10px 10px 6px;
   position: relative;
@@ -1010,7 +1019,8 @@ body {
 .chart-card h2 {
   margin: 0;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 800;
+  color: #153730;
 }
 
 .chart-header {
@@ -1063,7 +1073,7 @@ body {
   font-family: "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   font-size: 13px;
   font-weight: 600;
-  color: #0f172a;
+  color: #29453d;
   letter-spacing: 0.01em;
 }
 
@@ -1090,7 +1100,7 @@ body {
 .chart-card canvas {
   width: 100%;
   height: 296px;
-  border: 1px solid #e4e9e5;
+  border: 1px solid #dce4df;
   border-radius: 8px;
   touch-action: none;
 }
@@ -1197,11 +1207,11 @@ body {
   --section-chip-border: #c6ddd5;
   --section-chip-text: #0f766e;
   --section-chip-shadow: rgb(63 159 138 / 0.12);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-soft);
   border-radius: 14px;
   padding: 12px;
   margin-bottom: 18px;
-  box-shadow: 0 6px 16px rgb(15 23 42 / 0.04);
+  box-shadow: 0 4px 14px rgb(15 23 42 / 0.028);
 }
 
 .input-section:last-child {
@@ -1929,8 +1939,13 @@ body {
   background: #fffaf5;
 }
 
-.field span {
+.field > span,
+.living-expenses-heading,
+.living-expenses-category > span {
   font-size: 13px;
+  font-weight: 700;
+  color: #213b34;
+  letter-spacing: 0.005em;
 }
 
 input {
@@ -1956,7 +1971,7 @@ input {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  color: #475569;
+  color: #314b44;
   font-size: 13px;
   font-weight: 600;
   pointer-events: none;
@@ -2033,8 +2048,8 @@ input {
 
 .validation-summary.is-helper {
   border-color: #cbd5e1;
-  background: #f8fafc;
-  color: #475569;
+  background: #f5f8f7;
+  color: #425b54;
   padding: 8px 10px;
   font-size: 11px;
   line-height: 1.35;

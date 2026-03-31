@@ -1021,17 +1021,17 @@ function drawEmptyChart(canvas: HTMLCanvasElement, lines: string[]): void {
   const { ctx, width, height, dpr } = metrics;
   canvas.dataset.plotPadLeft = String(CHART_MIN_LEFT_PAD);
   ctx.clearRect(0, 0, width, height);
-  ctx.fillStyle = "#f8fafc";
+  ctx.fillStyle = "#f3f7f5";
   ctx.fillRect(0, 0, width, height);
   const messageLines = lines.length > 0 ? lines : [PROJECTION_EMPTY_GUIDANCE];
   const titleY = alignTextCoordinate(height / 2 - (messageLines.length > 1 ? 18 : 0), dpr);
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.fillStyle = "#475569";
+  ctx.fillStyle = "#23413a";
   ctx.font = '500 15px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
   ctx.fillText(messageLines[0], alignTextCoordinate(width / 2, dpr), titleY);
   if (messageLines.length === 1) return;
-  ctx.fillStyle = "#64748b";
+  ctx.fillStyle = "#58706a";
   ctx.font = '400 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
   messageLines.slice(1, 4).forEach((line, idx) => {
     ctx.fillText(line, alignTextCoordinate(width / 2, dpr), alignTextCoordinate(titleY + 26 + (idx * 18), dpr));
