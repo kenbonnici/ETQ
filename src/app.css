@@ -2135,8 +2135,10 @@ input {
 
 .downsizing-preview-row-value {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   color: #1f2937;
+  text-align: right;
+  justify-self: end;
 }
 
 .downsizing-preview-result {
@@ -2167,9 +2169,11 @@ input {
 }
 
 .downsizing-preview-result-value {
-  font-size: 17px;
+  font-size: 12px;
   font-weight: 700;
   color: #2f6b2e;
+  text-align: right;
+  justify-self: end;
 }
 
 .downsizing-preview-note {
