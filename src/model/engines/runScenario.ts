@@ -712,6 +712,45 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
     }
   }
 
+  const firstNonZeroIndex = (series: number[]): number => {
+    for (let i = 0; i < series.length; i += 1) {
+      if (Math.abs(series[i]) > EPS) return i;
+    }
+    return -1;
+  };
+
+  const downsizingSaleIdx = firstNonZeroIndex(downsizingHomeSaleSeries);
+  if (downsizingSaleIdx >= 0) {
+    milestoneHints.push({
+      year: timeline.years[downsizingSaleIdx],
+      age: timeline.ages[downsizingSaleIdx],
+      label: "Sell home",
+      amount: downsizingHomeSaleSeries[downsizingSaleIdx]
+    });
+  }
+
+  const downsizingPurchaseIdx = firstNonZeroIndex(downsizingHomePurchaseSeries);
+  if (downsizingPurchaseIdx >= 0) {
+    milestoneHints.push({
+      year: timeline.years[downsizingPurchaseIdx],
+      age: timeline.ages[downsizingPurchaseIdx],
+      label: "Buy downsized home",
+      amount: -downsizingHomePurchaseSeries[downsizingPurchaseIdx]
+    });
+  }
+
+  if (hasDownsizing && (!isInitialHomeowner || downsizingMode === "RENT")) {
+    const downsizingRentIdx = firstNonZeroIndex(housingRentSeries);
+    if (downsizingRentIdx >= 0) {
+      milestoneHints.push({
+        year: timeline.years[downsizingRentIdx],
+        age: timeline.ages[downsizingRentIdx],
+        label: "New rent starts",
+        amount: -housingRentSeries[downsizingRentIdx]
+      });
+    }
+  }
+
   if (inputs.otherLoanBalance > EPS) {
     const idx = firstPayoffIndex(otherLoanSeries);
     if (idx >= 0) {

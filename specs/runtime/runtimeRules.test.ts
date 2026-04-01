@@ -419,6 +419,59 @@ test("timeline milestone generation still uses semantic fields with specimen dat
   assert.equal(labels.some((label) => label.includes("Inheritance")), true);
 });
 
+test("timeline milestones include downsizing sale, purchase, and rent-start events", () => {
+  const homeownerBuy = createEmptyFieldState();
+  homeownerBuy[RUNTIME_FIELDS.currentAge] = 48;
+  homeownerBuy[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  homeownerBuy[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  homeownerBuy[HOME_FIELDS.homeValue] = 500_000;
+  homeownerBuy[HOME_FIELDS.mortgageBalance] = 120_000;
+  homeownerBuy[DOWNSIZING_FIELDS.year] = new Date().getFullYear() + 4;
+  homeownerBuy[DOWNSIZING_FIELDS.newHomeMode] = "Buy";
+  homeownerBuy[DOWNSIZING_FIELDS.newHomePurchaseCost] = 250_000;
+
+  const homeownerBuyResult = runModel(homeownerBuy, {
+    deeperDiveOpen: true,
+    finerDetailsOpen: true,
+    earlyRetirementAge: 60
+  });
+  const homeownerBuyLabels = buildTimelineMilestones(
+    homeownerBuy,
+    homeownerBuyResult,
+    Number(homeownerBuy[RUNTIME_FIELDS.statutoryRetirementAge]),
+    1000,
+    () => ""
+  ).map((milestone) => milestone.label);
+
+  assert.equal(homeownerBuyLabels.some((label) => label.includes("Sell home")), true);
+  assert.equal(homeownerBuyLabels.some((label) => label.includes("Buy downsized home")), true);
+
+  const homeownerRent = createEmptyFieldState();
+  homeownerRent[RUNTIME_FIELDS.currentAge] = 48;
+  homeownerRent[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  homeownerRent[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  homeownerRent[HOME_FIELDS.homeValue] = 500_000;
+  homeownerRent[DOWNSIZING_FIELDS.year] = new Date().getFullYear() + 4;
+  homeownerRent[DOWNSIZING_FIELDS.newHomeMode] = "Rent";
+  homeownerRent[DOWNSIZING_FIELDS.newRentAnnual] = 2_000;
+
+  const homeownerRentResult = runModel(homeownerRent, {
+    deeperDiveOpen: true,
+    finerDetailsOpen: true,
+    earlyRetirementAge: 60
+  });
+  const homeownerRentLabels = buildTimelineMilestones(
+    homeownerRent,
+    homeownerRentResult,
+    Number(homeownerRent[RUNTIME_FIELDS.statutoryRetirementAge]),
+    1000,
+    () => ""
+  ).map((milestone) => milestone.label);
+
+  assert.equal(homeownerRentLabels.some((label) => label.includes("Sell home")), true);
+  assert.equal(homeownerRentLabels.some((label) => label.includes("New rent starts")), true);
+});
+
 test("other-work visibility remains hidden until semantic income field is populated", () => {
   const fields = createEmptyFieldState();
   assert.equal(fieldVisible(fields, OTHER_WORK_FIELDS.untilAge, DEFAULT_VISIBILITY), false);
