@@ -2140,6 +2140,7 @@ input {
   text-align: right;
   justify-self: end;
   min-width: 88px;
+  padding-right: 6px;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
@@ -2183,6 +2184,7 @@ input {
   text-align: right;
   justify-self: end;
   min-width: 88px;
+  padding-right: 6px;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
 }
