@@ -2070,6 +2070,50 @@ input {
   outline-offset: 2px;
 }
 
+.downsizing-preview {
+  display: grid;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 8px 10px;
+  border: 1px solid #dde7e1;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #fbfdfc 0%, #f6faf8 100%);
+}
+
+.downsizing-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
+  gap: 6px 10px;
+}
+
+.downsizing-preview-item {
+  display: grid;
+  gap: 2px;
+}
+
+.downsizing-preview-item.is-warning .downsizing-preview-value {
+  color: #9a3412;
+}
+
+.downsizing-preview-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.downsizing-preview-value {
+  font-size: 13px;
+  font-weight: 700;
+  color: #21413a;
+}
+
+.downsizing-preview-note {
+  display: block;
+  margin: 0;
+}
+
 .field-stepper {
   position: absolute;
   right: 6px;

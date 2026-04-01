@@ -7,6 +7,7 @@ import {
   DEPENDENT_RUNTIME_GROUPS,
   DOWNSIZING_FIELDS,
   EXPENSE_EVENT_RUNTIME_GROUPS,
+  HOME_FIELDS,
   OTHER_WORK_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
   PROPERTY_RUNTIME_GROUPS,
@@ -281,6 +282,70 @@ test("validation requires replacement rent when downsizing from renting", () => 
   const messages = messagesFor(fields);
   assert.equal(
     messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newRentAnnual && message.severity === "error"),
+    true
+  );
+});
+
+test("validation rejects downsizing years outside the active projection window", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 50;
+  fields[HOME_FIELDS.homeValue] = 500_000;
+  fields[DOWNSIZING_FIELDS.year] = new Date().getFullYear() - 1;
+
+  let messages = messagesFor(fields);
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.year && message.severity === "error"),
+    true
+  );
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newHomeMode && message.severity === "error"),
+    false
+  );
+
+  fields[DOWNSIZING_FIELDS.year] = new Date().getFullYear() + 5;
+  messages = messagesFor(fields);
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.year && message.severity === "error"),
+    true
+  );
+});
+
+test("validation warns when downsizing assumptions do not look cheaper or equity-releasing", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[HOME_FIELDS.homeValue] = 500_000;
+  fields[HOME_FIELDS.mortgageBalance] = 320_000;
+  fields[HOME_FIELDS.mortgageInterestRateAnnual] = 0.04;
+  fields[HOME_FIELDS.mortgageMonthlyRepayment] = 1_800;
+  fields[DOWNSIZING_FIELDS.year] = new Date().getFullYear() + 4;
+  fields[DOWNSIZING_FIELDS.newHomeMode] = "Buy";
+  fields[DOWNSIZING_FIELDS.newHomePurchaseCost] = 500_000;
+
+  let messages = messagesFor(fields);
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newHomePurchaseCost && message.severity === "warning" && message.message.includes("not lower")),
+    true
+  );
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newHomePurchaseCost && message.severity === "warning" && message.message.includes("cash purchase")),
+    true
+  );
+
+  const rentingFields = createEmptyFieldState();
+  rentingFields[RUNTIME_FIELDS.currentAge] = 48;
+  rentingFields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  rentingFields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  rentingFields[HOME_FIELDS.housingRentAnnual] = 24_000;
+  rentingFields[DOWNSIZING_FIELDS.year] = new Date().getFullYear() + 4;
+  rentingFields[DOWNSIZING_FIELDS.newRentAnnual] = 2_500;
+
+  messages = messagesFor(rentingFields);
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newRentAnnual && message.severity === "warning" && message.message.includes("not lower")),
     true
   );
 });

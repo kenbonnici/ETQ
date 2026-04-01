@@ -17,6 +17,12 @@ import {
   PROPERTY_GROUPS_BY_CELL,
   STOCK_MARKET_CRASH_GROUPS_BY_CELL
 } from "./inputSchema";
+import {
+  estimateDownsizing,
+  getDownsizingProjectionWindow,
+  isDownsizingYearInProjectionWindow,
+  normalizeDownsizingMode
+} from "./downsizing";
 import { fieldStateToRawInputs } from "./excelAdapter";
 import { FieldState, InputCell, RawInputs } from "./types";
 
@@ -124,15 +130,47 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
     pushMessage(messages, "B23", "error", `${getCellLabel("B23")} must be blank when a home value is provided.`);
   }
 
-  const downsizingYear = asNumber(raw[DOWNSIZING_GROUP_BY_CELL.yearCell]) ?? 0;
-  if (downsizingYear > 0) {
+  const downsizingYear = asNumber(raw[DOWNSIZING_GROUP_BY_CELL.yearCell]);
+  const downsizingWindow = getDownsizingProjectionWindow(ageNow, lifeExpectancy);
+  const downsizingYearValid = isDownsizingYearInProjectionWindow(
+    raw[DOWNSIZING_GROUP_BY_CELL.yearCell],
+    ageNow,
+    lifeExpectancy
+  );
+  if (downsizingYear !== null && Number.isInteger(downsizingYear)) {
+    if (downsizingYear < downsizingWindow.minYear) {
+      pushMessage(
+        messages,
+        DOWNSIZING_GROUP_BY_CELL.yearCell,
+        "error",
+        `Downsizing year must be ${downsizingWindow.minYear} or later.`
+      );
+    }
+    if (downsizingWindow.maxYear !== null && downsizingYear > downsizingWindow.maxYear) {
+      pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.yearCell, "error", "Downsizing year cannot exceed the projection horizon.");
+    }
+  }
+
+  if (downsizingYearValid) {
     const hasHome = (asNumber(raw[HOME_LOAN_GROUP_BY_CELL.homeValueCell]) ?? 0) > 0;
-    const downsizingMode = String(raw[DOWNSIZING_GROUP_BY_CELL.modeCell] ?? "").trim().toUpperCase();
+    const downsizingMode = normalizeDownsizingMode(raw[DOWNSIZING_GROUP_BY_CELL.modeCell]);
     const purchaseCost = asNumber(raw[DOWNSIZING_GROUP_BY_CELL.purchaseCostCell]) ?? 0;
     const newRent = asNumber(raw[DOWNSIZING_GROUP_BY_CELL.rentCell]) ?? 0;
+    const currentHomeValue = asNumber(raw[HOME_LOAN_GROUP_BY_CELL.homeValueCell]) ?? 0;
+    const currentAnnualRent = asNumber(raw[HOME_LOAN_GROUP_BY_CELL.rentCell]) ?? 0;
+    const downsizingEstimate = estimateDownsizing({
+      downsizingYear,
+      homeValue: raw[HOME_LOAN_GROUP_BY_CELL.homeValueCell],
+      homeLoanBalance: raw[HOME_LOAN_GROUP_BY_CELL.balanceCell],
+      homeLoanRate: raw[HOME_LOAN_GROUP_BY_CELL.rateCell],
+      homeLoanRepaymentMonthly: raw[HOME_LOAN_GROUP_BY_CELL.repaymentCell],
+      propertyAppreciation: raw.B263,
+      propertyDisposalCosts: raw.B285,
+      newHomePurchaseCostToday: raw[DOWNSIZING_GROUP_BY_CELL.purchaseCostCell]
+    });
 
     if (hasHome) {
-      if (downsizingMode !== "BUY" && downsizingMode !== "RENT") {
+      if (downsizingMode === null) {
         pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.modeCell, "error", "Choose whether the downsized home will be bought or rented.");
       }
       if (downsizingMode === "BUY" && purchaseCost <= 0) {
@@ -141,8 +179,29 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
       if (downsizingMode === "RENT" && newRent <= 0) {
         pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.rentCell, "error", "New home monthly rent is required when downsizing to rent.");
       }
+      if (downsizingMode === "BUY" && purchaseCost > 0 && currentHomeValue > 0 && purchaseCost >= currentHomeValue) {
+        pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.purchaseCostCell, "warning", "Replacement purchase cost is not lower than the current home value.");
+      }
+      if (downsizingEstimate && downsizingEstimate.netEquityReleased <= 0) {
+        pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.yearCell, "warning", "Estimated net cash released after sale costs and mortgage payoff is zero or negative.");
+      }
+      if (
+        downsizingMode === "BUY"
+        && downsizingEstimate
+        && downsizingEstimate.replacementPurchaseCostAtDownsize !== null
+        && downsizingEstimate.replacementPurchaseCostAtDownsize > downsizingEstimate.netEquityReleased
+      ) {
+        pushMessage(
+          messages,
+          DOWNSIZING_GROUP_BY_CELL.purchaseCostCell,
+          "warning",
+          "Replacement purchase exceeds estimated released equity and is modeled as a cash purchase with no new mortgage."
+        );
+      }
     } else if (newRent <= 0) {
       pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.rentCell, "error", "New home monthly rent is required when downsizing from renting.");
+    } else if (currentAnnualRent > 0 && newRent * 12 >= currentAnnualRent) {
+      pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.rentCell, "warning", "New home rent is not lower than the current rent.");
     }
   }
 

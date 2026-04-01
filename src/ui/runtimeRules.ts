@@ -1,5 +1,6 @@
 import type { RunModelResult } from "../model/index";
 import { FieldId } from "../model/fieldRegistry";
+import { isDownsizingYearInProjectionWindow, normalizeDownsizingMode } from "../model/downsizing";
 import type { RawInputValue } from "../model/types";
 import type { ValidationMessage } from "../model/inputSchema";
 import type { InputDefinition } from "./inputDefinitions";
@@ -412,18 +413,19 @@ export function fieldVisible(
     return isBlank(values[HOME_FIELDS.homeValue]) || asNumber(values[HOME_FIELDS.homeValue]) === 0;
   }
   if (fieldId === DOWNSIZING_FIELDS.newHomeMode) {
-    return !isBlank(values[DOWNSIZING_FIELDS.year]) && asNumber(values[HOME_FIELDS.homeValue]) > 0;
+    return isDownsizingYearInProjectionWindow(values[DOWNSIZING_FIELDS.year], values[RUNTIME_FIELDS.currentAge], values[RUNTIME_FIELDS.lifeExpectancyAge])
+      && asNumber(values[HOME_FIELDS.homeValue]) > 0;
   }
   if (fieldId === DOWNSIZING_FIELDS.newHomePurchaseCost) {
-    return !isBlank(values[DOWNSIZING_FIELDS.year])
+    return isDownsizingYearInProjectionWindow(values[DOWNSIZING_FIELDS.year], values[RUNTIME_FIELDS.currentAge], values[RUNTIME_FIELDS.lifeExpectancyAge])
       && asNumber(values[HOME_FIELDS.homeValue]) > 0
-      && String(values[DOWNSIZING_FIELDS.newHomeMode] ?? "").trim().toUpperCase() === "BUY";
+      && normalizeDownsizingMode(values[DOWNSIZING_FIELDS.newHomeMode]) === "BUY";
   }
   if (fieldId === DOWNSIZING_FIELDS.newRentAnnual) {
-    return !isBlank(values[DOWNSIZING_FIELDS.year])
+    return isDownsizingYearInProjectionWindow(values[DOWNSIZING_FIELDS.year], values[RUNTIME_FIELDS.currentAge], values[RUNTIME_FIELDS.lifeExpectancyAge])
       && (
         asNumber(values[HOME_FIELDS.homeValue]) <= 0
-        || String(values[DOWNSIZING_FIELDS.newHomeMode] ?? "").trim().toUpperCase() === "RENT"
+        || normalizeDownsizingMode(values[DOWNSIZING_FIELDS.newHomeMode]) === "RENT"
       );
   }
 

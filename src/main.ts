@@ -1,5 +1,10 @@
 import "./app.css";
 import { pruneInactiveFieldState } from "./model/activation";
+import {
+  estimateDownsizing,
+  isDownsizingYearInProjectionWindow,
+  normalizeDownsizingMode
+} from "./model/downsizing";
 import { runModel } from "./model";
 import { createEmptyFieldState } from "./model/excelAdapter";
 import type { RunModelResult } from "./model/index";
@@ -2039,14 +2044,101 @@ function fieldHasPercentAdornment(def: InputDefinition): boolean {
 }
 
 function getDownsizingModeValue(value: RawInputValue): typeof DOWNSIZING_MODE_OPTIONS[number] | null {
-  const normalized = String(value ?? "").trim().toUpperCase();
+  const normalized = normalizeDownsizingMode(value);
   if (normalized === "BUY") return "Buy";
   if (normalized === "RENT") return "Rent";
   return null;
 }
 
+function hasValidDownsizingYearForUi(): boolean {
+  return isDownsizingYearInProjectionWindow(
+    fieldState[DOWNSIZING_FIELDS.year],
+    fieldState[RUNTIME_FIELDS.currentAge],
+    fieldState[RUNTIME_FIELDS.lifeExpectancyAge]
+  );
+}
+
+function getDownsizingPreviewAnchorFieldId(): FieldId | null {
+  if (!hasValidDownsizingYearForUi()) return null;
+  const hasHome = asNumber(fieldState[HOME_FIELDS.homeValue]) > 0;
+  const mode = normalizeDownsizingMode(fieldState[DOWNSIZING_FIELDS.newHomeMode]);
+  if (!hasHome) return DOWNSIZING_FIELDS.newRentAnnual;
+  if (mode === "BUY") return DOWNSIZING_FIELDS.newHomePurchaseCost;
+  if (mode === "RENT") return DOWNSIZING_FIELDS.newRentAnnual;
+  return DOWNSIZING_FIELDS.newHomeMode;
+}
+
+function renderDownsizingPreview(): string {
+  if (!hasValidDownsizingYearForUi()) return "";
+
+  const downsizingYear = Number(fieldState[DOWNSIZING_FIELDS.year]);
+  const hasHome = asNumber(fieldState[HOME_FIELDS.homeValue]) > 0;
+  const mode = normalizeDownsizingMode(fieldState[DOWNSIZING_FIELDS.newHomeMode]);
+  const newRentMonthly = asNumber(fieldState[DOWNSIZING_FIELDS.newRentAnnual]);
+  const previewRows: Array<{ label: string; value: string; tone?: "default" | "warning" }> = [];
+  const notes: string[] = [];
+
+  const estimate = estimateDownsizing({
+    downsizingYear,
+    homeValue: fieldState[HOME_FIELDS.homeValue],
+    homeLoanBalance: fieldState[HOME_FIELDS.mortgageBalance],
+    homeLoanRate: fieldState[HOME_FIELDS.mortgageInterestRateAnnual],
+    homeLoanRepaymentMonthly: fieldState[HOME_FIELDS.mortgageMonthlyRepayment],
+    propertyAppreciation: fieldState[RUNTIME_FIELDS.propertyAnnualAppreciation],
+    propertyDisposalCosts: fieldState[RUNTIME_FIELDS.propertyDisposalCostRate],
+    newHomePurchaseCostToday: fieldState[DOWNSIZING_FIELDS.newHomePurchaseCost],
+    projectionMonthOverride: uiState.projectionMonthOverride ?? null
+  });
+
+  if (hasHome && estimate) {
+    previewRows.push(
+      { label: `Sale proceeds in ${downsizingYear}`, value: formatCurrencyPrecise(estimate.saleProceeds) },
+      { label: "Mortgage payoff", value: formatCurrencyPrecise(estimate.mortgagePayoff) },
+      {
+        label: "Estimated equity released",
+        value: formatCurrencyPrecise(estimate.netEquityReleased),
+        tone: estimate.netEquityReleased <= 0 ? "warning" : "default"
+      }
+    );
+    if (mode === "BUY" && estimate.replacementPurchaseCostAtDownsize !== null) {
+      previewRows.push({
+        label: `Replacement cost in ${downsizingYear}`,
+        value: formatCurrencyPrecise(estimate.replacementPurchaseCostAtDownsize)
+      });
+      notes.push("Replacement purchase is rolled forward from today's price using home appreciation.");
+      if (estimate.replacementPurchaseCostAtDownsize > estimate.netEquityReleased) {
+        notes.push("Replacement purchase is modeled as a cash purchase with no new mortgage.");
+      }
+    }
+  } else if (newRentMonthly > 0) {
+    previewRows.push({
+      label: `Rent from ${downsizingYear}`,
+      value: `${formatCurrencyPrecise(newRentMonthly)}/mo`
+    });
+  }
+
+  if (previewRows.length === 0 && notes.length === 0) return "";
+
+  return `
+    <div class="downsizing-preview" aria-live="polite">
+      ${previewRows.length > 0 ? `
+        <div class="downsizing-preview-grid">
+          ${previewRows.map((row) => `
+            <div class="downsizing-preview-item${row.tone === "warning" ? " is-warning" : ""}">
+              <span class="downsizing-preview-label">${escapeHtml(row.label)}</span>
+              <strong class="downsizing-preview-value">${escapeHtml(row.value)}</strong>
+            </div>
+          `).join("")}
+        </div>
+      ` : ""}
+      ${notes.map((note) => `<small class="downsizing-preview-note">${escapeHtml(note)}</small>`).join("")}
+    </div>
+  `;
+}
+
 function renderDownsizingModeField(def: InputDefinition, label: string): string {
   const selectedMode = getDownsizingModeValue(fieldState[def.fieldId]);
+  const previewHtml = getDownsizingPreviewAnchorFieldId() === def.fieldId ? renderDownsizingPreview() : "";
 
   return `
     <div class="field field-choice-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
@@ -2068,6 +2160,7 @@ function renderDownsizingModeField(def: InputDefinition, label: string): string 
         </div>
       </div>
       ${def.tooltip ? `<small>${def.tooltip}</small>` : ""}
+      ${previewHtml}
     </div>
   `;
 }
@@ -2091,6 +2184,7 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
     hasSuffix ? "has-suffix" : "",
     hasStepper ? "has-stepper" : ""
   ].join(" ").trim();
+  const previewHtml = getDownsizingPreviewAnchorFieldId() === def.fieldId ? renderDownsizingPreview() : "";
 
   return `
     <div class="field${def.fieldId === LIVING_EXPENSES_FIELD_ID ? " living-expenses-field" : ""}" data-cell="${def.cell}" data-field-id="${def.fieldId}">
@@ -2107,6 +2201,7 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
         ` : ""}
       </div>
       ${showTooltip ? `<small>${def.tooltip}</small>` : ""}
+      ${previewHtml}
     </div>
   `;
 }

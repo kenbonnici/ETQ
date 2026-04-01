@@ -11,6 +11,7 @@ import {
   PROPERTY_GROUPS_BY_CELL,
   STOCK_MARKET_CRASH_GROUPS_BY_CELL
 } from "./inputSchema";
+import { isDownsizingYearInProjectionWindow } from "./downsizing";
 import { fieldStateToRawInputs, rawInputsToFieldState } from "./excelAdapter";
 import { FieldState, InputCell, ModelUiState, RawInputs } from "./types";
 
@@ -37,7 +38,11 @@ function clearCells(target: RawInputs, cells: readonly InputCell[]): void {
 
 function applyDependencyPruning(target: RawInputs): void {
   const hasHome = asNumber(target[HOME_LOAN_GROUP_BY_CELL.homeValueCell]) > 0;
-  const hasDownsizingYear = asNumber(target[DOWNSIZING_GROUP_BY_CELL.yearCell]) > 0;
+  const hasDownsizingYear = isDownsizingYearInProjectionWindow(
+    target[DOWNSIZING_GROUP_BY_CELL.yearCell],
+    target.B4,
+    target.B254
+  );
   const downsizingMode = String(target[DOWNSIZING_GROUP_BY_CELL.modeCell] ?? "").trim().toUpperCase();
   if (hasHome) {
     target[HOME_LOAN_GROUP_BY_CELL.rentCell] = null;

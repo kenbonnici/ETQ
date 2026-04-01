@@ -207,6 +207,8 @@ test("visibility rules stay semantic for dependents, properties, and loans", () 
   assert.equal(fieldVisible(fields, HOME_FIELDS.housingRentAnnual, DEFAULT_VISIBILITY), false);
 
   assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newHomeMode, DEFAULT_VISIBILITY), false);
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
   fields[DOWNSIZING_FIELDS.year] = new Date().getFullYear() + 4;
   assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newHomeMode, DEFAULT_VISIBILITY), true);
   assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newHomePurchaseCost, DEFAULT_VISIBILITY), false);
@@ -215,6 +217,11 @@ test("visibility rules stay semantic for dependents, properties, and loans", () 
   assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newRentAnnual, DEFAULT_VISIBILITY), false);
   fields[DOWNSIZING_FIELDS.newHomeMode] = "Rent";
   assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newRentAnnual, DEFAULT_VISIBILITY), true);
+
+  fields[DOWNSIZING_FIELDS.year] = new Date().getFullYear() - 1;
+  assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newHomeMode, DEFAULT_VISIBILITY), false);
+  assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newHomePurchaseCost, DEFAULT_VISIBILITY), false);
+  assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newRentAnnual, DEFAULT_VISIBILITY), false);
 });
 
 test("property liquidation order preserves duplicate-rank guardrails and only appends ranks for newly activated properties", () => {
