@@ -2050,20 +2050,22 @@ function renderDownsizingModeField(def: InputDefinition, label: string): string 
 
   return `
     <div class="field field-choice-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
-      <span>${label}</span>
-      <div class="field-choice-toggle" role="group" aria-label="${escapeHtml(label)}">
-        ${DOWNSIZING_MODE_OPTIONS.map((option) => `
-          <button
-            type="button"
-            class="field-choice-btn${selectedMode === option ? " is-active" : ""}"
-            data-field-id="${def.fieldId}"
-            data-toggle-field-id="${def.fieldId}"
-            data-toggle-option="${option}"
-            aria-pressed="${selectedMode === option ? "true" : "false"}"
-          >
-            ${option}
-          </button>
-        `).join("")}
+      <div class="field-choice-row">
+        <span>${label}</span>
+        <div class="field-choice-toggle" role="group" aria-label="${escapeHtml(label)}">
+          ${DOWNSIZING_MODE_OPTIONS.map((option) => `
+            <button
+              type="button"
+              class="field-choice-btn${selectedMode === option ? " is-active" : ""}"
+              data-field-id="${def.fieldId}"
+              data-toggle-field-id="${def.fieldId}"
+              data-toggle-option="${option}"
+              aria-pressed="${selectedMode === option ? "true" : "false"}"
+            >
+              ${option}
+            </button>
+          `).join("")}
+        </div>
       </div>
       ${def.tooltip ? `<small>${def.tooltip}</small>` : ""}
     </div>

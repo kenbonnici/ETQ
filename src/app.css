@@ -1949,6 +1949,17 @@ body {
   background: #fffaf5;
 }
 
+.field-choice-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.field-choice-row > span {
+  flex: 1 1 auto;
+}
+
 .field > span,
 .living-expenses-heading,
 .living-expenses-category > span {
@@ -2016,6 +2027,7 @@ input {
   align-items: center;
   gap: 2px;
   padding: 3px;
+  margin-left: auto;
   border: 1px solid #d6dfda;
   border-radius: 999px;
   background: #f8fbf9;
@@ -2023,16 +2035,16 @@ input {
 }
 
 .field-choice-btn {
-  min-width: 96px;
-  padding: 7px 14px;
-  border: 0;
+  min-width: 62px;
+  padding: 5px 12px;
+  border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   color: #5c746d;
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+  transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
 .field-choice-btn:hover {
@@ -2040,6 +2052,7 @@ input {
 }
 
 .field-choice-btn.is-active {
+  border-color: #2f8572;
   background: #7ec2b6;
   color: #ffffff;
   box-shadow: 0 1px 2px rgb(21 52 47 / 0.12);
