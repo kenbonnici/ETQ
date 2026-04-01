@@ -2051,7 +2051,7 @@ function renderDownsizingModeField(def: InputDefinition, label: string): string 
   return `
     <div class="field field-choice-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
       <div class="field-choice-row">
-        <span>${label}</span>
+        <span class="field-choice-label">${label}</span>
         <div class="field-choice-toggle" role="group" aria-label="${escapeHtml(label)}">
           ${DOWNSIZING_MODE_OPTIONS.map((option) => `
             <button

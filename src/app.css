@@ -1960,6 +1960,13 @@ body {
   flex: 1 1 auto;
 }
 
+.field-choice-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #314b44;
+  letter-spacing: 0.01em;
+}
+
 .field > span,
 .living-expenses-heading,
 .living-expenses-category > span {
