@@ -334,10 +334,21 @@ export function getPropertyName(
   return String(values[group.nameField] ?? "").trim() || group.fallbackName;
 }
 
+const DOWNSIZING_PREVIEW_RERENDER_FIELDS = new Set<FieldId>([
+  HOME_FIELDS.homeValue,
+  HOME_FIELDS.mortgageBalance,
+  HOME_FIELDS.mortgageInterestRateAnnual,
+  HOME_FIELDS.mortgageMonthlyRepayment,
+  DOWNSIZING_FIELDS.year,
+  DOWNSIZING_FIELDS.newHomePurchaseCost,
+  DOWNSIZING_FIELDS.newRentAnnual,
+  RUNTIME_FIELDS.propertyAnnualAppreciation,
+  RUNTIME_FIELDS.propertyDisposalCostRate
+]);
+
 export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, nextValue: unknown): boolean {
+  if (DOWNSIZING_PREVIEW_RERENDER_FIELDS.has(fieldId)) return asNumber(prevValue) !== asNumber(nextValue);
   if (fieldId === RUNTIME_FIELDS.stockMarketInvestments) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
-  if (fieldId === HOME_FIELDS.homeValue) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
-  if (fieldId === DOWNSIZING_FIELDS.year) return isBlank(prevValue) !== isBlank(nextValue);
   if (fieldId === DOWNSIZING_FIELDS.newHomeMode) return String(prevValue ?? "") !== String(nextValue ?? "");
   if (fieldId === OTHER_WORK_FIELDS.income) return isNonZeroNumber(prevValue) !== isNonZeroNumber(nextValue);
   if (fieldId === POST_RETIREMENT_INCOME_FIELDS.amount) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
