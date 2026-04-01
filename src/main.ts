@@ -2096,7 +2096,7 @@ function renderDownsizingPreview(): string {
   });
 
   if (hasHome && estimate) {
-    previewTitle = `Home downsizing summary · ${downsizingYear}`;
+    previewTitle = `Summary · ${downsizingYear}`;
     previewRows.push(
       { label: "Sale proceeds", value: formatCurrencyPrecise(estimate.saleProceeds), sign: "plus" },
       { label: "Mortgage payoff", value: formatCurrencyPrecise(estimate.mortgagePayoff), sign: "minus" }
@@ -2120,7 +2120,7 @@ function renderDownsizingPreview(): string {
       summaryTone = estimate.netEquityReleased <= 0 ? "warning" : "default";
     }
   } else if (newRentMonthly > 0) {
-    previewTitle = `Downsizing summary · ${downsizingYear}`;
+    previewTitle = `Summary · ${downsizingYear}`;
     summaryLabel = `Rent from ${downsizingYear}`;
     summaryValue = `${formatCurrencyPrecise(newRentMonthly)}/mo`;
   }
