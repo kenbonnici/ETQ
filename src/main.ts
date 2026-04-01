@@ -138,6 +138,17 @@ const STEP_DECIMALS = FIELD_STEPPER_DECIMALS;
 const LIVING_EXPENSES_FIELD_ID = RUNTIME_FIELDS.annualLivingExpenses;
 const LIVING_EXPENSES_DEF = INPUT_DEFINITION_BY_FIELD_ID[LIVING_EXPENSES_FIELD_ID];
 const DOWNSIZING_MODE_OPTIONS = ["Buy", "Rent"] as const;
+const DOWNSIZING_PREVIEW_INPUT_FIELDS = new Set<FieldId>([
+  HOME_FIELDS.homeValue,
+  HOME_FIELDS.mortgageBalance,
+  HOME_FIELDS.mortgageInterestRateAnnual,
+  HOME_FIELDS.mortgageMonthlyRepayment,
+  DOWNSIZING_FIELDS.year,
+  DOWNSIZING_FIELDS.newHomePurchaseCost,
+  DOWNSIZING_FIELDS.newRentAnnual,
+  RUNTIME_FIELDS.propertyAnnualAppreciation,
+  RUNTIME_FIELDS.propertyDisposalCostRate
+]);
 
 function getDynamicMinConstraint(fieldId: FieldId): number | null {
   if (fieldId !== RUNTIME_FIELDS.lifeExpectancyAge) return null;
@@ -2152,9 +2163,28 @@ function renderDownsizingPreview(): string {
   `;
 }
 
+function wrapDownsizingPreview(fieldId: FieldId): string {
+  if (getDownsizingPreviewAnchorFieldId() !== fieldId) return "";
+  return `<div data-downsizing-preview-slot data-downsizing-preview-field-id="${fieldId}">${renderDownsizingPreview()}</div>`;
+}
+
+function refreshDownsizingPreviewOnInput(fieldId: FieldId): boolean {
+  if (!DOWNSIZING_PREVIEW_INPUT_FIELDS.has(fieldId)) return false;
+  const slot = inputsPanel.querySelector<HTMLElement>("[data-downsizing-preview-slot]");
+  const anchorFieldId = getDownsizingPreviewAnchorFieldId();
+  if (!slot) return false;
+  const renderedFieldId = slot.dataset.downsizingPreviewFieldId as FieldId | undefined;
+  if (renderedFieldId !== anchorFieldId) {
+    renderInputs();
+    return true;
+  }
+  slot.innerHTML = renderDownsizingPreview();
+  return true;
+}
+
 function renderDownsizingModeField(def: InputDefinition, label: string): string {
   const selectedMode = getDownsizingModeValue(fieldState[def.fieldId]);
-  const previewHtml = getDownsizingPreviewAnchorFieldId() === def.fieldId ? renderDownsizingPreview() : "";
+  const previewHtml = wrapDownsizingPreview(def.fieldId);
 
   return `
     <div class="field field-choice-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
@@ -2200,7 +2230,7 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
     hasSuffix ? "has-suffix" : "",
     hasStepper ? "has-stepper" : ""
   ].join(" ").trim();
-  const previewHtml = getDownsizingPreviewAnchorFieldId() === def.fieldId ? renderDownsizingPreview() : "";
+  const previewHtml = wrapDownsizingPreview(def.fieldId);
 
   return `
     <div class="field${def.fieldId === LIVING_EXPENSES_FIELD_ID ? " living-expenses-field" : ""}" data-cell="${def.cell}" data-field-id="${def.fieldId}">
@@ -2374,7 +2404,8 @@ function applyStepperDelta(fieldId: FieldId, dir: number): void {
   if (input) input.value = formatFieldValue(def, fieldState[fieldId]);
 
   setRetireCheckMessage(null);
-  if (STRUCTURAL_RERENDER_CELLS.has(fieldId)) {
+  const refreshedDownsizingPreview = refreshDownsizingPreviewOnInput(fieldId);
+  if (!refreshedDownsizingPreview && STRUCTURAL_RERENDER_CELLS.has(fieldId)) {
     renderInputs();
   }
   queueRecalc();
@@ -2994,10 +3025,11 @@ function renderInputs(): void {
         enforceLiveUntilAgeConstraint(true);
       }
       queueRecalc();
+      const refreshedDownsizingPreview = refreshDownsizingPreviewOnInput(fieldId);
       // For numeric dependency-driver fields, defer UI structural rerender to blur
       // to avoid caret reset behavior in number inputs.
       const rerenderNow = shouldRerenderOnInput(fieldId, prevValue, nextValue);
-      if (rerenderNow) {
+      if (!refreshedDownsizingPreview && rerenderNow) {
         renderInputs();
       }
     });
