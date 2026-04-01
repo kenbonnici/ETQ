@@ -2139,6 +2139,9 @@ input {
   color: #1f2937;
   text-align: right;
   justify-self: end;
+  min-width: 88px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
 .downsizing-preview-result {
@@ -2174,6 +2177,9 @@ input {
   color: #2f6b2e;
   text-align: right;
   justify-self: end;
+  min-width: 88px;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
 }
 
 .downsizing-preview-note {
