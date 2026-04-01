@@ -142,11 +142,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 23,
     fieldId: "housing.rentAnnual",
-    label: "Housing rent",
+    label: "Home monthly rent",
     section: "QUICK START",
     groupPath: "QUICK START",
     groupTail: [],
-    tooltip: "If not a home owner",
+    tooltip: "Monthly rent if not a home owner",
     uiNote: "show only if not a home owner (B12=\"\")",
     sampleValue: "",
     type: "number"

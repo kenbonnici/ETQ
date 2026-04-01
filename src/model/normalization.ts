@@ -96,7 +96,7 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
     homeLoanRepaymentMonthly: toNumber(raw.B17),
     statutoryRetirementAge,
     pensionAnnual: toNumber(raw.B21),
-    housingRentAnnual: toNumber(raw.B23),
+    housingRentAnnual: toNumber(raw.B23) * 12,
     livingExpensesAnnual: toNumber(raw.B25),
 
     dependents: DEPENDENT_GROUPS_BY_CELL.map((group) => ({

@@ -120,7 +120,7 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   }
 
   if (asNumber(raw.B12) !== null && (asNumber(raw.B12) ?? 0) > 0 && (asNumber(raw.B23) ?? 0) > 0) {
-    pushMessage(messages, "B23", "error", "Housing rent must be blank when a home value is provided.");
+    pushMessage(messages, "B23", "error", `${getCellLabel("B23")} must be blank when a home value is provided.`);
   }
 
   const homeLoanBalance = asNumber(raw[HOME_LOAN_GROUP_BY_CELL.balanceCell]) ?? 0;
