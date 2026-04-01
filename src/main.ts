@@ -19,6 +19,7 @@ import { FieldId, ModelUiState, RawInputValue, ScenarioOutputs } from "./model/t
 import {
   ASSET_OF_VALUE_RUNTIME_GROUPS,
   DEPENDENT_RUNTIME_GROUPS,
+  DOWNSIZING_FIELDS,
   EXPENSE_EVENT_RUNTIME_GROUPS,
   HOME_FIELDS,
   INCOME_EVENT_RUNTIME_GROUPS,
@@ -130,6 +131,7 @@ const STEPPER_CONFIG = FIELD_STEPPER_STEPS;
 const STEP_DECIMALS = FIELD_STEPPER_DECIMALS;
 const LIVING_EXPENSES_FIELD_ID = RUNTIME_FIELDS.annualLivingExpenses;
 const LIVING_EXPENSES_DEF = INPUT_DEFINITION_BY_FIELD_ID[LIVING_EXPENSES_FIELD_ID];
+const DOWNSIZING_MODE_OPTIONS = ["Buy", "Rent"] as const;
 
 function getDynamicMinConstraint(fieldId: FieldId): number | null {
   if (fieldId !== RUNTIME_FIELDS.lifeExpectancyAge) return null;
@@ -892,11 +894,21 @@ function getAdjacentVisibleFieldId(fieldId: FieldId, reverse: boolean): FieldId 
   return orderedFields[nextIndex] ?? null;
 }
 
+function getRenderedFieldToggleButton(fieldId: FieldId): HTMLButtonElement | null {
+  return inputsPanel.querySelector<HTMLButtonElement>(`button[data-toggle-field-id="${fieldId}"][aria-pressed="true"]`)
+    ?? inputsPanel.querySelector<HTMLButtonElement>(`button[data-toggle-field-id="${fieldId}"]`);
+}
+
 function focusRenderedField(fieldId: FieldId | null): boolean {
   if (!fieldId) return false;
   const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${fieldId}"]`);
-  if (!input) return false;
-  input.focus({ preventScroll: true });
+  if (input) {
+    input.focus({ preventScroll: true });
+    return true;
+  }
+  const toggleButton = getRenderedFieldToggleButton(fieldId);
+  if (!toggleButton) return false;
+  toggleButton.focus({ preventScroll: true });
   return true;
 }
 
@@ -2026,7 +2038,42 @@ function fieldHasPercentAdornment(def: InputDefinition): boolean {
   return def.type === "percent";
 }
 
+function getDownsizingModeValue(value: RawInputValue): typeof DOWNSIZING_MODE_OPTIONS[number] | null {
+  const normalized = String(value ?? "").trim().toUpperCase();
+  if (normalized === "BUY") return "Buy";
+  if (normalized === "RENT") return "Rent";
+  return null;
+}
+
+function renderDownsizingModeField(def: InputDefinition, label: string): string {
+  const selectedMode = getDownsizingModeValue(fieldState[def.fieldId]);
+
+  return `
+    <div class="field field-choice-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+      <span>${label}</span>
+      <div class="field-choice-toggle" role="group" aria-label="${escapeHtml(label)}">
+        ${DOWNSIZING_MODE_OPTIONS.map((option) => `
+          <button
+            type="button"
+            class="field-choice-btn${selectedMode === option ? " is-active" : ""}"
+            data-field-id="${def.fieldId}"
+            data-toggle-field-id="${def.fieldId}"
+            data-toggle-option="${option}"
+            aria-pressed="${selectedMode === option ? "true" : "false"}"
+          >
+            ${option}
+          </button>
+        `).join("")}
+      </div>
+      ${def.tooltip ? `<small>${def.tooltip}</small>` : ""}
+    </div>
+  `;
+}
+
 function renderStandardFieldControl(def: InputDefinition, label: string): string {
+  if (def.fieldId === DOWNSIZING_FIELDS.newHomeMode) {
+    return renderDownsizingModeField(def, label);
+  }
   const value = fieldState[def.fieldId];
   const valStr = formatFieldValue(def, value);
   const inputType = "text";
@@ -2705,6 +2752,30 @@ function renderInputs(): void {
       if (nextMode === "expanded") {
         setLivingExpensesMode(livingExpensesMode === "expanded" ? "single" : "expanded");
       }
+    });
+  });
+
+  inputsPanel.querySelectorAll<HTMLButtonElement>("button[data-toggle-field-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const fieldId = btn.dataset.toggleFieldId as FieldId | undefined;
+      const nextValue = btn.dataset.toggleOption;
+      if (!fieldId || !DOWNSIZING_MODE_OPTIONS.includes(nextValue as typeof DOWNSIZING_MODE_OPTIONS[number])) return;
+
+      markFieldTouched(fieldId);
+      if (getDownsizingModeValue(fieldState[fieldId]) === nextValue) {
+        focusRenderedField(fieldId);
+        return;
+      }
+
+      fieldState[fieldId] = nextValue;
+      const pruned = pruneInactiveFieldState(fieldState);
+      for (const key of Object.keys(pruned) as Array<FieldId>) {
+        fieldState[key] = pruned[key];
+      }
+      setRetireCheckMessage(null);
+      queueRecalc();
+      renderInputs();
+      focusRenderedField(fieldId);
     });
   });
 
