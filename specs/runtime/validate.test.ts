@@ -332,7 +332,7 @@ test("validation warns when downsizing assumptions do not look cheaper or equity
   );
   assert.equal(
     messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newHomePurchaseCost && message.severity === "warning" && message.message.includes("cash purchase")),
-    true
+    false
   );
 
   const rentingFields = createEmptyFieldState();

@@ -46,6 +46,8 @@ const selectors = {
   stockMarketCrash2Year: 'input[data-field-id="stockMarketCrashes.02.year"]',
   stockMarketCrash4Year: 'input[data-field-id="stockMarketCrashes.04.year"]',
   stockMarketCrash4Drop: 'input[data-field-id="stockMarketCrashes.04.dropPercentage"]',
+  downsizingYear: 'input[data-field-id="housing.downsize.year"]',
+  downsizingPurchaseCost: 'input[data-field-id="housing.downsize.newHomePurchaseCost"]',
   cashChart: "#cash-chart",
   networthChart: "#nw-chart",
   cashflowScroll: "#cashflow-table-panel .cashflow-table-scroll",
@@ -63,6 +65,14 @@ async function loadSampleData(page: Page): Promise<void> {
 async function fillAndBlur(page: Page, selector: string, value: string): Promise<void> {
   const input = page.locator(selector);
   await input.fill(value);
+  await input.blur();
+}
+
+async function replaceAndBlur(page: Page, selector: string, value: string): Promise<void> {
+  const input = page.locator(selector);
+  await input.click();
+  await input.selectText();
+  await page.keyboard.type(value);
   await input.blur();
 }
 
@@ -224,6 +234,28 @@ test("tab order skips hidden housing rent and reveals mortgage fields in sequenc
 
   await page.locator(selectors.mortgageRepayment).press("Shift+Tab");
   await expectActiveElement(page, selectors.mortgageInterest);
+});
+
+test("downsizing cheaper-home warning clears once the replacement cost is reduced", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  await fillAndBlur(page, selectors.currentAge, "48");
+  await fillAndBlur(page, selectors.homeValue, "500000");
+  await fillAndBlur(page, selectors.mortgageBalance, "320000");
+  await fillAndBlur(page, selectors.mortgageInterest, "4");
+  await fillAndBlur(page, selectors.mortgageRepayment, "1800");
+  await fillAndBlur(page, selectors.downsizingYear, String(new Date().getFullYear() + 4));
+  await page.locator('button[data-toggle-field-id="housing.downsize.newHomeMode"][data-toggle-option="Buy"]').click();
+  await page.waitForTimeout(350);
+
+  await replaceAndBlur(page, selectors.downsizingPurchaseCost, "500000");
+  const downsizingField = page.locator('.field[data-field-id="housing.downsize.newHomePurchaseCost"]');
+  await expect(downsizingField.locator(".field-feedback")).toContainText("not lower than the current home value");
+
+  await replaceAndBlur(page, selectors.downsizingPurchaseCost, "450000");
+  await expect(downsizingField.locator(".field-feedback")).toHaveCount(0);
+  await expect(downsizingField).not.toHaveClass(/has-warning/);
 });
 
 test("living expenses default to single-total entry and expanded mode aggregates categories", async ({ page }) => {

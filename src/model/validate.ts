@@ -185,19 +185,6 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
       if (downsizingEstimate && downsizingEstimate.netEquityReleased <= 0) {
         pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.yearCell, "warning", "Estimated net cash released after sale costs and mortgage payoff is zero or negative.");
       }
-      if (
-        downsizingMode === "BUY"
-        && downsizingEstimate
-        && downsizingEstimate.replacementPurchaseCostAtDownsize !== null
-        && downsizingEstimate.replacementPurchaseCostAtDownsize > downsizingEstimate.netEquityReleased
-      ) {
-        pushMessage(
-          messages,
-          DOWNSIZING_GROUP_BY_CELL.purchaseCostCell,
-          "warning",
-          "Replacement purchase exceeds estimated released equity and is modeled as a cash purchase with no new mortgage."
-        );
-      }
     } else if (newRent <= 0) {
       pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.rentCell, "error", "New home monthly rent is required when downsizing from renting.");
     } else if (currentAnnualRent > 0 && newRent * 12 >= currentAnnualRent) {

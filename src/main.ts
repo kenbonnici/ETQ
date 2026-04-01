@@ -6,6 +6,7 @@ import {
   normalizeDownsizingMode
 } from "./model/downsizing";
 import { runModel } from "./model";
+import { validateFieldState } from "./model/validate";
 import { createEmptyFieldState } from "./model/excelAdapter";
 import type { RunModelResult } from "./model/index";
 import {
@@ -2996,6 +2997,9 @@ function renderInputs(): void {
         }
         const n = Number(current);
         el.value = Number.isFinite(n) ? (n * 100).toFixed(2) : "";
+        queueMicrotask(() => {
+          if (document.activeElement === el) el.setSelectionRange(0, el.value.length);
+        });
         return;
       }
       if (def.type === "integer" || def.type === "number") {
@@ -3004,6 +3008,9 @@ function renderInputs(): void {
           return;
         }
         el.value = String(current);
+        queueMicrotask(() => {
+          if (document.activeElement === el) el.setSelectionRange(0, el.value.length);
+        });
       }
     });
     el.addEventListener("blur", (ev) => {
@@ -3225,7 +3232,7 @@ function renderInputs(): void {
 
   restorePanelCursorState(cursorState);
   restorePendingLiquidationControl();
-  renderValidationState(latestValidationMessages);
+  renderValidationState(validateFieldState(fieldState));
 }
 
 function getOrCreateChartTooltip(canvas: HTMLCanvasElement): HTMLDivElement | null {
