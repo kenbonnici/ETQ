@@ -2076,8 +2076,12 @@ function renderDownsizingPreview(): string {
   const hasHome = asNumber(fieldState[HOME_FIELDS.homeValue]) > 0;
   const mode = normalizeDownsizingMode(fieldState[DOWNSIZING_FIELDS.newHomeMode]);
   const newRentMonthly = asNumber(fieldState[DOWNSIZING_FIELDS.newRentAnnual]);
-  const previewRows: Array<{ label: string; value: string; tone?: "default" | "warning"; detail?: string; emphasis?: boolean }> = [];
+  const previewRows: Array<{ label: string; value: string; sign: "plus" | "minus" }> = [];
   const notes: string[] = [];
+  let previewTitle = "";
+  let summaryLabel = "";
+  let summaryValue = "";
+  let summaryTone: "default" | "warning" = "default";
 
   const estimate = estimateDownsizing({
     downsizingYear,
@@ -2092,55 +2096,55 @@ function renderDownsizingPreview(): string {
   });
 
   if (hasHome && estimate) {
+    previewTitle = `Home downsizing summary · ${downsizingYear}`;
     previewRows.push(
-      { label: `Sale proceeds in ${downsizingYear}`, value: formatCurrencyPrecise(estimate.saleProceeds) },
-      { label: "Mortgage payoff", value: formatCurrencyPrecise(estimate.mortgagePayoff) }
+      { label: "Sale proceeds", value: formatCurrencyPrecise(estimate.saleProceeds), sign: "plus" },
+      { label: "Mortgage payoff", value: formatCurrencyPrecise(estimate.mortgagePayoff), sign: "minus" }
     );
     if (mode === "BUY" && estimate.replacementPurchaseCostAtDownsize !== null) {
       const cashReleased = estimate.netEquityReleased - estimate.replacementPurchaseCostAtDownsize;
       previewRows.push({
-        label: `Replacement cost in ${downsizingYear}`,
-        value: formatCurrencyPrecise(estimate.replacementPurchaseCostAtDownsize)
+        label: "Replacement cost",
+        value: formatCurrencyPrecise(estimate.replacementPurchaseCostAtDownsize),
+        sign: "minus"
       });
-      previewRows.push({
-        label: "Cash released",
-        value: formatCurrencyPrecise(cashReleased),
-        detail: `${formatCurrencyPrecise(estimate.saleProceeds)} - ${formatCurrencyPrecise(estimate.mortgagePayoff)} - ${formatCurrencyPrecise(estimate.replacementPurchaseCostAtDownsize)}`,
-        tone: cashReleased <= 0 ? "warning" : "default",
-        emphasis: true
-      });
+      summaryLabel = "Cash released";
+      summaryValue = formatCurrencyPrecise(cashReleased);
+      summaryTone = cashReleased <= 0 ? "warning" : "default";
       if (estimate.replacementPurchaseCostAtDownsize > estimate.netEquityReleased) {
         notes.push("Replacement purchase is modeled as a cash purchase with no new mortgage.");
       }
     } else {
-      previewRows.push({
-        label: "Cash released",
-        value: formatCurrencyPrecise(estimate.netEquityReleased),
-        detail: `${formatCurrencyPrecise(estimate.saleProceeds)} - ${formatCurrencyPrecise(estimate.mortgagePayoff)}`,
-        tone: estimate.netEquityReleased <= 0 ? "warning" : "default",
-        emphasis: true
-      });
+      summaryLabel = "Cash released";
+      summaryValue = formatCurrencyPrecise(estimate.netEquityReleased);
+      summaryTone = estimate.netEquityReleased <= 0 ? "warning" : "default";
     }
   } else if (newRentMonthly > 0) {
-    previewRows.push({
-      label: `Rent from ${downsizingYear}`,
-      value: `${formatCurrencyPrecise(newRentMonthly)}/mo`
-    });
+    previewTitle = `Downsizing summary · ${downsizingYear}`;
+    summaryLabel = `Rent from ${downsizingYear}`;
+    summaryValue = `${formatCurrencyPrecise(newRentMonthly)}/mo`;
   }
 
-  if (previewRows.length === 0 && notes.length === 0) return "";
+  if (!summaryValue && previewRows.length === 0 && notes.length === 0) return "";
 
   return `
     <div class="downsizing-preview" aria-live="polite">
+      ${previewTitle ? `<div class="downsizing-preview-header">${escapeHtml(previewTitle)}</div>` : ""}
       ${previewRows.length > 0 ? `
-        <div class="downsizing-preview-grid">
+        <div class="downsizing-preview-list">
           ${previewRows.map((row) => `
-            <div class="downsizing-preview-item${row.tone === "warning" ? " is-warning" : ""}${row.emphasis ? " is-emphasis" : ""}">
-              <span class="downsizing-preview-label">${escapeHtml(row.label)}</span>
-              <strong class="downsizing-preview-value">${escapeHtml(row.value)}</strong>
-              ${row.detail ? `<span class="downsizing-preview-detail">${escapeHtml(row.detail)}</span>` : ""}
+            <div class="downsizing-preview-row">
+              <span class="downsizing-preview-sign is-${row.sign}" aria-hidden="true">${row.sign === "plus" ? "+" : "−"}</span>
+              <span class="downsizing-preview-row-label">${escapeHtml(row.label)}</span>
+              <strong class="downsizing-preview-row-value">${escapeHtml(row.value)}</strong>
             </div>
           `).join("")}
+        </div>
+      ` : ""}
+      ${summaryValue ? `
+        <div class="downsizing-preview-result${summaryTone === "warning" ? " is-warning" : ""}">
+          <span class="downsizing-preview-result-label">${escapeHtml(summaryLabel)}</span>
+          <strong class="downsizing-preview-result-value">${escapeHtml(summaryValue)}</strong>
         </div>
       ` : ""}
       ${notes.map((note) => `<small class="downsizing-preview-note">${escapeHtml(note)}</small>`).join("")}
