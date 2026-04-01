@@ -2143,6 +2143,7 @@ function renderDownsizingPreview(): string {
       ` : ""}
       ${summaryValue ? `
         <div class="downsizing-preview-result${summaryTone === "warning" ? " is-warning" : ""}">
+          <span class="downsizing-preview-result-spacer" aria-hidden="true"></span>
           <span class="downsizing-preview-result-label">${escapeHtml(summaryLabel)}</span>
           <strong class="downsizing-preview-result-value">${escapeHtml(summaryValue)}</strong>
         </div>

@@ -2146,13 +2146,18 @@ input {
 
 .downsizing-preview-result {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 10px;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  gap: 8px;
   align-items: center;
   padding: 9px 10px;
   border-radius: 8px;
   border: 1px solid #dce7cf;
   background: linear-gradient(135deg, #eef4e1 0%, #e9f0d8 100%);
+}
+
+.downsizing-preview-result-spacer {
+  width: 16px;
+  height: 16px;
 }
 
 .downsizing-preview-result.is-warning {
