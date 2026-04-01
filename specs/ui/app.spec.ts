@@ -258,6 +258,30 @@ test("downsizing cheaper-home warning clears once the replacement cost is reduce
   await expect(downsizingField).not.toHaveClass(/has-warning/);
 });
 
+test("downsizing cash released returns after switching from rent back to buy", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+
+  await fillAndBlur(page, selectors.currentAge, "48");
+  await fillAndBlur(page, selectors.homeValue, "500000");
+  await fillAndBlur(page, selectors.mortgageBalance, "120000");
+  await fillAndBlur(page, selectors.mortgageInterest, "4");
+  await fillAndBlur(page, selectors.mortgageRepayment, "1800");
+  await fillAndBlur(page, selectors.downsizingYear, String(new Date().getFullYear() + 4));
+
+  await page.locator('button[data-toggle-field-id="housing.downsize.newHomeMode"][data-toggle-option="Rent"]').click();
+  await page.waitForTimeout(350);
+  await expect(page.locator(".downsizing-preview")).toContainText("Cash released");
+
+  await page.locator('button[data-toggle-field-id="housing.downsize.newHomeMode"][data-toggle-option="Buy"]').click();
+  await page.waitForTimeout(350);
+  await replaceAndBlur(page, selectors.downsizingPurchaseCost, "250000");
+
+  const preview = page.locator(".downsizing-preview");
+  await expect(preview).toContainText("Cash released");
+  await expect(preview).toContainText("Replacement cost");
+});
+
 test("living expenses default to single-total entry and expanded mode aggregates categories", async ({ page }) => {
   await loadSampleData(page);
 

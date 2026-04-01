@@ -257,6 +257,8 @@ export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
   HOME_FIELDS.mortgageBalance,
   DOWNSIZING_FIELDS.year,
   DOWNSIZING_FIELDS.newHomeMode,
+  DOWNSIZING_FIELDS.newHomePurchaseCost,
+  DOWNSIZING_FIELDS.newRentAnnual,
   ...DEPENDENT_RUNTIME_GROUPS.map((group) => group.nameField),
   ...PROPERTY_RUNTIME_GROUPS.flatMap((group) => [group.nameField, group.valueField]),
   ...ASSET_OF_VALUE_RUNTIME_GROUPS.flatMap((group) => [group.nameField, group.valueField]),
