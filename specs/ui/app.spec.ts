@@ -566,6 +566,14 @@ test("retire-check readiness follows projection-blocking validation", async ({ p
   await expect(page.locator(".timeline-milestone").first()).toBeVisible();
 });
 
+test("timeline cap shows the entered life expectancy age", async ({ page }) => {
+  await loadSampleData(page);
+
+  await expect(page.locator(".timeline-endcap-top .timeline-end-year")).toHaveText(
+    String(EXCEL_BASELINE_SPECIMEN.raw_inputs.B254)
+  );
+});
+
 test("cash-flow controls preserve structure and scroll position across scenario switches", async ({ page }) => {
   await loadSampleData(page);
 

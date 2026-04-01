@@ -1750,7 +1750,10 @@ function renderMilestoneTimeline(result: RunModelResult): void {
     return;
   }
   const startAge = ages[0];
-  const endAge = ages[ages.length - 1];
+  const enteredEndAge = Number(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
+  const endAge = !isBlank(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]) && Number.isFinite(enteredEndAge) && enteredEndAge >= startAge
+    ? enteredEndAge
+    : ages[ages.length - 1];
   const startLabelAge = Math.round(enteredAge);
   const span = Math.max(1, endAge - startAge);
   const milestones = buildTimelineMilestones(
