@@ -2078,7 +2078,6 @@ function renderDownsizingPreview(): string {
   const newRentMonthly = asNumber(fieldState[DOWNSIZING_FIELDS.newRentAnnual]);
   const previewRows: Array<{ label: string; value: string; sign: "plus" | "minus" }> = [];
   const notes: string[] = [];
-  let previewTitle = "";
   let summaryLabel = "";
   let summaryValue = "";
   let summaryTone: "default" | "warning" = "default";
@@ -2096,7 +2095,6 @@ function renderDownsizingPreview(): string {
   });
 
   if (hasHome && estimate) {
-    previewTitle = `Summary · ${downsizingYear}`;
     previewRows.push(
       { label: "Sale proceeds", value: formatCurrencyPrecise(estimate.saleProceeds), sign: "plus" },
       { label: "Mortgage payoff", value: formatCurrencyPrecise(estimate.mortgagePayoff), sign: "minus" }
@@ -2120,7 +2118,6 @@ function renderDownsizingPreview(): string {
       summaryTone = estimate.netEquityReleased <= 0 ? "warning" : "default";
     }
   } else if (newRentMonthly > 0) {
-    previewTitle = `Summary · ${downsizingYear}`;
     summaryLabel = `Rent from ${downsizingYear}`;
     summaryValue = `${formatCurrencyPrecise(newRentMonthly)}/mo`;
   }
@@ -2129,7 +2126,6 @@ function renderDownsizingPreview(): string {
 
   return `
     <div class="downsizing-preview" aria-live="polite">
-      ${previewTitle ? `<div class="downsizing-preview-header">${escapeHtml(previewTitle)}</div>` : ""}
       ${previewRows.length > 0 ? `
         <div class="downsizing-preview-list">
           ${previewRows.map((row) => `
