@@ -187,7 +187,7 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
       }
     } else if (newRent <= 0) {
       pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.rentCell, "error", "New home monthly rent is required when downsizing from renting.");
-    } else if (currentAnnualRent > 0 && newRent * 12 >= currentAnnualRent) {
+    } else if (currentAnnualRent > 0 && newRent >= currentAnnualRent) {
       pushMessage(messages, DOWNSIZING_GROUP_BY_CELL.rentCell, "warning", "New home rent is not lower than the current rent.");
     }
   }

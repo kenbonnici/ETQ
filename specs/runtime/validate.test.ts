@@ -339,13 +339,20 @@ test("validation warns when downsizing assumptions do not look cheaper or equity
   rentingFields[RUNTIME_FIELDS.currentAge] = 48;
   rentingFields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
   rentingFields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
-  rentingFields[HOME_FIELDS.housingRentAnnual] = 24_000;
+  rentingFields[HOME_FIELDS.housingRentAnnual] = 5_000;
   rentingFields[DOWNSIZING_FIELDS.year] = new Date().getFullYear() + 4;
-  rentingFields[DOWNSIZING_FIELDS.newRentAnnual] = 2_500;
+  rentingFields[DOWNSIZING_FIELDS.newRentAnnual] = 5_200;
 
   messages = messagesFor(rentingFields);
   assert.equal(
     messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newRentAnnual && message.severity === "warning" && message.message.includes("not lower")),
     true
+  );
+
+  rentingFields[DOWNSIZING_FIELDS.newRentAnnual] = 2_000;
+  messages = messagesFor(rentingFields);
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newRentAnnual && message.severity === "warning" && message.message.includes("not lower")),
+    false
   );
 });
