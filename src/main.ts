@@ -2106,7 +2106,6 @@ function renderDownsizingPreview(): string {
         label: `Replacement cost in ${downsizingYear}`,
         value: formatCurrencyPrecise(estimate.replacementPurchaseCostAtDownsize)
       });
-      notes.push("Replacement purchase is rolled forward from today's price using home appreciation.");
       if (estimate.replacementPurchaseCostAtDownsize > estimate.netEquityReleased) {
         notes.push("Replacement purchase is modeled as a cash purchase with no new mortgage.");
       }
