@@ -2076,7 +2076,7 @@ function renderDownsizingPreview(): string {
   const hasHome = asNumber(fieldState[HOME_FIELDS.homeValue]) > 0;
   const mode = normalizeDownsizingMode(fieldState[DOWNSIZING_FIELDS.newHomeMode]);
   const newRentMonthly = asNumber(fieldState[DOWNSIZING_FIELDS.newRentAnnual]);
-  const previewRows: Array<{ label: string; value: string; tone?: "default" | "warning" }> = [];
+  const previewRows: Array<{ label: string; value: string; tone?: "default" | "warning"; detail?: string; emphasis?: boolean }> = [];
   const notes: string[] = [];
 
   const estimate = estimateDownsizing({
@@ -2094,21 +2094,32 @@ function renderDownsizingPreview(): string {
   if (hasHome && estimate) {
     previewRows.push(
       { label: `Sale proceeds in ${downsizingYear}`, value: formatCurrencyPrecise(estimate.saleProceeds) },
-      { label: "Mortgage payoff", value: formatCurrencyPrecise(estimate.mortgagePayoff) },
-      {
-        label: "Estimated equity released",
-        value: formatCurrencyPrecise(estimate.netEquityReleased),
-        tone: estimate.netEquityReleased <= 0 ? "warning" : "default"
-      }
+      { label: "Mortgage payoff", value: formatCurrencyPrecise(estimate.mortgagePayoff) }
     );
     if (mode === "BUY" && estimate.replacementPurchaseCostAtDownsize !== null) {
+      const cashReleased = estimate.netEquityReleased - estimate.replacementPurchaseCostAtDownsize;
       previewRows.push({
         label: `Replacement cost in ${downsizingYear}`,
         value: formatCurrencyPrecise(estimate.replacementPurchaseCostAtDownsize)
       });
+      previewRows.push({
+        label: "Cash released",
+        value: formatCurrencyPrecise(cashReleased),
+        detail: `${formatCurrencyPrecise(estimate.saleProceeds)} - ${formatCurrencyPrecise(estimate.mortgagePayoff)} - ${formatCurrencyPrecise(estimate.replacementPurchaseCostAtDownsize)}`,
+        tone: cashReleased <= 0 ? "warning" : "default",
+        emphasis: true
+      });
       if (estimate.replacementPurchaseCostAtDownsize > estimate.netEquityReleased) {
         notes.push("Replacement purchase is modeled as a cash purchase with no new mortgage.");
       }
+    } else {
+      previewRows.push({
+        label: "Cash released",
+        value: formatCurrencyPrecise(estimate.netEquityReleased),
+        detail: `${formatCurrencyPrecise(estimate.saleProceeds)} - ${formatCurrencyPrecise(estimate.mortgagePayoff)}`,
+        tone: estimate.netEquityReleased <= 0 ? "warning" : "default",
+        emphasis: true
+      });
     }
   } else if (newRentMonthly > 0) {
     previewRows.push({
@@ -2124,9 +2135,10 @@ function renderDownsizingPreview(): string {
       ${previewRows.length > 0 ? `
         <div class="downsizing-preview-grid">
           ${previewRows.map((row) => `
-            <div class="downsizing-preview-item${row.tone === "warning" ? " is-warning" : ""}">
+            <div class="downsizing-preview-item${row.tone === "warning" ? " is-warning" : ""}${row.emphasis ? " is-emphasis" : ""}">
               <span class="downsizing-preview-label">${escapeHtml(row.label)}</span>
               <strong class="downsizing-preview-value">${escapeHtml(row.value)}</strong>
+              ${row.detail ? `<span class="downsizing-preview-detail">${escapeHtml(row.detail)}</span>` : ""}
             </div>
           `).join("")}
         </div>

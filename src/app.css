@@ -2091,8 +2091,18 @@ input {
   gap: 2px;
 }
 
+.downsizing-preview-item.is-emphasis {
+  padding: 5px 6px;
+  border-radius: 8px;
+  background: rgba(111, 191, 178, 0.1);
+}
+
 .downsizing-preview-item.is-warning .downsizing-preview-value {
   color: #9a3412;
+}
+
+.downsizing-preview-item.is-warning.is-emphasis {
+  background: rgba(245, 158, 11, 0.12);
 }
 
 .downsizing-preview-label {
@@ -2107,6 +2117,16 @@ input {
   font-size: 13px;
   font-weight: 700;
   color: #21413a;
+}
+
+.downsizing-preview-item.is-emphasis .downsizing-preview-value {
+  font-size: 14px;
+}
+
+.downsizing-preview-detail {
+  font-size: 11px;
+  color: #64748b;
+  line-height: 1.25;
 }
 
 .downsizing-preview-note {
