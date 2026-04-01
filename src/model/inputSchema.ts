@@ -129,6 +129,20 @@ type HomeLoanGroupByCell = {
   repaymentCell: InputCell;
 };
 
+type DownsizingGroup = {
+  yearField: FieldId;
+  modeField: FieldId;
+  purchaseCostField: FieldId;
+  rentField: FieldId;
+};
+
+type DownsizingGroupByCell = {
+  yearCell: InputCell;
+  modeCell: InputCell;
+  purchaseCostCell: InputCell;
+  rentCell: InputCell;
+};
+
 type OtherWorkGroup = {
   incomeField: FieldId;
   untilAgeField: FieldId;
@@ -232,6 +246,15 @@ function homeLoanGroupToCells(group: HomeLoanGroup): HomeLoanGroupByCell {
   };
 }
 
+function downsizingGroupToCells(group: DownsizingGroup): DownsizingGroupByCell {
+  return {
+    yearCell: FIELD_ID_TO_CELL[group.yearField],
+    modeCell: FIELD_ID_TO_CELL[group.modeField],
+    purchaseCostCell: FIELD_ID_TO_CELL[group.purchaseCostField],
+    rentCell: FIELD_ID_TO_CELL[group.rentField]
+  };
+}
+
 function otherWorkGroupToCells(group: OtherWorkGroup): OtherWorkGroupByCell {
   return {
     incomeCell: FIELD_ID_TO_CELL[group.incomeField],
@@ -332,6 +355,9 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "retirement.statutoryAge": { required: true, integer: true, nonNegative: true, clampBounds: { min: 50, max: 70 } },
   "retirement.statePension.netAnnualAtStart": { nonNegative: true },
   "housing.rentAnnual": { nonNegative: true },
+  "housing.downsize.year": { integer: true, nonNegative: true },
+  "housing.downsize.newHomePurchaseCost": { nonNegative: true },
+  "housing.downsize.newRentAnnual": { nonNegative: true },
   "spending.livingExpenses.annual": { required: true, positive: true },
   "dependents.01.annualCost": { nonNegative: true },
   "dependents.01.supportYearsRemaining": { integer: true, positive: true, clampBounds: { min: 1, max: 99 } },
@@ -732,6 +758,15 @@ export const HOME_LOAN_GROUP = {
 } as const satisfies HomeLoanGroup;
 
 export const HOME_LOAN_GROUP_BY_CELL = homeLoanGroupToCells(HOME_LOAN_GROUP);
+
+export const DOWNSIZING_GROUP = {
+  yearField: "housing.downsize.year",
+  modeField: "housing.downsize.newHomeMode",
+  purchaseCostField: "housing.downsize.newHomePurchaseCost",
+  rentField: "housing.downsize.newRentAnnual"
+} as const satisfies DownsizingGroup;
+
+export const DOWNSIZING_GROUP_BY_CELL = downsizingGroupToCells(DOWNSIZING_GROUP);
 
 export const OTHER_WORK_GROUP = {
   incomeField: "income.otherWork.netAnnual",

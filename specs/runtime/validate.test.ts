@@ -5,6 +5,7 @@ import { createEmptyFieldState } from "../../src/model/excelAdapter";
 import { validateFieldState } from "../../src/model/validate";
 import {
   DEPENDENT_RUNTIME_GROUPS,
+  DOWNSIZING_FIELDS,
   EXPENSE_EVENT_RUNTIME_GROUPS,
   OTHER_WORK_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
@@ -237,6 +238,49 @@ test("validation warns on unusually severe or slow stock market crash assumption
         && message.severity === "warning"
         && message.message.includes("unusually long")
     ),
+    true
+  );
+});
+
+test("validation requires a buy-or-rent choice and replacement home details for homeowner downsizing", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields["housing.01Residence.marketValue"] = 500_000;
+  fields[DOWNSIZING_FIELDS.year] = new Date().getFullYear() + 4;
+
+  let messages = messagesFor(fields);
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newHomeMode && message.severity === "error"),
+    true
+  );
+
+  fields[DOWNSIZING_FIELDS.newHomeMode] = "Buy";
+  messages = messagesFor(fields);
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newHomePurchaseCost && message.severity === "error"),
+    true
+  );
+
+  fields[DOWNSIZING_FIELDS.newHomeMode] = "Rent";
+  messages = messagesFor(fields);
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newRentAnnual && message.severity === "error"),
+    true
+  );
+});
+
+test("validation requires replacement rent when downsizing from renting", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[DOWNSIZING_FIELDS.year] = new Date().getFullYear() + 4;
+
+  const messages = messagesFor(fields);
+  assert.equal(
+    messages.some((message) => message.fieldId === DOWNSIZING_FIELDS.newRentAnnual && message.severity === "error"),
     true
   );
 });

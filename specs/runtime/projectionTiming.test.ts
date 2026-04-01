@@ -49,7 +49,7 @@ test("mid-year overrides use partial-year growth and month-offset loan balances"
   const july = runWithMonth(7);
 
   const homeValue = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B12);
-  const propertyGrowth = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B257);
+  const propertyGrowth = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B267);
   assertClose(
     january.scenarioNorm.netWorth.properties[0].values[0],
     homeValue * Math.pow(1 + propertyGrowth, 1)

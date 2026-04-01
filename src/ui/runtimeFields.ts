@@ -2,6 +2,7 @@ import { FieldId } from "../model/fieldRegistry";
 import {
   ASSET_OF_VALUE_GROUPS,
   DEPENDENT_GROUPS,
+  DOWNSIZING_GROUP,
   EXPENSE_EVENT_GROUPS,
   HOME_LOAN_GROUP,
   INCOME_EVENT_GROUPS,
@@ -21,22 +22,29 @@ export const RUNTIME_FIELDS = {
   statutoryRetirementAge: INPUT_DEFINITION_BY_CELL.B19.fieldId,
   annualPensionAtRetirement: INPUT_DEFINITION_BY_CELL.B21.fieldId,
   annualLivingExpenses: INPUT_DEFINITION_BY_CELL.B25.fieldId,
-  lifeExpectancyAge: INPUT_DEFINITION_BY_CELL.B244.fieldId,
-  spendingAdjustmentPre65: INPUT_DEFINITION_BY_CELL.B247.fieldId,
-  spendingAdjustment66To75: INPUT_DEFINITION_BY_CELL.B248.fieldId,
-  spendingAdjustment76Plus: INPUT_DEFINITION_BY_CELL.B249.fieldId,
-  generalInflation: INPUT_DEFINITION_BY_CELL.B255.fieldId,
-  propertyAnnualAppreciation: INPUT_DEFINITION_BY_CELL.B257.fieldId,
-  cashInterestRate: INPUT_DEFINITION_BY_CELL.B259.fieldId,
-  stockMarketReturn: INPUT_DEFINITION_BY_CELL.B261.fieldId,
-  salaryAnnualGrowthRate: INPUT_DEFINITION_BY_CELL.B263.fieldId,
-  rentalIncomeAnnualIncrease: INPUT_DEFINITION_BY_CELL.B265.fieldId,
-  pensionReductionPerYearEarly: INPUT_DEFINITION_BY_CELL.B267.fieldId,
-  minimumCashBuffer: INPUT_DEFINITION_BY_CELL.B269.fieldId,
-  legacyAmount: INPUT_DEFINITION_BY_CELL.B271.fieldId,
-  stockSellingCostRate: INPUT_DEFINITION_BY_CELL.B273.fieldId,
-  propertyDisposalCostRate: INPUT_DEFINITION_BY_CELL.B275.fieldId,
-  otherAssetDisposalCostRate: INPUT_DEFINITION_BY_CELL.B277.fieldId
+  lifeExpectancyAge: INPUT_DEFINITION_BY_CELL.B254.fieldId,
+  spendingAdjustmentPre65: INPUT_DEFINITION_BY_CELL.B257.fieldId,
+  spendingAdjustment66To75: INPUT_DEFINITION_BY_CELL.B258.fieldId,
+  spendingAdjustment76Plus: INPUT_DEFINITION_BY_CELL.B259.fieldId,
+  generalInflation: INPUT_DEFINITION_BY_CELL.B265.fieldId,
+  propertyAnnualAppreciation: INPUT_DEFINITION_BY_CELL.B267.fieldId,
+  cashInterestRate: INPUT_DEFINITION_BY_CELL.B269.fieldId,
+  stockMarketReturn: INPUT_DEFINITION_BY_CELL.B271.fieldId,
+  salaryAnnualGrowthRate: INPUT_DEFINITION_BY_CELL.B273.fieldId,
+  rentalIncomeAnnualIncrease: INPUT_DEFINITION_BY_CELL.B275.fieldId,
+  pensionReductionPerYearEarly: INPUT_DEFINITION_BY_CELL.B277.fieldId,
+  minimumCashBuffer: INPUT_DEFINITION_BY_CELL.B279.fieldId,
+  legacyAmount: INPUT_DEFINITION_BY_CELL.B281.fieldId,
+  stockSellingCostRate: INPUT_DEFINITION_BY_CELL.B283.fieldId,
+  propertyDisposalCostRate: INPUT_DEFINITION_BY_CELL.B285.fieldId,
+  otherAssetDisposalCostRate: INPUT_DEFINITION_BY_CELL.B287.fieldId
+} as const satisfies Record<string, FieldId>;
+
+export const DOWNSIZING_FIELDS = {
+  year: DOWNSIZING_GROUP.yearField,
+  newHomeMode: DOWNSIZING_GROUP.modeField,
+  newHomePurchaseCost: DOWNSIZING_GROUP.purchaseCostField,
+  newRentAnnual: DOWNSIZING_GROUP.rentField
 } as const satisfies Record<string, FieldId>;
 
 export const HOME_FIELDS = {

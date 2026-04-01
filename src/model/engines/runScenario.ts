@@ -281,6 +281,13 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
   const incomeEventSeries = inputs.incomeEvents.map(() => zeroSeries(n));
   const expenseEventSeries = inputs.expenseEvents.map(() => zeroSeries(n));
   const baseInterestSeries = zeroSeries(n);
+  const downsizingHomeSaleSeries = zeroSeries(n);
+  const downsizingHomePurchaseSeries = zeroSeries(n);
+
+  const downsizingMode = inputs.downsizingNewHomeMode.trim().toUpperCase();
+  const hasDownsizing = inputs.downsizingYear > 0;
+  const initialHomeValue = inputs.homeValue;
+  const isInitialHomeowner = initialHomeValue > 0;
 
   let cashBfwd = inputs.cashBalance; // Row 49 start
 
@@ -325,7 +332,17 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       incomeEvents += value;
     }
 
-    const inflowsBeforeInterest = salary + otherWork + rental + adjustedPension + postRetIncome + incomeEvents;
+    const downsizingActive = hasDownsizing && year >= inputs.downsizingYear;
+    const downsizingThisYear = hasDownsizing && year === inputs.downsizingYear;
+    const originalHomeValue =
+      initialHomeValue > 0 ? initialHomeValue * safePow(1 + inputs.propertyAppreciation, assetGrowthExponent(timing, idx)) : 0;
+    const downsizingHomeSale =
+      downsizingThisYear && isInitialHomeowner
+        ? originalHomeValue * (1 - inputs.propertyDisposalCosts)
+        : 0;
+    downsizingHomeSaleSeries[idx] = downsizingHomeSale;
+
+    const inflowsBeforeInterest = salary + otherWork + rental + adjustedPension + postRetIncome + incomeEvents + downsizingHomeSale;
 
     const livingExpenseBase = inputs.livingExpensesAnnual * infFactor * proRate;
     let livingExpense = livingExpenseBase;
@@ -335,7 +352,9 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
     livingExpensesSeries[idx] = livingExpense;
 
     let outflows = livingExpense;
-    const housingRent = inputs.housingRentAnnual * infFactor * proRate;
+    const housingRent = downsizingActive
+      ? (isInitialHomeowner && downsizingMode !== "RENT" ? 0 : inputs.downsizingNewRentAnnual * infFactor * proRate)
+      : inputs.housingRentAnnual * infFactor * proRate;
     housingRentSeries[idx] = housingRent;
     outflows += housingRent;
 
@@ -365,8 +384,22 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       timing.monthsRemaining,
       timing.monthOffset
     );
-    homeLoanRepaymentSeries[idx] = homeLoanRepayment;
-    outflows += homeLoanRepayment;
+    const originalHomeLoanBalance = Math.max(
+      fv(
+        inputs.homeLoanRate / 12,
+        (idx + 1) * 12 + timing.monthOffset,
+        inputs.homeLoanRepaymentMonthly,
+        -inputs.homeLoanBalance
+      ),
+      0
+    );
+    const downsizingLoanPayoff =
+      downsizingThisYear && isInitialHomeowner && inputs.homeLoanBalance > 0
+        ? originalHomeLoanBalance
+        : 0;
+    const scheduledHomeLoanRepayment = downsizingActive && isInitialHomeowner && !downsizingThisYear ? 0 : homeLoanRepayment;
+    homeLoanRepaymentSeries[idx] = scheduledHomeLoanRepayment + downsizingLoanPayoff;
+    outflows += homeLoanRepaymentSeries[idx];
     for (let p = 0; p < inputs.properties.length; p += 1) {
       const repayment = yearlyLoanPayment(
         propertyMonthsTotals[p],
@@ -427,6 +460,13 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
     }
     outflows += expenseEvents;
 
+    const downsizingHomePurchase =
+      downsizingThisYear && isInitialHomeowner && downsizingMode === "BUY"
+        ? inputs.downsizingNewHomePurchaseCost * safePow(1 + inputs.propertyAppreciation, assetGrowthExponent(timing, idx))
+        : 0;
+    downsizingHomePurchaseSeries[idx] = downsizingHomePurchase;
+    outflows += downsizingHomePurchase;
+
     const preInterestCash = cashBfwd + inflowsBeforeInterest - outflows;
     const interest = Math.max(((cashBfwd + preInterestCash) / 2) * inputs.cashRate, 0);
     baseInterestSeries[idx] = interest;
@@ -435,8 +475,17 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
     cashBaseSeries[idx] = cashCfwd;
     cashBfwd = cashCfwd;
 
-    homeValueSeries[idx] =
-      inputs.homeValue > 0 ? inputs.homeValue * safePow(1 + inputs.propertyAppreciation, assetGrowthExponent(timing, idx)) : 0;
+    if (downsizingActive) {
+      if (isInitialHomeowner && downsizingMode === "BUY") {
+        homeValueSeries[idx] = downsizingThisYear
+          ? downsizingHomePurchaseSeries[idx]
+          : homeValueSeries[idx - 1] * (1 + inputs.propertyAppreciation);
+      } else {
+        homeValueSeries[idx] = 0;
+      }
+    } else {
+      homeValueSeries[idx] = originalHomeValue;
+    }
     if (idx === 0) {
       stockBaseSeries[idx] = inputs.stocksBalance * safePow(1 + inputs.stockReturn, assetGrowthExponent(timing, idx));
     } else {
@@ -452,15 +501,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
         inputs.assetsOfValue[a].value * safePow(1 + inputs.assetsOfValue[a].appreciationRate, assetGrowthExponent(timing, idx));
     }
 
-    homeLoanSeries[idx] = Math.max(
-      fv(
-        inputs.homeLoanRate / 12,
-        (idx + 1) * 12 + timing.monthOffset,
-        inputs.homeLoanRepaymentMonthly,
-        -inputs.homeLoanBalance
-      ),
-      0
-    );
+    homeLoanSeries[idx] = downsizingActive && isInitialHomeowner ? 0 : originalHomeLoanBalance;
     otherLoanSeries[idx] = Math.max(
       fv(
         inputs.otherLoanRate / 12,
@@ -569,6 +610,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       statutoryPensionSeries[i] +
       postRetIncomeSeries[i] +
       sumAt(incomeEventSeries, i) +
+      downsizingHomeSaleSeries[i] +
       stockStage.netProceeds[i] +
       liquidationStages.reduce((sum, stage) => sum + stage.netProceeds[i], 0);
     totalOutflowsSeries[i] =
@@ -579,6 +621,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       otherLoanRepaymentSeries[i] +
       sumAt(dependentCostSeries, i) +
       housingRentSeries[i] +
+      downsizingHomePurchaseSeries[i] +
       sumAt(propertyAnnualCostSeries, i) +
       livingExpensesSeries[i] +
       sumAt(expenseEventSeries, i);
@@ -797,6 +840,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       statutoryPensionSeries[i] +
       postRetIncomeSeries[i] +
       sumAt(incomeEventSeries, i) +
+      downsizingHomeSaleSeries[i] +
       stockStage.netProceeds[i] +
       sumAt(displayLiquidationsByProperty.map((row) => row.values), i);
     displayTotalOutflowsSeries[i] =
@@ -807,6 +851,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       otherLoanRepaymentSeries[i] +
       sumAt(dependentCostSeries, i) +
       housingRentSeries[i] +
+      downsizingHomePurchaseSeries[i] +
       sumAt(displayPropertyCostsByProperty.map((row) => row.values), i) +
       livingExpensesSeries[i] +
       sumAt(expenseEventSeries, i);
@@ -834,6 +879,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       liquidationsStocks: [...stockStage.netProceeds],
       liquidationsByProperty: displayLiquidationsByProperty,
       interestOnCash: totalInterestSeries,
+      downsizingHomeSale: downsizingHomeSaleSeries,
       creditCardsCleared: creditCardClearanceSeries,
       homeLoanRepayment: homeLoanRepaymentSeries,
       propertyLoanRepayments: [
@@ -855,6 +901,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
         values: [...dependentCostSeries[idx]]
       })),
       housingRent: housingRentSeries,
+      downsizingHomePurchase: downsizingHomePurchaseSeries,
       propertyCosts: displayPropertyCostsByProperty,
       livingExpenses: livingExpensesSeries,
       expenseEvents: inputs.expenseEvents.map((event, idx) => ({

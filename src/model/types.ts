@@ -27,6 +27,10 @@ export interface EffectiveInputs {
   statutoryRetirementAge: number;
   pensionAnnual: number;
   housingRentAnnual: number;
+  downsizingYear: number;
+  downsizingNewHomeMode: string;
+  downsizingNewHomePurchaseCost: number;
+  downsizingNewRentAnnual: number;
   livingExpensesAnnual: number;
 
   dependents: Array<{ name: string; annualCost: number; yearsToSupport: number }>;
@@ -118,12 +122,14 @@ export interface ScenarioCashFlowRows {
   liquidationsStocks: number[];
   liquidationsByProperty: NamedProjectionSeries[];
   interestOnCash: number[];
+  downsizingHomeSale: number[];
   creditCardsCleared: number[];
   homeLoanRepayment: number[];
   propertyLoanRepayments: NamedProjectionSeries[];
   otherLoanRepayment: number[];
   dependentsCost: NamedProjectionSeries[];
   housingRent: number[];
+  downsizingHomePurchase: number[];
   propertyCosts: NamedProjectionSeries[];
   livingExpenses: number[];
   expenseEvents: NamedProjectionSeries[];

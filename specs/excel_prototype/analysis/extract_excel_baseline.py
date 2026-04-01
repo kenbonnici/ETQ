@@ -136,11 +136,11 @@ def main():
 
     years = row_series(sheet3, 2, sst)
     ages = row_series(sheet3, 3, sst)
-    cash_norm = row_series(sheet3, 379, sst)
-    nw_norm = row_series(sheet3, 380, sst)
-    cash_early = row_series(sheet4, 379, sst)
-    nw_early = row_series(sheet4, 380, sst)
-    mth_rem = numeric_cell(sheet1, "B292", sst)
+    cash_norm = row_series(sheet3, 381, sst)
+    nw_norm = row_series(sheet3, 382, sst)
+    cash_early = row_series(sheet4, 381, sst)
+    nw_early = row_series(sheet4, 382, sst)
+    mth_rem = numeric_cell(sheet1, "B302", sst)
     projection_month_override = int(round(13 - mth_rem)) if mth_rem is not None else None
 
     # Use RetEarly_Engine!B3 as source of early retirement age.

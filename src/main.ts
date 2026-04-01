@@ -1361,6 +1361,7 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
       projectionLeaf("statutory-pension", "Statutory pension", cashFlow.statutoryPension, 1),
       projectionLeaf("other-post-retirement-income", "Other post-retirement income", cashFlow.otherPostRetirementIncome, 1),
       projectionGroup("inflows-income-events", "One-off income events", sumProjectionSeries(cashFlow.incomeEvents.map((row) => row.values), yearCount), 1, incomeEventChildren),
+      projectionLeaf("downsizing-home-sale", "Sale of home (downsizing)", cashFlow.downsizingHomeSale, 1),
       projectionGroup("inflows-liquidations", "Liquidations", sumProjectionSeries([
         cashFlow.liquidationsStocks,
         ...cashFlow.liquidationsByProperty.map((row) => row.values)
@@ -1377,6 +1378,7 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
       ], yearCount), 1, propertyLoanChildren),
       projectionGroup("outflows-dependents", "Dependents cost", sumProjectionSeries(cashFlow.dependentsCost.map((row) => row.values), yearCount), 1, dependentChildren),
       projectionLeaf("housing-rent", "Housing rent", cashFlow.housingRent, 1),
+      projectionLeaf("downsizing-home-purchase", "Purchase of home (downsizing)", cashFlow.downsizingHomePurchase, 1),
       projectionGroup("outflows-property-costs", "Other property costs", sumProjectionSeries(cashFlow.propertyCosts.map((row) => row.values), yearCount), 1, propertyCostChildren),
       projectionLeaf("living-expenses", "Living expenses", cashFlow.livingExpenses, 1),
       projectionGroup("outflows-expense-events", "One-off expense events", sumProjectionSeries(cashFlow.expenseEvents.map((row) => row.values), yearCount), 1, expenseEventChildren),

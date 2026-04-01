@@ -6,6 +6,7 @@ import type { InputDefinition } from "./inputDefinitions";
 import {
   ASSET_OF_VALUE_RUNTIME_GROUPS,
   DEPENDENT_RUNTIME_GROUPS,
+  DOWNSIZING_FIELDS,
   EXPENSE_EVENT_RUNTIME_GROUPS,
   HOME_FIELDS,
   INCOME_EVENT_RUNTIME_GROUPS,
@@ -92,6 +93,9 @@ export const FIELD_STEPPER_STEPS: Readonly<Partial<Record<FieldId, number>>> = {
   [HOME_FIELDS.homeValue]: 1000,
   [HOME_FIELDS.mortgageBalance]: 100,
   [HOME_FIELDS.mortgageMonthlyRepayment]: 10,
+  [DOWNSIZING_FIELDS.year]: 1,
+  [DOWNSIZING_FIELDS.newHomePurchaseCost]: 1000,
+  [DOWNSIZING_FIELDS.newRentAnnual]: 100,
   [RUNTIME_FIELDS.statutoryRetirementAge]: 1,
   [RUNTIME_FIELDS.annualPensionAtRetirement]: 100,
   [HOME_FIELDS.housingRentAnnual]: 100,
@@ -169,6 +173,9 @@ export const FIELD_STEPPER_DECIMALS: Readonly<Partial<Record<FieldId, number>>> 
   [HOME_FIELDS.homeValue]: 0,
   [HOME_FIELDS.mortgageBalance]: 0,
   [HOME_FIELDS.mortgageMonthlyRepayment]: 0,
+  [DOWNSIZING_FIELDS.year]: 0,
+  [DOWNSIZING_FIELDS.newHomePurchaseCost]: 0,
+  [DOWNSIZING_FIELDS.newRentAnnual]: 0,
   [RUNTIME_FIELDS.statutoryRetirementAge]: 0,
   [RUNTIME_FIELDS.annualPensionAtRetirement]: 0,
   [HOME_FIELDS.housingRentAnnual]: 0,
@@ -247,6 +254,8 @@ export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
   RUNTIME_FIELDS.stockMarketInvestments,
   HOME_FIELDS.homeValue,
   HOME_FIELDS.mortgageBalance,
+  DOWNSIZING_FIELDS.year,
+  DOWNSIZING_FIELDS.newHomeMode,
   ...DEPENDENT_RUNTIME_GROUPS.map((group) => group.nameField),
   ...PROPERTY_RUNTIME_GROUPS.flatMap((group) => [group.nameField, group.valueField]),
   ...ASSET_OF_VALUE_RUNTIME_GROUPS.flatMap((group) => [group.nameField, group.valueField]),
@@ -325,6 +334,8 @@ export function getPropertyName(
 export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, nextValue: unknown): boolean {
   if (fieldId === RUNTIME_FIELDS.stockMarketInvestments) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === HOME_FIELDS.homeValue) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
+  if (fieldId === DOWNSIZING_FIELDS.year) return isBlank(prevValue) !== isBlank(nextValue);
+  if (fieldId === DOWNSIZING_FIELDS.newHomeMode) return String(prevValue ?? "") !== String(nextValue ?? "");
   if (fieldId === OTHER_WORK_FIELDS.income) return isNonZeroNumber(prevValue) !== isNonZeroNumber(nextValue);
   if (fieldId === POST_RETIREMENT_INCOME_FIELDS.amount) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (PROPERTY_RUNTIME_GROUPS.some((group) => group.valueField === fieldId)) {
@@ -399,6 +410,21 @@ export function fieldVisible(
   }
   if (fieldId === HOME_FIELDS.housingRentAnnual) {
     return isBlank(values[HOME_FIELDS.homeValue]) || asNumber(values[HOME_FIELDS.homeValue]) === 0;
+  }
+  if (fieldId === DOWNSIZING_FIELDS.newHomeMode) {
+    return !isBlank(values[DOWNSIZING_FIELDS.year]) && asNumber(values[HOME_FIELDS.homeValue]) > 0;
+  }
+  if (fieldId === DOWNSIZING_FIELDS.newHomePurchaseCost) {
+    return !isBlank(values[DOWNSIZING_FIELDS.year])
+      && asNumber(values[HOME_FIELDS.homeValue]) > 0
+      && String(values[DOWNSIZING_FIELDS.newHomeMode] ?? "").trim().toUpperCase() === "BUY";
+  }
+  if (fieldId === DOWNSIZING_FIELDS.newRentAnnual) {
+    return !isBlank(values[DOWNSIZING_FIELDS.year])
+      && (
+        asNumber(values[HOME_FIELDS.homeValue]) <= 0
+        || String(values[DOWNSIZING_FIELDS.newHomeMode] ?? "").trim().toUpperCase() === "RENT"
+      );
   }
 
   for (const group of DEPENDENT_RUNTIME_GROUPS) {

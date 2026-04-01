@@ -1412,7 +1412,55 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 218,
+    row: 217,
+    fieldId: "housing.downsize.year",
+    label: "Year",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Home downsizing",
+    groupTail: ["Home downsizing"],
+    tooltip: "Leave blank if none",
+    uiNote: "",
+    sampleValue: "2030",
+    type: "integer"
+  },
+  {
+    row: 219,
+    fieldId: "housing.downsize.newHomeMode",
+    label: "New home buy or rent?",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Home downsizing",
+    groupTail: ["Home downsizing"],
+    tooltip: "Buy or Rent",
+    uiNote: "Show only after a downsizing year is entered",
+    sampleValue: "Buy",
+    type: "text"
+  },
+  {
+    row: 221,
+    fieldId: "housing.downsize.newHomePurchaseCost",
+    label: "New home purchase cost",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Home downsizing",
+    groupTail: ["Home downsizing"],
+    tooltip: "At today's prices, including agency, tax, legal fees, moving, improvements etc.",
+    uiNote: "Show only when downsizing to buy",
+    sampleValue: "250000",
+    type: "number"
+  },
+  {
+    row: 223,
+    fieldId: "housing.downsize.newRentAnnual",
+    label: "New home monthly rent",
+    section: "DEEPER DIVE",
+    groupPath: "DEEPER DIVE > Home downsizing",
+    groupTail: ["Home downsizing"],
+    tooltip: "",
+    uiNote: "Show only when downsizing to rent",
+    sampleValue: "",
+    type: "number"
+  },
+  {
+    row: 228,
     fieldId: "stockMarketCrashes.01.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -1424,7 +1472,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 219,
+    row: 229,
     fieldId: "stockMarketCrashes.01.dropPercentage",
     label: "% drop",
     section: "DEEPER DIVE",
@@ -1436,7 +1484,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 220,
+    row: 230,
     fieldId: "stockMarketCrashes.01.recoveryYears",
     label: "Time to recover",
     section: "DEEPER DIVE",
@@ -1448,7 +1496,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 223,
+    row: 233,
     fieldId: "stockMarketCrashes.02.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -1460,7 +1508,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 224,
+    row: 234,
     fieldId: "stockMarketCrashes.02.dropPercentage",
     label: "% drop",
     section: "DEEPER DIVE",
@@ -1472,7 +1520,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 225,
+    row: 235,
     fieldId: "stockMarketCrashes.02.recoveryYears",
     label: "Time to recover",
     section: "DEEPER DIVE",
@@ -1484,7 +1532,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 228,
+    row: 238,
     fieldId: "stockMarketCrashes.03.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -1496,7 +1544,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 229,
+    row: 239,
     fieldId: "stockMarketCrashes.03.dropPercentage",
     label: "% drop",
     section: "DEEPER DIVE",
@@ -1508,7 +1556,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 230,
+    row: 240,
     fieldId: "stockMarketCrashes.03.recoveryYears",
     label: "Time to recover",
     section: "DEEPER DIVE",
@@ -1520,7 +1568,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 233,
+    row: 243,
     fieldId: "stockMarketCrashes.04.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -1532,7 +1580,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 234,
+    row: 244,
     fieldId: "stockMarketCrashes.04.dropPercentage",
     label: "% drop",
     section: "DEEPER DIVE",
@@ -1544,7 +1592,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 235,
+    row: 245,
     fieldId: "stockMarketCrashes.04.recoveryYears",
     label: "Time to recover",
     section: "DEEPER DIVE",
@@ -1556,7 +1604,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 238,
+    row: 248,
     fieldId: "stockMarketCrashes.05.year",
     label: "Year",
     section: "DEEPER DIVE",
@@ -1568,7 +1616,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 239,
+    row: 249,
     fieldId: "stockMarketCrashes.05.dropPercentage",
     label: "% drop",
     section: "DEEPER DIVE",
@@ -1580,7 +1628,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 240,
+    row: 250,
     fieldId: "stockMarketCrashes.05.recoveryYears",
     label: "Time to recover",
     section: "DEEPER DIVE",
@@ -1592,7 +1640,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 244,
+    row: 254,
     fieldId: "planning.lifeExpectancyAge",
     label: "Plan to live until age",
     section: "FINER DETAILS",
@@ -1604,7 +1652,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 247,
+    row: 257,
     fieldId: "spending.adjustments.pre65.deltaRate",
     label: "From now to 65",
     section: "FINER DETAILS",
@@ -1616,7 +1664,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 248,
+    row: 258,
     fieldId: "spending.adjustments.age66To75.deltaRate",
     label: "From 66 to 75",
     section: "FINER DETAILS",
@@ -1628,7 +1676,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 249,
+    row: 259,
     fieldId: "spending.adjustments.age76Plus.deltaRate",
     label: "From age 76",
     section: "FINER DETAILS",
@@ -1640,7 +1688,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 251,
+    row: 261,
     fieldId: "income.postRetirementSupplement.annual",
     label: "Other post-retirement income",
     section: "FINER DETAILS",
@@ -1652,7 +1700,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 252,
+    row: 262,
     fieldId: "income.postRetirementSupplement.startAge",
     label: "From age",
     section: "FINER DETAILS",
@@ -1664,7 +1712,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 253,
+    row: 263,
     fieldId: "income.postRetirementSupplement.endAge",
     label: "To age",
     section: "FINER DETAILS",
@@ -1676,7 +1724,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 255,
+    row: 265,
     fieldId: "assumptions.generalInflationRateAnnual",
     label: "General inflation",
     section: "FINER DETAILS",
@@ -1688,7 +1736,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 257,
+    row: 267,
     fieldId: "assumptions.propertyAppreciationRateAnnual",
     label: "Property annual appreciation",
     section: "FINER DETAILS",
@@ -1700,7 +1748,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 259,
+    row: 269,
     fieldId: "assumptions.cashYieldRateAnnual",
     label: "Cash interest rate",
     section: "FINER DETAILS",
@@ -1712,7 +1760,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 261,
+    row: 271,
     fieldId: "assumptions.equityReturnRateAnnual",
     label: "Stock market return",
     section: "FINER DETAILS",
@@ -1724,7 +1772,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 263,
+    row: 273,
     fieldId: "assumptions.salaryGrowthRateAnnual",
     label: "Salary annual growth rate",
     section: "FINER DETAILS",
@@ -1736,7 +1784,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 265,
+    row: 275,
     fieldId: "assumptions.rentalIncomeGrowthRateAnnual",
     label: "Rental income annual increase",
     section: "FINER DETAILS",
@@ -1748,7 +1796,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 267,
+    row: 277,
     fieldId: "retirement.earlyPensionReductionPerYear",
     label: "Pension reduction per year early",
     section: "FINER DETAILS",
@@ -1760,7 +1808,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 269,
+    row: 279,
     fieldId: "liquidity.minimumCashBuffer",
     label: "Cash buffer at any time",
     section: "FINER DETAILS",
@@ -1772,7 +1820,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 271,
+    row: 281,
     fieldId: "planning.legacyAmount",
     label: "Legacy amount",
     section: "FINER DETAILS",
@@ -1784,7 +1832,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
-    row: 273,
+    row: 283,
     fieldId: "liquidation.stockSellingCostRate",
     label: "Stock market selling costs",
     section: "FINER DETAILS",
@@ -1796,7 +1844,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 275,
+    row: 285,
     fieldId: "liquidation.propertyDisposalCostRate",
     label: "Property disposal costs",
     section: "FINER DETAILS",
@@ -1808,7 +1856,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 277,
+    row: 287,
     fieldId: "liquidation.otherAssetDisposalCostRate",
     label: "Other assets disposal costs",
     section: "FINER DETAILS",
@@ -1820,7 +1868,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
-    row: 280,
+    row: 290,
     fieldId: "properties.01.liquidationPriority",
     label: "Sliema",
     section: "FINER DETAILS",
@@ -1832,7 +1880,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 281,
+    row: 291,
     fieldId: "properties.02.liquidationPriority",
     label: "Gzira",
     section: "FINER DETAILS",
@@ -1844,7 +1892,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 282,
+    row: 292,
     fieldId: "properties.03.liquidationPriority",
     label: "Qormi",
     section: "FINER DETAILS",
@@ -1856,7 +1904,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 283,
+    row: 293,
     fieldId: "properties.04.liquidationPriority",
     label: "Gudja",
     section: "FINER DETAILS",
@@ -1868,7 +1916,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 284,
+    row: 294,
     fieldId: "properties.05.liquidationPriority",
     label: "Marsa",
     section: "FINER DETAILS",
@@ -1880,7 +1928,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 285,
+    row: 295,
     fieldId: "assetsOfValue.01.liquidationPriority",
     label: "Jewelry",
     section: "FINER DETAILS",
@@ -1892,7 +1940,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 286,
+    row: 296,
     fieldId: "assetsOfValue.02.liquidationPriority",
     label: "Car",
     section: "FINER DETAILS",
@@ -1904,7 +1952,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 287,
+    row: 297,
     fieldId: "assetsOfValue.03.liquidationPriority",
     label: "Painting",
     section: "FINER DETAILS",
@@ -1916,7 +1964,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 288,
+    row: 298,
     fieldId: "assetsOfValue.04.liquidationPriority",
     label: "Boat",
     section: "FINER DETAILS",
@@ -1928,7 +1976,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
-    row: 289,
+    row: 299,
     fieldId: "assetsOfValue.05.liquidationPriority",
     label: "Antiques",
     section: "FINER DETAILS",

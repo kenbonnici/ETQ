@@ -1,5 +1,6 @@
 import {
   ASSET_OF_VALUE_GROUPS_BY_CELL,
+  DOWNSIZING_GROUP_BY_CELL,
   DEPENDENT_GROUPS_BY_CELL,
   HOME_LOAN_GROUP_BY_CELL,
   INCOME_EVENT_GROUPS_BY_CELL,
@@ -36,6 +37,8 @@ function clearCells(target: RawInputs, cells: readonly InputCell[]): void {
 
 function applyDependencyPruning(target: RawInputs): void {
   const hasHome = asNumber(target[HOME_LOAN_GROUP_BY_CELL.homeValueCell]) > 0;
+  const hasDownsizingYear = asNumber(target[DOWNSIZING_GROUP_BY_CELL.yearCell]) > 0;
+  const downsizingMode = String(target[DOWNSIZING_GROUP_BY_CELL.modeCell] ?? "").trim().toUpperCase();
   if (hasHome) {
     target[HOME_LOAN_GROUP_BY_CELL.rentCell] = null;
   } else {
@@ -44,6 +47,25 @@ function applyDependencyPruning(target: RawInputs): void {
 
   if (!(asNumber(target[HOME_LOAN_GROUP_BY_CELL.balanceCell]) > 0)) {
     clearCells(target, [HOME_LOAN_GROUP_BY_CELL.rateCell, HOME_LOAN_GROUP_BY_CELL.repaymentCell]);
+  }
+
+  if (!hasDownsizingYear) {
+    clearCells(target, [
+      DOWNSIZING_GROUP_BY_CELL.modeCell,
+      DOWNSIZING_GROUP_BY_CELL.purchaseCostCell,
+      DOWNSIZING_GROUP_BY_CELL.rentCell
+    ]);
+  } else if (!hasHome) {
+    clearCells(target, [
+      DOWNSIZING_GROUP_BY_CELL.modeCell,
+      DOWNSIZING_GROUP_BY_CELL.purchaseCostCell
+    ]);
+  } else if (downsizingMode === "BUY") {
+    clearCells(target, [DOWNSIZING_GROUP_BY_CELL.rentCell]);
+  } else if (downsizingMode === "RENT") {
+    clearCells(target, [DOWNSIZING_GROUP_BY_CELL.purchaseCostCell]);
+  } else {
+    clearCells(target, [DOWNSIZING_GROUP_BY_CELL.purchaseCostCell, DOWNSIZING_GROUP_BY_CELL.rentCell]);
   }
 
   for (const dep of DEPENDENT_GROUPS_BY_CELL) {

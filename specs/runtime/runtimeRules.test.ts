@@ -29,6 +29,7 @@ import {
 import {
   ASSET_OF_VALUE_RUNTIME_GROUPS,
   DEPENDENT_RUNTIME_GROUPS,
+  DOWNSIZING_FIELDS,
   EXPENSE_EVENT_RUNTIME_GROUPS,
   HOME_FIELDS,
   INCOME_EVENT_RUNTIME_GROUPS,
@@ -57,7 +58,7 @@ const DEFAULT_VISIBILITY: RuntimeVisibilityState = {
   visibleExpenseEvents: 1,
   visibleStockMarketCrashes: 1
 };
-const LEGACY_AWARE_RETIREMENT_AGE = 51;
+const LEGACY_AWARE_RETIREMENT_AGE = 49;
 
 function cloneFields(fields: FieldState): FieldState {
   return { ...fields };
@@ -96,9 +97,9 @@ test("input definitions preserve row order and derive cells from semantic field 
       102, 103, 104, 107, 108, 109, 113, 114, 115, 116, 117, 119, 120, 124, 127, 128, 129, 132, 133, 134,
       137, 138, 139, 142, 143, 144, 147, 148, 149, 152, 153, 154, 157, 158, 159, 162, 163, 164, 167, 168,
       169, 172, 173, 174, 177, 178, 179, 184, 185, 186, 189, 190, 191, 194, 195, 196, 201, 202, 203, 206,
-      207, 208, 211, 212, 213, 218, 219, 220, 223, 224, 225, 228, 229, 230, 233, 234, 235, 238, 239, 240,
-      244, 247, 248, 249, 251, 252, 253, 255, 257, 259, 261, 263, 265, 267, 269, 271, 273, 275, 277, 280,
-      281, 282, 283, 284, 285, 286, 287, 288, 289
+      207, 208, 211, 212, 213, 217, 219, 221, 223, 228, 229, 230, 233, 234, 235, 238, 239, 240, 243, 244,
+      245, 248, 249, 250, 254, 257, 258, 259, 261, 262, 263, 265, 267, 269, 271, 273, 275, 277, 279, 281,
+      283, 285, 287, 290, 291, 292, 293, 294, 295, 296, 297, 298, 299
     ]
   );
 
@@ -120,7 +121,7 @@ test("blank legacy normalizes to zero and specimen parity captures the shifted w
 
 test("retirement success requires both the cash buffer and the end-age legacy target", () => {
   const workbookCachedAge = runModel(SPECIMEN_FIELDS, SPECIMEN_UI_STATE);
-  assert.equal(workbookCachedAge.outputs.scenarioEarly.retirementSuccessful, false);
+  assert.equal(workbookCachedAge.outputs.scenarioEarly.retirementSuccessful, true);
 
   const legacyAwareSuccess = runModel(SPECIMEN_FIELDS, {
     ...SPECIMEN_UI_STATE,
@@ -204,6 +205,16 @@ test("visibility rules stay semantic for dependents, properties, and loans", () 
   assert.equal(fieldVisible(fields, HOME_FIELDS.housingRentAnnual, DEFAULT_VISIBILITY), true);
   fields[HOME_FIELDS.homeValue] = 500_000;
   assert.equal(fieldVisible(fields, HOME_FIELDS.housingRentAnnual, DEFAULT_VISIBILITY), false);
+
+  assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newHomeMode, DEFAULT_VISIBILITY), false);
+  fields[DOWNSIZING_FIELDS.year] = new Date().getFullYear() + 4;
+  assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newHomeMode, DEFAULT_VISIBILITY), true);
+  assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newHomePurchaseCost, DEFAULT_VISIBILITY), false);
+  fields[DOWNSIZING_FIELDS.newHomeMode] = "Buy";
+  assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newHomePurchaseCost, DEFAULT_VISIBILITY), true);
+  assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newRentAnnual, DEFAULT_VISIBILITY), false);
+  fields[DOWNSIZING_FIELDS.newHomeMode] = "Rent";
+  assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newRentAnnual, DEFAULT_VISIBILITY), true);
 });
 
 test("property liquidation order preserves duplicate-rank guardrails and only appends ranks for newly activated properties", () => {

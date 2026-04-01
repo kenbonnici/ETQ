@@ -83,7 +83,7 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
   const ageNow = toNumber(raw.B4);
   const statutoryRetirementAge = toBoundedNumber(raw.B19, 50, 70);
   const liveUntilMinimum = ageNow > 0 ? ageNow : 19;
-  const liveUntilAge = toBoundedNumber(raw.B244, liveUntilMinimum, 120);
+  const liveUntilAge = toBoundedNumber(raw.B254, liveUntilMinimum, 120);
 
   return {
     ageNow,
@@ -97,6 +97,10 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
     statutoryRetirementAge,
     pensionAnnual: toNumber(raw.B21),
     housingRentAnnual: toNumber(raw.B23) * 12,
+    downsizingYear: toNumber(raw.B217),
+    downsizingNewHomeMode: toTrimmedString(raw.B219),
+    downsizingNewHomePurchaseCost: toNumber(raw.B221),
+    downsizingNewRentAnnual: toNumber(raw.B223) * 12,
     livingExpensesAnnual: toNumber(raw.B25),
 
     dependents: DEPENDENT_GROUPS_BY_CELL.map((group) => ({
@@ -148,26 +152,26 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
     })),
 
     liveUntilAge,
-    spendAdjustTo65: toNumber(raw.B247),
-    spendAdjust66To75: toNumber(raw.B248),
-    spendAdjustFrom76: toNumber(raw.B249),
-    postRetIncomeAnnual: toNumber(raw.B251),
-    postRetIncomeFromAge: toNumber(raw.B252),
-    postRetIncomeToAge: toNumber(raw.B253),
+    spendAdjustTo65: toNumber(raw.B257),
+    spendAdjust66To75: toNumber(raw.B258),
+    spendAdjustFrom76: toNumber(raw.B259),
+    postRetIncomeAnnual: toNumber(raw.B261),
+    postRetIncomeFromAge: toNumber(raw.B262),
+    postRetIncomeToAge: toNumber(raw.B263),
 
-    inflation: toNumber(raw.B255),
-    propertyAppreciation: toNumber(raw.B257),
-    cashRate: toNumber(raw.B259),
-    stockReturn: toNumber(raw.B261),
-    salaryGrowth: toNumber(raw.B263),
-    rentalIncomeGrowth: toNumber(raw.B265),
+    inflation: toNumber(raw.B265),
+    propertyAppreciation: toNumber(raw.B267),
+    cashRate: toNumber(raw.B269),
+    stockReturn: toNumber(raw.B271),
+    salaryGrowth: toNumber(raw.B273),
+    rentalIncomeGrowth: toNumber(raw.B275),
 
-    pensionReductionPerYearEarly: toNumber(raw.B267),
-    cashBuffer: toNumber(raw.B269),
-    legacyAmount: toNumber(raw.B271),
-    stockSellingCosts: toNumber(raw.B273),
-    propertyDisposalCosts: toNumber(raw.B275),
-    otherAssetDisposalCosts: toNumber(raw.B277),
+    pensionReductionPerYearEarly: toNumber(raw.B277),
+    cashBuffer: toNumber(raw.B279),
+    legacyAmount: toNumber(raw.B281),
+    stockSellingCosts: toNumber(raw.B283),
+    propertyDisposalCosts: toNumber(raw.B285),
+    otherAssetDisposalCosts: toNumber(raw.B287),
 
     liquidationPriority: resolveLiquidationPriority(raw, options)
   };
