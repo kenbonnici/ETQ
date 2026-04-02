@@ -3264,13 +3264,17 @@ function renderInputs(): void {
       }
 
       const duplicate = existingScenarios.find((scenario) => scenario.name.toLowerCase() === normalizedName.toLowerCase());
+      const savingOverActiveScenario = activeScenario !== undefined
+        && activeScenario.name.toLowerCase() === normalizedName.toLowerCase();
       if (duplicate && duplicate.id !== activeSavedScenarioId) {
         const shouldReplace = window.confirm(`Replace the saved scenario "${duplicate.name}"?`);
         if (!shouldReplace) return;
       }
 
       const snapshot = collectPersistedScenarioSnapshot();
-      const scenarioId = duplicate?.id ?? activeScenario?.id ?? createScenarioId();
+      const scenarioId = duplicate?.id
+        ?? (savingOverActiveScenario ? activeScenario?.id : undefined)
+        ?? createScenarioId();
       const nextEntry: NamedScenarioRecordV1 = {
         id: scenarioId,
         name: normalizedName,
