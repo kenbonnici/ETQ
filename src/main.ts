@@ -15,6 +15,7 @@ import {
   COERCED_NUMERIC_BOUNDS,
   InputDefinition,
   INPUT_DEFINITIONS,
+  INPUT_SECTION_ORDER,
   SKIP_REVEAL_CRITICAL_FIELDS,
   ValidationMessage
 } from "./model/inputSchema";
@@ -350,7 +351,6 @@ const networthTablePanel = document.getElementById("networth-table-panel") as HT
 
 const sectionState = {
   scenariosOpen: true,
-  quickStartOpen: true,
   deeperOpen: false,
   finerOpen: false
 };
@@ -1360,11 +1360,9 @@ function getOrderedDefinitions(defs: InputDefinition[]): InputDefinition[] {
 }
 
 function getVisibleInputOrder(): FieldId[] {
-  const ordered = [
-    ...getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === "QUICK START")),
-    ...getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === "DEEPER DIVE")),
-    ...getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === "FINER DETAILS"))
-  ];
+  const ordered = INPUT_SECTION_ORDER.flatMap((section) =>
+    getOrderedDefinitions(INPUT_DEFINITIONS.filter((def) => def.section === section))
+  );
   return ordered
     .filter((def) => fieldVisible(fieldState, def.fieldId, {
       visibleDependents,
@@ -2962,7 +2960,7 @@ function renderPropertyLiquidationOrderControl(): string {
   const excludedContent = excludedRows || `<div class="liquidation-empty">All active assets are currently sellable.</div>`;
   return `
     <div class="liquidation-reorder" data-liquidation-reorder="true">
-      <div class="liquidation-title">Asset liquidation order</div>
+      <div class="liquidation-title">If Money Runs Short, Sell Assets In This Order</div>
       <small class="liquidation-help">Use the arrows to reorder sellable assets. Turn Liquidate off for assets you would never liquidate.</small>
       <div class="liquidation-section" data-liquidation-zone="sellable">
         ${sellableRows ? `<ul class="liquidation-list">${sellableContent}</ul>` : sellableContent}
@@ -3080,16 +3078,26 @@ function renderInputs(): void {
     queueRecalc();
   }
   previousActivePropertyIndices = new Set(activePropertyConfigs(fieldState).map((group) => group.liquidationIdx));
-  const grouped = {
-    "QUICK START": INPUT_DEFINITIONS.filter((d) => d.section === "QUICK START"),
-    "DEEPER DIVE": INPUT_DEFINITIONS.filter((d) => d.section === "DEEPER DIVE"),
-    "FINER DETAILS": INPUT_DEFINITIONS.filter((d) => d.section === "FINER DETAILS")
-  } as const;
+  const grouped = Object.fromEntries(
+    INPUT_SECTION_ORDER.map((section) => [section, INPUT_DEFINITIONS.filter((def) => def.section === section)])
+  ) as Record<(typeof INPUT_SECTION_ORDER)[number], InputDefinition[]>;
+  const sectionConfigs = [
+    { title: "You", className: "section-you", open: true, canToggle: false },
+    { title: "Income", className: "section-income", open: true, canToggle: false },
+    { title: "Housing", className: "section-housing", open: true, canToggle: false },
+    { title: "Retirement Income", className: "section-retirement-income", open: true, canToggle: false },
+    { title: "Savings & Investments", className: "section-savings-investments", open: true, canToggle: false },
+    { title: "Properties & Other Assets", className: "section-properties-assets", open: true, canToggle: false },
+    { title: "Family", className: "section-family", open: true, canToggle: false },
+    { title: "Debts", className: "section-debts", open: true, canToggle: false },
+    { title: "Major Future Events", className: "section-major-future-events", open: sectionState.deeperOpen, canToggle: true },
+    { title: "Advanced Assumptions", className: "section-advanced-assumptions", open: sectionState.finerOpen, canToggle: true }
+  ] as const;
 
   const block = (title: string, open: boolean, canToggle: boolean, controlsHtml: string, sectionClass: string) => {
     const toggleHtml = `<button type="button" class="section-toggle" data-section="${title}"><span>${title}</span><span class="section-toggle-chevron" aria-hidden="true">${open ? "▾" : "▸"}</span></button>`;
     if (!canToggle) {
-      const quickStartAction = title === "QUICK START"
+      const sectionAction = title === "You"
         ? `
           <div class="section-header-actions">
             <button type="button" class="quickstart-load-btn" id="load-etq-excel-btn" ${excelLoadBusy ? "disabled" : ""}>${excelLoadBusy ? "Loading..." : "Load sample data"}</button>
@@ -3100,7 +3108,7 @@ function renderInputs(): void {
         <section class="input-section ${sectionClass}">
           <div class="section-header-row">
             <h2>${title}</h2>
-            ${quickStartAction}
+            ${sectionAction}
           </div>
           ${controlsHtml}
         </section>
@@ -3261,9 +3269,6 @@ function renderInputs(): void {
     return html;
   };
 
-  const quickHtml = controls(grouped["QUICK START"]);
-  const deeperHtml = controls(grouped["DEEPER DIVE"]);
-  const finerHtml = controls(grouped["FINER DETAILS"]);
   const scenarioManagerHtml = renderScenarioManager();
   const currencySelectHtml = `
     <label class="field currency-selector">
@@ -3273,11 +3278,14 @@ function renderInputs(): void {
       </select>
     </label>
   `;
+  const sectionBlocksHtml = sectionConfigs.map((section) => {
+    const controlsHtml = controls(grouped[section.title]);
+    const prefixedHtml = section.title === "You" ? currencySelectHtml + controlsHtml : controlsHtml;
+    return block(section.title, section.open, section.canToggle, prefixedHtml, section.className);
+  }).join("");
   inputsPanel.innerHTML =
     `<section class="input-section section-scenarios"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span class="scenario-heading-block"><span>MY DATA</span><span class="scenario-heading-note">${escapeHtml(scenarioStorageAvailable ? "Stored locally in your browser. No data leaves your device" : "Local save is unavailable in this browser")}</span></span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
-    block("QUICK START", true, false, currencySelectHtml + quickHtml, "section-quick-start") +
-    block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml, "section-deeper-dive") +
-    block("FINER DETAILS", sectionState.finerOpen, true, finerHtml, "section-finer-details");
+    sectionBlocksHtml;
 
   const currencySelector = inputsPanel.querySelector<HTMLSelectElement>("#currency-selector");
   if (currencySelector) {
@@ -3628,7 +3636,7 @@ function renderInputs(): void {
       if (section === "SAVED SCENARIOS") {
         sectionState.scenariosOpen = !sectionState.scenariosOpen;
       }
-      if (section === "DEEPER DIVE") {
+      if (section === "Major Future Events") {
         if (sectionState.deeperOpen) {
           sectionState.deeperOpen = false;
           uiState.deeperDiveOpen = false;
@@ -3637,7 +3645,7 @@ function renderInputs(): void {
           uiState.deeperDiveOpen = true;
         }
       }
-      if (section === "FINER DETAILS") {
+      if (section === "Advanced Assumptions") {
         if (sectionState.finerOpen) {
           sectionState.finerOpen = false;
           uiState.finerDetailsOpen = false;

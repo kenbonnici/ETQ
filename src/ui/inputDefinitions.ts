@@ -18,6 +18,19 @@ export interface InputDefinition {
 
 type AuthoredInputDefinition = Omit<InputDefinition, "cell">;
 
+export const INPUT_SECTION_ORDER = [
+  "You",
+  "Income",
+  "Housing",
+  "Retirement Income",
+  "Savings & Investments",
+  "Properties & Other Assets",
+  "Family",
+  "Debts",
+  "Major Future Events",
+  "Advanced Assumptions"
+] as const;
+
 const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 4,
@@ -1989,7 +2002,158 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   }
 ];
 
-export const INPUT_DEFINITIONS: InputDefinition[] = AUTHORED_INPUT_DEFINITIONS.map((def) => ({
+const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
+  "retirement.statutoryAge": "State pension age",
+  "retirement.statePension.netAnnualAtStart": "Expected annual state pension",
+  "housing.01Residence.marketValue": "Current home value",
+  "housing.rentAnnual": "Current monthly rent",
+  "spending.livingExpenses.annual": "Current annual living expenses",
+  "income.otherWork.netAnnual": "Side income (net per year)",
+  "income.otherWork.endAge": "Stop side income at age",
+  "housing.downsize.newHomeMode": "After downsizing: buy or rent?",
+  "income.postRetirementSupplement.annual": "Other retirement income (per year)",
+  "retirement.earlyPensionReductionPerYear": "State pension reduction for each year retired early",
+  "liquidity.minimumCashBuffer": "Minimum cash reserve",
+  "planning.legacyAmount": "Amount you want to leave behind"
+};
+
+function buildGroupPath(section: string, groupTail: string[]): string {
+  return groupTail.length > 0 ? `${section} > ${groupTail.join(" > ")}` : section;
+}
+
+function numberedLabel(segment: string | undefined, singular: string): string {
+  const value = Number(segment);
+  return Number.isFinite(value) && value > 0 ? `${singular} ${value}` : singular;
+}
+
+function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section" | "groupTail"> {
+  if (fieldId === "profile.currentAge" || fieldId === "planning.lifeExpectancyAge") {
+    return { section: "You", groupTail: ["About you"] };
+  }
+  if (fieldId === "spending.livingExpenses.annual") {
+    return { section: "You", groupTail: ["Living costs"] };
+  }
+  if (fieldId === "liquidity.minimumCashBuffer" || fieldId === "planning.legacyAmount") {
+    return { section: "You", groupTail: ["Goals"] };
+  }
+
+  if (fieldId === "income.employment.netAnnual") {
+    return { section: "Income", groupTail: ["Main income"] };
+  }
+  if (fieldId.startsWith("income.otherWork.")) {
+    return { section: "Income", groupTail: ["Side income"] };
+  }
+
+  if (
+    fieldId === "housing.01Residence.marketValue"
+    || fieldId === "housing.rentAnnual"
+  ) {
+    return { section: "Housing", groupTail: ["Current housing"] };
+  }
+  if (fieldId.startsWith("housing.01Residence.mortgage.")) {
+    return { section: "Housing", groupTail: ["Mortgage"] };
+  }
+  if (fieldId.startsWith("housing.downsize.")) {
+    return { section: "Housing", groupTail: ["Downsizing plan"] };
+  }
+
+  if (
+    fieldId === "retirement.statutoryAge"
+    || fieldId === "retirement.statePension.netAnnualAtStart"
+  ) {
+    return { section: "Retirement Income", groupTail: ["State pension"] };
+  }
+  if (fieldId.startsWith("income.postRetirementSupplement.")) {
+    return { section: "Retirement Income", groupTail: ["Other retirement income"] };
+  }
+
+  if (fieldId === "assets.cash.totalBalance") {
+    return { section: "Savings & Investments", groupTail: ["Cash savings"] };
+  }
+  if (fieldId === "assets.equities.marketValue") {
+    return { section: "Savings & Investments", groupTail: ["Stock market investments"] };
+  }
+
+  if (fieldId.startsWith("properties.")) {
+    const slot = numberedLabel(fieldId.split(".")[1], "Property");
+    return { section: "Properties & Other Assets", groupTail: ["Investment properties", slot] };
+  }
+  if (fieldId.startsWith("assetsOfValue.")) {
+    const slot = numberedLabel(fieldId.split(".")[1], "Asset");
+    return { section: "Properties & Other Assets", groupTail: ["Other valuable assets", slot] };
+  }
+
+  if (fieldId.startsWith("dependents.")) {
+    const slot = numberedLabel(fieldId.split(".")[1], "Dependent");
+    return { section: "Family", groupTail: ["People you support", slot] };
+  }
+
+  if (fieldId === "debts.creditCards.balance") {
+    return { section: "Debts", groupTail: ["Credit cards"] };
+  }
+  if (fieldId.startsWith("debts.other.")) {
+    return { section: "Debts", groupTail: ["Other loans"] };
+  }
+
+  if (fieldId.startsWith("cashflowEvents.income.")) {
+    const slot = numberedLabel(fieldId.split(".")[2], "Income Event");
+    return { section: "Major Future Events", groupTail: ["Future income events", slot] };
+  }
+  if (fieldId.startsWith("cashflowEvents.expense.")) {
+    const slot = numberedLabel(fieldId.split(".")[2], "Expense Event");
+    return { section: "Major Future Events", groupTail: ["Future expense events", slot] };
+  }
+  if (fieldId.startsWith("stockMarketCrashes.")) {
+    const slot = numberedLabel(fieldId.split(".")[1], "Crash");
+    return { section: "Major Future Events", groupTail: ["Market downturn scenarios", slot] };
+  }
+
+  if (
+    fieldId === "spending.adjustments.pre65.deltaRate"
+    || fieldId === "spending.adjustments.age66To75.deltaRate"
+    || fieldId === "spending.adjustments.age76Plus.deltaRate"
+  ) {
+    return { section: "Advanced Assumptions", groupTail: ["Spending changes by age"] };
+  }
+  if (
+    fieldId === "assumptions.generalInflationRateAnnual"
+    || fieldId === "assumptions.propertyAppreciationRateAnnual"
+    || fieldId === "assumptions.cashYieldRateAnnual"
+    || fieldId === "assumptions.equityReturnRateAnnual"
+    || fieldId === "assumptions.salaryGrowthRateAnnual"
+    || fieldId === "assumptions.rentalIncomeGrowthRateAnnual"
+  ) {
+    return { section: "Advanced Assumptions", groupTail: ["Growth & inflation assumptions"] };
+  }
+  if (fieldId === "retirement.earlyPensionReductionPerYear") {
+    return { section: "Advanced Assumptions", groupTail: ["Retirement rules"] };
+  }
+  if (
+    fieldId === "liquidation.stockSellingCostRate"
+    || fieldId === "liquidation.propertyDisposalCostRate"
+    || fieldId === "liquidation.otherAssetDisposalCostRate"
+  ) {
+    return { section: "Advanced Assumptions", groupTail: ["Selling costs"] };
+  }
+  if (fieldId.endsWith(".liquidationPriority")) {
+    return { section: "Advanced Assumptions", groupTail: ["If money runs short, sell assets in this order"] };
+  }
+
+  return { section: "Advanced Assumptions", groupTail: [] };
+}
+
+function remapInputDefinition(def: AuthoredInputDefinition): AuthoredInputDefinition {
+  const grouping = deriveIntentGrouping(def.fieldId);
+  return {
+    ...def,
+    label: LABEL_OVERRIDES[def.fieldId] ?? def.label,
+    section: grouping.section,
+    groupTail: grouping.groupTail,
+    groupPath: buildGroupPath(grouping.section, grouping.groupTail)
+  };
+}
+
+export const INPUT_DEFINITIONS: InputDefinition[] = AUTHORED_INPUT_DEFINITIONS.map(remapInputDefinition).map((def) => ({
   ...def,
   cell: FIELD_ID_TO_CELL[def.fieldId]
 }));

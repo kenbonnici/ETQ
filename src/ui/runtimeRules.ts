@@ -582,7 +582,8 @@ function stockMarketCrashSlotVisible(
 export function getDynamicFieldLabel(def: InputDefinition, values: RuntimeValues): string {
   const propertyByRentalIncomeField = PROPERTY_RUNTIME_GROUPS.find((group) => group.rentalIncomeField === def.fieldId);
   if (propertyByRentalIncomeField) {
-    return String(values[propertyByRentalIncomeField.nameField] ?? "").trim() || propertyByRentalIncomeField.fallbackName;
+    void propertyByRentalIncomeField;
+    return "Rental income";
   }
   if (def.fieldId === RUNTIME_FIELDS.generalInflation) return "General inflation";
   const propertyByRankField = LIQUIDATION_ASSET_RUNTIME_GROUPS.find((group) => group.liquidationRankField === def.fieldId);
@@ -593,31 +594,8 @@ export function getDynamicFieldLabel(def: InputDefinition, values: RuntimeValues
 }
 
 export function getDynamicGroupTail(def: InputDefinition, values: RuntimeValues): string[] {
-  const tail = [...def.groupTail];
-  const propertyByRentalIncomeField = PROPERTY_RUNTIME_GROUPS.find((group) => group.rentalIncomeField === def.fieldId);
-  if (propertyByRentalIncomeField) {
-    tail[0] = "Other income";
-    tail[1] = "Rental income from properties";
-    return tail;
-  }
-  if (def.fieldId === OTHER_WORK_FIELDS.income || def.fieldId === OTHER_WORK_FIELDS.untilAge) {
-    tail[0] = "Other income";
-    tail[1] = "Other work income";
-    return tail;
-  }
-  const propertyLoanGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.loanFields.includes(def.fieldId));
-  if (propertyLoanGroup) {
-    const name = String(values[propertyLoanGroup.nameField] ?? "").trim();
-    tail[0] = "Loans";
-    tail[1] = name ? `${name} Property` : propertyLoanGroup.fallbackName;
-    return tail;
-  }
-  const assetLoanGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.loanFields.includes(def.fieldId));
-  if (!assetLoanGroup) return tail;
-  const name = String(values[assetLoanGroup.nameField] ?? "").trim();
-  tail[0] = "Loans";
-  tail[1] = name || assetLoanGroup.fallbackName;
-  return tail;
+  void values;
+  return [...def.groupTail];
 }
 
 export function activePropertyConfigs(values: RuntimeValues): LiquidationAssetRuntimeConfig[] {

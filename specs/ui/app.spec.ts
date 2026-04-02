@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
 
-const LEGACY_AWARE_RETIREMENT_AGE = 51;
+const EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA = 49;
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
@@ -86,7 +86,6 @@ async function expectActiveElement(page: Page, selector: string): Promise<void> 
 
 test("activates dependent fields and home-owner visibility rules in the rendered UI", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await expect(page.locator(selectors.dependentAnnualCost)).toHaveCount(0);
   await fillAndBlur(page, selectors.dependentName, "Chris");
@@ -100,7 +99,6 @@ test("activates dependent fields and home-owner visibility rules in the rendered
 
 test("reveals dependent slots up to five through the existing add-dependent flow", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await expect(page.locator(selectors.dependent2Name)).toHaveCount(0);
   await expect(page.locator(selectors.dependent4Name)).toHaveCount(0);
@@ -125,7 +123,6 @@ test("reveals dependent slots up to five through the existing add-dependent flow
 
 test("reveals property slots up to five through the existing add-property flow", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await expect(page.locator(selectors.property2Name)).toHaveCount(0);
   await expect(page.locator(selectors.property4Name)).toHaveCount(0);
@@ -151,7 +148,6 @@ test("reveals property slots up to five through the existing add-property flow",
 
 test("reveals asset slots up to five through the existing add-asset flow", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await expect(page.locator(selectors.asset2Name)).toHaveCount(0);
   await expect(page.locator(selectors.asset4Name)).toHaveCount(0);
@@ -177,7 +173,7 @@ test("reveals asset slots up to five through the existing add-asset flow", async
 
 test("reveals stock market crash slots progressively and only shows crash details after the year is entered", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+  await page.getByRole("button", { name: "Major Future Events" }).click();
 
   await expect(page.locator(selectors.stockMarketCrash1Year)).toHaveCount(0);
   await expect(page.locator(selectors.stockMarketCrash1Drop)).toHaveCount(0);
@@ -196,7 +192,6 @@ test("reveals stock market crash slots progressively and only shows crash detail
 
 test("tab order stays in visible dependent field order as groups appear", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   const dependentName = page.locator(selectors.dependentName);
   await dependentName.fill("Chris");
@@ -238,7 +233,6 @@ test("tab order skips hidden housing rent and reveals mortgage fields in sequenc
 
 test("downsizing cheaper-home warning clears once the replacement cost is reduced", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await fillAndBlur(page, selectors.currentAge, "48");
   await fillAndBlur(page, selectors.homeValue, "500000");
@@ -260,7 +254,6 @@ test("downsizing cheaper-home warning clears once the replacement cost is reduce
 
 test("downsizing cash released returns after switching from rent back to buy", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await fillAndBlur(page, selectors.currentAge, "48");
   await fillAndBlur(page, selectors.homeValue, "500000");
@@ -303,7 +296,6 @@ test("living expenses default to single-total entry and expanded mode aggregates
 
 test("load sample data restores dependents 4 and 5 from the Excel specimen", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await expect(page.locator(selectors.dependent4Name)).toBeVisible();
   await expect(page.locator(selectors.dependent4Name)).toHaveValue("Stephen");
@@ -318,7 +310,6 @@ test("load sample data restores dependents 4 and 5 from the Excel specimen", asy
 
 test("load sample data restores properties 4 and 5 from the Excel specimen", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await expect(page.locator(selectors.property4Name)).toBeVisible();
   await expect(page.locator(selectors.property4Name)).toHaveValue("Gudja");
@@ -333,7 +324,6 @@ test("load sample data restores properties 4 and 5 from the Excel specimen", asy
 
 test("load sample data restores assets of value 4 and 5 from the Excel specimen", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
   await expect(page.locator(selectors.asset4Name)).toBeVisible();
   await expect(page.locator(selectors.asset4Name)).toHaveValue("Boat");
@@ -348,7 +338,7 @@ test("load sample data restores assets of value 4 and 5 from the Excel specimen"
 
 test("load sample data restores the active stock market crash scenario from the Excel specimen", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
+  await page.getByRole("button", { name: "Major Future Events" }).click();
 
   await expect(page.locator(selectors.stockMarketCrash4Year)).toBeVisible();
   await expect(page.locator(selectors.stockMarketCrash4Year)).toHaveValue("2045");
@@ -361,7 +351,7 @@ test("load sample data restores the active stock market crash scenario from the 
 
 test("finer details honors workbook liquidation order and lets users exclude a property from liquidation", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "FINER DETAILS" }).click();
+  await page.getByRole("button", { name: "Advanced Assumptions" }).click();
 
   const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
   await expect(sellableItems).toHaveText([
@@ -411,7 +401,7 @@ test("finer details honors workbook liquidation order and lets users exclude a p
 
 test("liquidation up and down controls reorder sellable assets precisely", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "FINER DETAILS" }).click();
+  await page.getByRole("button", { name: "Advanced Assumptions" }).click();
 
   const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
   await expect(sellableItems).toHaveText([
@@ -462,21 +452,24 @@ test("load sample data restores the workbook early-retirement age", async ({ pag
   await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(EXCEL_BASELINE_SPECIMEN.early_retirement_age));
 });
 
-test("legacy input sits between cash buffer and selling costs in finer details with the expected tab order", async ({ page }) => {
+test("legacy and cash reserve sit together in You while selling costs stay in Advanced Assumptions", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "FINER DETAILS" }).click();
 
-  await expect(page.locator(selectors.minimumCashBuffer)).toBeVisible();
+  const youFieldIds = await page.locator(".section-you .field[data-field-id]").evaluateAll((fields) => (
+    fields.map((field) => field.getAttribute("data-field-id") ?? "").filter((fieldId) => fieldId.length > 0)
+  ));
+  const youPosition = (fieldId: string): number => youFieldIds.indexOf(fieldId);
+
+  expect(youPosition("liquidity.minimumCashBuffer")).toBeGreaterThan(-1);
+  expect(youPosition("planning.legacyAmount")).toBeGreaterThan(-1);
+  expect(youPosition("liquidity.minimumCashBuffer")).toBeLessThan(youPosition("planning.legacyAmount"));
+
   await expect(page.locator(selectors.minimumCashBuffer)).toHaveValue(/50,000/);
-  await expect(page.locator(selectors.legacyAmount)).toBeVisible();
   await expect(page.locator(selectors.legacyAmount)).toHaveValue(/1,000,000/);
+  await expect(page.locator(selectors.stockSellingCostRate)).toHaveCount(0);
 
-  await page.locator(selectors.minimumCashBuffer).focus();
-  await page.locator(selectors.minimumCashBuffer).press("Tab");
-  await expectActiveElement(page, selectors.legacyAmount);
-
-  await page.locator(selectors.legacyAmount).press("Tab");
-  await expectActiveElement(page, selectors.stockSellingCostRate);
+  await page.getByRole("button", { name: "Advanced Assumptions" }).click();
+  await expect(page.locator(selectors.stockSellingCostRate)).toBeVisible();
 });
 
 test("enough to quit search advances to the first age that satisfies the legacy-aware rule", async ({ page }) => {
@@ -485,19 +478,19 @@ test("enough to quit search advances to the first age that satisfies the legacy-
 
   await page.getByRole("button", { name: "Enough to quit?" }).click();
 
-  await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(LEGACY_AWARE_RETIREMENT_AGE));
-  await expect(page.locator("#retire-check-result")).toContainText(`retire at ${LEGACY_AWARE_RETIREMENT_AGE}`);
+  await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA));
+  await expect(page.locator("#retire-check-result")).toContainText(`retire at ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
 });
 
-test("deep dive keeps investment properties together before other income and orders other loans cleanly", async ({ page }) => {
+test("properties, assets, and debts are split into clearer intent-based sections", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "DEEPER DIVE" }).click();
 
-  const topHeadings = await page.locator(".section-deeper-dive .group-top").allTextContents();
-  expect(topHeadings.filter((heading) => heading.trim() === "Investment Properties")).toHaveLength(1);
-  expect(topHeadings.filter((heading) => heading.trim() === "Other Assets of Value")).toHaveLength(1);
+  const topHeadings = await page.locator(".section-properties-assets .group-top").allTextContents();
+  const normalizedTopHeadings = topHeadings.map((heading) => heading.trim());
+  expect(normalizedTopHeadings).toContain("Investment properties");
+  expect(normalizedTopHeadings).toContain("Other valuable assets");
 
-  const visibleFieldIds = await page.locator(".section-deeper-dive .field[data-field-id]").evaluateAll((fields) => (
+  const visibleFieldIds = await page.locator(".field[data-field-id]").evaluateAll((fields) => (
     fields.map((field) => field.getAttribute("data-field-id") ?? "").filter((fieldId) => fieldId.length > 0)
   ));
   const position = (fieldId: string): number => visibleFieldIds.indexOf(fieldId);
@@ -509,12 +502,11 @@ test("deep dive keeps investment properties together before other income and ord
   expect(position("debts.creditCards.balance")).toBeGreaterThan(-1);
   expect(position("properties.01.loan.balance")).toBeGreaterThan(-1);
   expect(position("assetsOfValue.01.loan.balance")).toBeGreaterThan(-1);
+  expect(position("income.otherWork.netAnnual")).toBeLessThan(position("properties.01.rentalIncomeNetAnnual"));
   expect(position("properties.05.annualOperatingCost")).toBeLessThan(position("properties.01.rentalIncomeNetAnnual"));
-  expect(position("properties.01.rentalIncomeNetAnnual")).toBeLessThan(position("income.otherWork.netAnnual"));
-  expect(position("income.otherWork.netAnnual")).toBeLessThan(position("debts.creditCards.balance"));
-  expect(position("debts.creditCards.balance")).toBeLessThan(position("properties.01.loan.balance"));
+  expect(position("properties.01.rentalIncomeNetAnnual")).toBeLessThan(position("properties.01.loan.balance"));
   expect(position("properties.05.loan.monthlyRepayment")).toBeLessThan(position("assetsOfValue.01.loan.balance"));
-  expect(position("assetsOfValue.05.loan.monthlyRepayment")).toBeLessThan(position("debts.other.balance"));
+  expect(position("assetsOfValue.05.loan.monthlyRepayment")).toBeLessThan(position("debts.creditCards.balance"));
   expect(position("debts.creditCards.balance")).toBeLessThan(position("debts.other.balance"));
 });
 

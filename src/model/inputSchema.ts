@@ -1,8 +1,8 @@
-import { InputDefinition, INPUT_DEFINITIONS } from "../ui/inputDefinitions";
+import { InputDefinition, INPUT_DEFINITIONS, INPUT_SECTION_ORDER } from "../ui/inputDefinitions";
 import { FIELD_ID_TO_CELL, FieldId, InputCell } from "./fieldRegistry";
 
 export type { InputDefinition };
-export { INPUT_DEFINITIONS };
+export { INPUT_DEFINITIONS, INPUT_SECTION_ORDER };
 
 export type ValidationSeverity = "error" | "warning";
 
@@ -294,19 +294,19 @@ export const ALL_INPUT_CELLS: InputCell[] = INPUT_DEFINITIONS.map((def) => def.c
 export const ALL_FIELD_IDS: FieldId[] = INPUT_DEFINITIONS.map((def) => def.fieldId);
 
 export const DEEPER_DIVE_CELLS: InputCell[] = INPUT_DEFINITIONS
-  .filter((def) => def.section === "DEEPER DIVE")
+  .filter((def) => def.section === "Major Future Events")
   .map((def) => def.cell);
 
 export const DEEPER_DIVE_FIELDS: FieldId[] = INPUT_DEFINITIONS
-  .filter((def) => def.section === "DEEPER DIVE")
+  .filter((def) => def.section === "Major Future Events")
   .map((def) => def.fieldId);
 
 export const FINER_DETAILS_CELLS: InputCell[] = INPUT_DEFINITIONS
-  .filter((def) => def.section === "FINER DETAILS")
+  .filter((def) => def.section === "Advanced Assumptions")
   .map((def) => def.cell);
 
 export const FINER_DETAILS_FIELDS: FieldId[] = INPUT_DEFINITIONS
-  .filter((def) => def.section === "FINER DETAILS")
+  .filter((def) => def.section === "Advanced Assumptions")
   .map((def) => def.fieldId);
 
 export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule>> = {
