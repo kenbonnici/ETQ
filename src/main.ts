@@ -3151,7 +3151,6 @@ function renderInputs(): void {
           <div class="section-header-row">
             ${toggleHtml}
             <div class="finer-default-actions section-header-actions">
-              <button type="button" class="quickstart-clear-btn" id="clear-finer-defaults-btn">Clear Data</button>
               <button type="button" class="quickstart-load-btn" id="load-finer-defaults-btn">Load Defaults</button>
             </div>
           </div>
@@ -3361,16 +3360,14 @@ function renderInputs(): void {
     });
   }
 
-  const clearFinerDefaultsBtn = inputsPanel.querySelector<HTMLButtonElement>("#clear-finer-defaults-btn");
-  if (clearFinerDefaultsBtn) {
-    clearFinerDefaultsBtn.addEventListener("click", () => {
-      clearFinerDetailsInputs();
-    });
-  }
-
   const loadFinerDefaultsBtn = inputsPanel.querySelector<HTMLButtonElement>("#load-finer-defaults-btn");
   if (loadFinerDefaultsBtn) {
     loadFinerDefaultsBtn.addEventListener("click", () => {
+      const hasExistingFinerDetails = FINER_DETAILS_FIELD_IDS.some((fieldId) => !isBlank(fieldState[fieldId]));
+      if (hasExistingFinerDetails) {
+        const shouldLoadDefaults = window.confirm("Load defaults and overwrite current Finer Details inputs?");
+        if (!shouldLoadDefaults) return;
+      }
       loadFinerDetailsDefaults();
     });
   }
