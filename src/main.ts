@@ -3344,6 +3344,10 @@ function renderInputs(): void {
   const loadEtqExcelBtn = inputsPanel.querySelector<HTMLButtonElement>("#load-etq-excel-btn");
   if (loadEtqExcelBtn) {
     loadEtqExcelBtn.addEventListener("click", () => {
+      if (snapshotHasSavableData(collectPersistedScenarioSnapshot())) {
+        const shouldLoad = window.confirm("Load sample data and overwrite current inputs?");
+        if (!shouldLoad) return;
+      }
       void loadInputsFromEtqExcelSnapshot();
     });
   }
