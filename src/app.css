@@ -1402,12 +1402,6 @@ body {
   border-color: #8ebfb1;
 }
 
-.scenario-manager-divider {
-  height: 1px;
-  margin: 0;
-  background: linear-gradient(90deg, rgb(215 228 221 / 0), rgb(215 228 221 / 1) 10%, rgb(215 228 221 / 1) 90%, rgb(215 228 221 / 0));
-}
-
 .scenario-library-field {
   display: grid;
   gap: 5px;
@@ -1423,7 +1417,6 @@ body {
   gap: 8px;
   min-width: 112px;
   padding-left: 16px;
-  border-left: 1px solid #dbe6e0;
 }
 
 .scenario-action-btn {
@@ -2603,8 +2596,6 @@ small {
   .scenario-row-actions {
     min-width: 0;
     padding-left: 0;
-    border-left: 0;
-    border-top: 1px solid #dbe6e0;
     padding-top: 10px;
   }
 

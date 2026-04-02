@@ -1252,7 +1252,6 @@ function renderScenarioManager(): string {
             <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="clear-inputs-btn">Clear</button>
           </div>
         </div>
-        <div class="scenario-manager-divider" aria-hidden="true"></div>
         <div class="scenario-manager-row">
           <div class="scenario-row-main">
             <label class="scenario-library-field">
