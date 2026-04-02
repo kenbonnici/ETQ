@@ -1441,19 +1441,19 @@ body {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
-  gap: 8px;
-  width: 164px;
-  min-width: 164px;
+  gap: 6px;
+  width: 132px;
+  min-width: 132px;
   padding-left: 16px;
 }
 
 .scenario-action-btn {
   width: 100%;
   min-width: 0;
-  height: 40px;
-  border-radius: 8px;
-  padding: 0 14px;
-  font-size: 13px;
+  height: 32px;
+  border-radius: 6px;
+  padding: 0 11px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.01em;
   cursor: pointer;
@@ -1493,6 +1493,12 @@ body {
   color: #44625a;
 }
 
+.scenario-action-btn--secondary:disabled {
+  border-color: #d5e0db;
+  background: #f2f6f4;
+  color: #a3b5ae;
+}
+
 .scenario-action-btn--secondary:hover:not(:disabled) {
   background: #f6faf8;
 }
@@ -1501,6 +1507,12 @@ body {
   border: 1px solid #e8c0b9;
   background: #ffffff;
   color: #c7655b;
+}
+
+.scenario-action-btn--danger:disabled {
+  border-color: #d5e0db;
+  background: #f2f6f4;
+  color: #a3b5ae;
 }
 
 .scenario-action-btn--danger:hover:not(:disabled) {
