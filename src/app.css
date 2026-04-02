@@ -1346,6 +1346,8 @@ body {
 
 .scenario-row-main {
   min-width: 0;
+  width: 82%;
+  justify-self: start;
 }
 
 .scenario-manager-kicker-row {
@@ -2598,6 +2600,10 @@ small {
     min-width: 0;
     padding-left: 0;
     padding-top: 10px;
+  }
+
+  .scenario-row-main {
+    width: 100%;
   }
 
   .scenario-manager-inline-note {
