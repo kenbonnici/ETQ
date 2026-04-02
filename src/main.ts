@@ -1098,6 +1098,12 @@ function snapshotHasSavableData(snapshot: PersistedScenarioSnapshotV1): boolean 
   return false;
 }
 
+function syncScenarioSaveButtonState(): void {
+  const saveButton = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
+  if (!saveButton) return;
+  saveButton.disabled = !scenarioStorageAvailable || !snapshotHasSavableData(collectPersistedScenarioSnapshot());
+}
+
 function readDraftScenarioSnapshot(): PersistedScenarioSnapshotV1 | null {
   return normalizePersistedSnapshot(readScenarioStorageJson<unknown>(SCENARIO_DRAFT_STORAGE_KEY));
 }
@@ -4325,6 +4331,7 @@ function recalc(): void {
 
 function queueRecalc(): void {
   schedulePersistDraft();
+  syncScenarioSaveButtonState();
   if (debounceHandle !== null) window.clearTimeout(debounceHandle);
   debounceHandle = window.setTimeout(() => {
     recalc();
