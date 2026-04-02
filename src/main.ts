@@ -1222,10 +1222,12 @@ function renderScenarioManager(): string {
 
   return `
     <div class="scenario-manager">
-      <p class="scenario-manager-intro">${escapeHtml(scenarioStorageAvailable ? "Stored in your browser only. No data leaves your device." : "Local save is unavailable in this browser.")}</p>
       ${noticeHtml}
       <div class="scenario-manager-section">
-        <div class="scenario-manager-kicker">Save current inputs</div>
+        <div class="scenario-manager-kicker-row">
+          <div class="scenario-manager-kicker">Save current inputs</div>
+          <div class="scenario-manager-inline-note">${escapeHtml(scenarioStorageAvailable ? "Stored in your browser only. No data leaves your device." : "Local save is unavailable in this browser.")}</div>
+        </div>
         <div class="scenario-save-row">
           <input
             id="scenario-name-input"
