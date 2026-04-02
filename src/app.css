@@ -1346,8 +1346,7 @@ body {
 
 .scenario-row-main {
   min-width: 0;
-  width: 82%;
-  justify-self: start;
+  width: 100%;
 }
 
 .scenario-manager-kicker-row {
@@ -1377,7 +1376,7 @@ body {
 
 .scenario-field-shell {
   display: block;
-  width: 100%;
+  width: 82%;
   min-width: 0;
 }
 
@@ -1439,7 +1438,8 @@ body {
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
   gap: 8px;
-  min-width: 112px;
+  width: 164px;
+  min-width: 164px;
   padding-left: 16px;
 }
 
@@ -2618,12 +2618,17 @@ small {
   }
 
   .scenario-row-actions {
+    width: 100%;
     min-width: 0;
     padding-left: 0;
     padding-top: 10px;
   }
 
   .scenario-row-main {
+    width: 100%;
+  }
+
+  .scenario-field-shell {
     width: 100%;
   }
 
