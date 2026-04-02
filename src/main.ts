@@ -1302,7 +1302,7 @@ function restoreDraftScenarioIfAvailable(): boolean {
   if (!scenarioStorageAvailable) return false;
   const draft = readDraftScenarioSnapshot();
   if (!draft) return false;
-  applyPersistedScenarioSnapshot(draft, { message: "Restored your local draft.", tone: "info" });
+  applyPersistedScenarioSnapshot(draft);
   return true;
 }
 
