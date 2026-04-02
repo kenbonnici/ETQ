@@ -1334,17 +1334,18 @@ body {
 
 .scenario-manager-layout {
   display: grid;
+  gap: 14px;
+}
+
+.scenario-manager-row {
+  display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  align-items: start;
+  align-items: end;
   gap: 16px;
 }
 
-.scenario-manager-main {
+.scenario-row-main {
   min-width: 0;
-}
-
-.scenario-manager-section {
-  margin-top: 12px;
 }
 
 .scenario-manager-kicker-row {
@@ -1403,17 +1404,11 @@ body {
 
 .scenario-manager-divider {
   height: 1px;
-  margin: 10px 0 0;
+  margin: 0;
   background: linear-gradient(90deg, rgb(215 228 221 / 0), rgb(215 228 221 / 1) 10%, rgb(215 228 221 / 1) 90%, rgb(215 228 221 / 0));
 }
 
-.scenario-library-row {
-  display: block;
-  margin-top: 14px;
-}
-
 .scenario-library-field {
-  flex: 1 1 auto;
   display: grid;
   gap: 5px;
   font-size: 11px;
@@ -1421,20 +1416,14 @@ body {
   color: #35564d;
 }
 
-.scenario-actions-rail {
-  display: flex;
-  flex-direction: column;
+.scenario-row-actions {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 8px;
   min-width: 112px;
-  padding-top: 12px;
   padding-left: 16px;
   border-left: 1px solid #dbe6e0;
-}
-
-.scenario-primary-actions {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
 }
 
 .scenario-action-btn {
@@ -2606,21 +2595,17 @@ small {
     margin-left: 0;
   }
 
-  .scenario-manager-layout {
+  .scenario-manager-row {
     grid-template-columns: 1fr;
-    gap: 12px;
+    gap: 10px;
   }
 
-  .scenario-actions-rail {
+  .scenario-row-actions {
     min-width: 0;
-    padding-top: 12px;
     padding-left: 0;
     border-left: 0;
     border-top: 1px solid #dbe6e0;
-  }
-
-  .scenario-primary-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    padding-top: 10px;
   }
 
   .scenario-manager-inline-note {

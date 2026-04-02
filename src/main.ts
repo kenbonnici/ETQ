@@ -1224,8 +1224,8 @@ function renderScenarioManager(): string {
     <div class="scenario-manager">
       ${noticeHtml}
       <div class="scenario-manager-layout">
-        <div class="scenario-manager-main">
-          <div class="scenario-manager-section">
+        <div class="scenario-manager-row">
+          <div class="scenario-row-main">
             <div class="scenario-manager-kicker-row">
               <div class="scenario-manager-kicker">Save current inputs</div>
               <div class="scenario-manager-inline-note">${escapeHtml(scenarioStorageAvailable ? "Stored in your browser only. No data leaves your device." : "Local save is unavailable in this browser.")}</div>
@@ -1242,8 +1242,19 @@ function renderScenarioManager(): string {
               />
             </div>
           </div>
-          <div class="scenario-manager-divider" aria-hidden="true"></div>
-          <div class="scenario-library-row">
+          <div class="scenario-row-actions">
+            <button
+              type="button"
+              class="scenario-action-btn scenario-action-btn--primary"
+              id="save-named-scenario-btn"
+              ${scenarioStorageAvailable && normalizeScenarioName(scenarioDraftName).length > 0 ? "" : "disabled"}
+            >Save</button>
+            <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="clear-inputs-btn">Clear</button>
+          </div>
+        </div>
+        <div class="scenario-manager-divider" aria-hidden="true"></div>
+        <div class="scenario-manager-row">
+          <div class="scenario-row-main">
             <label class="scenario-library-field">
               <span class="scenario-manager-kicker">Saved scenarios</span>
               <select id="saved-scenario-select" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>
@@ -1260,19 +1271,10 @@ function renderScenarioManager(): string {
               </select>
             </label>
           </div>
-        </div>
-        <div class="scenario-actions-rail">
-          <div class="scenario-primary-actions">
-            <button
-              type="button"
-              class="scenario-action-btn scenario-action-btn--primary"
-              id="save-named-scenario-btn"
-              ${scenarioStorageAvailable && normalizeScenarioName(scenarioDraftName).length > 0 ? "" : "disabled"}
-            >Save</button>
-            <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="clear-inputs-btn">Clear</button>
+          <div class="scenario-row-actions">
+            <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="load-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Load</button>
+            <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Delete</button>
           </div>
-          <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="load-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Load</button>
-          <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Delete</button>
         </div>
       </div>
     </div>
