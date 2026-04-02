@@ -485,10 +485,10 @@ test("enough to quit search advances to the first age that satisfies the legacy-
 test("properties, assets, and debts are split into clearer intent-based sections", async ({ page }) => {
   await loadSampleData(page);
 
-  const topHeadings = await page.locator(".section-properties-assets .group-top").allTextContents();
-  const normalizedTopHeadings = topHeadings.map((heading) => heading.trim());
-  expect(normalizedTopHeadings).toContain("Investment properties");
-  expect(normalizedTopHeadings).toContain("Other valuable assets");
+  const propertyHeadings = await page.locator(".section-properties .group-top").allTextContents();
+  const assetHeadings = await page.locator(".section-other-assets .group-top").allTextContents();
+  expect(propertyHeadings.map((heading) => heading.trim())).toContain("Investment properties");
+  expect(assetHeadings.map((heading) => heading.trim())).toContain("Other valuable assets");
 
   const visibleFieldIds = await page.locator(".field[data-field-id]").evaluateAll((fields) => (
     fields.map((field) => field.getAttribute("data-field-id") ?? "").filter((fieldId) => fieldId.length > 0)

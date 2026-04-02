@@ -1229,6 +1229,8 @@ body {
   background: linear-gradient(180deg, #edf8f4 0%, #ffffff 78%);
 }
 
+.section-properties,
+.section-other-assets,
 .section-deeper-dive,
 .section-major-future-events {
   --section-chip-bg: #e4eefb;
@@ -1613,6 +1615,8 @@ body {
 }
 
 .section-deeper-dive h2,
+.section-properties h2,
+.section-other-assets h2,
 .section-major-future-events h2 {
   color: #1d3f6c;
   background: #dfeaf7;
@@ -1638,6 +1642,8 @@ body {
 }
 
 .section-deeper-dive h3,
+.section-properties h3,
+.section-other-assets h3,
 .section-major-future-events h3 {
   color: #1d4f8f;
   border-bottom-color: #d6e1ef;
@@ -1721,23 +1727,31 @@ body {
 }
 
 .section-deeper-dive .group-item-card,
+.section-properties .group-item-card,
+.section-other-assets .group-item-card,
 .section-major-future-events .group-item-card {
   border-color: #d5e0ef;
   background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
 }
 
 .section-deeper-dive .group-mid,
+.section-properties .group-mid,
+.section-other-assets .group-mid,
 .section-major-future-events .group-mid {
   color: #49688f;
 }
 
 .section-deeper-dive .group-item-card-header,
+.section-properties .group-item-card-header,
+.section-other-assets .group-item-card-header,
 .section-major-future-events .group-item-card-header {
   border-bottom-color: #d5e0ef;
   background: #edf4fd;
 }
 
 .section-deeper-dive .group-item-card-summary,
+.section-properties .group-item-card-summary,
+.section-other-assets .group-item-card-summary,
 .section-major-future-events .group-item-card-summary {
   color: #1d4f8f;
   background: #e4eefb;
@@ -1794,6 +1808,8 @@ body {
 }
 
 .section-deeper-dive .section-toggle,
+.section-properties .section-toggle,
+.section-other-assets .section-toggle,
 .section-major-future-events .section-toggle {
   color: #23456f;
   background: #e8f0fb;
