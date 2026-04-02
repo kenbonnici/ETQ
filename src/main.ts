@@ -1228,7 +1228,6 @@ function renderScenarioManager(): string {
           <div class="scenario-row-main">
             <div class="scenario-manager-kicker-row">
               <div class="scenario-manager-kicker">Save current inputs</div>
-              <div class="scenario-manager-inline-note">${escapeHtml(scenarioStorageAvailable ? "Stored in your browser only. No data leaves your device." : "Local save is unavailable in this browser.")}</div>
             </div>
             <div class="scenario-field-shell">
               <input
@@ -3314,7 +3313,7 @@ function renderInputs(): void {
     </label>
   `;
   inputsPanel.innerHTML =
-    `<section class="input-section section-scenarios"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span>My data</span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
+    `<section class="input-section section-scenarios"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span>My data <span class="scenario-heading-note">(${escapeHtml(scenarioStorageAvailable ? "Stored in your browser only. No data leaves your device." : "Local save is unavailable in this browser.")})</span></span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
     block("QUICK START", true, false, currencySelectHtml + quickHtml, "section-quick-start") +
     block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml, "section-deeper-dive") +
     block("FINER DETAILS", sectionState.finerOpen, true, finerHtml, "section-finer-details");
