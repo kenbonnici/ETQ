@@ -13,8 +13,6 @@ import {
   INPUT_DEFINITION_BY_FIELD_ID,
   ALLOW_NEGATIVE_FIELDS,
   COERCED_NUMERIC_BOUNDS,
-  FINER_DETAILS_COL_C_DEFAULTS,
-  FINER_DETAILS_FIELDS,
   InputDefinition,
   INPUT_DEFINITIONS,
   SKIP_REVEAL_CRITICAL_FIELDS,
@@ -82,19 +80,12 @@ const NAMED_SCENARIOS_STORAGE_KEY = "etq:scenario:named:v1";
 const SCENARIO_MAX_NAME_LENGTH = 60;
 
 function createDefaultPersistedRawInputs(): RawInputs {
-  const defaults = createEmptyFieldState();
-  for (const [fieldId, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
-    defaults[fieldId as FieldId] = value;
-  }
-  return pruneInactiveRawInputs(fieldStateToRawInputs(defaults));
+  return pruneInactiveRawInputs(fieldStateToRawInputs(createEmptyFieldState()));
 }
 
 const DEFAULT_PERSISTED_RAW_INPUTS = createDefaultPersistedRawInputs();
 
 const fieldState = createEmptyFieldState();
-for (const [fieldId, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
-  fieldState[fieldId as FieldId] = value;
-}
 
 let uiState: ModelUiState = {
   deeperDiveOpen: false,
@@ -371,7 +362,6 @@ const propertyFieldSets = PROPERTY_RUNTIME_GROUPS.map((group) => group.coreField
 let visibleAssetsOfValue = 1;
 const assetOfValueFieldSets = ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.coreFields);
 const PROPERTY_LIQUIDATION_CELLS = PROPERTY_LIQUIDATION_FIELDS;
-const FINER_DETAILS_FIELD_IDS = FINER_DETAILS_FIELDS;
 let visibleIncomeEvents = 1;
 const incomeEvent1Fields = INCOME_EVENT_RUNTIME_GROUPS[0].fields;
 const incomeEvent2Fields = INCOME_EVENT_RUNTIME_GROUPS[1].fields;
@@ -2984,15 +2974,6 @@ function renderPropertyLiquidationOrderControl(): string {
   `;
 }
 
-function applyFinerDefaultsIfNeeded(): void {
-  for (const [fieldId, val] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS) as Array<[FieldId, number | null]>) {
-    const current = fieldState[fieldId];
-    if (isBlank(current) && val !== null && val !== undefined) {
-      fieldState[fieldId] = applyFieldNumericConstraint(fieldId, Number(val));
-    }
-  }
-}
-
 async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
   if (excelLoadBusy) return;
   excelLoadBusy = true;
@@ -3054,7 +3035,7 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
   }
 }
 
-function clearAllInputsPreservingFinerDefaults(): void {
+function clearAllInputs(): void {
   for (const def of INPUT_DEFINITIONS) {
     fieldState[def.fieldId] = null;
   }
@@ -3065,7 +3046,6 @@ function clearAllInputsPreservingFinerDefaults(): void {
   validationRevealAll = false;
   clearTouchedFields();
   clearAllAttemptedFieldMessages();
-  applyFinerDefaultsIfNeeded();
   syncVisibleRuntimeGroupsFromState();
   uiState.manualPropertyLiquidationOrder = false;
   setRetireCheckMessage(null);
@@ -3074,35 +3054,6 @@ function clearAllInputsPreservingFinerDefaults(): void {
     uiState.earlyRetirementAge = statutory;
   }
   syncEarlyRetirementControl(true);
-  renderInputs();
-  queueRecalc();
-}
-
-function clearFinerDetailsInputs(): void {
-  for (const fieldId of FINER_DETAILS_FIELD_IDS) {
-    fieldState[fieldId] = null;
-  }
-  validationRevealAll = false;
-  clearTouchedFields(FINER_DETAILS_FIELD_IDS);
-  clearAllAttemptedFieldMessages();
-  uiState.manualPropertyLiquidationOrder = false;
-  setRetireCheckMessage(null);
-  renderInputs();
-  queueRecalc();
-}
-
-function loadFinerDetailsDefaults(): void {
-  for (const fieldId of FINER_DETAILS_FIELD_IDS) {
-    fieldState[fieldId] = null;
-  }
-  for (const [fieldId, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS) as Array<[FieldId, RawInputValue]>) {
-    fieldState[fieldId] = value;
-  }
-  validationRevealAll = false;
-  clearTouchedFields(FINER_DETAILS_FIELD_IDS);
-  clearAllAttemptedFieldMessages();
-  uiState.manualPropertyLiquidationOrder = false;
-  setRetireCheckMessage(null);
   renderInputs();
   queueRecalc();
 }
@@ -3152,19 +3103,6 @@ function renderInputs(): void {
             ${quickStartAction}
           </div>
           ${controlsHtml}
-        </section>
-      `;
-    }
-    if (title === "FINER DETAILS") {
-      return `
-        <section class="input-section ${sectionClass}">
-          <div class="section-header-row">
-            ${toggleHtml}
-            <div class="finer-default-actions section-header-actions">
-              <button type="button" class="quickstart-load-btn" id="load-finer-defaults-btn">Load Defaults</button>
-            </div>
-          </div>
-          ${open ? controlsHtml : ""}
         </section>
       `;
     }
@@ -3366,19 +3304,7 @@ function renderInputs(): void {
     clearInputsBtn.addEventListener("click", () => {
       const shouldClear = window.confirm("Clear all current inputs?");
       if (!shouldClear) return;
-      clearAllInputsPreservingFinerDefaults();
-    });
-  }
-
-  const loadFinerDefaultsBtn = inputsPanel.querySelector<HTMLButtonElement>("#load-finer-defaults-btn");
-  if (loadFinerDefaultsBtn) {
-    loadFinerDefaultsBtn.addEventListener("click", () => {
-      const hasExistingFinerDetails = FINER_DETAILS_FIELD_IDS.some((fieldId) => !isBlank(fieldState[fieldId]));
-      if (hasExistingFinerDetails) {
-        const shouldLoadDefaults = window.confirm("Load defaults and overwrite current Finer Details inputs?");
-        if (!shouldLoadDefaults) return;
-      }
-      loadFinerDetailsDefaults();
+      clearAllInputs();
     });
   }
 
@@ -3718,7 +3644,6 @@ function renderInputs(): void {
         } else {
           sectionState.finerOpen = true;
           uiState.finerDetailsOpen = true;
-          applyFinerDefaultsIfNeeded();
         }
       }
       setRetireCheckMessage(null);

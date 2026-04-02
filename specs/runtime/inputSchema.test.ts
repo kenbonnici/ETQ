@@ -15,8 +15,6 @@ import {
   EXPENSE_EVENT_GROUPS_BY_CELL,
   FIELD_VALIDATION_RULES,
   FIELD_VALIDATION_RULES_BY_CELL,
-  FINER_DETAILS_COL_C_DEFAULTS,
-  FINER_DETAILS_COL_C_DEFAULTS_BY_CELL,
   HOME_LOAN_GROUP,
   HOME_LOAN_GROUP_BY_CELL,
   INCOME_EVENT_GROUPS,
@@ -56,7 +54,6 @@ function mapCellListToFields(cells: readonly InputCell[]): FieldId[] {
 }
 
 test("cell-keyed schema exports match the field-keyed source when remapped", () => {
-  assert.deepEqual(FINER_DETAILS_COL_C_DEFAULTS_BY_CELL, mapFieldRecordToCells(FINER_DETAILS_COL_C_DEFAULTS));
   assert.deepEqual(FIELD_VALIDATION_RULES_BY_CELL, mapFieldRecordToCells(FIELD_VALIDATION_RULES));
   assert.deepEqual(COERCED_NUMERIC_BOUNDS_BY_CELL, mapFieldRecordToCells(COERCED_NUMERIC_BOUNDS));
   assert.deepEqual([...ALLOW_NEGATIVE_INPUT_CELLS], mapFieldListToCells([...ALLOW_NEGATIVE_FIELDS]));

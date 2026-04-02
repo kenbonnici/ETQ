@@ -309,40 +309,6 @@ export const FINER_DETAILS_FIELDS: FieldId[] = INPUT_DEFINITIONS
   .filter((def) => def.section === "FINER DETAILS")
   .map((def) => def.fieldId);
 
-export const FINER_DETAILS_COL_C_DEFAULTS: Partial<Record<FieldId, number | null>> = {
-  "planning.lifeExpectancyAge": 85,
-  "spending.adjustments.pre65.deltaRate": 0,
-  "spending.adjustments.age66To75.deltaRate": -0.1,
-  "spending.adjustments.age76Plus.deltaRate": -0.2,
-  "income.postRetirementSupplement.annual": null,
-  "income.postRetirementSupplement.startAge": null,
-  "income.postRetirementSupplement.endAge": null,
-  "assumptions.generalInflationRateAnnual": 0.025,
-  "assumptions.propertyAppreciationRateAnnual": 0.03,
-  "assumptions.cashYieldRateAnnual": 0.025,
-  "assumptions.equityReturnRateAnnual": 0.08,
-  "assumptions.salaryGrowthRateAnnual": 0.03,
-  "assumptions.rentalIncomeGrowthRateAnnual": 0.03,
-  "retirement.earlyPensionReductionPerYear": 300,
-  "liquidity.minimumCashBuffer": 20000,
-  "planning.legacyAmount": 0,
-  "liquidation.stockSellingCostRate": 0.05,
-  "liquidation.propertyDisposalCostRate": 0.15,
-  "liquidation.otherAssetDisposalCostRate": 0.02,
-  "properties.01.liquidationPriority": null,
-  "properties.02.liquidationPriority": null,
-  "properties.03.liquidationPriority": null,
-  "properties.04.liquidationPriority": null,
-  "properties.05.liquidationPriority": null,
-  "assetsOfValue.01.liquidationPriority": null,
-  "assetsOfValue.02.liquidationPriority": null,
-  "assetsOfValue.03.liquidationPriority": null,
-  "assetsOfValue.04.liquidationPriority": null,
-  "assetsOfValue.05.liquidationPriority": null
-};
-
-export const FINER_DETAILS_COL_C_DEFAULTS_BY_CELL = mapFieldRecordToCells(FINER_DETAILS_COL_C_DEFAULTS);
-
 export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule>> = {
   "profile.currentAge": { required: true, integer: true, nonNegative: true, clampBounds: { min: 18, max: 100 } },
   "income.employment.netAnnual": { nonNegative: true },
