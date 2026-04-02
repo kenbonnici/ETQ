@@ -1340,7 +1340,7 @@ body {
 
 .scenario-manager-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 228px;
+  grid-template-columns: minmax(0, 1fr) 148px;
   align-items: end;
   gap: 16px;
 }
@@ -1440,18 +1440,11 @@ body {
 
 .scenario-row-actions {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
   width: 100%;
   min-width: 0;
   padding-left: 8px;
-}
-
-.scenario-row-actions--triple {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.scenario-row-actions--double {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .scenario-action-btn {

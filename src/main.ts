@@ -1103,8 +1103,6 @@ function syncScenarioActionButtonState(): void {
   const hasSavableScenarioData = scenarioStorageAvailable && snapshotHasSavableData(collectPersistedScenarioSnapshot());
   const saveButton = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
   if (saveButton) saveButton.disabled = !hasSavableScenarioData;
-  const saveAsButton = inputsPanel.querySelector<HTMLButtonElement>("#save-as-named-scenario-btn");
-  if (saveAsButton) saveAsButton.disabled = !hasSavableScenarioData;
   const clearButton = inputsPanel.querySelector<HTMLButtonElement>("#clear-inputs-btn");
   if (clearButton) clearButton.disabled = !hasSavableScenarioData;
 }
@@ -1260,14 +1258,13 @@ function renderScenarioManager(): string {
               />
             </div>
           </div>
-          <div class="scenario-row-actions scenario-row-actions--triple">
+          <div class="scenario-row-actions">
             <button
               type="button"
               class="scenario-action-btn scenario-action-btn--primary"
               id="save-named-scenario-btn"
               ${scenarioStorageAvailable && hasSavableScenarioData ? "" : "disabled"}
             >Save</button>
-            <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="save-as-named-scenario-btn" ${scenarioStorageAvailable && hasSavableScenarioData ? "" : "disabled"}>Save As</button>
             <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="clear-inputs-btn" ${scenarioStorageAvailable && hasSavableScenarioData ? "" : "disabled"}>Clear</button>
           </div>
         </div>
@@ -1291,7 +1288,7 @@ function renderScenarioManager(): string {
               </span>
             </label>
           </div>
-          <div class="scenario-row-actions scenario-row-actions--double">
+          <div class="scenario-row-actions">
             <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="load-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Load</button>
             <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Delete</button>
           </div>
@@ -1309,7 +1306,7 @@ function restoreDraftScenarioIfAvailable(): boolean {
   return true;
 }
 
-function saveCurrentScenario(mode: "save" | "saveAs" = "save"): void {
+function saveCurrentScenario(): void {
   if (!scenarioStorageAvailable) {
     setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
     renderInputs();
@@ -1325,7 +1322,9 @@ function saveCurrentScenario(mode: "save" | "saveAs" = "save"): void {
 
   const existingScenarios = readNamedScenarios();
   const activeScenario = existingScenarios.find((scenario) => scenario.id === activeSavedScenarioId);
-  const targetScenarioId = mode === "save" && activeScenario ? activeScenario.id : null;
+  const targetScenarioId = activeScenario && activeScenario.name.toLowerCase() === normalizedName.toLowerCase()
+    ? activeScenario.id
+    : null;
   const duplicate = existingScenarios.find((scenario) => scenario.name.toLowerCase() === normalizedName.toLowerCase());
   if (duplicate && duplicate.id !== targetScenarioId) {
     const shouldReplace = window.confirm(`Replace the saved scenario "${duplicate.name}"?`);
@@ -1349,7 +1348,7 @@ function saveCurrentScenario(mode: "save" | "saveAs" = "save"): void {
   activeSavedScenarioId = scenarioId;
   selectedSavedScenarioId = null;
   scenarioDraftName = normalizedName;
-  setScenarioManagerNotice(`${mode === "saveAs" ? "Saved new" : "Saved"} scenario "${normalizedName}".`, "success");
+  setScenarioManagerNotice(`${targetScenarioId ? "Updated" : "Saved"} scenario "${normalizedName}".`, "success");
   renderInputs();
 }
 
@@ -3406,14 +3405,7 @@ function renderInputs(): void {
   const saveNamedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
   if (saveNamedScenarioBtn) {
     saveNamedScenarioBtn.addEventListener("click", () => {
-      saveCurrentScenario("save");
-    });
-  }
-
-  const saveAsNamedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#save-as-named-scenario-btn");
-  if (saveAsNamedScenarioBtn) {
-    saveAsNamedScenarioBtn.addEventListener("click", () => {
-      saveCurrentScenario("saveAs");
+      saveCurrentScenario();
     });
   }
 
