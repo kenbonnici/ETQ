@@ -1262,7 +1262,7 @@ function renderScenarioManager(): string {
               id="save-named-scenario-btn"
               ${scenarioStorageAvailable && hasSavableScenarioData ? "" : "disabled"}
             >Save</button>
-            <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="clear-inputs-btn">Clear</button>
+            <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="clear-inputs-btn">Clear</button>
           </div>
         </div>
         <div class="scenario-manager-row">
@@ -3351,6 +3351,8 @@ function renderInputs(): void {
   const clearInputsBtn = inputsPanel.querySelector<HTMLButtonElement>("#clear-inputs-btn");
   if (clearInputsBtn) {
     clearInputsBtn.addEventListener("click", () => {
+      const shouldClear = window.confirm("Clear all current inputs?");
+      if (!shouldClear) return;
       clearAllInputsPreservingFinerDefaults();
     });
   }
