@@ -1209,7 +1209,7 @@ function renderScenarioManager(): string {
           <button type="button" class="quickstart-clear-btn" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>Delete</button>
         </div>
       </div>
-      <small class="scenario-manager-footnote">Saved locally in this browser only. Nothing is sent to your server.</small>
+      <small class="scenario-manager-footnote">Saved locally in your browser only. We do not collect any data.</small>
     </div>
   `;
 }
