@@ -1333,7 +1333,7 @@ body {
 }
 
 .scenario-manager-section {
-  margin-top: 10px;
+  margin-top: 12px;
 }
 
 .scenario-manager-kicker-row {
@@ -1404,7 +1404,7 @@ body {
   display: flex;
   align-items: flex-end;
   gap: 8px;
-  margin-top: 10px;
+  margin-top: 14px;
 }
 
 .scenario-library-field {
@@ -1439,7 +1439,7 @@ body {
 }
 
 .scenario-action-btn:disabled {
-  opacity: 0.45;
+  opacity: 1;
   cursor: not-allowed;
   transform: none;
 }
@@ -1452,9 +1452,9 @@ body {
 }
 
 .scenario-action-btn--primary:disabled {
-  border-color: #c7ddd6;
-  background: #dbeae5;
-  color: #f8fafc;
+  border-color: #d5e0db;
+  background: #f2f6f4;
+  color: #a3b5ae;
 }
 
 .scenario-action-btn--primary:hover:not(:disabled) {
@@ -1491,15 +1491,26 @@ body {
 }
 
 .section-scenarios {
-  border-color: #bfd4cb;
-  border-left: 4px solid #6aa391;
-  background: linear-gradient(180deg, #eef7f3 0%, #ffffff 82%);
+  border-color: #c9dbd3;
+  border-left: 3px solid #79a999;
+  background: linear-gradient(180deg, #f2f8f5 0%, #ffffff 84%);
 }
 
-.section-scenarios .section-toggle {
-  color: #275149;
-  background: #dceee8;
-  border-color: #b9d3ca;
+.section-scenarios .section-toggle--scenarios {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: #2c5950;
+  background: #e8f3ee;
+  border-color: #c8ddd4;
+  padding-top: 9px;
+  padding-bottom: 9px;
+}
+
+.section-toggle-chevron {
+  font-size: 14px;
+  line-height: 1;
+  color: #6a8e83;
 }
 
 .finer-default-actions {
@@ -1706,14 +1717,17 @@ body {
 .section-toggle {
   width: 100%;
   text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   background: #f8faf9;
   border: 1px solid var(--line);
   border-radius: 10px;
   padding: 10px 12px;
   font-size: 13px;
   font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
   cursor: pointer;
   margin-bottom: 14px;
 }
@@ -1726,15 +1740,15 @@ body {
 }
 
 .section-deeper-dive .section-toggle {
-  color: #1d3f6c;
-  background: #dde9f8;
-  border-color: #bfd0e5;
+  color: #23456f;
+  background: #e8f0fb;
+  border-color: #cad8ea;
 }
 
 .section-finer-details .section-toggle {
-  color: #4f3277;
-  background: #e7ddf4;
-  border-color: #cebee4;
+  color: #5a397f;
+  background: #efe7f8;
+  border-color: #dacced;
 }
 
 .add-dependent-btn,

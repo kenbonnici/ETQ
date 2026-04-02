@@ -3103,6 +3103,7 @@ function renderInputs(): void {
   } as const;
 
   const block = (title: string, open: boolean, canToggle: boolean, controlsHtml: string, sectionClass: string) => {
+    const toggleHtml = `<button type="button" class="section-toggle" data-section="${title}"><span>${title}</span><span class="section-toggle-chevron" aria-hidden="true">${open ? "▾" : "▸"}</span></button>`;
     if (!canToggle) {
       const quickStartAction = title === "QUICK START"
         ? `
@@ -3126,7 +3127,7 @@ function renderInputs(): void {
       return `
         <section class="input-section ${sectionClass}">
           <div class="section-header-row">
-            <button type="button" class="section-toggle" data-section="${title}">${open ? `Hide ${title}` : title}</button>
+            ${toggleHtml}
             <div class="finer-default-actions section-header-actions">
               <button type="button" class="quickstart-clear-btn" id="clear-finer-defaults-btn">Clear Data</button>
               <button type="button" class="quickstart-load-btn" id="load-finer-defaults-btn">Load Defaults</button>
@@ -3136,7 +3137,7 @@ function renderInputs(): void {
         </section>
       `;
     }
-    return `<section class="input-section ${sectionClass}"><button type="button" class="section-toggle" data-section="${title}">${open ? `Hide ${title}` : title}</button>${open ? controlsHtml : ""}</section>`;
+    return `<section class="input-section ${sectionClass}">${toggleHtml}${open ? controlsHtml : ""}</section>`;
   };
 
   const getSubgroupSummary = (sub: string): string => {
@@ -3304,7 +3305,7 @@ function renderInputs(): void {
     </label>
   `;
   inputsPanel.innerHTML =
-    `<section class="input-section section-scenarios"><button type="button" class="section-toggle" data-section="SAVED SCENARIOS">${sectionState.scenariosOpen ? "Hide Saved Scenarios" : "Saved Scenarios"}</button>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
+    `<section class="input-section section-scenarios"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span>Saved Scenarios</span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
     block("QUICK START", true, false, currencySelectHtml + quickHtml, "section-quick-start") +
     block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml, "section-deeper-dive") +
     block("FINER DETAILS", sectionState.finerOpen, true, finerHtml, "section-finer-details");
