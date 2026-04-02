@@ -1224,7 +1224,7 @@ function renderScenarioManager(): string {
       <div class="scenario-manager-header">
         <div>
           <h3>Scenarios</h3>
-          <p>${escapeHtml(scenarioStorageAvailable ? "Save current inputs locally and compare versions on this device." : "Local save is unavailable in this browser.")}</p>
+          <p>${escapeHtml(scenarioStorageAvailable ? "Save and compare scenarios on this device." : "Local save is unavailable in this browser.")}</p>
         </div>
         <span class="scenario-manager-label">${scenarioStorageAvailable ? "Stored locally" : "Unavailable"}</span>
       </div>
