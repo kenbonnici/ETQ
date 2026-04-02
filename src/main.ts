@@ -1091,6 +1091,13 @@ function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshotV1): bool
   return false;
 }
 
+function snapshotHasSavableData(snapshot: PersistedScenarioSnapshotV1): boolean {
+  if (INPUT_DEFINITIONS.some((def) => (snapshot.rawInputs[def.cell] ?? null) !== (DEFAULT_PERSISTED_RAW_INPUTS[def.cell] ?? null))) return true;
+  if (snapshot.ui.selectedCurrency !== DEFAULT_CURRENCY) return true;
+  if (snapshot.ui.livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(snapshot.ui.livingExpenseCategoryValues)) return true;
+  return false;
+}
+
 function readDraftScenarioSnapshot(): PersistedScenarioSnapshotV1 | null {
   return normalizePersistedSnapshot(readScenarioStorageJson<unknown>(SCENARIO_DRAFT_STORAGE_KEY));
 }
@@ -1208,7 +1215,7 @@ function applyPersistedScenarioSnapshot(
 
 function renderScenarioManager(): string {
   const scenarios = readNamedScenarios();
-  const hasMeaningfulScenarioState = snapshotHasMeaningfulState(collectPersistedScenarioSnapshot());
+  const hasSavableScenarioData = snapshotHasSavableData(collectPersistedScenarioSnapshot());
   const hasSavedScenarios = scenarios.length > 0;
   const hasSelectedScenario = activeSavedScenarioId !== null && scenarios.some((scenario) => scenario.id === activeSavedScenarioId);
   const selectedScenarioId = hasSelectedScenario ? activeSavedScenarioId : "";
@@ -1247,7 +1254,7 @@ function renderScenarioManager(): string {
               type="button"
               class="scenario-action-btn scenario-action-btn--primary"
               id="save-named-scenario-btn"
-              ${scenarioStorageAvailable && hasMeaningfulScenarioState ? "" : "disabled"}
+              ${scenarioStorageAvailable && hasSavableScenarioData ? "" : "disabled"}
             >Save</button>
             <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="clear-inputs-btn">Clear</button>
           </div>
