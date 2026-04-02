@@ -1223,47 +1223,54 @@ function renderScenarioManager(): string {
   return `
     <div class="scenario-manager">
       ${noticeHtml}
-      <div class="scenario-manager-section">
-        <div class="scenario-manager-kicker-row">
-          <div class="scenario-manager-kicker">Save current inputs</div>
-          <div class="scenario-manager-inline-note">${escapeHtml(scenarioStorageAvailable ? "Stored in your browser only. No data leaves your device." : "Local save is unavailable in this browser.")}</div>
+      <div class="scenario-manager-layout">
+        <div class="scenario-manager-main">
+          <div class="scenario-manager-section">
+            <div class="scenario-manager-kicker-row">
+              <div class="scenario-manager-kicker">Save current inputs</div>
+              <div class="scenario-manager-inline-note">${escapeHtml(scenarioStorageAvailable ? "Stored in your browser only. No data leaves your device." : "Local save is unavailable in this browser.")}</div>
+            </div>
+            <div class="scenario-save-row">
+              <input
+                id="scenario-name-input"
+                class="scenario-name-input"
+                type="text"
+                maxlength="${SCENARIO_MAX_NAME_LENGTH}"
+                value="${escapeHtml(scenarioDraftName)}"
+                placeholder="e.g. Conservative, Aggressive..."
+                ${scenarioStorageAvailable ? "" : "disabled"}
+              />
+            </div>
+          </div>
+          <div class="scenario-manager-divider" aria-hidden="true"></div>
+          <div class="scenario-library-row">
+            <label class="scenario-library-field">
+              <span class="scenario-manager-kicker">Saved scenarios</span>
+              <select id="saved-scenario-select" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>
+                ${hasSavedScenarios
+                  ? `
+                    <option value="" ${hasSelectedScenario ? "" : "selected"}>Select a scenario...</option>
+                    ${scenarios.map((scenario) => `
+                    <option value="${escapeHtml(scenario.id)}" ${scenario.id === selectedScenarioId ? "selected" : ""}>
+                      ${escapeHtml(`${scenario.name} · ${formatScenarioTimestamp(scenario.updatedAt)}`)}
+                    </option>
+                  `).join("")}
+                  `
+                  : `<option value="">No saved scenarios yet</option>`}
+              </select>
+            </label>
+          </div>
         </div>
-        <div class="scenario-save-row">
-          <input
-            id="scenario-name-input"
-            class="scenario-name-input"
-            type="text"
-            maxlength="${SCENARIO_MAX_NAME_LENGTH}"
-            value="${escapeHtml(scenarioDraftName)}"
-            placeholder="e.g. Conservative, Aggressive..."
-            ${scenarioStorageAvailable ? "" : "disabled"}
-          />
-          <button
-            type="button"
-            class="scenario-action-btn scenario-action-btn--primary"
-            id="save-named-scenario-btn"
-            ${scenarioStorageAvailable && normalizeScenarioName(scenarioDraftName).length > 0 ? "" : "disabled"}
-          >Save</button>
-        </div>
-      </div>
-      <div class="scenario-manager-divider" aria-hidden="true"></div>
-      <div class="scenario-library-row">
-        <label class="scenario-library-field">
-          <span class="scenario-manager-kicker">Saved scenarios</span>
-          <select id="saved-scenario-select" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>
-            ${hasSavedScenarios
-              ? `
-                <option value="" ${hasSelectedScenario ? "" : "selected"}>Select a scenario...</option>
-                ${scenarios.map((scenario) => `
-                <option value="${escapeHtml(scenario.id)}" ${scenario.id === selectedScenarioId ? "selected" : ""}>
-                  ${escapeHtml(`${scenario.name} · ${formatScenarioTimestamp(scenario.updatedAt)}`)}
-                </option>
-              `).join("")}
-              `
-              : `<option value="">No saved scenarios yet</option>`}
-          </select>
-        </label>
-        <div class="scenario-library-actions">
+        <div class="scenario-actions-rail">
+          <div class="scenario-primary-actions">
+            <button
+              type="button"
+              class="scenario-action-btn scenario-action-btn--primary"
+              id="save-named-scenario-btn"
+              ${scenarioStorageAvailable && normalizeScenarioName(scenarioDraftName).length > 0 ? "" : "disabled"}
+            >Save</button>
+            <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="clear-inputs-btn">Clear</button>
+          </div>
           <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="load-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Load</button>
           <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Delete</button>
         </div>
@@ -3108,7 +3115,6 @@ function renderInputs(): void {
       const quickStartAction = title === "QUICK START"
         ? `
           <div class="section-header-actions">
-            <button type="button" class="quickstart-clear-btn" id="clear-inputs-btn">Clear inputs</button>
             <button type="button" class="quickstart-load-btn" id="load-etq-excel-btn" ${excelLoadBusy ? "disabled" : ""}>${excelLoadBusy ? "Loading..." : "Load sample data"}</button>
           </div>
         `
@@ -3305,7 +3311,7 @@ function renderInputs(): void {
     </label>
   `;
   inputsPanel.innerHTML =
-    `<section class="input-section section-scenarios"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span>Saved Scenarios</span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
+    `<section class="input-section section-scenarios"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span>My data</span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
     block("QUICK START", true, false, currencySelectHtml + quickHtml, "section-quick-start") +
     block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml, "section-deeper-dive") +
     block("FINER DETAILS", sectionState.finerOpen, true, finerHtml, "section-finer-details");

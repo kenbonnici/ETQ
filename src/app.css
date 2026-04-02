@@ -1332,15 +1332,24 @@ body {
   cursor: pointer;
 }
 
+.scenario-manager-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 16px;
+}
+
+.scenario-manager-main {
+  min-width: 0;
+}
+
 .scenario-manager-section {
   margin-top: 12px;
 }
 
 .scenario-manager-kicker-row {
   display: grid;
-  grid-template-columns: max-content 1fr;
-  align-items: baseline;
-  column-gap: 10px;
+  gap: 4px;
   margin-bottom: 6px;
 }
 
@@ -1354,18 +1363,16 @@ body {
 }
 
 .scenario-manager-inline-note {
-  justify-self: end;
+  justify-self: start;
   font-size: 11px;
   line-height: 1.35;
   color: var(--muted);
-  text-align: right;
-  white-space: nowrap;
+  text-align: left;
+  max-width: 34ch;
 }
 
 .scenario-save-row {
-  display: flex;
-  align-items: stretch;
-  gap: 8px;
+  display: block;
 }
 
 .scenario-name-input,
@@ -1401,9 +1408,7 @@ body {
 }
 
 .scenario-library-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 8px;
+  display: block;
   margin-top: 14px;
 }
 
@@ -1416,14 +1421,25 @@ body {
   color: #35564d;
 }
 
-.scenario-library-actions {
-  display: inline-flex;
-  align-items: center;
+.scenario-actions-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 112px;
+  padding-top: 12px;
+  padding-left: 16px;
+  border-left: 1px solid #dbe6e0;
+}
+
+.scenario-primary-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 8px;
 }
 
 .scenario-action-btn {
-  min-width: 76px;
+  width: 100%;
+  min-width: 0;
   height: 40px;
   border-radius: 8px;
   padding: 0 14px;
@@ -2590,29 +2606,25 @@ small {
     margin-left: 0;
   }
 
-  .scenario-save-row,
-  .scenario-library-row {
-    flex-direction: column;
-    align-items: stretch;
+  .scenario-manager-layout {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
-  .scenario-manager-kicker-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
+  .scenario-actions-rail {
+    min-width: 0;
+    padding-top: 12px;
+    padding-left: 0;
+    border-left: 0;
+    border-top: 1px solid #dbe6e0;
+  }
+
+  .scenario-primary-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .scenario-manager-inline-note {
-    text-align: left;
-  }
-
-  .scenario-library-actions {
-    width: 100%;
-  }
-
-  .scenario-library-actions .scenario-action-btn,
-  .scenario-save-row .scenario-action-btn {
-    flex: 1 1 0;
+    max-width: none;
   }
 
   .retire-check-result {
