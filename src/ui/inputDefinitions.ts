@@ -2075,6 +2075,10 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     return { section: "Savings & Investments", groupTail: ["Stock market investments"] };
   }
 
+  if (fieldId.endsWith(".liquidationPriority")) {
+    return { section: "Advanced Assumptions", groupTail: ["If money runs short, sell assets in this order"] };
+  }
+
   if (fieldId.startsWith("properties.")) {
     const slot = numberedLabel(fieldId.split(".")[1], "Property");
     return { section: "Properties", groupTail: ["Investment properties", slot] };
@@ -2135,9 +2139,6 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     || fieldId === "liquidation.otherAssetDisposalCostRate"
   ) {
     return { section: "Advanced Assumptions", groupTail: ["Selling costs"] };
-  }
-  if (fieldId.endsWith(".liquidationPriority")) {
-    return { section: "Advanced Assumptions", groupTail: ["If money runs short, sell assets in this order"] };
   }
 
   return { section: "Advanced Assumptions", groupTail: [] };

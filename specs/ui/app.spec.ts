@@ -173,7 +173,6 @@ test("reveals asset slots up to five through the existing add-asset flow", async
 
 test("reveals stock market crash slots progressively and only shows crash details after the year is entered", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("button", { name: "Major Future Events" }).click();
 
   await expect(page.locator(selectors.stockMarketCrash1Year)).toHaveCount(0);
   await expect(page.locator(selectors.stockMarketCrash1Drop)).toHaveCount(0);
@@ -338,7 +337,6 @@ test("load sample data restores assets of value 4 and 5 from the Excel specimen"
 
 test("load sample data restores the active stock market crash scenario from the Excel specimen", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "Major Future Events" }).click();
 
   await expect(page.locator(selectors.stockMarketCrash4Year)).toBeVisible();
   await expect(page.locator(selectors.stockMarketCrash4Year)).toHaveValue("2045");
@@ -351,7 +349,6 @@ test("load sample data restores the active stock market crash scenario from the 
 
 test("finer details honors workbook liquidation order and lets users exclude a property from liquidation", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "Advanced Assumptions" }).click();
 
   const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
   await expect(sellableItems).toHaveText([
@@ -401,7 +398,6 @@ test("finer details honors workbook liquidation order and lets users exclude a p
 
 test("liquidation up and down controls reorder sellable assets precisely", async ({ page }) => {
   await loadSampleData(page);
-  await page.getByRole("button", { name: "Advanced Assumptions" }).click();
 
   const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
   await expect(sellableItems).toHaveText([
@@ -466,9 +462,6 @@ test("legacy and cash reserve sit together in You while selling costs stay in Ad
 
   await expect(page.locator(selectors.minimumCashBuffer)).toHaveValue(/50,000/);
   await expect(page.locator(selectors.legacyAmount)).toHaveValue(/1,000,000/);
-  await expect(page.locator(selectors.stockSellingCostRate)).toHaveCount(0);
-
-  await page.getByRole("button", { name: "Advanced Assumptions" }).click();
   await expect(page.locator(selectors.stockSellingCostRate)).toBeVisible();
 });
 
