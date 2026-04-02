@@ -1227,7 +1227,7 @@ function renderScenarioManager(): string {
         <div class="scenario-manager-row">
           <div class="scenario-row-main">
             <div class="scenario-manager-kicker-row">
-              <div class="scenario-manager-kicker">Save current inputs</div>
+              <div class="scenario-manager-kicker">Current inputs</div>
             </div>
             <div class="scenario-field-shell">
               <input
@@ -1254,7 +1254,7 @@ function renderScenarioManager(): string {
         <div class="scenario-manager-row">
           <div class="scenario-row-main">
             <label class="scenario-library-field">
-              <span class="scenario-manager-kicker">Saved scenarios</span>
+              <span class="scenario-manager-kicker">Scenarios</span>
               <span class="scenario-field-shell">
                 <select id="saved-scenario-select" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>
                   ${hasSavedScenarios
