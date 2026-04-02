@@ -124,6 +124,11 @@ interface NamedScenarioRecordV1 {
   snapshot: PersistedScenarioSnapshotV1;
 }
 
+interface ScenarioManagerNotice {
+  message: string;
+  tone: "success" | "warning" | "info";
+}
+
 let debounceHandle: number | null = null;
 let draftPersistHandle: number | null = null;
 let pendingFocusFieldId: FieldId | null = null;
@@ -188,8 +193,10 @@ const DOWNSIZING_PREVIEW_INPUT_FIELDS = new Set<FieldId>([
 ]);
 
 let scenarioStorageAvailable = true;
-let scenarioManagerMessage = "Autosaves locally in this browser on this device.";
 let activeSavedScenarioId: string | null = null;
+let scenarioDraftName = "";
+let scenarioManagerNotice: ScenarioManagerNotice | null = null;
+let scenarioManagerNoticeHandle: number | null = null;
 
 function applyFieldNumericConstraint(fieldId: FieldId, value: number | null): number | null {
   return applyFieldNumericConstraintForState(fieldId, value, fieldState);
@@ -894,7 +901,7 @@ function writeScenarioStorageJson(key: string, value: unknown): boolean {
     return true;
   } catch {
     scenarioStorageAvailable = false;
-    scenarioManagerMessage = "Local save is unavailable in this browser.";
+    setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
     return false;
   }
 }
@@ -905,8 +912,29 @@ function removeScenarioStorageKey(key: string): void {
     window.localStorage.removeItem(key);
   } catch {
     scenarioStorageAvailable = false;
-    scenarioManagerMessage = "Local save is unavailable in this browser.";
+    setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
   }
+}
+
+function setScenarioManagerNotice(
+  message: string | null,
+  tone: ScenarioManagerNotice["tone"] = "info",
+  durationMs = 3200
+): void {
+  if (scenarioManagerNoticeHandle !== null) {
+    window.clearTimeout(scenarioManagerNoticeHandle);
+    scenarioManagerNoticeHandle = null;
+  }
+  if (message === null) {
+    scenarioManagerNotice = null;
+    return;
+  }
+  scenarioManagerNotice = { message, tone };
+  scenarioManagerNoticeHandle = window.setTimeout(() => {
+    scenarioManagerNoticeHandle = null;
+    scenarioManagerNotice = null;
+    renderInputs();
+  }, durationMs);
 }
 
 function escapeHtml(text: string): string {
@@ -1135,7 +1163,10 @@ function createScenarioId(): string {
   return `scenario-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function applyPersistedScenarioSnapshot(snapshot: PersistedScenarioSnapshotV1, message: string): void {
+function applyPersistedScenarioSnapshot(
+  snapshot: PersistedScenarioSnapshotV1,
+  notice: { message: string; tone?: ScenarioManagerNotice["tone"] } | null = null
+): void {
   const restoredFields = rawInputsToFieldState(snapshot.rawInputs);
   for (const def of INPUT_DEFINITIONS) {
     fieldState[def.fieldId] = restoredFields[def.fieldId] ?? null;
@@ -1166,7 +1197,9 @@ function applyPersistedScenarioSnapshot(snapshot: PersistedScenarioSnapshotV1, m
     uiState.earlyRetirementAge = statutory;
   }
   syncEarlyRetirementControl(true);
-  scenarioManagerMessage = message;
+  if (notice) {
+    setScenarioManagerNotice(notice.message, notice.tone ?? "info");
+  }
   renderInputs();
   recalc();
   writeDraftScenarioSnapshot(collectPersistedScenarioSnapshot());
@@ -1175,41 +1208,70 @@ function applyPersistedScenarioSnapshot(snapshot: PersistedScenarioSnapshotV1, m
 function renderScenarioManager(): string {
   const scenarios = readNamedScenarios();
   const hasSavedScenarios = scenarios.length > 0;
-  const selectedScenarioId = activeSavedScenarioId && scenarios.some((scenario) => scenario.id === activeSavedScenarioId)
-    ? activeSavedScenarioId
-    : hasSavedScenarios ? scenarios[0].id : "";
+  const hasSelectedScenario = activeSavedScenarioId !== null && scenarios.some((scenario) => scenario.id === activeSavedScenarioId);
+  const selectedScenarioId = hasSelectedScenario ? activeSavedScenarioId : "";
+  const noticeHtml = scenarioManagerNotice
+    ? `
+      <div class="scenario-notice scenario-notice--${scenarioManagerNotice.tone}" role="status" aria-live="polite">
+        <span>${escapeHtml(scenarioManagerNotice.message)}</span>
+        <button type="button" class="scenario-notice-dismiss" id="dismiss-scenario-notice-btn" aria-label="Dismiss scenario message">×</button>
+      </div>
+    `
+    : "";
 
   return `
     <div class="scenario-manager">
       <div class="scenario-manager-header">
         <div>
           <h3>Scenarios</h3>
-          <p>${escapeHtml(scenarioStorageAvailable ? scenarioManagerMessage : "Local save is unavailable in this browser.")}</p>
+          <p>${escapeHtml(scenarioStorageAvailable ? "Save current inputs locally and compare versions on this device." : "Local save is unavailable in this browser.")}</p>
         </div>
-        <span class="scenario-manager-badge">${scenarioStorageAvailable ? "Local only" : "Unavailable"}</span>
+        <span class="scenario-manager-label">${scenarioStorageAvailable ? "Stored locally" : "Unavailable"}</span>
       </div>
-      <div class="scenario-manager-actions">
-        <button type="button" class="quickstart-load-btn" id="save-named-scenario-btn" ${scenarioStorageAvailable ? "" : "disabled"}>Save as scenario</button>
+      ${noticeHtml}
+      <div class="scenario-manager-section">
+        <div class="scenario-manager-kicker">Save current inputs</div>
+        <div class="scenario-save-row">
+          <input
+            id="scenario-name-input"
+            class="scenario-name-input"
+            type="text"
+            maxlength="${SCENARIO_MAX_NAME_LENGTH}"
+            value="${escapeHtml(scenarioDraftName)}"
+            placeholder="e.g. Conservative, Aggressive..."
+            ${scenarioStorageAvailable ? "" : "disabled"}
+          />
+          <button
+            type="button"
+            class="scenario-action-btn scenario-action-btn--primary"
+            id="save-named-scenario-btn"
+            ${scenarioStorageAvailable && normalizeScenarioName(scenarioDraftName).length > 0 ? "" : "disabled"}
+          >Save</button>
+        </div>
       </div>
+      <div class="scenario-manager-divider" aria-hidden="true"></div>
       <div class="scenario-library-row">
         <label class="scenario-library-field">
-          <span>Saved scenarios</span>
+          <span class="scenario-manager-kicker">Saved scenarios</span>
           <select id="saved-scenario-select" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>
             ${hasSavedScenarios
-              ? scenarios.map((scenario) => `
+              ? `
+                <option value="" ${hasSelectedScenario ? "" : "selected"}>Select a scenario...</option>
+                ${scenarios.map((scenario) => `
                 <option value="${escapeHtml(scenario.id)}" ${scenario.id === selectedScenarioId ? "selected" : ""}>
                   ${escapeHtml(`${scenario.name} · ${formatScenarioTimestamp(scenario.updatedAt)}`)}
                 </option>
-              `).join("")
+              `).join("")}
+              `
               : `<option value="">No saved scenarios yet</option>`}
           </select>
         </label>
         <div class="scenario-library-actions">
-          <button type="button" class="quickstart-load-btn" id="load-saved-scenario-btn" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>Load</button>
-          <button type="button" class="quickstart-clear-btn" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>Delete</button>
+          <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="load-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Load</button>
+          <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Delete</button>
         </div>
       </div>
-      <small class="scenario-manager-footnote">Saved locally in your browser only. We do not collect any data.</small>
+      <small class="scenario-manager-footnote">Stored in your browser only. No data leaves your device.</small>
     </div>
   `;
 }
@@ -1218,8 +1280,50 @@ function restoreDraftScenarioIfAvailable(): boolean {
   if (!scenarioStorageAvailable) return false;
   const draft = readDraftScenarioSnapshot();
   if (!draft) return false;
-  applyPersistedScenarioSnapshot(draft, "Restored your local draft.");
+  applyPersistedScenarioSnapshot(draft, { message: "Restored your local draft.", tone: "info" });
   return true;
+}
+
+function saveCurrentScenario(): void {
+  if (!scenarioStorageAvailable) {
+    setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
+    renderInputs();
+    return;
+  }
+
+  const normalizedName = normalizeScenarioName(scenarioDraftName);
+  if (normalizedName.length === 0) {
+    setScenarioManagerNotice("Enter a scenario name before saving.", "warning");
+    renderInputs();
+    return;
+  }
+
+  const existingScenarios = readNamedScenarios();
+  const activeScenario = existingScenarios.find((scenario) => scenario.id === activeSavedScenarioId);
+  const duplicate = existingScenarios.find((scenario) => scenario.name.toLowerCase() === normalizedName.toLowerCase());
+  const savingOverActiveScenario = activeScenario !== undefined
+    && activeScenario.name.toLowerCase() === normalizedName.toLowerCase();
+  if (duplicate && duplicate.id !== activeSavedScenarioId) {
+    const shouldReplace = window.confirm(`Replace the saved scenario "${duplicate.name}"?`);
+    if (!shouldReplace) return;
+  }
+
+  const snapshot = collectPersistedScenarioSnapshot();
+  const scenarioId = duplicate?.id
+    ?? (savingOverActiveScenario ? activeScenario?.id : undefined)
+    ?? createScenarioId();
+  const nextEntry: NamedScenarioRecordV1 = {
+    id: scenarioId,
+    name: normalizedName,
+    updatedAt: new Date().toISOString(),
+    snapshot
+  };
+  const remaining = existingScenarios.filter((scenario) => scenario.id !== scenarioId);
+  writeNamedScenarios([nextEntry, ...remaining]);
+  activeSavedScenarioId = scenarioId;
+  scenarioDraftName = "";
+  setScenarioManagerNotice(`Saved scenario "${normalizedName}".`, "success");
+  renderInputs();
 }
 
 function setAttemptedFieldMessage(fieldId: FieldId, message: string): void {
@@ -3245,47 +3349,34 @@ function renderInputs(): void {
     });
   }
 
+  const dismissScenarioNoticeBtn = inputsPanel.querySelector<HTMLButtonElement>("#dismiss-scenario-notice-btn");
+  if (dismissScenarioNoticeBtn) {
+    dismissScenarioNoticeBtn.addEventListener("click", () => {
+      setScenarioManagerNotice(null);
+      renderInputs();
+    });
+  }
+
+  const scenarioNameInput = inputsPanel.querySelector<HTMLInputElement>("#scenario-name-input");
+  if (scenarioNameInput) {
+    scenarioNameInput.addEventListener("input", () => {
+      scenarioDraftName = scenarioNameInput.value;
+      const saveButton = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
+      if (saveButton) {
+        saveButton.disabled = normalizeScenarioName(scenarioDraftName).length === 0 || !scenarioStorageAvailable;
+      }
+    });
+    scenarioNameInput.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      saveCurrentScenario();
+    });
+  }
+
   const saveNamedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
   if (saveNamedScenarioBtn) {
     saveNamedScenarioBtn.addEventListener("click", () => {
-      if (!scenarioStorageAvailable) {
-        window.alert("Local save is unavailable in this browser.");
-        return;
-      }
-      const existingScenarios = readNamedScenarios();
-      const activeScenario = existingScenarios.find((scenario) => scenario.id === activeSavedScenarioId);
-      const enteredName = window.prompt("Save this scenario as", activeScenario?.name ?? "");
-      if (enteredName === null) return;
-
-      const normalizedName = normalizeScenarioName(enteredName);
-      if (normalizedName.length === 0) {
-        window.alert("Enter a scenario name to save it.");
-        return;
-      }
-
-      const duplicate = existingScenarios.find((scenario) => scenario.name.toLowerCase() === normalizedName.toLowerCase());
-      const savingOverActiveScenario = activeScenario !== undefined
-        && activeScenario.name.toLowerCase() === normalizedName.toLowerCase();
-      if (duplicate && duplicate.id !== activeSavedScenarioId) {
-        const shouldReplace = window.confirm(`Replace the saved scenario "${duplicate.name}"?`);
-        if (!shouldReplace) return;
-      }
-
-      const snapshot = collectPersistedScenarioSnapshot();
-      const scenarioId = duplicate?.id
-        ?? (savingOverActiveScenario ? activeScenario?.id : undefined)
-        ?? createScenarioId();
-      const nextEntry: NamedScenarioRecordV1 = {
-        id: scenarioId,
-        name: normalizedName,
-        updatedAt: new Date().toISOString(),
-        snapshot
-      };
-      const remaining = existingScenarios.filter((scenario) => scenario.id !== scenarioId);
-      writeNamedScenarios([nextEntry, ...remaining]);
-      activeSavedScenarioId = scenarioId;
-      scenarioManagerMessage = `Saved scenario "${normalizedName}" locally.`;
-      renderInputs();
+      saveCurrentScenario();
     });
   }
 
@@ -3293,6 +3384,7 @@ function renderInputs(): void {
   if (savedScenarioSelect) {
     savedScenarioSelect.addEventListener("change", () => {
       activeSavedScenarioId = savedScenarioSelect.value || null;
+      renderInputs();
     });
   }
 
@@ -3304,7 +3396,7 @@ function renderInputs(): void {
       const scenario = readNamedScenarios().find((entry) => entry.id === selectedId);
       if (!scenario) return;
       activeSavedScenarioId = scenario.id;
-      applyPersistedScenarioSnapshot(scenario.snapshot, `Loaded scenario "${scenario.name}".`);
+      applyPersistedScenarioSnapshot(scenario.snapshot, { message: `Loaded scenario "${scenario.name}".`, tone: "success" });
     });
   }
 
@@ -3321,7 +3413,7 @@ function renderInputs(): void {
 
       writeNamedScenarios(scenarios.filter((entry) => entry.id !== selectedId));
       if (activeSavedScenarioId === selectedId) activeSavedScenarioId = null;
-      scenarioManagerMessage = `Deleted scenario "${scenario.name}".`;
+      setScenarioManagerNotice(`Deleted scenario "${scenario.name}".`, "warning");
       renderInputs();
     });
   }
@@ -4435,7 +4527,7 @@ if (typeof ResizeObserver !== "undefined") {
 
 scenarioStorageAvailable = canUseScenarioStorage();
 if (!scenarioStorageAvailable) {
-  scenarioManagerMessage = "Local save is unavailable in this browser.";
+  setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
 }
 
 resetCashflowExpandedGroups("collapsed");
