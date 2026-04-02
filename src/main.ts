@@ -1208,6 +1208,7 @@ function applyPersistedScenarioSnapshot(
 
 function renderScenarioManager(): string {
   const scenarios = readNamedScenarios();
+  const hasMeaningfulScenarioState = snapshotHasMeaningfulState(collectPersistedScenarioSnapshot());
   const hasSavedScenarios = scenarios.length > 0;
   const hasSelectedScenario = activeSavedScenarioId !== null && scenarios.some((scenario) => scenario.id === activeSavedScenarioId);
   const selectedScenarioId = hasSelectedScenario ? activeSavedScenarioId : "";
@@ -1246,7 +1247,7 @@ function renderScenarioManager(): string {
               type="button"
               class="scenario-action-btn scenario-action-btn--primary"
               id="save-named-scenario-btn"
-              ${scenarioStorageAvailable && normalizeScenarioName(scenarioDraftName).length > 0 ? "" : "disabled"}
+              ${scenarioStorageAvailable && hasMeaningfulScenarioState ? "" : "disabled"}
             >Save</button>
             <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="clear-inputs-btn">Clear</button>
           </div>
@@ -3367,10 +3368,6 @@ function renderInputs(): void {
   if (scenarioNameInput) {
     scenarioNameInput.addEventListener("input", () => {
       scenarioDraftName = scenarioNameInput.value;
-      const saveButton = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
-      if (saveButton) {
-        saveButton.disabled = normalizeScenarioName(scenarioDraftName).length === 0 || !scenarioStorageAvailable;
-      }
     });
     scenarioNameInput.addEventListener("keydown", (event) => {
       if (event.key !== "Enter") return;
