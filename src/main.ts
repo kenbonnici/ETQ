@@ -1222,7 +1222,7 @@ function renderScenarioManager(): string {
 
   return `
     <div class="scenario-manager">
-      <p class="scenario-manager-intro">${escapeHtml(scenarioStorageAvailable ? "Save and compare scenarios on this device." : "Local save is unavailable in this browser.")}</p>
+      <p class="scenario-manager-intro">${escapeHtml(scenarioStorageAvailable ? "Stored in your browser only. No data leaves your device." : "Local save is unavailable in this browser.")}</p>
       ${noticeHtml}
       <div class="scenario-manager-section">
         <div class="scenario-manager-kicker">Save current inputs</div>
@@ -1266,7 +1266,6 @@ function renderScenarioManager(): string {
           <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Delete</button>
         </div>
       </div>
-      <small class="scenario-manager-footnote">Stored in your browser only. No data leaves your device.</small>
     </div>
   `;
 }
