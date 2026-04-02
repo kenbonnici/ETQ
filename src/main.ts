@@ -1262,7 +1262,7 @@ function renderScenarioManager(): string {
               id="save-named-scenario-btn"
               ${scenarioStorageAvailable && hasSavableScenarioData ? "" : "disabled"}
             >Save</button>
-            <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="clear-inputs-btn">Clear</button>
+            <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="clear-inputs-btn" ${scenarioStorageAvailable && hasSavableScenarioData ? "" : "disabled"}>Clear</button>
           </div>
         </div>
         <div class="scenario-manager-row">
