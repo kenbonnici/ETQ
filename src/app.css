@@ -1351,7 +1351,9 @@ body {
 
 .scenario-manager-kicker-row {
   display: grid;
-  gap: 4px;
+  grid-template-columns: max-content max-content;
+  align-items: baseline;
+  column-gap: 10px;
   margin-bottom: 6px;
 }
 
