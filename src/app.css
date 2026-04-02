@@ -1361,6 +1361,7 @@ body {
 .scenario-manager-footnote {
   display: block;
   margin-top: 10px;
+  padding-left: 10px;
   font-size: 11px;
   line-height: 1.4;
   color: #617872;
