@@ -357,6 +357,7 @@ const cashflowTablePanel = document.getElementById("cashflow-table-panel") as HT
 const networthTablePanel = document.getElementById("networth-table-panel") as HTMLDivElement;
 
 const sectionState = {
+  scenariosOpen: true,
   quickStartOpen: true,
   deeperOpen: false,
   finerOpen: false
@@ -1221,13 +1222,7 @@ function renderScenarioManager(): string {
 
   return `
     <div class="scenario-manager">
-      <div class="scenario-manager-header">
-        <div>
-          <h3>Scenarios</h3>
-          <p>${escapeHtml(scenarioStorageAvailable ? "Save and compare scenarios on this device." : "Local save is unavailable in this browser.")}</p>
-        </div>
-        <span class="scenario-manager-label">${scenarioStorageAvailable ? "Stored locally" : "Unavailable"}</span>
-      </div>
+      <p class="scenario-manager-intro">${escapeHtml(scenarioStorageAvailable ? "Save and compare scenarios on this device." : "Local save is unavailable in this browser.")}</p>
       ${noticeHtml}
       <div class="scenario-manager-section">
         <div class="scenario-manager-kicker">Save current inputs</div>
@@ -3308,7 +3303,8 @@ function renderInputs(): void {
     </label>
   `;
   inputsPanel.innerHTML =
-    block("QUICK START", true, false, scenarioManagerHtml + currencySelectHtml + quickHtml, "section-quick-start") +
+    `<section class="input-section section-scenarios"><button type="button" class="section-toggle" data-section="SAVED SCENARIOS">${sectionState.scenariosOpen ? "Hide Saved Scenarios" : "Saved Scenarios"}</button>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
+    block("QUICK START", true, false, currencySelectHtml + quickHtml, "section-quick-start") +
     block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml, "section-deeper-dive") +
     block("FINER DETAILS", sectionState.finerOpen, true, finerHtml, "section-finer-details");
 
@@ -3667,6 +3663,9 @@ function renderInputs(): void {
   inputsPanel.querySelectorAll<HTMLButtonElement>(".section-toggle").forEach((btn) => {
     btn.addEventListener("click", () => {
       const section = btn.dataset.section;
+      if (section === "SAVED SCENARIOS") {
+        sectionState.scenariosOpen = !sectionState.scenariosOpen;
+      }
       if (section === "DEEPER DIVE") {
         if (sectionState.deeperOpen) {
           sectionState.deeperOpen = false;
