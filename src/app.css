@@ -1277,6 +1277,95 @@ body {
   gap: 8px;
 }
 
+.scenario-manager {
+  margin: 0 0 14px;
+  padding: 12px;
+  border: 1px solid #cfe1d9;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #f7fbf9 0%, #ffffff 100%);
+}
+
+.scenario-manager-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.scenario-manager-header h3 {
+  margin: 0 0 4px;
+  border: 0;
+  padding: 0;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #0b5d56;
+}
+
+.scenario-manager-header p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #49635b;
+}
+
+.scenario-manager-badge {
+  margin-left: auto;
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #bfd7ce;
+  background: #edf7f3;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f5d57;
+}
+
+.scenario-manager-actions {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+}
+
+.scenario-library-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.scenario-library-field {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #35564d;
+}
+
+.scenario-library-field select {
+  width: 100%;
+  border: 1px solid #c8d7d0;
+  border-radius: 9px;
+  padding: 9px 10px;
+  background: #fff;
+  color: #1f2937;
+  font-size: 13px;
+}
+
+.scenario-library-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.scenario-manager-footnote {
+  display: block;
+  margin-top: 10px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #617872;
+}
+
 .finer-default-actions {
   display: flex;
   justify-content: flex-end;
@@ -2349,6 +2438,26 @@ small {
 
   .retirement-stepper {
     margin-left: 0;
+  }
+
+  .scenario-manager-header,
+  .scenario-library-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .scenario-manager-badge {
+    margin-left: 0;
+    align-self: flex-start;
+  }
+
+  .scenario-library-actions {
+    width: 100%;
+  }
+
+  .scenario-library-actions .quickstart-load-btn,
+  .scenario-library-actions .quickstart-clear-btn {
+    flex: 1 1 0;
   }
 
   .retire-check-result {

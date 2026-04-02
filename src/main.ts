@@ -1,5 +1,5 @@
 import "./app.css";
-import { pruneInactiveFieldState } from "./model/activation";
+import { pruneInactiveFieldState, pruneInactiveRawInputs } from "./model/activation";
 import {
   estimateDownsizing,
   isDownsizingYearInProjectionWindow,
@@ -7,7 +7,7 @@ import {
 } from "./model/downsizing";
 import { runModel } from "./model";
 import { validateFieldState } from "./model/validate";
-import { createEmptyFieldState } from "./model/excelAdapter";
+import { createEmptyFieldState, fieldStateToRawInputs, rawInputsToFieldState } from "./model/excelAdapter";
 import type { RunModelResult } from "./model/index";
 import {
   INPUT_DEFINITION_BY_FIELD_ID,
@@ -21,7 +21,7 @@ import {
   ValidationMessage
 } from "./model/inputSchema";
 import { EXCEL_BASELINE_SPECIMEN } from "./model/parity/excelBaselineSpecimen";
-import { FieldId, ModelUiState, RawInputValue, ScenarioOutputs } from "./model/types";
+import { FieldId, ModelUiState, RawInputValue, RawInputs, ScenarioOutputs } from "./model/types";
 import {
   ASSET_OF_VALUE_RUNTIME_GROUPS,
   DEPENDENT_RUNTIME_GROUPS,
@@ -76,6 +76,21 @@ import {
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
 
+const DEFAULT_CURRENCY = "EUR";
+const SCENARIO_DRAFT_STORAGE_KEY = "etq:scenario:draft:v1";
+const NAMED_SCENARIOS_STORAGE_KEY = "etq:scenario:named:v1";
+const SCENARIO_MAX_NAME_LENGTH = 60;
+
+function createDefaultPersistedRawInputs(): RawInputs {
+  const defaults = createEmptyFieldState();
+  for (const [fieldId, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
+    defaults[fieldId as FieldId] = value;
+  }
+  return pruneInactiveRawInputs(fieldStateToRawInputs(defaults));
+}
+
+const DEFAULT_PERSISTED_RAW_INPUTS = createDefaultPersistedRawInputs();
+
 const fieldState = createEmptyFieldState();
 for (const [fieldId, value] of Object.entries(FINER_DETAILS_COL_C_DEFAULTS)) {
   fieldState[fieldId as FieldId] = value;
@@ -88,10 +103,32 @@ let uiState: ModelUiState = {
   manualPropertyLiquidationOrder: false
 };
 
+interface PersistedScenarioSnapshotV1 {
+  version: 1;
+  savedAt: string;
+  rawInputs: RawInputs;
+  ui: {
+    deeperDiveOpen: boolean;
+    finerDetailsOpen: boolean;
+    earlyRetirementAge: number;
+    selectedCurrency: string;
+    livingExpensesMode: LivingExpensesMode;
+    livingExpenseCategoryValues: LivingExpenseCategoryValues;
+  };
+}
+
+interface NamedScenarioRecordV1 {
+  id: string;
+  name: string;
+  updatedAt: string;
+  snapshot: PersistedScenarioSnapshotV1;
+}
+
 let debounceHandle: number | null = null;
+let draftPersistHandle: number | null = null;
 let pendingFocusFieldId: FieldId | null = null;
 let pendingLiquidationControl: { propertyIdx: number; control: "up" | "down" | "toggle"; pulse: boolean } | null = null;
-let selectedCurrency = "EUR";
+let selectedCurrency = DEFAULT_CURRENCY;
 let stepperHoldTimeout: number | null = null;
 let stepperHoldInterval: number | null = null;
 let stepperHoldListenersBound = false;
@@ -150,24 +187,12 @@ const DOWNSIZING_PREVIEW_INPUT_FIELDS = new Set<FieldId>([
   RUNTIME_FIELDS.propertyDisposalCostRate
 ]);
 
-function getDynamicMinConstraint(fieldId: FieldId): number | null {
-  if (fieldId !== RUNTIME_FIELDS.lifeExpectancyAge) return null;
-  const currentAge = getCurrentAge();
-  if (currentAge === null) return null;
-  return currentAge;
-}
+let scenarioStorageAvailable = true;
+let scenarioManagerMessage = "Autosaves locally in this browser on this device.";
+let activeSavedScenarioId: string | null = null;
 
 function applyFieldNumericConstraint(fieldId: FieldId, value: number | null): number | null {
-  if (value === null || !Number.isFinite(value)) return value;
-  let bounded = value;
-  const cfg = COERCED_NUMERIC_BOUNDS[fieldId];
-  if (cfg) {
-    if (Number.isFinite(cfg.min)) bounded = Math.max(cfg.min as number, bounded);
-    if (Number.isFinite(cfg.max)) bounded = Math.min(cfg.max as number, bounded);
-  }
-  const dynamicMin = getDynamicMinConstraint(fieldId);
-  if (Number.isFinite(dynamicMin)) bounded = Math.max(dynamicMin as number, bounded);
-  return bounded;
+  return applyFieldNumericConstraintForState(fieldId, value, fieldState);
 }
 
 function enforceLiveUntilAgeConstraint(syncVisibleInput: boolean): boolean {
@@ -793,6 +818,97 @@ function currentCurrencySymbol(): string {
   return TOP_CURRENCIES.find((currency) => currency.code === selectedCurrency)?.symbol ?? "€";
 }
 
+function isTopCurrency(code: unknown): code is string {
+  return typeof code === "string" && TOP_CURRENCIES.some((currency) => currency.code === code);
+}
+
+function canUseScenarioStorage(): boolean {
+  try {
+    const probe = "__etq_storage_probe__";
+    window.localStorage.setItem(probe, "1");
+    window.localStorage.removeItem(probe);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function normalizeScenarioName(name: string): string {
+  return name.trim().replace(/\s+/g, " ").slice(0, SCENARIO_MAX_NAME_LENGTH);
+}
+
+function hasAnyLivingExpenseCategoryValues(values: LivingExpenseCategoryValues): boolean {
+  return hasAnyLivingExpenseCategoryValue(values);
+}
+
+function sanitizeLivingExpenseCategoryValues(
+  raw: unknown
+): LivingExpenseCategoryValues {
+  const next = createEmptyLivingExpenseCategoryValues();
+  if (!raw || typeof raw !== "object") return next;
+  const record = raw as Partial<Record<LivingExpenseCategoryId, unknown>>;
+  for (const { id } of LIVING_EXPENSE_CATEGORY_DEFINITIONS) {
+    const value = record[id];
+    if (value === null || value === undefined || String(value).trim() === "") continue;
+    const numeric = Number(value);
+    next[id] = Number.isFinite(numeric) ? Math.max(0, numeric) : null;
+  }
+  return next;
+}
+
+function applyFieldNumericConstraintForState(fieldId: FieldId, value: number | null, state: Partial<Record<FieldId, RawInputValue>>): number | null {
+  if (value === null || !Number.isFinite(value)) return value;
+  let bounded = value;
+  const cfg = COERCED_NUMERIC_BOUNDS[fieldId];
+  if (cfg) {
+    if (Number.isFinite(cfg.min)) bounded = Math.max(cfg.min as number, bounded);
+    if (Number.isFinite(cfg.max)) bounded = Math.min(cfg.max as number, bounded);
+  }
+  if (fieldId === RUNTIME_FIELDS.lifeExpectancyAge) {
+    const currentAge = state[RUNTIME_FIELDS.currentAge];
+    const numericCurrentAge = typeof currentAge === "number" && Number.isFinite(currentAge)
+      ? currentAge
+      : Number(currentAge);
+    if (Number.isFinite(numericCurrentAge)) {
+      bounded = Math.max(numericCurrentAge, bounded);
+    }
+  }
+  return bounded;
+}
+
+function readScenarioStorageJson<T>(key: string): T | null {
+  if (!scenarioStorageAvailable) return null;
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
+  }
+}
+
+function writeScenarioStorageJson(key: string, value: unknown): boolean {
+  if (!scenarioStorageAvailable) return false;
+  try {
+    window.localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  } catch {
+    scenarioStorageAvailable = false;
+    scenarioManagerMessage = "Local save is unavailable in this browser.";
+    return false;
+  }
+}
+
+function removeScenarioStorageKey(key: string): void {
+  if (!scenarioStorageAvailable) return;
+  try {
+    window.localStorage.removeItem(key);
+  } catch {
+    scenarioStorageAvailable = false;
+    scenarioManagerMessage = "Local save is unavailable in this browser.";
+  }
+}
+
 function escapeHtml(text: string): string {
   return text
     .replace(/&/g, "&amp;")
@@ -866,6 +982,244 @@ function setLivingExpensesMode(nextMode: LivingExpensesMode): void {
   setRetireCheckMessage(null);
   renderInputs();
   queueRecalc();
+}
+
+function normalizePersistedRawInputs(raw: unknown): RawInputs {
+  const candidateFields = rawInputsToFieldState(
+    raw && typeof raw === "object"
+      ? raw as Partial<Record<string, RawInputValue>>
+      : {}
+  );
+  const sanitizedFields = createEmptyFieldState();
+  for (const def of INPUT_DEFINITIONS) {
+    const value = candidateFields[def.fieldId];
+    if (value === null || value === undefined || String(value).trim() === "") {
+      sanitizedFields[def.fieldId] = null;
+      continue;
+    }
+    if (def.type === "text") {
+      sanitizedFields[def.fieldId] = String(value);
+      continue;
+    }
+    const numeric = Number(value);
+    sanitizedFields[def.fieldId] = Number.isFinite(numeric)
+      ? applyFieldNumericConstraintForState(def.fieldId, numeric, sanitizedFields)
+      : null;
+  }
+  return pruneInactiveRawInputs(fieldStateToRawInputs(sanitizedFields));
+}
+
+function normalizePersistedSnapshot(raw: unknown): PersistedScenarioSnapshotV1 | null {
+  if (!raw || typeof raw !== "object") return null;
+  const candidate = raw as Partial<PersistedScenarioSnapshotV1>;
+  if (candidate.version !== 1) return null;
+
+  const ui = candidate.ui && typeof candidate.ui === "object" ? candidate.ui : {};
+  const livingExpenseValues = sanitizeLivingExpenseCategoryValues(
+    (ui as Partial<PersistedScenarioSnapshotV1["ui"]>).livingExpenseCategoryValues
+  );
+
+  return {
+    version: 1,
+    savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString(),
+    rawInputs: normalizePersistedRawInputs(candidate.rawInputs),
+    ui: {
+      deeperDiveOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).deeperDiveOpen),
+      finerDetailsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).finerDetailsOpen),
+      earlyRetirementAge: Number((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).earlyRetirementAge),
+      selectedCurrency: isTopCurrency((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).selectedCurrency)
+        ? String((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).selectedCurrency)
+        : DEFAULT_CURRENCY,
+      livingExpensesMode: (ui as Partial<PersistedScenarioSnapshotV1["ui"]>).livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(livingExpenseValues)
+        ? "expanded"
+        : "single",
+      livingExpenseCategoryValues: livingExpenseValues
+    }
+  };
+}
+
+function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshotV1 {
+  return {
+    version: 1,
+    savedAt: new Date().toISOString(),
+    rawInputs: pruneInactiveRawInputs(fieldStateToRawInputs(fieldState)),
+    ui: {
+      deeperDiveOpen: sectionState.deeperOpen,
+      finerDetailsOpen: sectionState.finerOpen,
+      earlyRetirementAge: uiState.earlyRetirementAge,
+      selectedCurrency,
+      livingExpensesMode,
+      livingExpenseCategoryValues: { ...livingExpenseCategoryValues }
+    }
+  };
+}
+
+function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshotV1): boolean {
+  if (INPUT_DEFINITIONS.some((def) => (snapshot.rawInputs[def.cell] ?? null) !== (DEFAULT_PERSISTED_RAW_INPUTS[def.cell] ?? null))) return true;
+  if (snapshot.ui.deeperDiveOpen || snapshot.ui.finerDetailsOpen) return true;
+  if (snapshot.ui.selectedCurrency !== DEFAULT_CURRENCY) return true;
+  if (snapshot.ui.livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(snapshot.ui.livingExpenseCategoryValues)) return true;
+  return false;
+}
+
+function readDraftScenarioSnapshot(): PersistedScenarioSnapshotV1 | null {
+  return normalizePersistedSnapshot(readScenarioStorageJson<unknown>(SCENARIO_DRAFT_STORAGE_KEY));
+}
+
+function writeDraftScenarioSnapshot(snapshot: PersistedScenarioSnapshotV1): void {
+  if (!scenarioStorageAvailable) return;
+  if (!snapshotHasMeaningfulState(snapshot)) {
+    removeScenarioStorageKey(SCENARIO_DRAFT_STORAGE_KEY);
+    return;
+  }
+  writeScenarioStorageJson(SCENARIO_DRAFT_STORAGE_KEY, snapshot);
+}
+
+function schedulePersistDraft(): void {
+  if (!scenarioStorageAvailable) return;
+  if (draftPersistHandle !== null) window.clearTimeout(draftPersistHandle);
+  draftPersistHandle = window.setTimeout(() => {
+    draftPersistHandle = null;
+    writeDraftScenarioSnapshot(collectPersistedScenarioSnapshot());
+  }, 250);
+}
+
+function readNamedScenarios(): NamedScenarioRecordV1[] {
+  const raw = readScenarioStorageJson<unknown>(NAMED_SCENARIOS_STORAGE_KEY);
+  if (!Array.isArray(raw)) return [];
+
+  const scenarios = raw
+    .map((entry): NamedScenarioRecordV1 | null => {
+      if (!entry || typeof entry !== "object") return null;
+      const record = entry as Partial<NamedScenarioRecordV1>;
+      const snapshot = normalizePersistedSnapshot(record.snapshot);
+      const name = typeof record.name === "string" ? normalizeScenarioName(record.name) : "";
+      if (!snapshot || name.length === 0) return null;
+      const id = typeof record.id === "string" && record.id.trim().length > 0
+        ? record.id
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+      const updatedAt = typeof record.updatedAt === "string" ? record.updatedAt : snapshot.savedAt;
+      return {
+        id,
+        name,
+        updatedAt,
+        snapshot
+      };
+    })
+    .filter((entry): entry is NamedScenarioRecordV1 => entry !== null);
+
+  scenarios.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  return scenarios;
+}
+
+function writeNamedScenarios(scenarios: NamedScenarioRecordV1[]): void {
+  if (!scenarioStorageAvailable) return;
+  writeScenarioStorageJson(NAMED_SCENARIOS_STORAGE_KEY, scenarios);
+}
+
+function formatScenarioTimestamp(timestamp: string): string {
+  const parsed = new Date(timestamp);
+  if (Number.isNaN(parsed.getTime())) return "saved locally";
+  return parsed.toLocaleString("en-US", {
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit"
+  });
+}
+
+function createScenarioId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `scenario-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function applyPersistedScenarioSnapshot(snapshot: PersistedScenarioSnapshotV1, message: string): void {
+  const restoredFields = rawInputsToFieldState(snapshot.rawInputs);
+  for (const def of INPUT_DEFINITIONS) {
+    fieldState[def.fieldId] = restoredFields[def.fieldId] ?? null;
+  }
+
+  sectionState.deeperOpen = snapshot.ui.deeperDiveOpen;
+  sectionState.finerOpen = snapshot.ui.finerDetailsOpen;
+  uiState.deeperDiveOpen = snapshot.ui.deeperDiveOpen;
+  uiState.finerDetailsOpen = snapshot.ui.finerDetailsOpen;
+  selectedCurrency = isTopCurrency(snapshot.ui.selectedCurrency) ? snapshot.ui.selectedCurrency : DEFAULT_CURRENCY;
+  livingExpenseCategoryValues = sanitizeLivingExpenseCategoryValues(snapshot.ui.livingExpenseCategoryValues);
+  livingExpensesMode = snapshot.ui.livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(livingExpenseCategoryValues)
+    ? "expanded"
+    : "single";
+  uiState.manualPropertyLiquidationOrder = hasExplicitPropertyLiquidationPreferences(fieldState);
+  syncVisibleRuntimeGroupsFromState();
+
+  validationRevealAll = false;
+  clearTouchedFields();
+  clearAllAttemptedFieldMessages();
+  latestValidationMessages = [];
+  setRetireCheckMessage(null);
+
+  const statutory = getStatutoryAge();
+  if (Number.isFinite(snapshot.ui.earlyRetirementAge)) {
+    uiState.earlyRetirementAge = Math.round(snapshot.ui.earlyRetirementAge);
+  } else if (statutory !== null) {
+    uiState.earlyRetirementAge = statutory;
+  }
+  syncEarlyRetirementControl(true);
+  scenarioManagerMessage = message;
+  renderInputs();
+  recalc();
+  writeDraftScenarioSnapshot(collectPersistedScenarioSnapshot());
+}
+
+function renderScenarioManager(): string {
+  const scenarios = readNamedScenarios();
+  const hasSavedScenarios = scenarios.length > 0;
+  const selectedScenarioId = activeSavedScenarioId && scenarios.some((scenario) => scenario.id === activeSavedScenarioId)
+    ? activeSavedScenarioId
+    : hasSavedScenarios ? scenarios[0].id : "";
+
+  return `
+    <div class="scenario-manager">
+      <div class="scenario-manager-header">
+        <div>
+          <h3>Scenarios</h3>
+          <p>${escapeHtml(scenarioStorageAvailable ? scenarioManagerMessage : "Local save is unavailable in this browser.")}</p>
+        </div>
+        <span class="scenario-manager-badge">${scenarioStorageAvailable ? "Local only" : "Unavailable"}</span>
+      </div>
+      <div class="scenario-manager-actions">
+        <button type="button" class="quickstart-load-btn" id="save-named-scenario-btn" ${scenarioStorageAvailable ? "" : "disabled"}>Save as scenario</button>
+      </div>
+      <div class="scenario-library-row">
+        <label class="scenario-library-field">
+          <span>Saved scenarios</span>
+          <select id="saved-scenario-select" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>
+            ${hasSavedScenarios
+              ? scenarios.map((scenario) => `
+                <option value="${escapeHtml(scenario.id)}" ${scenario.id === selectedScenarioId ? "selected" : ""}>
+                  ${escapeHtml(`${scenario.name} · ${formatScenarioTimestamp(scenario.updatedAt)}`)}
+                </option>
+              `).join("")
+              : `<option value="">No saved scenarios yet</option>`}
+          </select>
+        </label>
+        <div class="scenario-library-actions">
+          <button type="button" class="quickstart-load-btn" id="load-saved-scenario-btn" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>Load</button>
+          <button type="button" class="quickstart-clear-btn" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>Delete</button>
+        </div>
+      </div>
+      <small class="scenario-manager-footnote">Saved locally in this browser only. Nothing is sent to your server.</small>
+    </div>
+  `;
+}
+
+function restoreDraftScenarioIfAvailable(): boolean {
+  if (!scenarioStorageAvailable) return false;
+  const draft = readDraftScenarioSnapshot();
+  if (!draft) return false;
+  applyPersistedScenarioSnapshot(draft, "Restored your local draft.");
+  return true;
 }
 
 function setAttemptedFieldMessage(fieldId: FieldId, message: string): void {
@@ -2840,6 +3194,7 @@ function renderInputs(): void {
   const quickHtml = controls(grouped["QUICK START"]);
   const deeperHtml = controls(grouped["DEEPER DIVE"]);
   const finerHtml = controls(grouped["FINER DETAILS"]);
+  const scenarioManagerHtml = renderScenarioManager();
   const currencySelectHtml = `
     <label class="field currency-selector">
       <span>Currency</span>
@@ -2849,7 +3204,7 @@ function renderInputs(): void {
     </label>
   `;
   inputsPanel.innerHTML =
-    block("QUICK START", true, false, currencySelectHtml + quickHtml, "section-quick-start") +
+    block("QUICK START", true, false, scenarioManagerHtml + currencySelectHtml + quickHtml, "section-quick-start") +
     block("DEEPER DIVE", sectionState.deeperOpen, true, deeperHtml, "section-deeper-dive") +
     block("FINER DETAILS", sectionState.finerOpen, true, finerHtml, "section-finer-details");
 
@@ -2887,6 +3242,83 @@ function renderInputs(): void {
   if (loadFinerDefaultsBtn) {
     loadFinerDefaultsBtn.addEventListener("click", () => {
       loadFinerDetailsDefaults();
+    });
+  }
+
+  const saveNamedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
+  if (saveNamedScenarioBtn) {
+    saveNamedScenarioBtn.addEventListener("click", () => {
+      if (!scenarioStorageAvailable) {
+        window.alert("Local save is unavailable in this browser.");
+        return;
+      }
+      const existingScenarios = readNamedScenarios();
+      const activeScenario = existingScenarios.find((scenario) => scenario.id === activeSavedScenarioId);
+      const enteredName = window.prompt("Save this scenario as", activeScenario?.name ?? "");
+      if (enteredName === null) return;
+
+      const normalizedName = normalizeScenarioName(enteredName);
+      if (normalizedName.length === 0) {
+        window.alert("Enter a scenario name to save it.");
+        return;
+      }
+
+      const duplicate = existingScenarios.find((scenario) => scenario.name.toLowerCase() === normalizedName.toLowerCase());
+      if (duplicate && duplicate.id !== activeSavedScenarioId) {
+        const shouldReplace = window.confirm(`Replace the saved scenario "${duplicate.name}"?`);
+        if (!shouldReplace) return;
+      }
+
+      const snapshot = collectPersistedScenarioSnapshot();
+      const scenarioId = duplicate?.id ?? activeScenario?.id ?? createScenarioId();
+      const nextEntry: NamedScenarioRecordV1 = {
+        id: scenarioId,
+        name: normalizedName,
+        updatedAt: new Date().toISOString(),
+        snapshot
+      };
+      const remaining = existingScenarios.filter((scenario) => scenario.id !== scenarioId);
+      writeNamedScenarios([nextEntry, ...remaining]);
+      activeSavedScenarioId = scenarioId;
+      scenarioManagerMessage = `Saved scenario "${normalizedName}" locally.`;
+      renderInputs();
+    });
+  }
+
+  const savedScenarioSelect = inputsPanel.querySelector<HTMLSelectElement>("#saved-scenario-select");
+  if (savedScenarioSelect) {
+    savedScenarioSelect.addEventListener("change", () => {
+      activeSavedScenarioId = savedScenarioSelect.value || null;
+    });
+  }
+
+  const loadSavedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#load-saved-scenario-btn");
+  if (loadSavedScenarioBtn) {
+    loadSavedScenarioBtn.addEventListener("click", () => {
+      const selectedId = savedScenarioSelect?.value ?? activeSavedScenarioId;
+      if (!selectedId) return;
+      const scenario = readNamedScenarios().find((entry) => entry.id === selectedId);
+      if (!scenario) return;
+      activeSavedScenarioId = scenario.id;
+      applyPersistedScenarioSnapshot(scenario.snapshot, `Loaded scenario "${scenario.name}".`);
+    });
+  }
+
+  const deleteSavedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#delete-saved-scenario-btn");
+  if (deleteSavedScenarioBtn) {
+    deleteSavedScenarioBtn.addEventListener("click", () => {
+      const selectedId = savedScenarioSelect?.value ?? activeSavedScenarioId;
+      if (!selectedId) return;
+      const scenarios = readNamedScenarios();
+      const scenario = scenarios.find((entry) => entry.id === selectedId);
+      if (!scenario) return;
+      const confirmed = window.confirm(`Delete the saved scenario "${scenario.name}"?`);
+      if (!confirmed) return;
+
+      writeNamedScenarios(scenarios.filter((entry) => entry.id !== selectedId));
+      if (activeSavedScenarioId === selectedId) activeSavedScenarioId = null;
+      scenarioManagerMessage = `Deleted scenario "${scenario.name}".`;
+      renderInputs();
     });
   }
 
@@ -3783,6 +4215,7 @@ function recalc(): void {
 }
 
 function queueRecalc(): void {
+  schedulePersistDraft();
   if (debounceHandle !== null) window.clearTimeout(debounceHandle);
   debounceHandle = window.setTimeout(() => {
     recalc();
@@ -3996,8 +4429,15 @@ if (typeof ResizeObserver !== "undefined") {
   chartResizeObserver.observe(nwCanvas);
 }
 
+scenarioStorageAvailable = canUseScenarioStorage();
+if (!scenarioStorageAvailable) {
+  scenarioManagerMessage = "Local save is unavailable in this browser.";
+}
+
 resetCashflowExpandedGroups("collapsed");
 resetNetworthExpandedGroups("collapsed");
 syncProjectionSectionVisibility();
-renderInputs();
-recalc();
+if (!restoreDraftScenarioIfAvailable()) {
+  renderInputs();
+  recalc();
+}
