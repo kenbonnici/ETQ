@@ -1230,7 +1230,7 @@ function renderScenarioManager(): string {
               <div class="scenario-manager-kicker">Save current inputs</div>
               <div class="scenario-manager-inline-note">${escapeHtml(scenarioStorageAvailable ? "Stored in your browser only. No data leaves your device." : "Local save is unavailable in this browser.")}</div>
             </div>
-            <div class="scenario-save-row">
+            <div class="scenario-field-shell">
               <input
                 id="scenario-name-input"
                 class="scenario-name-input"
@@ -1256,18 +1256,20 @@ function renderScenarioManager(): string {
           <div class="scenario-row-main">
             <label class="scenario-library-field">
               <span class="scenario-manager-kicker">Saved scenarios</span>
-              <select id="saved-scenario-select" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>
-                ${hasSavedScenarios
-                  ? `
-                    <option value="" ${hasSelectedScenario ? "" : "selected"}>Select a scenario...</option>
-                    ${scenarios.map((scenario) => `
-                    <option value="${escapeHtml(scenario.id)}" ${scenario.id === selectedScenarioId ? "selected" : ""}>
-                      ${escapeHtml(`${scenario.name} · ${formatScenarioTimestamp(scenario.updatedAt)}`)}
-                    </option>
-                  `).join("")}
-                  `
-                  : `<option value="">No saved scenarios yet</option>`}
-              </select>
+              <span class="scenario-field-shell">
+                <select id="saved-scenario-select" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>
+                  ${hasSavedScenarios
+                    ? `
+                      <option value="" ${hasSelectedScenario ? "" : "selected"}>Select a scenario...</option>
+                      ${scenarios.map((scenario) => `
+                      <option value="${escapeHtml(scenario.id)}" ${scenario.id === selectedScenarioId ? "selected" : ""}>
+                        ${escapeHtml(`${scenario.name} · ${formatScenarioTimestamp(scenario.updatedAt)}`)}
+                      </option>
+                    `).join("")}
+                    `
+                    : `<option value="">No saved scenarios yet</option>`}
+                </select>
+              </span>
             </label>
           </div>
           <div class="scenario-row-actions">
