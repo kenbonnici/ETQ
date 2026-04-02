@@ -1369,7 +1369,8 @@ body {
   line-height: 1.35;
   color: var(--muted);
   text-align: left;
-  max-width: 34ch;
+  max-width: none;
+  white-space: nowrap;
 }
 
 .scenario-save-row {
@@ -2600,7 +2601,7 @@ small {
   }
 
   .scenario-manager-inline-note {
-    max-width: none;
+    white-space: nowrap;
   }
 
   .retire-check-result {
