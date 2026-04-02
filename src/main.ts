@@ -194,6 +194,7 @@ const DOWNSIZING_PREVIEW_INPUT_FIELDS = new Set<FieldId>([
 
 let scenarioStorageAvailable = true;
 let activeSavedScenarioId: string | null = null;
+let selectedSavedScenarioId: string | null = null;
 let scenarioDraftName = "";
 let scenarioManagerNotice: ScenarioManagerNotice | null = null;
 let scenarioManagerNoticeHandle: number | null = null;
@@ -1098,10 +1099,14 @@ function snapshotHasSavableData(snapshot: PersistedScenarioSnapshotV1): boolean 
   return false;
 }
 
-function syncScenarioSaveButtonState(): void {
+function syncScenarioActionButtonState(): void {
+  const hasSavableScenarioData = scenarioStorageAvailable && snapshotHasSavableData(collectPersistedScenarioSnapshot());
   const saveButton = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
-  if (!saveButton) return;
-  saveButton.disabled = !scenarioStorageAvailable || !snapshotHasSavableData(collectPersistedScenarioSnapshot());
+  if (saveButton) saveButton.disabled = !hasSavableScenarioData;
+  const saveAsButton = inputsPanel.querySelector<HTMLButtonElement>("#save-as-named-scenario-btn");
+  if (saveAsButton) saveAsButton.disabled = !hasSavableScenarioData;
+  const clearButton = inputsPanel.querySelector<HTMLButtonElement>("#clear-inputs-btn");
+  if (clearButton) clearButton.disabled = !hasSavableScenarioData;
 }
 
 function readDraftScenarioSnapshot(): PersistedScenarioSnapshotV1 | null {
@@ -1223,8 +1228,8 @@ function renderScenarioManager(): string {
   const scenarios = readNamedScenarios();
   const hasSavableScenarioData = snapshotHasSavableData(collectPersistedScenarioSnapshot());
   const hasSavedScenarios = scenarios.length > 0;
-  const hasSelectedScenario = activeSavedScenarioId !== null && scenarios.some((scenario) => scenario.id === activeSavedScenarioId);
-  const selectedScenarioId = hasSelectedScenario ? activeSavedScenarioId : "";
+  const hasSelectedScenario = selectedSavedScenarioId !== null && scenarios.some((scenario) => scenario.id === selectedSavedScenarioId);
+  const selectedScenarioId = hasSelectedScenario ? selectedSavedScenarioId : "";
   const noticeHtml = scenarioManagerNotice
     ? `
       <div class="scenario-notice scenario-notice--${scenarioManagerNotice.tone}" role="status" aria-live="polite">
@@ -1255,13 +1260,14 @@ function renderScenarioManager(): string {
               />
             </div>
           </div>
-          <div class="scenario-row-actions">
+          <div class="scenario-row-actions scenario-row-actions--triple">
             <button
               type="button"
               class="scenario-action-btn scenario-action-btn--primary"
               id="save-named-scenario-btn"
               ${scenarioStorageAvailable && hasSavableScenarioData ? "" : "disabled"}
             >Save</button>
+            <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="save-as-named-scenario-btn" ${scenarioStorageAvailable && hasSavableScenarioData ? "" : "disabled"}>Save As</button>
             <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="clear-inputs-btn" ${scenarioStorageAvailable && hasSavableScenarioData ? "" : "disabled"}>Clear</button>
           </div>
         </div>
@@ -1285,7 +1291,7 @@ function renderScenarioManager(): string {
               </span>
             </label>
           </div>
-          <div class="scenario-row-actions">
+          <div class="scenario-row-actions scenario-row-actions--double">
             <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="load-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Load</button>
             <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Delete</button>
           </div>
@@ -1303,7 +1309,7 @@ function restoreDraftScenarioIfAvailable(): boolean {
   return true;
 }
 
-function saveCurrentScenario(): void {
+function saveCurrentScenario(mode: "save" | "saveAs" = "save"): void {
   if (!scenarioStorageAvailable) {
     setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
     renderInputs();
@@ -1319,17 +1325,16 @@ function saveCurrentScenario(): void {
 
   const existingScenarios = readNamedScenarios();
   const activeScenario = existingScenarios.find((scenario) => scenario.id === activeSavedScenarioId);
+  const targetScenarioId = mode === "save" && activeScenario ? activeScenario.id : null;
   const duplicate = existingScenarios.find((scenario) => scenario.name.toLowerCase() === normalizedName.toLowerCase());
-  const savingOverActiveScenario = activeScenario !== undefined
-    && activeScenario.name.toLowerCase() === normalizedName.toLowerCase();
-  if (duplicate && duplicate.id !== activeSavedScenarioId) {
+  if (duplicate && duplicate.id !== targetScenarioId) {
     const shouldReplace = window.confirm(`Replace the saved scenario "${duplicate.name}"?`);
     if (!shouldReplace) return;
   }
 
   const snapshot = collectPersistedScenarioSnapshot();
-  const scenarioId = duplicate?.id
-    ?? (savingOverActiveScenario ? activeScenario?.id : undefined)
+  const scenarioId = targetScenarioId
+    ?? duplicate?.id
     ?? createScenarioId();
   const nextEntry: NamedScenarioRecordV1 = {
     id: scenarioId,
@@ -1337,11 +1342,14 @@ function saveCurrentScenario(): void {
     updatedAt: new Date().toISOString(),
     snapshot
   };
-  const remaining = existingScenarios.filter((scenario) => scenario.id !== scenarioId);
+  const replacedScenarioIds = new Set<string>([scenarioId]);
+  if (duplicate && duplicate.id !== scenarioId) replacedScenarioIds.add(duplicate.id);
+  const remaining = existingScenarios.filter((scenario) => !replacedScenarioIds.has(scenario.id));
   writeNamedScenarios([nextEntry, ...remaining]);
   activeSavedScenarioId = scenarioId;
-  scenarioDraftName = "";
-  setScenarioManagerNotice(`Saved scenario "${normalizedName}".`, "success");
+  selectedSavedScenarioId = null;
+  scenarioDraftName = normalizedName;
+  setScenarioManagerNotice(`${mode === "saveAs" ? "Saved new" : "Saved"} scenario "${normalizedName}".`, "success");
   renderInputs();
 }
 
@@ -3051,6 +3059,9 @@ function clearAllInputsPreservingFinerDefaults(): void {
   for (const def of INPUT_DEFINITIONS) {
     fieldState[def.fieldId] = null;
   }
+  activeSavedScenarioId = null;
+  selectedSavedScenarioId = null;
+  scenarioDraftName = "";
   resetLivingExpensesHelperState();
   validationRevealAll = false;
   clearTouchedFields();
@@ -3395,14 +3406,21 @@ function renderInputs(): void {
   const saveNamedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
   if (saveNamedScenarioBtn) {
     saveNamedScenarioBtn.addEventListener("click", () => {
-      saveCurrentScenario();
+      saveCurrentScenario("save");
+    });
+  }
+
+  const saveAsNamedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#save-as-named-scenario-btn");
+  if (saveAsNamedScenarioBtn) {
+    saveAsNamedScenarioBtn.addEventListener("click", () => {
+      saveCurrentScenario("saveAs");
     });
   }
 
   const savedScenarioSelect = inputsPanel.querySelector<HTMLSelectElement>("#saved-scenario-select");
   if (savedScenarioSelect) {
     savedScenarioSelect.addEventListener("change", () => {
-      activeSavedScenarioId = savedScenarioSelect.value || null;
+      selectedSavedScenarioId = savedScenarioSelect.value || null;
       renderInputs();
     });
   }
@@ -3410,11 +3428,13 @@ function renderInputs(): void {
   const loadSavedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#load-saved-scenario-btn");
   if (loadSavedScenarioBtn) {
     loadSavedScenarioBtn.addEventListener("click", () => {
-      const selectedId = savedScenarioSelect?.value ?? activeSavedScenarioId;
+      const selectedId = savedScenarioSelect?.value ?? selectedSavedScenarioId;
       if (!selectedId) return;
       const scenario = readNamedScenarios().find((entry) => entry.id === selectedId);
       if (!scenario) return;
       activeSavedScenarioId = scenario.id;
+      selectedSavedScenarioId = null;
+      scenarioDraftName = scenario.name;
       applyPersistedScenarioSnapshot(scenario.snapshot, { message: `Loaded scenario "${scenario.name}".`, tone: "success" });
     });
   }
@@ -3422,7 +3442,7 @@ function renderInputs(): void {
   const deleteSavedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#delete-saved-scenario-btn");
   if (deleteSavedScenarioBtn) {
     deleteSavedScenarioBtn.addEventListener("click", () => {
-      const selectedId = savedScenarioSelect?.value ?? activeSavedScenarioId;
+      const selectedId = savedScenarioSelect?.value ?? selectedSavedScenarioId;
       if (!selectedId) return;
       const scenarios = readNamedScenarios();
       const scenario = scenarios.find((entry) => entry.id === selectedId);
@@ -3432,6 +3452,7 @@ function renderInputs(): void {
 
       writeNamedScenarios(scenarios.filter((entry) => entry.id !== selectedId));
       if (activeSavedScenarioId === selectedId) activeSavedScenarioId = null;
+      if (selectedSavedScenarioId === selectedId) selectedSavedScenarioId = null;
       setScenarioManagerNotice(`Deleted scenario "${scenario.name}".`, "warning");
       renderInputs();
     });
@@ -4334,7 +4355,7 @@ function recalc(): void {
 
 function queueRecalc(): void {
   schedulePersistDraft();
-  syncScenarioSaveButtonState();
+  syncScenarioActionButtonState();
   if (debounceHandle !== null) window.clearTimeout(debounceHandle);
   debounceHandle = window.setTimeout(() => {
     recalc();
