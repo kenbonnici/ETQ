@@ -24,7 +24,7 @@ body {
 .layout {
   min-height: 100vh;
   display: grid;
-  grid-template-columns: minmax(300px, 28.2%) minmax(0, 1fr) minmax(300px, 28.2%);
+  grid-template-columns: minmax(300px, 23.97%) minmax(0, 46.17%) minmax(300px, 29.86%);
   gap: 16px;
   padding: 16px;
 }
@@ -2661,7 +2661,7 @@ small {
 
 @media (max-width: 1280px) {
   .layout {
-    grid-template-columns: minmax(300px, 26.9%) minmax(0, 1fr);
+    grid-template-columns: minmax(300px, 22.87%) minmax(0, 1fr);
   }
 
   .timeline-panel {
