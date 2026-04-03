@@ -1230,6 +1230,14 @@ function renderScenarioManager(): string {
   return `
     <div class="scenario-manager">
       ${noticeHtml}
+      <div class="scenario-manager-toolbar">
+        <label class="scenario-inline-setting">
+          <span class="scenario-inline-setting-label">Currency</span>
+          <select id="currency-selector" aria-label="Currency selector">
+            ${TOP_CURRENCIES.map((currency) => `<option value="${currency.code}" ${currency.code === selectedCurrency ? "selected" : ""}>${currency.code} - ${currency.label}</option>`).join("")}
+          </select>
+        </label>
+      </div>
       <div class="scenario-manager-layout">
         <div class="scenario-manager-row">
           <div class="scenario-row-main">
@@ -3095,15 +3103,6 @@ function renderInputs(): void {
     { title: "Advanced Assumptions", className: "section-advanced-assumptions", open: true, canToggle: false }
   ] as const;
 
-  const currencySelectHtml = `
-    <label class="field currency-selector header-currency-selector">
-      <span>Currency</span>
-      <select id="currency-selector" aria-label="Currency selector">
-        ${TOP_CURRENCIES.map((currency) => `<option value="${currency.code}" ${currency.code === selectedCurrency ? "selected" : ""}>${currency.code} - ${currency.label}</option>`).join("")}
-      </select>
-    </label>
-  `;
-
   const block = (title: string, open: boolean, canToggle: boolean, controlsHtml: string, sectionClass: string) => {
     const toggleHtml = `<button type="button" class="section-toggle" data-section="${title}"><span>${title}</span><span class="section-toggle-chevron" aria-hidden="true">${open ? "▾" : "▸"}</span></button>`;
     if (!canToggle) {
@@ -3111,7 +3110,6 @@ function renderInputs(): void {
         ? `
           <div class="section-header-actions">
             <button type="button" class="quickstart-load-btn" id="load-etq-excel-btn" ${excelLoadBusy ? "disabled" : ""}>${excelLoadBusy ? "Loading..." : "Load sample data"}</button>
-            ${currencySelectHtml}
           </div>
         `
         : "";

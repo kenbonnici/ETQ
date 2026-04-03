@@ -1286,29 +1286,6 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-}
-
-.section-header-actions .header-currency-selector {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 0;
-}
-
-.section-header-actions .header-currency-selector > span {
-  font-size: 11px;
-  font-weight: 700;
-  color: #35564d;
-  white-space: nowrap;
-}
-
-.section-header-actions .header-currency-selector select {
-  width: auto;
-  min-width: 170px;
-  height: 35px;
-  padding: 0 30px 0 10px;
-  font-size: 12px;
 }
 
 .scenario-manager {
@@ -1317,6 +1294,37 @@ body {
   border: 0;
   border-radius: 0;
   background: transparent;
+}
+
+.scenario-manager-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 0 10px;
+}
+
+.scenario-inline-setting {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.scenario-inline-setting-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #35564d;
+  white-space: nowrap;
+}
+
+.scenario-inline-setting select {
+  min-width: 170px;
+  height: 34px;
+  border: 1px solid #c2d4cd;
+  border-radius: 8px;
+  padding: 0 30px 0 10px;
+  background: #ffffff;
+  color: #1f2937;
+  font-size: 12px;
 }
 
 .scenario-notice {
@@ -1667,11 +1675,11 @@ body {
 
 .input-section h3 {
   margin: 12px 0 6px;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  color: #0b5d56;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: #44625a;
+  text-transform: none;
+  letter-spacing: 0.01em;
   padding-bottom: 4px;
   border-bottom: 1px solid #dce8e0;
 }
