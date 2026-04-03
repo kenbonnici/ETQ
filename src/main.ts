@@ -2696,16 +2696,22 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
   const hasSuffix = fieldHasPercentAdornment(def);
   const stepSize = STEPPER_CONFIG[def.fieldId];
   const hasStepper = Number.isFinite(stepSize);
+  const isAgeRangeField = def.fieldId === "income.postRetirementSupplement.startAge" || def.fieldId === "income.postRetirementSupplement.endAge";
   const inputShellClass = [
     "input-shell",
     hasPrefix ? "has-prefix" : "",
     hasSuffix ? "has-suffix" : "",
     hasStepper ? "has-stepper" : ""
   ].join(" ").trim();
+  const fieldClass = [
+    "field",
+    def.fieldId === LIVING_EXPENSES_FIELD_ID ? "living-expenses-field" : "",
+    isAgeRangeField ? "field--half" : ""
+  ].join(" ").trim();
   const previewHtml = wrapDownsizingPreview(def.fieldId);
 
   return `
-    <div class="field${def.fieldId === LIVING_EXPENSES_FIELD_ID ? " living-expenses-field" : ""}" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+    <div class="${fieldClass}" data-cell="${def.cell}" data-field-id="${def.fieldId}">
       <span>${label}</span>
       <div class="${inputShellClass}">
         ${hasPrefix ? `<span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>` : ""}

@@ -2005,14 +2005,14 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
 
 const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
   "retirement.statutoryAge": "State pension age",
-  "retirement.statePension.netAnnualAtStart": "Expected annual state pension",
+  "retirement.statePension.netAnnualAtStart": "Expected annual amount",
   "housing.01Residence.marketValue": "Current home value",
   "housing.rentAnnual": "Current monthly rent",
   "spending.livingExpenses.annual": "Current annual living expenses",
   "income.otherWork.netAnnual": "Side income (net per year)",
   "income.otherWork.endAge": "Side income ends at age",
   "housing.downsize.newHomeMode": "After downsizing: buy or rent?",
-  "income.postRetirementSupplement.annual": "Other retirement income (per year)",
+  "income.postRetirementSupplement.annual": "Amount (per year)",
   "retirement.earlyPensionReductionPerYear": "State pension reduction for each year retired early",
   "liquidity.minimumCashBuffer": "Minimum cash reserve",
   "planning.legacyAmount": "Amount you want to leave behind"

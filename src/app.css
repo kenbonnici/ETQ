@@ -2114,6 +2114,16 @@ body {
   margin-bottom: 8px;
 }
 
+.field--half {
+  display: inline-grid;
+  width: calc(50% - 6px);
+  vertical-align: top;
+}
+
+.field--half + .field--half {
+  margin-left: 12px;
+}
+
 .living-expenses-wrap {
   margin-bottom: 8px;
 }
@@ -2536,7 +2546,7 @@ input {
 
 .field-stepper {
   position: absolute;
-  right: 6px;
+  right: 8px;
   top: 50%;
   transform: translateY(-50%);
   display: inline-flex;
@@ -2619,6 +2629,8 @@ input {
 }
 
 small {
+  display: block;
+  margin-top: 4px;
   color: var(--muted);
   font-size: 11px;
 }
@@ -2638,6 +2650,15 @@ small {
 
   .living-expenses-category-grid {
     grid-template-columns: 1fr;
+  }
+
+  .field--half {
+    display: grid;
+    width: 100%;
+  }
+
+  .field--half + .field--half {
+    margin-left: 0;
   }
 }
 
