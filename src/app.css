@@ -2116,7 +2116,7 @@ body {
 
 .field--half {
   display: inline-grid;
-  width: calc(50% - 6px);
+  width: calc(50% - 10px);
   vertical-align: top;
 }
 
