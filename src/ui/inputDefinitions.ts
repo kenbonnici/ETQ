@@ -2057,6 +2057,11 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     return { section: "Income", groupTail: ["Side income"] };
   }
 
+  if (fieldId.startsWith("properties.") && fieldId.includes(".loan.")) {
+    const slot = numberedLabel(fieldId.split(".")[1], "Property");
+    return { section: "Debts", groupTail: ["Investment property loans", slot] };
+  }
+
   if (
     fieldId === "housing.01Residence.marketValue"
     || fieldId === "housing.rentAnnual"

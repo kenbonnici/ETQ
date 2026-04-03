@@ -3231,8 +3231,12 @@ function renderInputs(): void {
           const propertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
           const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
           const summary = getSubgroupSummary(sub);
+          const cardTitle = summary || sub;
+          const usePropertyLoanHeader = top.toLowerCase() === "investment property loans" && !!propertyGroup;
           const headerInputHtml = propertyGroup
-            ? renderGroupHeaderNameInput(propertyGroup.nameField, "Property name")
+            ? usePropertyLoanHeader
+              ? ""
+              : renderGroupHeaderNameInput(propertyGroup.nameField, "Property name")
             : assetOfValueGroup
               ? renderGroupHeaderNameInput(assetOfValueGroup.nameField, "Asset name")
               : "";
@@ -3240,11 +3244,14 @@ function renderInputs(): void {
           html += `
             <div class="group-item-card">
               <div class="group-item-card-header${headerInputHtml ? " has-name-input" : ""}">
-                ${headerInputHtml || `<h4 class="group-sub">${sub}</h4>
-                ${summary ? `<span class="group-item-card-summary">${escapeHtml(summary)}</span>` : ""}`}
+                ${headerInputHtml || `<h4 class="group-sub">${escapeHtml(cardTitle)}</h4>
+                ${summary && !usePropertyLoanHeader ? `<span class="group-item-card-summary">${escapeHtml(summary)}</span>` : ""}`}
               </div>
           `;
           subgroupCardOpen = true;
+          if (usePropertyLoanHeader) {
+            subgroupHeaderFieldId = null;
+          }
           prevSub = sub;
         }
       }
