@@ -1565,11 +1565,11 @@ body {
 
 .scenario-header-currency {
   flex: 0 0 auto;
-  width: 84px;
+  width: 72px;
   height: 38px;
   border: 1px solid #c8ddd4;
   border-radius: 10px;
-  padding: 0 28px 0 10px;
+  padding: 0 24px 0 8px;
   background-color: #ffffff;
   color: #2c5950;
   font-size: 12px;
@@ -1580,8 +1580,8 @@ body {
     linear-gradient(45deg, transparent 50%, #6a8e83 50%),
     linear-gradient(135deg, #6a8e83 50%, transparent 50%);
   background-position:
-    calc(100% - 17px) calc(50% + 1px),
-    calc(100% - 12px) calc(50% + 1px);
+    calc(100% - 15px) calc(50% + 1px),
+    calc(100% - 10px) calc(50% + 1px);
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }
