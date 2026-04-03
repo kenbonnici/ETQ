@@ -2034,10 +2034,10 @@ function numberedLabel(segment: string | undefined, singular: string): string {
 
 function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section" | "groupTail"> {
   if (fieldId === "profile.currentAge" || fieldId === "planning.lifeExpectancyAge") {
-    return { section: "Basics", groupTail: ["About you"] };
+    return { section: "Basics", groupTail: [] };
   }
   if (fieldId === "spending.livingExpenses.annual") {
-    return { section: "Basics", groupTail: ["Living costs"] };
+    return { section: "Basics", groupTail: [] };
   }
   if (fieldId === "liquidity.minimumCashBuffer" || fieldId === "planning.legacyAmount") {
     return { section: "Basics", groupTail: ["Goals"] };

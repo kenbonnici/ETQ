@@ -1674,13 +1674,13 @@ body {
 
 .input-section h3 {
   margin: 12px 0 6px;
-  font-size: 12px;
-  font-weight: 700;
-  color: #44625a;
-  text-transform: none;
-  letter-spacing: 0.01em;
+  font-size: 13px;
+  font-weight: 800;
+  color: #244b42;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   padding-bottom: 4px;
-  border-bottom: 1px solid #dce8e0;
+  border-bottom: 1px solid #cfddd5;
 }
 
 .section-deeper-dive h3 {
