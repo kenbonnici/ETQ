@@ -48,11 +48,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 6,
     fieldId: "income.employment.netAnnual",
-    label: "Current net annual income",
+    label: "Main income",
     section: "QUICK START",
     groupPath: "QUICK START",
     groupTail: [],
-    tooltip: "Net of tax, from employment or self-employment",
+    tooltip: "Annual net of tax income from employment or self-employment.",
     uiNote: "",
     sampleValue: "80000",
     type: "number"
@@ -84,11 +84,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 12,
     fieldId: "housing.01Residence.marketValue",
-    label: "Home current market value",
+    label: "Home value",
     section: "QUICK START",
     groupPath: "QUICK START",
     groupTail: [],
-    tooltip: "Leave blank if not a home owner",
+    tooltip: "Current market value or leave blank if not a home owner",
     uiNote: "",
     sampleValue: "600000",
     type: "number"
@@ -144,7 +144,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 21,
     fieldId: "retirement.statePension.netAnnualAtStart",
-    label: "Annual pension at retirement",
+    label: "Expected annual amount",
     section: "QUICK START",
     groupPath: "QUICK START",
     groupTail: [],
@@ -204,7 +204,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 35,
     fieldId: "dependents.01.supportYearsRemaining",
-    label: "Years to support (from now)",
+    label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 1",
     groupTail: ["Dependents", "Dependent 1"],
@@ -240,7 +240,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 40,
     fieldId: "dependents.02.supportYearsRemaining",
-    label: "Years to support (from now)",
+    label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 2",
     groupTail: ["Dependents", "Dependent 2"],
@@ -276,7 +276,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 45,
     fieldId: "dependents.03.supportYearsRemaining",
-    label: "Years to support (from now)",
+    label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 3",
     groupTail: ["Dependents", "Dependent 3"],
@@ -312,7 +312,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 50,
     fieldId: "dependents.04.supportYearsRemaining",
-    label: "Years to support (from now)",
+    label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 4",
     groupTail: ["Dependents", "Dependent 4"],
@@ -348,7 +348,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 55,
     fieldId: "dependents.05.supportYearsRemaining",
-    label: "Years to support (from now)",
+    label: "Years to support",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 5",
     groupTail: ["Dependents", "Dependent 5"],
@@ -564,7 +564,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 89,
     fieldId: "assetsOfValue.01.appreciationRateAnnual",
-    label: "Annual appreciation / depreciation",
+    label: "Annual value change",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other Assets of Value > Asset 1",
     groupTail: ["Other Assets of Value", "Asset 1"],
@@ -600,7 +600,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 94,
     fieldId: "assetsOfValue.02.appreciationRateAnnual",
-    label: "Annual appreciation / depreciation",
+    label: "Annual value change",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other Assets of Value > Asset 2",
     groupTail: ["Other Assets of Value", "Asset 2"],
@@ -636,7 +636,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 99,
     fieldId: "assetsOfValue.03.appreciationRateAnnual",
-    label: "Annual appreciation / depreciation",
+    label: "Annual value change",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other Assets of Value > Asset 3",
     groupTail: ["Other Assets of Value", "Asset 3"],
@@ -672,7 +672,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 104,
     fieldId: "assetsOfValue.04.appreciationRateAnnual",
-    label: "Annual appreciation / depreciation",
+    label: "Annual value change",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other Assets of Value > Asset 4",
     groupTail: ["Other Assets of Value", "Asset 4"],
@@ -708,7 +708,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 109,
     fieldId: "assetsOfValue.05.appreciationRateAnnual",
-    label: "Annual appreciation / depreciation",
+    label: "Annual value change",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other Assets of Value > Asset 5",
     groupTail: ["Other Assets of Value", "Asset 5"],
@@ -780,11 +780,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 119,
     fieldId: "income.otherWork.netAnnual",
-    label: "Other work income (net annual)",
+    label: "Annual amount",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Other income",
     groupTail: ["Other income"],
-    tooltip: "Part-time / consulting / side projects etc. Leave blank if none",
+    tooltip: "Net annual income from consulting, freelance, or other part-time work. Leave blank if none.",
     uiNote: "",
     sampleValue: "2000",
     type: "number"
@@ -804,11 +804,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 124,
     fieldId: "debts.creditCards.balance",
-    label: "Credit card balances",
+    label: "Credit card balance",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Loans",
     groupTail: ["Loans"],
-    tooltip: "Assumed cleared in Year 1. Leave blank if none",
+    tooltip: "Combined balance on all cards. Assumed cleared in Year 1. Leave blank if none.",
     uiNote: "",
     sampleValue: "1000",
     type: "number"
@@ -1440,7 +1440,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 219,
     fieldId: "housing.downsize.newHomeMode",
-    label: "New home buy or rent?",
+    label: "Buy or rent after downsizing?",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Home downsizing",
     groupTail: ["Home downsizing"],
@@ -1452,7 +1452,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 221,
     fieldId: "housing.downsize.newHomePurchaseCost",
-    label: "New home purchase cost",
+    label: "New home cost",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Home downsizing",
     groupTail: ["Home downsizing"],
@@ -1500,7 +1500,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 230,
     fieldId: "stockMarketCrashes.01.recoveryYears",
-    label: "Time to recover",
+    label: "Recovery years",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 1",
     groupTail: ["Stock market crash scenarios", "Crash 1"],
@@ -1536,7 +1536,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 235,
     fieldId: "stockMarketCrashes.02.recoveryYears",
-    label: "Time to recover",
+    label: "Recovery years",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 2",
     groupTail: ["Stock market crash scenarios", "Crash 2"],
@@ -1572,7 +1572,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 240,
     fieldId: "stockMarketCrashes.03.recoveryYears",
-    label: "Time to recover",
+    label: "Recovery years",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 3",
     groupTail: ["Stock market crash scenarios", "Crash 3"],
@@ -1608,7 +1608,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 245,
     fieldId: "stockMarketCrashes.04.recoveryYears",
-    label: "Time to recover",
+    label: "Recovery years",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 4",
     groupTail: ["Stock market crash scenarios", "Crash 4"],
@@ -1644,7 +1644,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 250,
     fieldId: "stockMarketCrashes.05.recoveryYears",
-    label: "Time to recover",
+    label: "Recovery years",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Stock market crash scenarios > Crash 5",
     groupTail: ["Stock market crash scenarios", "Crash 5"],
@@ -1656,7 +1656,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 254,
     fieldId: "planning.lifeExpectancyAge",
-    label: "Plan to live until age",
+    label: "Life expectancy",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
@@ -1704,7 +1704,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 261,
     fieldId: "income.postRetirementSupplement.annual",
-    label: "Other post-retirement income",
+    label: "Annual amount",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Other post-retirement income",
     groupTail: ["Other post-retirement income"],
@@ -1752,7 +1752,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 267,
     fieldId: "assumptions.propertyAppreciationRateAnnual",
-    label: "Property annual appreciation",
+    label: "Property growth",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
@@ -1788,7 +1788,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 273,
     fieldId: "assumptions.salaryGrowthRateAnnual",
-    label: "Salary annual growth rate",
+    label: "Salary growth",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
@@ -1800,7 +1800,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 275,
     fieldId: "assumptions.rentalIncomeGrowthRateAnnual",
-    label: "Rental income annual increase",
+    label: "Rental income growth",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
@@ -1812,11 +1812,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 277,
     fieldId: "retirement.earlyPensionReductionPerYear",
-    label: "Pension reduction per year early",
+    label: "Early retirement reduction",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "Reduction in pension for each year retired early",
+    tooltip: "Reduction in annual pension for each year retired early",
     uiNote: "",
     sampleValue: "300",
     type: "number"
@@ -2004,30 +2004,33 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
 ];
 
 const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
-  "income.employment.netAnnual": "Main income (net annual)",
+  "income.employment.netAnnual": "Main income",
   "retirement.statutoryAge": "Start age",
-  "retirement.statePension.netAnnualAtStart": "Expected amount (net annual)",
-  "housing.01Residence.marketValue": "Home market value",
+  "retirement.statePension.netAnnualAtStart": "Expected annual amount",
+  "housing.01Residence.marketValue": "Home value",
   "housing.rentAnnual": "Monthly rent",
-  "spending.livingExpenses.annual": "Current annual living expenses",
-  "income.otherWork.netAnnual": "Amount (net annual)",
+  "spending.livingExpenses.annual": "Annual living expenses",
+  "income.otherWork.netAnnual": "Annual amount",
   "income.otherWork.endAge": "Ends at age",
-  "housing.downsize.newHomeMode": "After downsizing: buy or rent?",
-  "income.postRetirementSupplement.annual": "Amount (net annual)",
-  "retirement.earlyPensionReductionPerYear": "State pension reduction for each year retired early",
+  "housing.downsize.newHomeMode": "Buy or rent after downsizing?",
+  "income.postRetirementSupplement.annual": "Annual amount",
+  "retirement.earlyPensionReductionPerYear": "Early retirement reduction",
   "liquidity.minimumCashBuffer": "Minimum cash reserve",
   "planning.legacyAmount": "Amount you want to leave behind",
   "assets.cash.totalBalance": "Cash balance",
   "assets.equities.marketValue": "Investment value",
-  "debts.creditCards.balance": "Credit card balances",
+  "debts.creditCards.balance": "Credit card balance",
   "liquidation.stockSellingCostRate": "Stocks",
   "liquidation.propertyDisposalCostRate": "Properties",
   "liquidation.otherAssetDisposalCostRate": "Other assets"
 };
 
 const TOOLTIP_OVERRIDES: Partial<Record<FieldId, string>> = {
-  "income.employment.netAnnual": "Net of tax, from employment or self-employment.",
-  "income.otherWork.netAnnual": "Consulting, freelance, or other part-time work. Leave blank if none."
+  "income.employment.netAnnual": "Annual net of tax income from employment or self-employment.",
+  "housing.01Residence.marketValue": "Current market value or leave blank if not a home owner",
+  "income.otherWork.netAnnual": "Net annual income from consulting, freelance, or other part-time work. Leave blank if none.",
+  "retirement.earlyPensionReductionPerYear": "Reduction in annual pension for each year retired early",
+  "debts.creditCards.balance": "Combined balance on all cards. Assumed cleared in Year 1. Leave blank if none."
 };
 
 function buildGroupPath(section: string, groupTail: string[]): string {
