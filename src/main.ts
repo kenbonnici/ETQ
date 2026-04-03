@@ -3212,7 +3212,10 @@ function renderInputs(): void {
         const sub = tail.length > 2 ? tail.slice(2).join(" > ") : tail.slice(1).join(" > ");
         if (top && top !== prevTop) {
           closeSubgroupCard();
-          const suppressTopHeading = top.toLowerCase() === "other post-retirement income" || top.toLowerCase() === "investment property";
+          const suppressTopHeading =
+            top.toLowerCase() === "other post-retirement income"
+            || top.toLowerCase() === "investment property"
+            || top.toLowerCase() === "other valuable assets";
           if (!suppressTopHeading) {
             html += `<h3 class="group-top">${top}</h3>`;
           }
