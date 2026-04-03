@@ -1379,6 +1379,7 @@ body {
   display: grid;
   gap: 2px;
   text-align: left;
+  min-width: 0;
 }
 
 .scenario-heading-note {
@@ -1388,6 +1389,9 @@ body {
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .scenario-field-shell {
@@ -1549,6 +1553,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
 }
 
 .section-scenarios .section-toggle--scenarios {
@@ -1556,6 +1561,7 @@ body {
   align-items: center;
   justify-content: space-between;
   flex: 1 1 auto;
+  min-width: 0;
   color: #2c5950;
   background: #e8f3ee;
   border-color: #c8ddd4;
@@ -1565,14 +1571,14 @@ body {
 
 .scenario-header-currency {
   flex: 0 0 auto;
-  width: 72px;
+  width: 64px;
   height: 38px;
   border: 1px solid #c8ddd4;
   border-radius: 10px;
-  padding: 0 24px 0 8px;
+  padding: 0 22px 0 8px;
   background-color: #ffffff;
   color: #2c5950;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   appearance: none;
   -webkit-appearance: none;
@@ -1580,8 +1586,8 @@ body {
     linear-gradient(45deg, transparent 50%, #6a8e83 50%),
     linear-gradient(135deg, #6a8e83 50%, transparent 50%);
   background-position:
-    calc(100% - 15px) calc(50% + 1px),
-    calc(100% - 10px) calc(50% + 1px);
+    calc(100% - 14px) calc(50% + 1px),
+    calc(100% - 9px) calc(50% + 1px);
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }
