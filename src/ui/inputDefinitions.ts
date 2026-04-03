@@ -2060,7 +2060,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     fieldId === "housing.01Residence.marketValue"
     || fieldId === "housing.rentAnnual"
   ) {
-    return { section: "Housing", groupTail: ["Current housing"] };
+    return { section: "Housing", groupTail: [] };
   }
   if (fieldId.startsWith("housing.01Residence.mortgage.")) {
     return { section: "Housing", groupTail: ["Mortgage"] };
