@@ -3245,6 +3245,7 @@ function renderInputs(): void {
           const dependentGroup = DEPENDENT_RUNTIME_GROUPS.find((group) => group.label === sub);
           const incomeEventGroup = INCOME_EVENT_RUNTIME_GROUPS.find((group) => group.label === sub);
           const expenseEventGroup = EXPENSE_EVENT_RUNTIME_GROUPS.find((group) => group.label === sub);
+          const stockMarketCrashGroup = STOCK_MARKET_CRASH_RUNTIME_GROUPS.find((group) => group.label === sub);
           const propertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
           const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
           const summary = getSubgroupSummary(sub);
@@ -3257,6 +3258,8 @@ function renderInputs(): void {
               ? renderGroupHeaderNameInput(incomeEventGroup.nameField, "Event name")
             : expenseEventGroup
               ? renderGroupHeaderNameInput(expenseEventGroup.nameField, "Event name")
+            : stockMarketCrashGroup
+              ? renderGroupHeaderNameInput(stockMarketCrashGroup.yearField, "Year")
             : propertyGroup
             ? usePropertyLoanHeader
               ? ""
@@ -3270,6 +3273,7 @@ function renderInputs(): void {
             dependentGroup?.nameField
             ?? incomeEventGroup?.nameField
             ?? expenseEventGroup?.nameField
+            ?? stockMarketCrashGroup?.yearField
             ?? propertyGroup?.nameField
             ?? assetOfValueGroup?.nameField
             ?? null;
