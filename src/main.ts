@@ -3362,7 +3362,7 @@ function renderInputs(): void {
     return block(section.title, section.open, section.canToggle, controlsHtml, section.className);
   }).join("");
   inputsPanel.innerHTML =
-    `<section class="input-section section-scenarios"><div class="section-scenarios-header"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span class="scenario-heading-block"><span>MY DATA</span><span class="scenario-heading-note">${escapeHtml(scenarioStorageAvailable ? "Stored locally in your browser. No data leaves your device" : "Local save is unavailable in this browser")}</span></span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${scenarioCurrencyHtml}</div>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
+    `<section class="input-section section-scenarios"><div class="section-scenarios-header"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span class="scenario-heading-block"><span>MY DATA</span><span class="scenario-heading-note">${escapeHtml(scenarioStorageAvailable ? "Stored locally. Never leaves your device." : "Local save is unavailable in this browser")}</span></span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${scenarioCurrencyHtml}</div>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
     sectionBlocksHtml;
 
   const currencySelector = inputsPanel.querySelector<HTMLSelectElement>("#currency-selector");
