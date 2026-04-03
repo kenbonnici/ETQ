@@ -2018,7 +2018,7 @@ const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
   "liquidity.minimumCashBuffer": "Minimum cash reserve",
   "planning.legacyAmount": "Amount you want to leave behind",
   "assets.cash.totalBalance": "Cash balance",
-  "assets.equities.marketValue": "Investment value",
+  "assets.equities.marketValue": "Stock market investments",
   "debts.creditCards.balance": "Credit card balance",
   "liquidation.stockSellingCostRate": "Stocks",
   "liquidation.propertyDisposalCostRate": "Properties",
