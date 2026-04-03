@@ -1787,10 +1787,7 @@ body {
   margin-bottom: 0;
 }
 
-.group-item-card .add-dependent-btn,
-.group-item-card .add-property-btn,
-.group-item-card .add-stock-market-crash-btn,
-.group-item-card .add-event-btn {
+.group-item-card .add-slot-btn {
   margin-top: 4px;
   margin-bottom: 0;
 }
@@ -1881,10 +1878,7 @@ body {
   border-color: #dacced;
 }
 
-.add-dependent-btn,
-.add-property-btn,
-.add-stock-market-crash-btn,
-.add-event-btn {
+.add-slot-btn {
   border: 1px solid var(--section-chip-border);
   background: linear-gradient(180deg, var(--section-chip-bg) 0%, #ffffff 100%);
   color: var(--section-chip-text);
@@ -1904,10 +1898,7 @@ body {
     transform 140ms ease;
 }
 
-.add-dependent-btn:hover,
-.add-property-btn:hover,
-.add-stock-market-crash-btn:hover,
-.add-event-btn:hover {
+.add-slot-btn:hover {
   border-color: color-mix(in srgb, var(--section-chip-border) 70%, var(--section-chip-text));
   background: linear-gradient(180deg, color-mix(in srgb, var(--section-chip-bg) 82%, #ffffff) 0%, #ffffff 100%);
   box-shadow:
@@ -1916,18 +1907,12 @@ body {
   transform: translateY(-1px);
 }
 
-.add-dependent-btn:focus-visible,
-.add-property-btn:focus-visible,
-.add-stock-market-crash-btn:focus-visible,
-.add-event-btn:focus-visible {
+.add-slot-btn:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--section-chip-text) 58%, #ffffff);
   outline-offset: 2px;
 }
 
-.add-dependent-btn:active,
-.add-property-btn:active,
-.add-stock-market-crash-btn:active,
-.add-event-btn:active {
+.add-slot-btn:active {
   transform: translateY(0);
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.5);
 }

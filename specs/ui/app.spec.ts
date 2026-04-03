@@ -105,19 +105,19 @@ test("reveals dependent slots up to five through the existing add-dependent flow
   await expect(page.locator(selectors.dependent5Name)).toHaveCount(0);
 
   await fillAndBlur(page, selectors.dependentName, "Chris");
-  await page.locator(".add-dependent-btn").last().click();
+  await page.locator('[data-next-dependent]').last().click();
   await expect(page.locator(selectors.dependent2Name)).toBeVisible();
 
   await fillAndBlur(page, selectors.dependent2Name, "Jamie");
-  await page.locator(".add-dependent-btn").last().click();
+  await page.locator('[data-next-dependent]').last().click();
   await expect(page.locator(selectors.dependent3Name)).toBeVisible();
 
   await fillAndBlur(page, selectors.dependent3Name, "Morgan");
-  await page.locator(".add-dependent-btn").last().click();
+  await page.locator('[data-next-dependent]').last().click();
   await expect(page.locator(selectors.dependent4Name)).toBeVisible();
 
   await fillAndBlur(page, selectors.dependent4Name, "Taylor");
-  await page.locator(".add-dependent-btn").last().click();
+  await page.locator('[data-next-dependent]').last().click();
   await expect(page.locator(selectors.dependent5Name)).toBeVisible();
 });
 
@@ -130,19 +130,19 @@ test("reveals property slots up to five through the existing add-property flow",
 
   await fillAndBlur(page, selectors.propertyName, "Sliema");
   await expect(page.locator(selectors.propertyAnnualCost)).toBeVisible();
-  await page.locator(".add-property-btn").last().click();
+  await page.locator('[data-next-property]').last().click();
   await expect(page.locator(selectors.property2Name)).toBeVisible();
 
   await fillAndBlur(page, selectors.property2Name, "Gzira");
-  await page.locator(".add-property-btn").last().click();
+  await page.locator('[data-next-property]').last().click();
   await expect(page.locator(selectors.property3Name)).toBeVisible();
 
   await fillAndBlur(page, selectors.property3Name, "Qormi");
-  await page.locator(".add-property-btn").last().click();
+  await page.locator('[data-next-property]').last().click();
   await expect(page.locator(selectors.property4Name)).toBeVisible();
 
   await fillAndBlur(page, selectors.property4Name, "Gudja");
-  await page.locator(".add-property-btn").last().click();
+  await page.locator('[data-next-property]').last().click();
   await expect(page.locator(selectors.property5Name)).toBeVisible();
 });
 
@@ -155,19 +155,19 @@ test("reveals asset slots up to five through the existing add-asset flow", async
 
   await fillAndBlur(page, selectors.assetName, "Jewelry");
   await expect(page.locator(selectors.assetAppreciation)).toBeVisible();
-  await page.locator(".add-asset-btn").last().click();
+  await page.locator('[data-next-asset]').last().click();
   await expect(page.locator(selectors.asset2Name)).toBeVisible();
 
   await fillAndBlur(page, selectors.asset2Name, "Car");
-  await page.locator(".add-asset-btn").last().click();
+  await page.locator('[data-next-asset]').last().click();
   await expect(page.locator(selectors.asset3Name)).toBeVisible();
 
   await fillAndBlur(page, selectors.asset3Name, "Painting");
-  await page.locator(".add-asset-btn").last().click();
+  await page.locator('[data-next-asset]').last().click();
   await expect(page.locator(selectors.asset4Name)).toBeVisible();
 
   await fillAndBlur(page, selectors.asset4Name, "Boat");
-  await page.locator(".add-asset-btn").last().click();
+  await page.locator('[data-next-asset]').last().click();
   await expect(page.locator(selectors.asset5Name)).toBeVisible();
 });
 
@@ -185,7 +185,7 @@ test("reveals stock market crash slots progressively and only shows crash detail
   await expect(page.locator(selectors.stockMarketCrash1Drop)).toBeVisible();
   await expect(page.locator(selectors.stockMarketCrash1Recovery)).toBeVisible();
 
-  await page.locator(".add-stock-market-crash-btn").last().click();
+  await page.locator('[data-next-stock-market-crash]').last().click();
   await expect(page.locator(selectors.stockMarketCrash2Year)).toBeVisible();
 });
 
@@ -202,7 +202,7 @@ test("tab order stays in visible dependent field order as groups appear", async 
   await dependentAnnualCost.press("Tab");
   await expectActiveElement(page, 'input[data-field-id="dependents.01.supportYearsRemaining"]');
 
-  await page.locator(".add-dependent-btn").click();
+  await page.locator('[data-next-dependent]').click();
   await page.locator('input[data-field-id="dependents.01.supportYearsRemaining"]').press("Tab");
   await expectActiveElement(page, selectors.dependent2Name);
 

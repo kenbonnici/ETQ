@@ -3306,7 +3306,7 @@ function renderInputs(): void {
         && visibleDependents < dependentGroup.idx + 2
         && !isBlank(fieldState[dependentGroup.nameField])
       ) {
-        html += `<button type="button" class="add-dependent-btn" data-next-dependent="${dependentGroup.idx + 2}">Add another dependent</button>`;
+        html += `<button type="button" class="add-slot-btn" data-next-dependent="${dependentGroup.idx + 2}">Add another dependent</button>`;
       }
       const propertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.annualCostsField === def.fieldId);
       if (
@@ -3315,7 +3315,7 @@ function renderInputs(): void {
         && visibleProperties < propertyGroup.idx + 2
         && !isBlank(fieldState[propertyGroup.nameField])
       ) {
-        html += `<button type="button" class="add-property-btn" data-next-property="${propertyGroup.idx + 2}">Add another property</button>`;
+        html += `<button type="button" class="add-slot-btn" data-next-property="${propertyGroup.idx + 2}">Add another property</button>`;
       }
       const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.appreciationRateField === def.fieldId);
       if (
@@ -3324,19 +3324,19 @@ function renderInputs(): void {
         && visibleAssetsOfValue < assetOfValueGroup.idx + 2
         && !isBlank(fieldState[assetOfValueGroup.nameField])
       ) {
-        html += `<button type="button" class="add-asset-btn" data-next-asset="${assetOfValueGroup.idx + 2}">Add another asset</button>`;
+        html += `<button type="button" class="add-slot-btn" data-next-asset="${assetOfValueGroup.idx + 2}">Add another asset</button>`;
       }
       if (def.fieldId === INCOME_EVENT_RUNTIME_GROUPS[0].yearField && visibleIncomeEvents < 2 && !isBlank(fieldState[INCOME_EVENT_RUNTIME_GROUPS[0].nameField])) {
-        html += `<button type="button" class="add-event-btn" data-next-income-event="2">Add another income event</button>`;
+        html += `<button type="button" class="add-slot-btn" data-next-income-event="2">Add another income event</button>`;
       }
       if (def.fieldId === INCOME_EVENT_RUNTIME_GROUPS[1].yearField && visibleIncomeEvents < 3 && !isBlank(fieldState[INCOME_EVENT_RUNTIME_GROUPS[1].nameField])) {
-        html += `<button type="button" class="add-event-btn" data-next-income-event="3">Add another income event</button>`;
+        html += `<button type="button" class="add-slot-btn" data-next-income-event="3">Add another income event</button>`;
       }
       if (def.fieldId === EXPENSE_EVENT_RUNTIME_GROUPS[0].yearField && visibleExpenseEvents < 2 && !isBlank(fieldState[EXPENSE_EVENT_RUNTIME_GROUPS[0].nameField])) {
-        html += `<button type="button" class="add-event-btn" data-next-expense-event="2">Add another expense event</button>`;
+        html += `<button type="button" class="add-slot-btn" data-next-expense-event="2">Add another expense event</button>`;
       }
       if (def.fieldId === EXPENSE_EVENT_RUNTIME_GROUPS[1].yearField && visibleExpenseEvents < 3 && !isBlank(fieldState[EXPENSE_EVENT_RUNTIME_GROUPS[1].nameField])) {
-        html += `<button type="button" class="add-event-btn" data-next-expense-event="3">Add another expense event</button>`;
+        html += `<button type="button" class="add-slot-btn" data-next-expense-event="3">Add another expense event</button>`;
       }
       const stockMarketCrashGroup = STOCK_MARKET_CRASH_RUNTIME_GROUPS.find((group) => group.recoveryField === def.fieldId);
       if (
@@ -3345,7 +3345,7 @@ function renderInputs(): void {
         && visibleStockMarketCrashes < stockMarketCrashGroup.idx + 2
         && !isBlank(fieldState[stockMarketCrashGroup.yearField])
       ) {
-        html += `<button type="button" class="add-stock-market-crash-btn" data-next-stock-market-crash="${stockMarketCrashGroup.idx + 2}">Add another stock market crash</button>`;
+        html += `<button type="button" class="add-slot-btn" data-next-stock-market-crash="${stockMarketCrashGroup.idx + 2}">Add another stock market crash</button>`;
       }
     }
     closeSubgroupCard();
@@ -3738,7 +3738,7 @@ function renderInputs(): void {
     });
   });
 
-  inputsPanel.querySelectorAll<HTMLButtonElement>(".add-dependent-btn").forEach((btn) => {
+  inputsPanel.querySelectorAll<HTMLButtonElement>("[data-next-dependent]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const next = Number(btn.dataset.nextDependent);
       if (Number.isFinite(next)) {
@@ -3748,7 +3748,7 @@ function renderInputs(): void {
     });
   });
 
-  inputsPanel.querySelectorAll<HTMLButtonElement>(".add-property-btn").forEach((btn) => {
+  inputsPanel.querySelectorAll<HTMLButtonElement>("[data-next-property]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const next = Number(btn.dataset.nextProperty);
       if (Number.isFinite(next)) {
@@ -3758,7 +3758,7 @@ function renderInputs(): void {
     });
   });
 
-  inputsPanel.querySelectorAll<HTMLButtonElement>(".add-asset-btn").forEach((btn) => {
+  inputsPanel.querySelectorAll<HTMLButtonElement>("[data-next-asset]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const next = Number(btn.dataset.nextAsset);
       if (Number.isFinite(next)) {
@@ -3768,7 +3768,7 @@ function renderInputs(): void {
     });
   });
 
-  inputsPanel.querySelectorAll<HTMLButtonElement>(".add-event-btn").forEach((btn) => {
+  inputsPanel.querySelectorAll<HTMLButtonElement>("[data-next-income-event], [data-next-expense-event]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const nextIncome = Number(btn.dataset.nextIncomeEvent);
       if (Number.isFinite(nextIncome)) {
@@ -3784,7 +3784,7 @@ function renderInputs(): void {
     });
   });
 
-  inputsPanel.querySelectorAll<HTMLButtonElement>(".add-stock-market-crash-btn").forEach((btn) => {
+  inputsPanel.querySelectorAll<HTMLButtonElement>("[data-next-stock-market-crash]").forEach((btn) => {
     btn.addEventListener("click", () => {
       const next = Number(btn.dataset.nextStockMarketCrash);
       if (Number.isFinite(next)) {
