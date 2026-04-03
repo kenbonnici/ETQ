@@ -3150,6 +3150,16 @@ function renderInputs(): void {
       const value = fieldState[dependentGroup.nameField];
       return typeof value === "string" ? value.trim() : "";
     }
+    const incomeEventGroup = INCOME_EVENT_RUNTIME_GROUPS.find((group) => group.label === sub);
+    if (incomeEventGroup) {
+      const value = fieldState[incomeEventGroup.nameField];
+      return typeof value === "string" ? value.trim() : "";
+    }
+    const expenseEventGroup = EXPENSE_EVENT_RUNTIME_GROUPS.find((group) => group.label === sub);
+    if (expenseEventGroup) {
+      const value = fieldState[expenseEventGroup.nameField];
+      return typeof value === "string" ? value.trim() : "";
+    }
     const propertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
     if (propertyGroup) {
       const value = fieldState[propertyGroup.nameField];
@@ -3233,6 +3243,8 @@ function renderInputs(): void {
         if (sub && sub !== prevSub) {
           closeSubgroupCard();
           const dependentGroup = DEPENDENT_RUNTIME_GROUPS.find((group) => group.label === sub);
+          const incomeEventGroup = INCOME_EVENT_RUNTIME_GROUPS.find((group) => group.label === sub);
+          const expenseEventGroup = EXPENSE_EVENT_RUNTIME_GROUPS.find((group) => group.label === sub);
           const propertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
           const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
           const summary = getSubgroupSummary(sub);
@@ -3241,6 +3253,10 @@ function renderInputs(): void {
           const useAssetLoanHeader = top.toLowerCase() === "other asset loans" && !!assetOfValueGroup;
           const headerInputHtml = dependentGroup
             ? renderGroupHeaderNameInput(dependentGroup.nameField, "Name")
+            : incomeEventGroup
+              ? renderGroupHeaderNameInput(incomeEventGroup.nameField, "Event name")
+            : expenseEventGroup
+              ? renderGroupHeaderNameInput(expenseEventGroup.nameField, "Event name")
             : propertyGroup
             ? usePropertyLoanHeader
               ? ""
@@ -3250,7 +3266,13 @@ function renderInputs(): void {
                 ? ""
                 : renderGroupHeaderNameInput(assetOfValueGroup.nameField, "Asset name")
               : "";
-          subgroupHeaderFieldId = dependentGroup?.nameField ?? propertyGroup?.nameField ?? assetOfValueGroup?.nameField ?? null;
+          subgroupHeaderFieldId =
+            dependentGroup?.nameField
+            ?? incomeEventGroup?.nameField
+            ?? expenseEventGroup?.nameField
+            ?? propertyGroup?.nameField
+            ?? assetOfValueGroup?.nameField
+            ?? null;
           html += `
             <div class="group-item-card">
               <div class="group-item-card-header${headerInputHtml ? " has-name-input" : ""}">
