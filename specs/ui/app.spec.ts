@@ -56,7 +56,7 @@ const selectors = {
 
 async function loadSampleData(page: Page): Promise<void> {
   await page.goto("/");
-  await page.getByRole("button", { name: "Load sample data" }).click();
+  await page.getByRole("button", { name: "Sample data" }).click();
   await expect(page.locator(selectors.currentAge)).toHaveValue(/\d+/);
   await expect(page.getByRole("button", { name: "Enough to quit?" })).toBeEnabled();
   await expect(page.locator(".timeline-milestone").first()).toBeVisible();

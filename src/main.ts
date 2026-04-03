@@ -3101,7 +3101,7 @@ function renderInputs(): void {
       const sectionAction = title === "Basics"
         ? `
           <div class="section-header-actions">
-            <button type="button" class="quickstart-load-btn" id="load-etq-excel-btn" ${excelLoadBusy ? "disabled" : ""}>${excelLoadBusy ? "Loading..." : "Load sample data"}</button>
+            <button type="button" class="quickstart-load-btn" id="load-etq-excel-btn" ${excelLoadBusy ? "disabled" : ""}>${excelLoadBusy ? "Loading..." : "Sample data"}</button>
           </div>
         `
         : "";
