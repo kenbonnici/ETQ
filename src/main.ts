@@ -154,7 +154,7 @@ const CHART_MIN_LEFT_PAD = 48;
 const CHART_PRIMARY_COLOR = "#0284c7";
 const CHART_COMPARISON_COLOR = "#d97706";
 const CHART_TOOLTIP_DELAY_MS = 60;
-const PROJECTION_EMPTY_GUIDANCE = "Enter statutory retirement age, your age and other relevant info to start seeing projections.";
+const PROJECTION_EMPTY_GUIDANCE = "";
 const TOP_CURRENCIES = [
   { code: "USD", label: "US Dollar", symbol: "$" },
   { code: "EUR", label: "Euro", symbol: "€" },
