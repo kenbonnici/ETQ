@@ -3204,7 +3204,7 @@ function renderInputs(): void {
           closeSubgroupCard();
           const controlHtml = renderPropertyLiquidationOrderControl();
           if (controlHtml) {
-            html += controlHtml;
+            html += `<h3 class="group-top">Asset liquidation order</h3>${controlHtml}`;
           }
           liquidationRendered = true;
         }
