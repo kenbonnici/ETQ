@@ -2004,18 +2004,24 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
 ];
 
 const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
-  "retirement.statutoryAge": "State pension age",
+  "retirement.statutoryAge": "Start age",
   "retirement.statePension.netAnnualAtStart": "Expected annual amount",
-  "housing.01Residence.marketValue": "Current home value",
-  "housing.rentAnnual": "Current monthly rent",
+  "housing.01Residence.marketValue": "Home value",
+  "housing.rentAnnual": "Monthly rent",
   "spending.livingExpenses.annual": "Current annual living expenses",
-  "income.otherWork.netAnnual": "Side income (net per year)",
-  "income.otherWork.endAge": "Side income ends at age",
+  "income.otherWork.netAnnual": "Amount (net per year)",
+  "income.otherWork.endAge": "Ends at age",
   "housing.downsize.newHomeMode": "After downsizing: buy or rent?",
   "income.postRetirementSupplement.annual": "Amount (per year)",
   "retirement.earlyPensionReductionPerYear": "State pension reduction for each year retired early",
   "liquidity.minimumCashBuffer": "Minimum cash reserve",
-  "planning.legacyAmount": "Amount you want to leave behind"
+  "planning.legacyAmount": "Amount you want to leave behind",
+  "assets.cash.totalBalance": "Total balance",
+  "assets.equities.marketValue": "Current value",
+  "debts.creditCards.balance": "Total balance",
+  "liquidation.stockSellingCostRate": "Stocks",
+  "liquidation.propertyDisposalCostRate": "Properties",
+  "liquidation.otherAssetDisposalCostRate": "Other assets"
 };
 
 const TOOLTIP_OVERRIDES: Partial<Record<FieldId, string>> = {
