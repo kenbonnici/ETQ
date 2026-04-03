@@ -1444,7 +1444,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Home downsizing",
     groupTail: ["Home downsizing"],
-    tooltip: "Buy or Rent",
+    tooltip: "",
     uiNote: "Show only after a downsizing year is entered",
     sampleValue: "Buy",
     type: "text"
@@ -2004,15 +2004,16 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
 ];
 
 const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
+  "income.employment.netAnnual": "Main income (net annual)",
   "retirement.statutoryAge": "Start age",
-  "retirement.statePension.netAnnualAtStart": "Expected annual amount",
-  "housing.01Residence.marketValue": "Home value",
+  "retirement.statePension.netAnnualAtStart": "Expected amount (net annual)",
+  "housing.01Residence.marketValue": "Home market value",
   "housing.rentAnnual": "Monthly rent",
   "spending.livingExpenses.annual": "Current annual living expenses",
-  "income.otherWork.netAnnual": "Amount (net per year)",
+  "income.otherWork.netAnnual": "Amount (net annual)",
   "income.otherWork.endAge": "Ends at age",
   "housing.downsize.newHomeMode": "After downsizing: buy or rent?",
-  "income.postRetirementSupplement.annual": "Amount (per year)",
+  "income.postRetirementSupplement.annual": "Amount (net annual)",
   "retirement.earlyPensionReductionPerYear": "State pension reduction for each year retired early",
   "liquidity.minimumCashBuffer": "Minimum cash reserve",
   "planning.legacyAmount": "Amount you want to leave behind",
@@ -2089,7 +2090,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
 
   if (fieldId.startsWith("properties.")) {
     const slot = numberedLabel(fieldId.split(".")[1], "Property");
-    return { section: "Properties", groupTail: ["Investment properties", slot] };
+    return { section: "Properties", groupTail: ["Investment property", slot] };
   }
   if (fieldId.startsWith("assetsOfValue.")) {
     const slot = numberedLabel(fieldId.split(".")[1], "Asset");
