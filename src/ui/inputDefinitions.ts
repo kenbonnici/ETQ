@@ -24,7 +24,7 @@ export const INPUT_SECTION_ORDER = [
   "Housing",
   "Retirement Income",
   "Savings & Investments",
-  "Properties",
+  "Investment Properties",
   "Other Assets",
   "Family",
   "Debts",
@@ -2090,7 +2090,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
 
   if (fieldId.startsWith("properties.")) {
     const slot = numberedLabel(fieldId.split(".")[1], "Property");
-    return { section: "Properties", groupTail: ["Investment property", slot] };
+    return { section: "Investment Properties", groupTail: ["Investment property", slot] };
   }
   if (fieldId.startsWith("assetsOfValue.")) {
     const slot = numberedLabel(fieldId.split(".")[1], "Asset");

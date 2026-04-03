@@ -3113,7 +3113,7 @@ function renderInputs(): void {
     { title: "Housing", className: "section-housing", open: true, canToggle: false },
     { title: "Retirement Income", className: "section-retirement-income", open: true, canToggle: false },
     { title: "Savings & Investments", className: "section-savings-investments", open: true, canToggle: false },
-    { title: "Properties", className: "section-properties", open: true, canToggle: false },
+    { title: "Investment Properties", className: "section-properties", open: true, canToggle: false },
     { title: "Other Assets", className: "section-other-assets", open: true, canToggle: false },
     { title: "Family", className: "section-family", open: true, canToggle: false },
     { title: "Debts", className: "section-debts", open: true, canToggle: false },
@@ -3212,7 +3212,7 @@ function renderInputs(): void {
         const sub = tail.length > 2 ? tail.slice(2).join(" > ") : tail.slice(1).join(" > ");
         if (top && top !== prevTop) {
           closeSubgroupCard();
-          const suppressTopHeading = top.toLowerCase() === "other post-retirement income";
+          const suppressTopHeading = top.toLowerCase() === "other post-retirement income" || top.toLowerCase() === "investment property";
           if (!suppressTopHeading) {
             html += `<h3 class="group-top">${top}</h3>`;
           }
