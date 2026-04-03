@@ -1730,11 +1730,35 @@ body {
   background: #f6faf8;
 }
 
+.group-item-card-header.has-name-input {
+  display: block;
+}
+
 .group-item-card .group-sub {
   margin: 0;
   font-size: 12px;
   font-weight: 700;
   color: #1f2937;
+}
+
+.group-item-card-name-wrap {
+  display: block;
+}
+
+.group-item-card-name-input {
+  width: 100%;
+  border: 1px solid #c5d4c8;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #213b34;
+  background: #ffffff;
+}
+
+.group-item-card-name-input::placeholder {
+  color: #6b7f77;
+  opacity: 1;
 }
 
 .group-item-card-summary {

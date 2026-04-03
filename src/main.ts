@@ -2730,6 +2730,26 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
   `;
 }
 
+function renderGroupHeaderNameInput(fieldId: FieldId, placeholder: string): string {
+  const def = INPUT_DEFINITION_BY_FIELD_ID[fieldId];
+  const value = fieldState[fieldId];
+  const valStr = formatFieldValue(def, value);
+  return `
+    <div class="group-item-card-name-wrap" data-cell="${def.cell}" data-field-id="${fieldId}">
+      <input
+        class="group-item-card-name-input"
+        data-cell="${def.cell}"
+        data-field-id="${fieldId}"
+        type="text"
+        inputmode="text"
+        value="${valStr}"
+        placeholder="${escapeHtml(placeholder)}"
+        aria-label="${escapeHtml(placeholder)}"
+      />
+    </div>
+  `;
+}
+
 function renderLivingExpensesField(def: InputDefinition, label: string): string {
   const modeToggleHtml = `
     <div class="living-expenses-mode-toggle" role="group" aria-label="Living expenses entry mode">
@@ -3151,11 +3171,13 @@ function renderInputs(): void {
     let prevSub = "";
     let liquidationRendered = false;
     let subgroupCardOpen = false;
+    let subgroupHeaderFieldId: FieldId | null = null;
 
     const closeSubgroupCard = () => {
       if (!subgroupCardOpen) return;
       html += `</div>`;
       subgroupCardOpen = false;
+      subgroupHeaderFieldId = null;
     };
 
     for (const def of orderedDefs) {
@@ -3206,17 +3228,28 @@ function renderInputs(): void {
         }
         if (sub && sub !== prevSub) {
           closeSubgroupCard();
+          const propertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
+          const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
           const summary = getSubgroupSummary(sub);
+          const headerInputHtml = propertyGroup
+            ? renderGroupHeaderNameInput(propertyGroup.nameField, "Property name")
+            : assetOfValueGroup
+              ? renderGroupHeaderNameInput(assetOfValueGroup.nameField, "Asset name")
+              : "";
+          subgroupHeaderFieldId = propertyGroup?.nameField ?? assetOfValueGroup?.nameField ?? null;
           html += `
             <div class="group-item-card">
-              <div class="group-item-card-header">
-                <h4 class="group-sub">${sub}</h4>
-                ${summary ? `<span class="group-item-card-summary">${escapeHtml(summary)}</span>` : ""}
+              <div class="group-item-card-header${headerInputHtml ? " has-name-input" : ""}">
+                ${headerInputHtml || `<h4 class="group-sub">${sub}</h4>
+                ${summary ? `<span class="group-item-card-summary">${escapeHtml(summary)}</span>` : ""}`}
               </div>
           `;
           subgroupCardOpen = true;
           prevSub = sub;
         }
+      }
+      if (subgroupHeaderFieldId === def.fieldId) {
+        continue;
       }
       const label = getDynamicFieldLabel(def, fieldState);
       html += def.fieldId === LIVING_EXPENSES_FIELD_ID
