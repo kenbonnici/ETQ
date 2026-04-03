@@ -27,7 +27,7 @@ export const INPUT_SECTION_ORDER = [
   "Investment Properties",
   "Other Assets",
   "Family",
-  "Debts",
+  "Debt",
   "Major Future Events",
   "Advanced Assumptions"
 ] as const;
@@ -2059,11 +2059,11 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
 
   if (fieldId.startsWith("properties.") && fieldId.includes(".loan.")) {
     const slot = numberedLabel(fieldId.split(".")[1], "Property");
-    return { section: "Debts", groupTail: ["Investment property loans", slot] };
+    return { section: "Debt", groupTail: ["Investment property loans", slot] };
   }
   if (fieldId.startsWith("assetsOfValue.") && fieldId.includes(".loan.")) {
     const slot = numberedLabel(fieldId.split(".")[1], "Asset");
-    return { section: "Debts", groupTail: ["Other asset loans", slot] };
+    return { section: "Debt", groupTail: ["Other asset loans", slot] };
   }
 
   if (
@@ -2112,10 +2112,10 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
   }
 
   if (fieldId === "debts.creditCards.balance") {
-    return { section: "Debts", groupTail: [] };
+    return { section: "Debt", groupTail: [] };
   }
   if (fieldId.startsWith("debts.other.")) {
-    return { section: "Debts", groupTail: ["Other loan"] };
+    return { section: "Debt", groupTail: ["Other loan"] };
   }
 
   if (fieldId.startsWith("cashflowEvents.income.")) {
@@ -2128,7 +2128,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
   }
   if (fieldId.startsWith("stockMarketCrashes.")) {
     const slot = numberedLabel(fieldId.split(".")[1], "Crash");
-    return { section: "Major Future Events", groupTail: ["Market downturn scenarios", slot] };
+    return { section: "Major Future Events", groupTail: ["Stock market crash scenarios", slot] };
   }
 
   if (
