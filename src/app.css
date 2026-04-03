@@ -1571,7 +1571,7 @@ body {
 
 .scenario-header-currency {
   flex: 0 0 auto;
-  align-self: center;
+  align-self: flex-start;
   width: 78px;
   height: 52px;
   border: 1px solid #c8ddd4;
