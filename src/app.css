@@ -2309,10 +2309,10 @@ body {
 }
 
 .field-choice-label {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  color: #314b44;
-  letter-spacing: 0.01em;
+  color: #213b34;
+  letter-spacing: 0.005em;
 }
 
 .field > span,
