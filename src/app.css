@@ -1792,6 +1792,10 @@ body {
   margin-bottom: 8px;
 }
 
+.group-item-card .field:last-of-type + .add-slot-btn {
+  margin-top: 12px;
+}
+
 .section-deeper-dive .group-item-card {
   border-color: #d5e0ef;
   background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
