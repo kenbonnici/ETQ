@@ -505,6 +505,10 @@ export function fieldVisible(
     return PROPERTY_RUNTIME_GROUPS.some((group) => asNumber(values[group.rentalIncomeField]) !== 0);
   }
 
+  if (fieldId === RUNTIME_FIELDS.stockMarketReturn) {
+    return asNumber(values[RUNTIME_FIELDS.stockMarketInvestments]) > 0;
+  }
+
   for (const group of INCOME_EVENT_RUNTIME_GROUPS) {
     if (fieldId === group.amountField || fieldId === group.yearField) {
       return incomeEventSlotVisible(values, group, visibility.visibleIncomeEvents) && !isBlank(values[group.nameField]);

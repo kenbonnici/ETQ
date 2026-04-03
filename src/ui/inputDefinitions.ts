@@ -1788,7 +1788,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 273,
     fieldId: "assumptions.salaryGrowthRateAnnual",
-    label: "Salary growth",
+    label: "Main income growth",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
