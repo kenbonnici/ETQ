@@ -2115,7 +2115,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     return { section: "Debts", groupTail: [] };
   }
   if (fieldId.startsWith("debts.other.")) {
-    return { section: "Debts", groupTail: ["Other loans"] };
+    return { section: "Debts", groupTail: ["Other loan"] };
   }
 
   if (fieldId.startsWith("cashflowEvents.income.")) {
