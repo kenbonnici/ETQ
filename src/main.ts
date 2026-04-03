@@ -3082,7 +3082,7 @@ function renderInputs(): void {
     INPUT_SECTION_ORDER.map((section) => [section, INPUT_DEFINITIONS.filter((def) => def.section === section)])
   ) as Record<(typeof INPUT_SECTION_ORDER)[number], InputDefinition[]>;
   const sectionConfigs = [
-    { title: "You", className: "section-you", open: true, canToggle: false },
+    { title: "Basics", className: "section-basics", open: true, canToggle: false },
     { title: "Income", className: "section-income", open: true, canToggle: false },
     { title: "Housing", className: "section-housing", open: true, canToggle: false },
     { title: "Retirement Income", className: "section-retirement-income", open: true, canToggle: false },
@@ -3098,7 +3098,7 @@ function renderInputs(): void {
   const block = (title: string, open: boolean, canToggle: boolean, controlsHtml: string, sectionClass: string) => {
     const toggleHtml = `<button type="button" class="section-toggle" data-section="${title}"><span>${title}</span><span class="section-toggle-chevron" aria-hidden="true">${open ? "▾" : "▸"}</span></button>`;
     if (!canToggle) {
-      const sectionAction = title === "You"
+      const sectionAction = title === "Basics"
         ? `
           <div class="section-header-actions">
             <button type="button" class="quickstart-load-btn" id="load-etq-excel-btn" ${excelLoadBusy ? "disabled" : ""}>${excelLoadBusy ? "Loading..." : "Load sample data"}</button>
@@ -3272,20 +3272,27 @@ function renderInputs(): void {
 
   const scenarioManagerHtml = renderScenarioManager();
   const currencySelectHtml = `
-    <label class="field currency-selector">
+    <label class="field currency-selector plan-settings-currency">
       <span>Currency</span>
       <select id="currency-selector" aria-label="Currency selector">
         ${TOP_CURRENCIES.map((currency) => `<option value="${currency.code}" ${currency.code === selectedCurrency ? "selected" : ""}>${currency.code} - ${currency.label}</option>`).join("")}
       </select>
     </label>
   `;
+  const planSettingsHtml = `
+    <section class="input-section section-plan-settings">
+      <div class="plan-settings-row">
+        ${currencySelectHtml}
+      </div>
+    </section>
+  `;
   const sectionBlocksHtml = sectionConfigs.map((section) => {
     const controlsHtml = controls(grouped[section.title]);
-    const prefixedHtml = section.title === "You" ? currencySelectHtml + controlsHtml : controlsHtml;
-    return block(section.title, section.open, section.canToggle, prefixedHtml, section.className);
+    return block(section.title, section.open, section.canToggle, controlsHtml, section.className);
   }).join("");
   inputsPanel.innerHTML =
     `<section class="input-section section-scenarios"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span class="scenario-heading-block"><span>MY DATA</span><span class="scenario-heading-note">${escapeHtml(scenarioStorageAvailable ? "Stored locally in your browser. No data leaves your device" : "Local save is unavailable in this browser")}</span></span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
+    planSettingsHtml +
     sectionBlocksHtml;
 
   const currencySelector = inputsPanel.querySelector<HTMLSelectElement>("#currency-selector");

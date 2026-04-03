@@ -448,17 +448,17 @@ test("load sample data restores the workbook early-retirement age", async ({ pag
   await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(EXCEL_BASELINE_SPECIMEN.early_retirement_age));
 });
 
-test("legacy and cash reserve sit together in You while selling costs stay in Advanced Assumptions", async ({ page }) => {
+test("legacy and cash reserve sit together in Basics while selling costs stay in Advanced Assumptions", async ({ page }) => {
   await loadSampleData(page);
 
-  const youFieldIds = await page.locator(".section-you .field[data-field-id]").evaluateAll((fields) => (
+  const basicsFieldIds = await page.locator(".section-basics .field[data-field-id]").evaluateAll((fields) => (
     fields.map((field) => field.getAttribute("data-field-id") ?? "").filter((fieldId) => fieldId.length > 0)
   ));
-  const youPosition = (fieldId: string): number => youFieldIds.indexOf(fieldId);
+  const basicsPosition = (fieldId: string): number => basicsFieldIds.indexOf(fieldId);
 
-  expect(youPosition("liquidity.minimumCashBuffer")).toBeGreaterThan(-1);
-  expect(youPosition("planning.legacyAmount")).toBeGreaterThan(-1);
-  expect(youPosition("liquidity.minimumCashBuffer")).toBeLessThan(youPosition("planning.legacyAmount"));
+  expect(basicsPosition("liquidity.minimumCashBuffer")).toBeGreaterThan(-1);
+  expect(basicsPosition("planning.legacyAmount")).toBeGreaterThan(-1);
+  expect(basicsPosition("liquidity.minimumCashBuffer")).toBeLessThan(basicsPosition("planning.legacyAmount"));
 
   await expect(page.locator(selectors.minimumCashBuffer)).toHaveValue(/50,000/);
   await expect(page.locator(selectors.legacyAmount)).toHaveValue(/1,000,000/);

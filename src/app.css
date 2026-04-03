@@ -1219,7 +1219,7 @@ body {
 }
 
 .section-quick-start,
-.section-you,
+.section-basics,
 .section-income,
 .section-housing,
 .section-retirement-income,
@@ -1539,6 +1539,24 @@ body {
   color: #738880;
 }
 
+.section-plan-settings {
+  padding: 14px 16px;
+  border-color: #d8e4de;
+  border-left: 3px solid #a9c8bc;
+  background: linear-gradient(180deg, #f7faf8 0%, #ffffff 100%);
+}
+
+.plan-settings-row {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+
+.plan-settings-currency {
+  width: min(360px, 100%);
+  margin-bottom: 0;
+}
+
 .section-scenarios {
   border-color: #c9dbd3;
   border-left: 3px solid #79a999;
@@ -1614,7 +1632,7 @@ body {
 }
 
 .section-quick-start h2,
-.section-you h2,
+.section-basics h2,
 .section-income h2,
 .section-housing h2,
 .section-retirement-income h2,

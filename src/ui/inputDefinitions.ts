@@ -19,7 +19,7 @@ export interface InputDefinition {
 type AuthoredInputDefinition = Omit<InputDefinition, "cell">;
 
 export const INPUT_SECTION_ORDER = [
-  "You",
+  "Basics",
   "Income",
   "Housing",
   "Retirement Income",
@@ -2029,13 +2029,13 @@ function numberedLabel(segment: string | undefined, singular: string): string {
 
 function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section" | "groupTail"> {
   if (fieldId === "profile.currentAge" || fieldId === "planning.lifeExpectancyAge") {
-    return { section: "You", groupTail: ["About you"] };
+    return { section: "Basics", groupTail: ["About you"] };
   }
   if (fieldId === "spending.livingExpenses.annual") {
-    return { section: "You", groupTail: ["Living costs"] };
+    return { section: "Basics", groupTail: ["Living costs"] };
   }
   if (fieldId === "liquidity.minimumCashBuffer" || fieldId === "planning.legacyAmount") {
-    return { section: "You", groupTail: ["Goals"] };
+    return { section: "Basics", groupTail: ["Goals"] };
   }
 
   if (fieldId === "income.employment.netAnnual") {
