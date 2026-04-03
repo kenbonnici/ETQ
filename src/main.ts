@@ -3115,7 +3115,7 @@ function renderInputs(): void {
     { title: "Savings & Investments", className: "section-savings-investments", open: true, canToggle: false },
     { title: "Investment Properties", className: "section-properties", open: true, canToggle: false },
     { title: "Other Assets", className: "section-other-assets", open: true, canToggle: false },
-    { title: "Family", className: "section-family", open: true, canToggle: false },
+    { title: "Family Support", className: "section-family", open: true, canToggle: false },
     { title: "Debt", className: "section-debts", open: true, canToggle: false },
     { title: "Major Future Events", className: "section-major-future-events", open: true, canToggle: false },
     { title: "Advanced Assumptions", className: "section-advanced-assumptions", open: true, canToggle: false }

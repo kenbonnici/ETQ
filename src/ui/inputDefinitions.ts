@@ -26,7 +26,7 @@ export const INPUT_SECTION_ORDER = [
   "Savings & Investments",
   "Investment Properties",
   "Other Assets",
-  "Family",
+  "Family Support",
   "Debt",
   "Major Future Events",
   "Advanced Assumptions"
@@ -2111,7 +2111,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
 
   if (fieldId.startsWith("dependents.")) {
     const slot = numberedLabel(fieldId.split(".")[1], "Dependent");
-    return { section: "Family", groupTail: ["People you support", slot] };
+    return { section: "Family Support", groupTail: ["People you support", slot] };
   }
 
   if (fieldId === "debts.creditCards.balance") {
