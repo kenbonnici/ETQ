@@ -204,11 +204,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 35,
     fieldId: "dependents.01.supportYearsRemaining",
-    label: "Years to support",
+    label: "Years to support (from now)",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 1",
     groupTail: ["Dependents", "Dependent 1"],
-    tooltip: "Years from now",
+    tooltip: "",
     uiNote: "Hide until user enters dependent name",
     sampleValue: "3",
     type: "integer"
@@ -240,11 +240,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 40,
     fieldId: "dependents.02.supportYearsRemaining",
-    label: "Years to support",
+    label: "Years to support (from now)",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 2",
     groupTail: ["Dependents", "Dependent 2"],
-    tooltip: "Years from now",
+    tooltip: "",
     uiNote: "Hide until user enters dependent name",
     sampleValue: "5",
     type: "integer"
@@ -276,11 +276,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 45,
     fieldId: "dependents.03.supportYearsRemaining",
-    label: "Years to support",
+    label: "Years to support (from now)",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 3",
     groupTail: ["Dependents", "Dependent 3"],
-    tooltip: "Years from now",
+    tooltip: "",
     uiNote: "Hide until user enters dependent name",
     sampleValue: "2",
     type: "integer"
@@ -312,11 +312,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 50,
     fieldId: "dependents.04.supportYearsRemaining",
-    label: "Years to support",
+    label: "Years to support (from now)",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 4",
     groupTail: ["Dependents", "Dependent 4"],
-    tooltip: "Years from now",
+    tooltip: "",
     uiNote: "Hide until user enters dependent name",
     sampleValue: "3",
     type: "integer"
@@ -348,11 +348,11 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 55,
     fieldId: "dependents.05.supportYearsRemaining",
-    label: "Years to support",
+    label: "Years to support (from now)",
     section: "DEEPER DIVE",
     groupPath: "DEEPER DIVE > Dependents > Dependent 5",
     groupTail: ["Dependents", "Dependent 5"],
-    tooltip: "Years from now",
+    tooltip: "",
     uiNote: "Hide until user enters dependent name",
     sampleValue: "6",
     type: "integer"

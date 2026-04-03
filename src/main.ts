@@ -3215,7 +3215,8 @@ function renderInputs(): void {
           const suppressTopHeading =
             top.toLowerCase() === "other post-retirement income"
             || top.toLowerCase() === "investment property"
-            || top.toLowerCase() === "other valuable assets";
+            || top.toLowerCase() === "other valuable assets"
+            || top.toLowerCase() === "people you support";
           if (!suppressTopHeading) {
             html += `<h3 class="group-top">${top}</h3>`;
           }
@@ -3231,13 +3232,16 @@ function renderInputs(): void {
         }
         if (sub && sub !== prevSub) {
           closeSubgroupCard();
+          const dependentGroup = DEPENDENT_RUNTIME_GROUPS.find((group) => group.label === sub);
           const propertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
           const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.fallbackName === sub);
           const summary = getSubgroupSummary(sub);
           const cardTitle = summary || sub;
           const usePropertyLoanHeader = top.toLowerCase() === "investment property loans" && !!propertyGroup;
           const useAssetLoanHeader = top.toLowerCase() === "other asset loans" && !!assetOfValueGroup;
-          const headerInputHtml = propertyGroup
+          const headerInputHtml = dependentGroup
+            ? renderGroupHeaderNameInput(dependentGroup.nameField, "Name")
+            : propertyGroup
             ? usePropertyLoanHeader
               ? ""
               : renderGroupHeaderNameInput(propertyGroup.nameField, "Property name")
@@ -3246,7 +3250,7 @@ function renderInputs(): void {
                 ? ""
                 : renderGroupHeaderNameInput(assetOfValueGroup.nameField, "Asset name")
               : "";
-          subgroupHeaderFieldId = propertyGroup?.nameField ?? assetOfValueGroup?.nameField ?? null;
+          subgroupHeaderFieldId = dependentGroup?.nameField ?? propertyGroup?.nameField ?? assetOfValueGroup?.nameField ?? null;
           html += `
             <div class="group-item-card">
               <div class="group-item-card-header${headerInputHtml ? " has-name-input" : ""}">
