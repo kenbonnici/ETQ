@@ -1675,10 +1675,10 @@ body {
 .input-section h3 {
   margin: 12px 0 6px;
   font-size: 13px;
-  font-weight: 800;
-  color: #244b42;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  font-weight: 750;
+  color: #2d574d;
+  text-transform: none;
+  letter-spacing: 0.01em;
   padding-bottom: 4px;
   border-bottom: 1px solid #cfddd5;
 }
