@@ -1571,24 +1571,24 @@ body {
 
 .scenario-header-currency {
   flex: 0 0 auto;
-  align-self: stretch;
-  width: 88px;
-  height: auto;
-  border: 1px solid #c5ddd3;
-  border-radius: 12px;
-  padding: 0 28px 0 12px;
-  background-color: #eef5f1;
-  color: #41645a;
+  align-self: center;
+  width: 78px;
+  height: 36px;
+  border: 1px solid #c8ddd4;
+  border-radius: 10px;
+  padding: 0 24px 0 10px;
+  background-color: #e8f3ee;
+  color: #335b52;
   font-size: 12px;
   font-weight: 600;
   appearance: none;
   -webkit-appearance: none;
   background-image:
-    linear-gradient(45deg, transparent 50%, #86a49a 50%),
-    linear-gradient(135deg, #86a49a 50%, transparent 50%);
+    linear-gradient(45deg, transparent 50%, #7f9d92 50%),
+    linear-gradient(135deg, #7f9d92 50%, transparent 50%);
   background-position:
-    calc(100% - 17px) calc(50% + 1px),
-    calc(100% - 12px) calc(50% + 1px);
+    calc(100% - 15px) calc(50% + 1px),
+    calc(100% - 10px) calc(50% + 1px);
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }
