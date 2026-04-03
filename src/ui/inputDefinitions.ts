@@ -2010,12 +2010,17 @@ const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
   "housing.rentAnnual": "Current monthly rent",
   "spending.livingExpenses.annual": "Current annual living expenses",
   "income.otherWork.netAnnual": "Side income (net per year)",
-  "income.otherWork.endAge": "Stop side income at age",
+  "income.otherWork.endAge": "Side income ends at age",
   "housing.downsize.newHomeMode": "After downsizing: buy or rent?",
   "income.postRetirementSupplement.annual": "Other retirement income (per year)",
   "retirement.earlyPensionReductionPerYear": "State pension reduction for each year retired early",
   "liquidity.minimumCashBuffer": "Minimum cash reserve",
   "planning.legacyAmount": "Amount you want to leave behind"
+};
+
+const TOOLTIP_OVERRIDES: Partial<Record<FieldId, string>> = {
+  "income.employment.netAnnual": "Net of tax, from employment or self-employment.",
+  "income.otherWork.netAnnual": "Consulting, freelance, or other part-time work. Leave blank if none."
 };
 
 function buildGroupPath(section: string, groupTail: string[]): string {
@@ -2039,7 +2044,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
   }
 
   if (fieldId === "income.employment.netAnnual") {
-    return { section: "Income", groupTail: ["Main income"] };
+    return { section: "Income", groupTail: [] };
   }
   if (fieldId.startsWith("income.otherWork.")) {
     return { section: "Income", groupTail: ["Side income"] };
@@ -2149,6 +2154,7 @@ function remapInputDefinition(def: AuthoredInputDefinition): AuthoredInputDefini
   return {
     ...def,
     label: LABEL_OVERRIDES[def.fieldId] ?? def.label,
+    tooltip: TOOLTIP_OVERRIDES[def.fieldId] ?? def.tooltip,
     section: grouping.section,
     groupTail: grouping.groupTail,
     groupPath: buildGroupPath(grouping.section, grouping.groupTail)
