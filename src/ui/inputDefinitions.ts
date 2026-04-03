@@ -2016,9 +2016,9 @@ const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
   "retirement.earlyPensionReductionPerYear": "State pension reduction for each year retired early",
   "liquidity.minimumCashBuffer": "Minimum cash reserve",
   "planning.legacyAmount": "Amount you want to leave behind",
-  "assets.cash.totalBalance": "Total balance",
-  "assets.equities.marketValue": "Current value",
-  "debts.creditCards.balance": "Total balance",
+  "assets.cash.totalBalance": "Cash balance",
+  "assets.equities.marketValue": "Investment value",
+  "debts.creditCards.balance": "Credit card balances",
   "liquidation.stockSellingCostRate": "Stocks",
   "liquidation.propertyDisposalCostRate": "Properties",
   "liquidation.otherAssetDisposalCostRate": "Other assets"
@@ -2079,11 +2079,8 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     return { section: "Retirement Income", groupTail: ["Other retirement income"] };
   }
 
-  if (fieldId === "assets.cash.totalBalance") {
-    return { section: "Savings & Investments", groupTail: ["Cash savings"] };
-  }
-  if (fieldId === "assets.equities.marketValue") {
-    return { section: "Savings & Investments", groupTail: ["Stock market investments"] };
+  if (fieldId === "assets.cash.totalBalance" || fieldId === "assets.equities.marketValue") {
+    return { section: "Savings & Investments", groupTail: [] };
   }
 
   if (fieldId.endsWith(".liquidationPriority")) {
@@ -2105,7 +2102,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
   }
 
   if (fieldId === "debts.creditCards.balance") {
-    return { section: "Debts", groupTail: ["Credit cards"] };
+    return { section: "Debts", groupTail: [] };
   }
   if (fieldId.startsWith("debts.other.")) {
     return { section: "Debts", groupTail: ["Other loans"] };
@@ -2142,7 +2139,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     return { section: "Advanced Assumptions", groupTail: ["Growth & inflation assumptions"] };
   }
   if (fieldId === "retirement.earlyPensionReductionPerYear") {
-    return { section: "Advanced Assumptions", groupTail: ["Retirement rules"] };
+    return { section: "Advanced Assumptions", groupTail: [] };
   }
   if (
     fieldId === "liquidation.stockSellingCostRate"
