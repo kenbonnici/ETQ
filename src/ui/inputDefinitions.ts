@@ -1756,7 +1756,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "Including inflation",
+    tooltip: "",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
@@ -1768,7 +1768,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "Including inflation",
+    tooltip: "",
     uiNote: "",
     sampleValue: "2.5000000000000001E-2",
     type: "percent"
@@ -1780,7 +1780,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "Including inflation",
+    tooltip: "",
     uiNote: "",
     sampleValue: "0.08",
     type: "percent"
@@ -1792,7 +1792,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS",
     groupTail: [],
-    tooltip: "Including inflation",
+    tooltip: "",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
