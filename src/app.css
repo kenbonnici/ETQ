@@ -1277,6 +1277,13 @@ body {
   margin-bottom: 14px;
 }
 
+.section-header-row--with-actions {
+  padding: 6px 10px;
+  border: 1px solid #c8ddd4;
+  border-radius: 10px;
+  background: #e8f3ee;
+}
+
 .section-header-row h2 {
   margin: 0;
   flex: 1 1 auto;
@@ -1647,7 +1654,7 @@ body {
 
 .quickstart-load-btn {
   flex: 0 0 auto;
-  height: 35px;
+  height: 31px;
   border: 1px solid #9ebeb3;
   border-radius: 7px;
   background: #ffffff;
@@ -1655,7 +1662,7 @@ body {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  padding: 0 9px;
+  padding: 0 10px;
   cursor: pointer;
 }
 
@@ -1701,6 +1708,14 @@ body {
   color: #0b4f49;
   background: #d8ede6;
   border-bottom: 1px solid #b7d8cd;
+}
+
+.section-header-row--with-actions > h2 {
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  border-bottom: 0;
+  box-shadow: none;
 }
 
 .section-deeper-dive h2 {

@@ -3124,16 +3124,18 @@ function renderInputs(): void {
   const block = (title: string, open: boolean, canToggle: boolean, controlsHtml: string, sectionClass: string) => {
     const toggleHtml = `<button type="button" class="section-toggle" data-section="${title}"><span>${title}</span><span class="section-toggle-chevron" aria-hidden="true">${open ? "▾" : "▸"}</span></button>`;
     if (!canToggle) {
-      const sectionAction = title === "Basics"
+      const hasHeaderAction = title === "Basics";
+      const sectionAction = hasHeaderAction
         ? `
           <div class="section-header-actions">
             <button type="button" class="quickstart-load-btn" id="load-etq-excel-btn" ${excelLoadBusy ? "disabled" : ""}>${excelLoadBusy ? "Loading..." : "Sample data"}</button>
           </div>
         `
         : "";
+      const headerRowClass = hasHeaderAction ? "section-header-row section-header-row--with-actions" : "section-header-row";
       return `
         <section class="input-section ${sectionClass}">
-          <div class="section-header-row">
+          <div class="${headerRowClass}">
             <h2>${title}</h2>
             ${sectionAction}
           </div>
