@@ -355,7 +355,7 @@ body {
 
 .retire-check-result {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: #334155;
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
@@ -375,7 +375,7 @@ body {
 }
 
 .retire-check-result.is-positive {
-  font-size: 17px;
+  font-size: 15px;
   font-weight: 800;
   color: #0b5d56;
   background: linear-gradient(180deg, #eefbf3 0%, #dff5e8 100%);
@@ -387,6 +387,8 @@ body {
 }
 
 .retire-check-result.is-promising {
+  font-size: 14px;
+  font-weight: 750;
   color: #0f5f59;
   background: linear-gradient(180deg, #f0fbf8 0%, #e0f5ef 100%);
   border-color: #9ad4c5;
@@ -396,6 +398,8 @@ body {
 }
 
 .retire-check-result.is-warning {
+  font-size: 14px;
+  font-weight: 750;
   color: #7a4b12;
   background: linear-gradient(180deg, #fff8eb 0%, #fdecc8 100%);
   border-color: #e7c37a;
@@ -2812,7 +2816,7 @@ small {
   }
 
   .retire-check-result.is-positive {
-    font-size: 16px;
+    font-size: 15px;
   }
 
   .cashflow-section {
