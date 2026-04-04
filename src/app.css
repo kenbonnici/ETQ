@@ -1421,7 +1421,7 @@ body {
 .scenario-heading-block {
   display: flex;
   align-items: flex-end;
-  gap: 6px;
+  gap: 8px;
   text-align: left;
   min-width: 0;
 }
@@ -1438,7 +1438,7 @@ body {
 .scenario-heading-note {
   font-size: 10px;
   line-height: 1;
-  color: #7d9089;
+  color: #6f877f;
   font-weight: 500;
   letter-spacing: 0;
   text-transform: none;
@@ -1451,7 +1451,7 @@ body {
 
 .scenario-heading-note::before {
   content: "·";
-  margin-right: 6px;
+  margin-right: 8px;
   color: #95a7a1;
 }
 
