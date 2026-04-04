@@ -2501,7 +2501,6 @@ function adjustEarlyRetirementAge(delta: number): void {
   uiState.earlyRetirementAge = Math.max(minRetirementAge, Math.min(statutory, current + delta));
   spinner.value = String(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
-  setRetireCheckMessage(null);
   queueRecalc();
 }
 

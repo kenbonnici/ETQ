@@ -545,6 +545,24 @@ test("earliest-retirement indicator follows projection-blocking validation", asy
   await expect(page.locator(".timeline-milestone").first()).toBeVisible();
 });
 
+test("retirement stepper does not clear the earliest-retirement indicator while recalculating", async ({ page }) => {
+  await loadSampleData(page);
+
+  const retirementIndicator = page.locator("#retire-check-result");
+  await expect(retirementIndicator).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
+
+  await page.locator("#early-ret-up").click();
+
+  const indicatorSnapshot = await retirementIndicator.evaluate((node) => ({
+    text: node.textContent ?? "",
+    isNeutral: node.classList.contains("is-neutral")
+  }));
+
+  expect(indicatorSnapshot.text).toContain(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
+  expect(indicatorSnapshot.text).not.toContain("—");
+  expect(indicatorSnapshot.isNeutral).toBe(false);
+});
+
 test("timeline cap shows the entered life expectancy age", async ({ page }) => {
   await loadSampleData(page);
 
