@@ -3353,16 +3353,18 @@ function renderInputs(): void {
   };
   const scenarioManagerHtml = renderScenarioManager();
   const scenarioCurrencyHtml = `
-    <select id="currency-selector" class="scenario-header-currency" aria-label="Currency selector">
-      ${TOP_CURRENCIES.map((currency) => `<option value="${currency.code}" ${currency.code === selectedCurrency ? "selected" : ""}>${currency.code}</option>`).join("")}
-    </select>
+    <div class="scenario-header-currency-wrap">
+      <select id="currency-selector" class="scenario-header-currency" aria-label="Currency selector">
+        ${TOP_CURRENCIES.map((currency) => `<option value="${currency.code}" ${currency.code === selectedCurrency ? "selected" : ""}>${currency.code}</option>`).join("")}
+      </select>
+    </div>
   `;
   const sectionBlocksHtml = sectionConfigs.map((section) => {
     const controlsHtml = controls(grouped[section.title]);
     return block(section.title, section.open, section.canToggle, controlsHtml, section.className);
   }).join("");
   inputsPanel.innerHTML =
-    `<section class="input-section section-scenarios"><div class="section-scenarios-header"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span class="scenario-heading-block"><span>MY DATA</span><span class="scenario-heading-note">${escapeHtml(scenarioStorageAvailable ? "Stored locally. Never leaves your device." : "Local save is unavailable in this browser")}</span></span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${scenarioCurrencyHtml}</div>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
+    `<section class="input-section section-scenarios"><div class="section-scenarios-header"><div class="section-scenarios-shell"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span class="scenario-heading-block"><span>MY DATA</span><span class="scenario-heading-note">${escapeHtml(scenarioStorageAvailable ? "Stored locally. Never leaves your device." : "Local save is unavailable in this browser")}</span></span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${scenarioCurrencyHtml}</div></div>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
     sectionBlocksHtml;
 
   const currencySelector = inputsPanel.querySelector<HTMLSelectElement>("#currency-selector");
