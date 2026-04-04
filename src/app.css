@@ -435,7 +435,9 @@ body {
 }
 
 .retire-check-result.is-positive .retire-check-result-value {
+  font-size: 20px;
   font-weight: 800;
+  line-height: 1;
 }
 
 .retire-check-result.is-promising .retire-check-result-value,
