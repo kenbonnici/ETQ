@@ -218,14 +218,13 @@ app.innerHTML = `
     <section class="right">
       <header class="retirement-control">
         <div class="retirement-control-actions">
-          <button id="retire-check-btn" class="retire-check-btn" type="button">Enough to quit?</button>
+          <p id="retire-check-result" class="retire-check-result">Earliest viable retirement: —</p>
         </div>
-        <p id="retire-check-result" class="retire-check-result" hidden></p>
         <div class="retirement-stepper">
-          <span class="retirement-stepper-label">Retire at</span>
-          <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease early retirement age">-</button>
-          <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Early retirement age" />
-          <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase early retirement age">+</button>
+          <span class="retirement-stepper-label">Compare with retiring at</span>
+          <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease comparison retirement age">-</button>
+          <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Comparison retirement age" />
+          <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase comparison retirement age">+</button>
         </div>
       </header>
       <article class="chart-card" id="cash-chart-card">
@@ -320,7 +319,6 @@ const spinner = document.getElementById("early-ret-age") as HTMLInputElement;
 const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonElement;
 const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
 const retireCheckResult = document.getElementById("retire-check-result") as HTMLParagraphElement;
-const retireCheckButton = document.getElementById("retire-check-btn") as HTMLButtonElement;
 const openCashflowButton = document.getElementById("open-cashflow-btn") as HTMLButtonElement;
 const openNetworthButton = document.getElementById("open-networth-btn") as HTMLButtonElement;
 const cashCanvas = document.getElementById("cash-chart") as HTMLCanvasElement;
@@ -433,8 +431,10 @@ interface ChartHoverData {
   seriesPrimary: number[];
   seriesComparison: number[];
   zeroLineAlert: boolean;
-  retireNowAge: number | null;
-  statutoryAge: number | null;
+  primaryAge: number | null;
+  comparisonAge: number | null;
+  primaryLabel: string;
+  comparisonLabel: string;
   metricLabel: string;
   contextByYear: Map<number, TimelineYearEvent[]>;
 }
@@ -1472,14 +1472,6 @@ function getProjectionBlockingLines(messages: ValidationMessage[]): string[] {
   return ["Fix highlighted inputs to see projections."];
 }
 
-function applyRetireCheckReadiness(messages: ValidationMessage[], statutory: number | null): void {
-  const hasEssentialErrors = hasRetireCheckEssentialErrors(messages);
-  retireCheckButton.disabled = hasEssentialErrors || statutory === null || statutory <= getMinEarlyRetirementAge();
-  if (retireCheckButton.disabled) {
-    setRetireCheckMessage(null);
-  }
-}
-
 function renderValidationState(messages: ValidationMessage[]): void {
   latestValidationMessages = messages;
   const fields = inputsPanel.querySelectorAll<HTMLElement>(".field[data-field-id]");
@@ -2340,30 +2332,60 @@ function updateEarlyRetirementButtons(statutory: number | null): void {
 }
 
 function setRetireCheckMessage(message: string | null, tone: "positive" | "neutral" = "neutral"): void {
-  if (message === null) {
-    retireCheckResult.textContent = "";
-    retireCheckResult.hidden = true;
-    retireCheckResult.classList.remove("is-positive", "is-neutral");
-    return;
-  }
-  retireCheckResult.textContent = message;
-  retireCheckResult.classList.toggle("is-positive", tone === "positive");
-  retireCheckResult.classList.toggle("is-neutral", tone === "neutral");
+  retireCheckResult.textContent = message ?? "Earliest viable retirement: —";
+  retireCheckResult.classList.toggle("is-positive", message !== null && tone === "positive");
+  retireCheckResult.classList.toggle("is-neutral", message === null || tone === "neutral");
   retireCheckResult.hidden = false;
 }
 
-function updateRetireCheckButton(statutory: number | null): void {
-  const isReady = statutory !== null && statutory > getMinEarlyRetirementAge();
-  retireCheckButton.disabled = !isReady;
+function formatRetirementAgeLabel(prefix: string, age: number | null): string {
+  return age === null ? prefix : `${prefix} ${age}`;
 }
 
-function findEarliestRetirementAgeBeforeStatutory(statutory: number): number | null {
+function createRetirementIndicatorState(
+  earliestAge: number | null,
+  currentAge: number | null,
+  hasEssentialErrors: boolean,
+  statutory: number | null
+): { message: string | null; tone: "positive" | "neutral" } {
+  if (hasEssentialErrors || statutory === null || statutory <= getMinEarlyRetirementAge()) {
+    return { message: null, tone: "neutral" };
+  }
+  if (earliestAge === null) {
+    return { message: "Earliest viable retirement: not yet viable", tone: "neutral" };
+  }
+  if (currentAge !== null && earliestAge === currentAge) {
+    return { message: `Earliest viable retirement: now (${earliestAge})`, tone: "positive" };
+  }
+  return { message: `Earliest viable retirement: ${earliestAge}`, tone: "neutral" };
+}
+
+function composeDisplayedRunModelResult(
+  templateResult: RunModelResult,
+  primaryScenario: ScenarioOutputs,
+  comparisonScenario: ScenarioOutputs
+): RunModelResult {
+  return {
+    ...templateResult,
+    outputs: {
+      ...templateResult.outputs,
+      cashSeriesEarly: primaryScenario.cashSeries,
+      cashSeriesNorm: comparisonScenario.cashSeries,
+      netWorthSeriesEarly: primaryScenario.netWorthSeries,
+      netWorthSeriesNorm: comparisonScenario.netWorthSeries,
+      scenarioEarly: primaryScenario,
+      scenarioNorm: comparisonScenario
+    }
+  };
+}
+
+function findEarliestViableRetirementAge(statutory: number): number | null {
   const baseline = runModel(fieldState, uiState);
   const firstProjectedAge = baseline.outputs.ages[0];
   if (!Number.isFinite(firstProjectedAge)) return null;
 
   const candidateStartAge = Math.max(18, Math.round(firstProjectedAge));
-  const candidateEndAge = statutory - 1;
+  const candidateEndAge = statutory;
   if (candidateStartAge > candidateEndAge) return null;
 
   for (let candidateAge = candidateStartAge; candidateAge <= candidateEndAge; candidateAge += 1) {
@@ -2397,7 +2419,6 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
     spinner.disabled = true;
     spinner.value = "";
     updateEarlyRetirementButtons(null);
-    updateRetireCheckButton(null);
     setRetireCheckMessage(null);
     return;
   }
@@ -2410,12 +2431,10 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
     uiState.earlyRetirementAge = Math.max(minRetirementAge, Math.min(statutory, seeded));
     spinner.value = String(uiState.earlyRetirementAge);
     updateEarlyRetirementButtons(statutory);
-    updateRetireCheckButton(statutory);
     return;
   }
   if (raw === "") {
     updateEarlyRetirementButtons(statutory);
-    updateRetireCheckButton(statutory);
     return;
   }
 
@@ -2423,13 +2442,11 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
   if (!Number.isFinite(v)) {
     spinner.value = String(uiState.earlyRetirementAge);
     updateEarlyRetirementButtons(statutory);
-    updateRetireCheckButton(statutory);
     return;
   }
   uiState.earlyRetirementAge = Math.max(minRetirementAge, Math.min(statutory, v));
   spinner.value = String(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
-  updateRetireCheckButton(statutory);
 }
 
 function adjustEarlyRetirementAge(delta: number): void {
@@ -3037,14 +3054,9 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
     syncVisibleRuntimeGroupsFromState();
     uiState.manualPropertyLiquidationOrder = hasExplicitPropertyLiquidationPreferences(fieldState);
 
-    const fromPayload = Number(payload.early_retirement_age);
-    if (Number.isFinite(fromPayload) && fromPayload >= 18) {
-      uiState.earlyRetirementAge = Math.round(fromPayload);
-    } else {
-      const statutory = getStatutoryAge();
-      if (statutory !== null) {
-        uiState.earlyRetirementAge = statutory;
-      }
+    const statutory = getStatutoryAge();
+    if (statutory !== null) {
+      uiState.earlyRetirementAge = statutory;
     }
     setRetireCheckMessage(null);
     syncEarlyRetirementControl(true);
@@ -3924,8 +3936,6 @@ function renderChartTooltip(
   const delta = Number.isFinite(primary) && Number.isFinite(comparison)
     ? Math.abs(primary - comparison)
     : Number.NaN;
-  const retireNowAge = data.retireNowAge !== null ? Math.round(data.retireNowAge) : null;
-  const statutoryAge = data.statutoryAge !== null ? Math.round(data.statutoryAge) : null;
   const contextEvents = data.contextByYear.get(year) ?? [];
   const contextAmounts = contextEvents
     .map((event) => event.amount)
@@ -3946,11 +3956,11 @@ function renderChartTooltip(
       <div class="chart-tooltip-metric-chip">${escapeHtml(data.metricLabel)}</div>
     </div>
     <div class="chart-tooltip-row">
-      <span class="chart-tooltip-key">Normal (${statutoryAge === null ? "—" : String(statutoryAge)})</span>
+      <span class="chart-tooltip-key">${escapeHtml(data.comparisonLabel)}</span>
       <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(comparison, valueMode, compactUnit))}</span>
     </div>
     <div class="chart-tooltip-row">
-      <span class="chart-tooltip-key">Early (${retireNowAge === null ? "—" : String(retireNowAge)})</span>
+      <span class="chart-tooltip-key">${escapeHtml(data.primaryLabel)}</span>
       <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(primary, valueMode, compactUnit))}</span>
     </div>
     <div class="chart-tooltip-row is-delta">
@@ -4247,20 +4257,28 @@ function recalc(): void {
   hideChartTooltip(cashCanvas);
   hideChartTooltip(nwCanvas);
 
-  const result = runModel(fieldState, uiState);
-  latestRunResult = result;
-  renderValidationState(result.validationMessages);
-  const visibleValidationMessages = getVisibleValidationMessages(result.validationMessages);
-  const hasBlockingErrors = hasProjectionBlockingValidation(result.validationMessages);
+  const compareResult = runModel(fieldState, uiState);
+  renderValidationState(compareResult.validationMessages);
+  const visibleValidationMessages = getVisibleValidationMessages(compareResult.validationMessages);
+  const hasBlockingErrors = hasProjectionBlockingValidation(compareResult.validationMessages);
   const hasVisibleBlockingErrors = hasProjectionBlockingValidation(visibleValidationMessages);
   const statutory = getStatutoryAge();
-  applyRetireCheckReadiness(result.validationMessages, statutory);
+  const compareAge = Number.isFinite(uiState.earlyRetirementAge) ? Math.round(uiState.earlyRetirementAge) : null;
+  const hasEssentialErrors = hasRetireCheckEssentialErrors(compareResult.validationMessages);
+  const earliestAge = !hasBlockingErrors && !hasEssentialErrors && statutory !== null
+    ? findEarliestViableRetirementAge(statutory)
+    : null;
+  const indicator = createRetirementIndicatorState(earliestAge, getCurrentAge(), hasEssentialErrors, statutory);
+  setRetireCheckMessage(indicator.message, indicator.tone);
   if (hasBlockingErrors) {
+    latestRunResult = null;
     setChartLegendsVisible(false);
-    cashLegendA.textContent = "Retire at early age";
-    cashLegendB.textContent = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
-    nwLegendA.textContent = "Retire at early age";
-    nwLegendB.textContent = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
+    const blockedPrimaryLabel = statutory === null ? "At Earliest" : formatRetirementAgeLabel("At Statutory", statutory);
+    const blockedCompareLabel = compareAge === null ? "At Compare Age" : formatRetirementAgeLabel("At", compareAge);
+    cashLegendA.textContent = blockedPrimaryLabel;
+    cashLegendB.textContent = blockedCompareLabel;
+    nwLegendA.textContent = blockedPrimaryLabel;
+    nwLegendB.textContent = blockedCompareLabel;
     cashCanvas.dataset.zeroLineAlert = "false";
     chartHoverData.delete(cashCanvas);
     chartHoverData.delete(nwCanvas);
@@ -4274,10 +4292,10 @@ function recalc(): void {
     drawEmptyChart(nwCanvas, chartLines);
     clearTimeline(timelineMessage);
     for (const button of [projectionScenarioEarlyButton]) {
-      button.textContent = "Early";
+      button.textContent = blockedPrimaryLabel;
     }
     for (const button of [projectionScenarioNormButton]) {
-      button.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
+      button.textContent = blockedCompareLabel;
     }
     if (projectionHasMounted) {
       renderCashflowPage(null, chartLines);
@@ -4286,12 +4304,23 @@ function recalc(): void {
     return;
   }
 
-  const contextByYear = buildChartContextByYear(result);
-  const earlyLabel = spinner.value.trim() === "" ? "Retire at early age" : `Retire at ${uiState.earlyRetirementAge}`;
-  const statutoryLabel = statutory === null ? "Retire at statutory age" : `Retire at ${statutory}`;
+  const primaryAge = earliestAge ?? statutory;
+  const primaryResult = primaryAge !== null && primaryAge !== compareAge
+    ? runModel(fieldState, { ...uiState, earlyRetirementAge: primaryAge })
+    : compareResult;
+  const primaryScenario = primaryAge !== null
+    ? primaryResult.outputs.scenarioEarly
+    : compareResult.outputs.scenarioEarly;
+  const displayResult = composeDisplayedRunModelResult(compareResult, primaryScenario, compareResult.outputs.scenarioEarly);
+  latestRunResult = displayResult;
+  const contextByYear = buildChartContextByYear(displayResult);
+  const primaryLabel = earliestAge !== null
+    ? formatRetirementAgeLabel("At Earliest", earliestAge)
+    : (primaryAge === null ? "At Earliest" : formatRetirementAgeLabel("At Statutory", primaryAge));
+  const comparisonLabel = compareAge === null ? "At Compare Age" : formatRetirementAgeLabel("At", compareAge);
   const activeCashSeries = cashflowScenario === "early"
-    ? result.outputs.cashSeriesEarly
-    : result.outputs.cashSeriesNorm;
+    ? displayResult.outputs.cashSeriesEarly
+    : displayResult.outputs.cashSeriesNorm;
   const cashZeroLineAlert = activeCashSeries.some((value) => value < 0);
   const axisLabelFont = '500 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
   const axisPrefixFont = '500 12px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
@@ -4299,61 +4328,65 @@ function recalc(): void {
   const axisLineGap = 8;
   const axisOuterMargin = 10;
   const sharedChartLeftPad = Math.max(
-    computeChartLeftPad(cashCanvas, result.outputs.cashSeriesEarly, result.outputs.cashSeriesNorm, axisLabelFont, axisPrefixFont, axisPrefixGap, axisLineGap, axisOuterMargin),
-    computeChartLeftPad(nwCanvas, result.outputs.netWorthSeriesEarly, result.outputs.netWorthSeriesNorm, axisLabelFont, axisPrefixFont, axisPrefixGap, axisLineGap, axisOuterMargin)
+    computeChartLeftPad(cashCanvas, displayResult.outputs.cashSeriesEarly, displayResult.outputs.cashSeriesNorm, axisLabelFont, axisPrefixFont, axisPrefixGap, axisLineGap, axisOuterMargin),
+    computeChartLeftPad(nwCanvas, displayResult.outputs.netWorthSeriesEarly, displayResult.outputs.netWorthSeriesNorm, axisLabelFont, axisPrefixFont, axisPrefixGap, axisLineGap, axisOuterMargin)
   );
   setChartLegendsVisible(true);
-  cashLegendA.textContent = earlyLabel;
-  cashLegendB.textContent = statutoryLabel;
-  nwLegendA.textContent = earlyLabel;
-  nwLegendB.textContent = statutoryLabel;
+  cashLegendA.textContent = primaryLabel;
+  cashLegendB.textContent = comparisonLabel;
+  nwLegendA.textContent = primaryLabel;
+  nwLegendB.textContent = comparisonLabel;
   for (const button of [projectionScenarioEarlyButton]) {
-    button.textContent = `Early ${uiState.earlyRetirementAge}`;
+    button.textContent = primaryLabel;
   }
   for (const button of [projectionScenarioNormButton]) {
-    button.textContent = statutory === null ? "Statutory" : `Statutory ${statutory}`;
+    button.textContent = comparisonLabel;
   }
   drawChart(
     cashCanvas,
-    result.outputs.ages,
-    result.outputs.cashSeriesEarly,
-    result.outputs.cashSeriesNorm,
+    displayResult.outputs.ages,
+    displayResult.outputs.cashSeriesEarly,
+    displayResult.outputs.cashSeriesNorm,
     { zeroLineAlert: cashZeroLineAlert, leftPad: sharedChartLeftPad }
   );
   cashCanvas.dataset.zeroLineAlert = cashZeroLineAlert ? "true" : "false";
   chartHoverData.set(cashCanvas, {
-    ages: result.outputs.ages,
-    years: result.outputs.years,
-    seriesPrimary: result.outputs.cashSeriesEarly,
-    seriesComparison: result.outputs.cashSeriesNorm,
+    ages: displayResult.outputs.ages,
+    years: displayResult.outputs.years,
+    seriesPrimary: displayResult.outputs.cashSeriesEarly,
+    seriesComparison: displayResult.outputs.cashSeriesNorm,
     zeroLineAlert: cashZeroLineAlert,
-    retireNowAge: uiState.earlyRetirementAge,
-    statutoryAge: statutory,
+    primaryAge,
+    comparisonAge: compareAge,
+    primaryLabel,
+    comparisonLabel,
     metricLabel: "Cash",
     contextByYear
   });
   drawChart(
     nwCanvas,
-    result.outputs.ages,
-    result.outputs.netWorthSeriesEarly,
-    result.outputs.netWorthSeriesNorm,
+    displayResult.outputs.ages,
+    displayResult.outputs.netWorthSeriesEarly,
+    displayResult.outputs.netWorthSeriesNorm,
     { zeroLineAlert: false, leftPad: sharedChartLeftPad }
   );
   chartHoverData.set(nwCanvas, {
-    ages: result.outputs.ages,
-    years: result.outputs.years,
-    seriesPrimary: result.outputs.netWorthSeriesEarly,
-    seriesComparison: result.outputs.netWorthSeriesNorm,
+    ages: displayResult.outputs.ages,
+    years: displayResult.outputs.years,
+    seriesPrimary: displayResult.outputs.netWorthSeriesEarly,
+    seriesComparison: displayResult.outputs.netWorthSeriesNorm,
     zeroLineAlert: false,
-    retireNowAge: uiState.earlyRetirementAge,
-    statutoryAge: statutory,
+    primaryAge,
+    comparisonAge: compareAge,
+    primaryLabel,
+    comparisonLabel,
     metricLabel: "Net worth",
     contextByYear
   });
-  renderMilestoneTimeline(result);
+  renderMilestoneTimeline(displayResult);
   if (projectionHasMounted) {
-    renderCashflowPage(result);
-    renderNetworthPage(result);
+    renderCashflowPage(displayResult);
+    renderNetworthPage(displayResult);
   }
 }
 
@@ -4527,37 +4560,6 @@ cashflowTablePanel.addEventListener("click", (event) => {
 
 networthTablePanel.addEventListener("click", (event) => {
   handleProjectionToggleClick(event, "networth", networthExpandedGroups);
-});
-
-retireCheckButton.addEventListener("click", () => {
-  validationRevealAll = true;
-  const statutory = getStatutoryAge();
-  if (statutory === null) {
-    updateRetireCheckButton(null);
-    setRetireCheckMessage(null);
-    renderValidationState(latestValidationMessages);
-    return;
-  }
-
-  const canRetAge = findEarliestRetirementAgeBeforeStatutory(statutory);
-  if (canRetAge === null) {
-    uiState.earlyRetirementAge = statutory;
-    spinner.value = String(statutory);
-    updateEarlyRetirementButtons(statutory);
-    setRetireCheckMessage("No. Update your inputs and try again.", "neutral");
-    queueRecalc();
-    return;
-  }
-
-  uiState.earlyRetirementAge = canRetAge;
-  spinner.value = String(canRetAge);
-  updateEarlyRetirementButtons(statutory);
-  const currentAge = getCurrentAge();
-  const positiveMessage = currentAge !== null && canRetAge === currentAge
-    ? "Yes! You can retire now!"
-    : `Not quite, but you can retire at ${canRetAge}`;
-  setRetireCheckMessage(positiveMessage, "positive");
-  queueRecalc();
 });
 
 setupChartHover(cashCanvas);

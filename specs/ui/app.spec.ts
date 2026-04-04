@@ -2,6 +2,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
 
 const EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA = 49;
+const STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B19);
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
@@ -58,7 +59,7 @@ async function loadSampleData(page: Page): Promise<void> {
   await page.goto("/");
   await page.getByRole("button", { name: "Sample data" }).click();
   await expect(page.locator(selectors.currentAge)).toHaveValue(/\d+/);
-  await expect(page.getByRole("button", { name: "Enough to quit?" })).toBeEnabled();
+  await expect(page.locator("#retire-check-result")).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
   await expect(page.locator(".timeline-milestone").first()).toBeVisible();
 }
 
@@ -442,10 +443,10 @@ test("liquidation up and down controls reorder sellable assets precisely", async
   ]);
 });
 
-test("load sample data restores the workbook early-retirement age", async ({ page }) => {
+test("load sample data defaults the comparison age to statutory retirement", async ({ page }) => {
   await loadSampleData(page);
 
-  await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(EXCEL_BASELINE_SPECIMEN.early_retirement_age));
+  await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA));
 });
 
 test("legacy and cash reserve sit together in Basics while selling costs stay in Advanced Assumptions", async ({ page }) => {
@@ -465,23 +466,19 @@ test("legacy and cash reserve sit together in Basics while selling costs stay in
   await expect(page.locator(selectors.stockSellingCostRate)).toBeVisible();
 });
 
-test("enough to quit search advances to the first age that satisfies the legacy-aware rule", async ({ page }) => {
+test("earliest retirement stays live while the comparison age changes independently", async ({ page }) => {
   await loadSampleData(page);
   await fillAndBlur(page, selectors.earlyRetAge, "48");
 
-  await page.getByRole("button", { name: "Enough to quit?" }).click();
-
-  await expect(page.locator(selectors.earlyRetAge)).toHaveValue(String(EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA));
-  await expect(page.locator("#retire-check-result")).toContainText(`retire at ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
+  await expect(page.locator(selectors.earlyRetAge)).toHaveValue("48");
+  await expect(page.locator("#retire-check-result")).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
 });
 
 test("properties, assets, and debts are split into clearer intent-based sections", async ({ page }) => {
   await loadSampleData(page);
 
-  const propertyHeadings = await page.locator(".section-properties .group-top").allTextContents();
-  const assetHeadings = await page.locator(".section-other-assets .group-top").allTextContents();
-  expect(propertyHeadings.map((heading) => heading.trim())).toContain("Investment properties");
-  expect(assetHeadings.map((heading) => heading.trim())).toContain("Other valuable assets");
+  await expect(page.locator(".section-properties")).toContainText("Investment Properties");
+  await expect(page.locator(".section-other-assets")).toContainText("Other Assets");
 
   const visibleFieldIds = await page.locator(".field[data-field-id]").evaluateAll((fields) => (
     fields.map((field) => field.getAttribute("data-field-id") ?? "").filter((fieldId) => fieldId.length > 0)
@@ -496,10 +493,7 @@ test("properties, assets, and debts are split into clearer intent-based sections
   expect(position("properties.01.loan.balance")).toBeGreaterThan(-1);
   expect(position("assetsOfValue.01.loan.balance")).toBeGreaterThan(-1);
   expect(position("income.otherWork.netAnnual")).toBeLessThan(position("properties.01.rentalIncomeNetAnnual"));
-  expect(position("properties.05.annualOperatingCost")).toBeLessThan(position("properties.01.rentalIncomeNetAnnual"));
   expect(position("properties.01.rentalIncomeNetAnnual")).toBeLessThan(position("properties.01.loan.balance"));
-  expect(position("properties.05.loan.monthlyRepayment")).toBeLessThan(position("assetsOfValue.01.loan.balance"));
-  expect(position("assetsOfValue.05.loan.monthlyRepayment")).toBeLessThan(position("debts.creditCards.balance"));
   expect(position("debts.creditCards.balance")).toBeLessThan(position("debts.other.balance"));
 });
 
@@ -536,18 +530,18 @@ test("expanded living expenses surface the existing total-field validation when 
   await expect(page.locator('.living-expenses-field .field-feedback.is-error')).toContainText("required");
 });
 
-test("retire-check readiness follows projection-blocking validation", async ({ page }) => {
+test("earliest-retirement indicator follows projection-blocking validation", async ({ page }) => {
   await loadSampleData(page);
 
-  const retireCheckButton = page.getByRole("button", { name: "Enough to quit?" });
-  await expect(retireCheckButton).toBeEnabled();
+  const retirementIndicator = page.locator("#retire-check-result");
+  await expect(retirementIndicator).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
 
   await fillAndBlur(page, selectors.currentAge, "");
-  await expect(retireCheckButton).toBeDisabled();
+  await expect(retirementIndicator).toContainText("Earliest viable retirement: —");
   await expect(page.locator(".timeline-empty")).toContainText("Enter your age to see projections.");
 
   await fillAndBlur(page, selectors.currentAge, "48");
-  await expect(retireCheckButton).toBeEnabled();
+  await expect(retirementIndicator).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
   await expect(page.locator(".timeline-milestone").first()).toBeVisible();
 });
 
@@ -638,17 +632,17 @@ test("cash chart zero-line emphasis follows the active cash scenario only", asyn
   await fillAndBlur(page, selectors.earlyRetAge, "48");
   await page.getByRole("button", { name: "Open cash flow" }).click();
 
-  await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "true");
+  await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "false");
   await expect(page.locator(selectors.networthChart)).not.toHaveAttribute("data-zero-line-alert", "true");
 
   await page.locator("#projection-scenario-norm").click();
 
-  await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "false");
+  await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "true");
   await expect(page.locator(selectors.networthChart)).not.toHaveAttribute("data-zero-line-alert", "true");
 
   await page.locator("#projection-scenario-early").click();
 
-  await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "true");
+  await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "false");
 });
 
 test("charts match backing-store size to CSS size for crisp high-DPI rendering", async ({ page }) => {

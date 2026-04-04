@@ -296,7 +296,8 @@ body {
 .retirement-control-actions {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  flex: 1 1 260px;
+  min-width: 0;
 }
 
 .retirement-stepper {
@@ -354,17 +355,16 @@ body {
 
 .retire-check-result {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 700;
   color: #334155;
   background: #f1f5f9;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  padding: 4px 8px;
-  line-height: 1.15;
+  padding: 7px 10px;
+  line-height: 1.25;
   white-space: normal;
-  max-width: min(420px, 44vw);
-  flex: 0 1 auto;
+  max-width: min(520px, 100%);
 }
 
 .retire-check-result.is-positive {
@@ -379,34 +379,6 @@ body {
   color: #334155;
   background: #f1f5f9;
   border-color: #cbd5e1;
-}
-
-.retire-check-btn {
-  height: 38px;
-  border: 1px solid #0a7f75;
-  border-radius: 9px;
-  padding: 0 14px;
-  background: linear-gradient(180deg, #11a398 0%, #0d9488 100%);
-  color: #f8fafc;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.01em;
-  cursor: pointer;
-  box-shadow: 0 3px 10px rgb(13 148 136 / 0.22);
-}
-
-.retire-check-btn:hover {
-  filter: brightness(1.03);
-}
-
-.retire-check-btn:active {
-  transform: translateY(1px);
-}
-
-.retire-check-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
 }
 
 .cashflow-nav-btn,
