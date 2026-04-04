@@ -103,6 +103,7 @@ export const FIELD_STEPPER_STEPS: Readonly<Partial<Record<FieldId, number>>> = {
   [RUNTIME_FIELDS.annualLivingExpenses]: 100,
   [OTHER_WORK_FIELDS.income]: 100,
   [OTHER_WORK_FIELDS.untilAge]: 1,
+  ["debts.creditCards.balance" as FieldId]: 100,
   [OTHER_LOAN_FIELDS.balance]: 100,
   [OTHER_LOAN_FIELDS.monthlyRepayment]: 10,
   [RUNTIME_FIELDS.lifeExpectancyAge]: 1,

@@ -18,6 +18,7 @@ import {
   buildTimelineMilestones,
   deriveRuntimeVisibilityState,
   fieldVisible,
+  FIELD_STEPPER_STEPS,
   hasExplicitPropertyLiquidationPreferences,
   hasRetireCheckEssentialErrors,
   isOutOfRangeLiquidationRank,
@@ -106,6 +107,15 @@ test("input definitions preserve row order and derive cells from semantic field 
   for (const def of INPUT_DEFINITIONS) {
     assert.equal(def.cell, FIELD_ID_TO_CELL[def.fieldId]);
   }
+});
+
+test("currency number fields do not fall back to a 1-unit stepper increment", () => {
+  const oneUnitCurrencySteps = INPUT_DEFINITIONS
+    .filter((def) => def.type === "number")
+    .map((def) => ({ fieldId: def.fieldId, label: def.label, step: FIELD_STEPPER_STEPS[def.fieldId] ?? 1 }))
+    .filter((row) => row.step === 1);
+
+  assert.deepEqual(oneUnitCurrencySteps, []);
 });
 
 test("blank legacy normalizes to zero and specimen parity captures the shifted workbook cells", () => {
