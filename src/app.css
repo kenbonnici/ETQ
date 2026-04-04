@@ -1529,9 +1529,10 @@ body {
   height: 34px;
   border-radius: 7px;
   padding: 0 10px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 800;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.18);
   cursor: pointer;
   transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 120ms ease;
 }
@@ -1567,7 +1568,7 @@ body {
 .scenario-action-btn--secondary {
   border: 1px solid #c2d4cd;
   background: #ffffff;
-  color: #44625a;
+  color: #2f5048;
 }
 
 .scenario-action-btn--secondary:disabled {
@@ -1583,7 +1584,7 @@ body {
 .scenario-action-btn--danger {
   border: 1px solid #e8c0b9;
   background: #ffffff;
-  color: #c7655b;
+  color: #b14f45;
 }
 
 .scenario-action-btn--danger:disabled {
