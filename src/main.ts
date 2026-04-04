@@ -436,11 +436,11 @@ function renderRetirementIndicatorValue(message: string | null): string {
     : message.trim();
   const nowMatch = /^now\s+\((\d+)\)$/i.exec(trimmed);
   if (nowMatch) {
-    return `now (<span class="retire-check-result-age">${escapeHtml(nowMatch[1])}</span>)`;
+    return `now <span class="retire-check-result-age-token">(${escapeHtml(nowMatch[1])})</span>`;
   }
   const ageMatch = /^(\d+)$/i.exec(trimmed);
   if (ageMatch) {
-    return `<span class="retire-check-result-age">${escapeHtml(ageMatch[1])}</span>`;
+    return `<span class="retire-check-result-age-token">${escapeHtml(ageMatch[1])}</span>`;
   }
   return escapeHtml(trimmed);
 }
