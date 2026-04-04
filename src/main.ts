@@ -3364,7 +3364,7 @@ function renderInputs(): void {
     return block(section.title, section.open, section.canToggle, controlsHtml, section.className);
   }).join("");
   inputsPanel.innerHTML =
-    `<section class="input-section section-scenarios"><div class="section-scenarios-header"><div class="section-scenarios-shell"><div class="section-scenarios-title"><span class="scenario-heading-block"><span class="scenario-heading-title">MY DATA</span><span class="scenario-heading-note">${escapeHtml(scenarioStorageAvailable ? "Stored locally. Never leaves your device." : "Local save is unavailable in this browser")}</span></span></div>${scenarioCurrencyHtml}</div></div>${scenarioManagerHtml}</section>` +
+    `<section class="input-section section-scenarios"><div class="section-scenarios-header"><div class="section-scenarios-shell"><h2 class="section-scenarios-title"><span class="scenario-heading-block"><span class="scenario-heading-title">MY DATA</span><span class="scenario-heading-note">${escapeHtml(scenarioStorageAvailable ? "Stored locally. Never leaves your device." : "Local save is unavailable in this browser")}</span></span></h2>${scenarioCurrencyHtml}</div></div>${scenarioManagerHtml}</section>` +
     sectionBlocksHtml;
 
   const currencySelector = inputsPanel.querySelector<HTMLSelectElement>("#currency-selector");

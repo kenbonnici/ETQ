@@ -1402,7 +1402,8 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-bottom: 2px;
+  align-self: flex-end;
+  padding-bottom: 1px;
 }
 
 .scenario-heading-note::before {
@@ -1585,10 +1586,16 @@ body {
 
 .section-scenarios-title {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   flex: 1 1 auto;
   min-width: 0;
-  color: #2c5950;
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: #0b4f49;
+  background: #d8ede6;
+  border: 1px solid transparent;
+  border-bottom: 1px solid #b7d8cd;
 }
 
 .scenario-header-currency-wrap {
