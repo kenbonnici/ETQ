@@ -1383,6 +1383,15 @@ body {
   min-width: 0;
 }
 
+.scenario-heading-title {
+  display: block;
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
 .scenario-heading-note {
   font-size: 10px;
   line-height: 1;
