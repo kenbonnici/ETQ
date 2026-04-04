@@ -1589,13 +1589,7 @@ body {
   align-items: flex-end;
   flex: 1 1 auto;
   min-width: 0;
-  margin: 0;
-  padding: 10px 12px;
-  border-radius: 10px;
   color: #0b4f49;
-  background: #d8ede6;
-  border: 1px solid transparent;
-  border-bottom: 1px solid #b7d8cd;
 }
 
 .scenario-header-currency-wrap {
