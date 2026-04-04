@@ -205,13 +205,11 @@ test("visibility rules stay semantic for dependents, properties, and loans", () 
   fields[POST_RETIREMENT_INCOME_FIELDS.amount] = 12_000;
   assert.equal(fieldVisible(fields, POST_RETIREMENT_INCOME_FIELDS.fromAge, DEFAULT_VISIBILITY), true);
 
+  assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField, DEFAULT_VISIBILITY), false);
+  assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField, DEFAULT_VISIBILITY), false);
   assert.equal(fieldVisible(fields, RUNTIME_FIELDS.stockMarketReturn, DEFAULT_VISIBILITY), false);
   fields[RUNTIME_FIELDS.stockMarketInvestments] = 100_000;
   assert.equal(fieldVisible(fields, RUNTIME_FIELDS.stockMarketReturn, DEFAULT_VISIBILITY), true);
-
-  assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField, DEFAULT_VISIBILITY), false);
-  assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField, DEFAULT_VISIBILITY), false);
-  fields[RUNTIME_FIELDS.stockMarketInvestments] = 100_000;
   assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField, DEFAULT_VISIBILITY), true);
   fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField] = new Date().getFullYear() + 1;
   assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField, DEFAULT_VISIBILITY), true);

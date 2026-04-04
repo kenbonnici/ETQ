@@ -122,6 +122,10 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
     pushMessage(messages, "B254", "error", "Plan to live until age must be current age or later.", true);
   }
 
+  if (statutoryAge !== null && lifeExpectancy !== null && statutoryAge > lifeExpectancy) {
+    pushMessage(messages, "B19", "error", "State pension start age cannot exceed plan to live until age.", true);
+  }
+
   if (lifeExpectancy !== null && lifeExpectancy > 100) {
     pushMessage(messages, "B254", "warning", "Planning past age 100 is allowed, but double-check that horizon.");
   }

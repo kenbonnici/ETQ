@@ -133,6 +133,73 @@ test("validation enforces post-retirement and other-work age bounds", () => {
   );
 });
 
+test("validation clamps open-ended age fields to realistic planning ages", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[OTHER_WORK_FIELDS.income] = 10_000;
+  fields[OTHER_WORK_FIELDS.untilAge] = 121;
+  fields[POST_RETIREMENT_INCOME_FIELDS.amount] = 8_000;
+  fields[POST_RETIREMENT_INCOME_FIELDS.fromAge] = 70;
+  fields[POST_RETIREMENT_INCOME_FIELDS.toAge] = 121;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === OTHER_WORK_FIELDS.untilAge && message.severity === "error" && message.message.includes("at most 120")),
+    true
+  );
+  assert.equal(
+    messages.some((message) => message.fieldId === POST_RETIREMENT_INCOME_FIELDS.toAge && message.severity === "error" && message.message.includes("at most 120")),
+    true
+  );
+});
+
+test("validation rejects interest rates above 20 percent", () => {
+  const fields = createEmptyFieldState();
+  fields[HOME_FIELDS.homeValue] = 500_000;
+  fields[HOME_FIELDS.mortgageBalance] = 120_000;
+  fields[HOME_FIELDS.mortgageInterestRateAnnual] = 0.25;
+  fields[HOME_FIELDS.mortgageMonthlyRepayment] = 1_800;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === HOME_FIELDS.mortgageInterestRateAnnual && message.severity === "error" && message.message.includes("at most 20%")),
+    true
+  );
+});
+
+test("validation rejects pension start ages beyond the planning horizon", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 90;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === RUNTIME_FIELDS.statutoryRetirementAge && message.severity === "error" && message.message.includes("cannot exceed plan to live until age")),
+    true
+  );
+});
+
+test("validation warns on typo-like monetary amounts", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[RUNTIME_FIELDS.cashBalance] = 100_000_001;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === RUNTIME_FIELDS.cashBalance && message.severity === "warning" && message.message.includes("unusually high")),
+    true
+  );
+});
+
 test("validation requires a complete stock market crash entry once any crash field is used", () => {
   const fields = createEmptyFieldState();
   fields[RUNTIME_FIELDS.currentAge] = 48;

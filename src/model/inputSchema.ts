@@ -454,6 +454,67 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "assetsOfValue.05.liquidationPriority": { integer: true, nonNegative: true, clampBounds: { min: 0, max: 10 } }
 };
 
+const AGE_0_TO_120_FIELDS: readonly FieldId[] = [
+  "income.otherWork.endAge",
+  "income.postRetirementSupplement.startAge",
+  "income.postRetirementSupplement.endAge"
+];
+
+const INTEREST_RATE_0_TO_20_FIELDS: readonly FieldId[] = [
+  "housing.01Residence.mortgage.interestRateAnnual",
+  "properties.01.loan.interestRateAnnual",
+  "properties.02.loan.interestRateAnnual",
+  "properties.03.loan.interestRateAnnual",
+  "properties.04.loan.interestRateAnnual",
+  "properties.05.loan.interestRateAnnual",
+  "assetsOfValue.01.loan.interestRateAnnual",
+  "assetsOfValue.02.loan.interestRateAnnual",
+  "assetsOfValue.03.loan.interestRateAnnual",
+  "assetsOfValue.04.loan.interestRateAnnual",
+  "assetsOfValue.05.loan.interestRateAnnual",
+  "debts.other.interestRateAnnual",
+  "assumptions.cashYieldRateAnnual"
+];
+
+const AMOUNT_WARNING_MAX = 100_000_000;
+const NUMBER_AMOUNT_FIELDS: readonly FieldId[] = INPUT_DEFINITIONS
+  .filter((def) => def.type === "number")
+  .map((def) => def.fieldId);
+
+for (const fieldId of AGE_0_TO_120_FIELDS) {
+  const existing = FIELD_VALIDATION_RULES[fieldId] ?? {};
+  FIELD_VALIDATION_RULES[fieldId] = {
+    ...existing,
+    clampBounds: {
+      min: existing.clampBounds?.min ?? 0,
+      max: existing.clampBounds?.max ?? 120
+    }
+  };
+}
+
+for (const fieldId of INTEREST_RATE_0_TO_20_FIELDS) {
+  const existing = FIELD_VALIDATION_RULES[fieldId] ?? {};
+  FIELD_VALIDATION_RULES[fieldId] = {
+    ...existing,
+    clampBounds: {
+      min: existing.clampBounds?.min ?? 0,
+      max: existing.clampBounds?.max ?? 0.2
+    },
+    warningBounds: existing.warningBounds
+  };
+}
+
+for (const fieldId of NUMBER_AMOUNT_FIELDS) {
+  const existing = FIELD_VALIDATION_RULES[fieldId] ?? {};
+  FIELD_VALIDATION_RULES[fieldId] = {
+    ...existing,
+    warningBounds: {
+      ...existing.warningBounds,
+      max: existing.warningBounds?.max ?? AMOUNT_WARNING_MAX
+    }
+  };
+}
+
 export const FIELD_VALIDATION_RULES_BY_CELL = mapFieldRecordToCells(FIELD_VALIDATION_RULES);
 
 export const COERCED_NUMERIC_BOUNDS: Partial<Record<FieldId, NumericConstraint>> = Object.fromEntries(
