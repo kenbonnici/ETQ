@@ -1608,7 +1608,7 @@ body {
 
 .section-scenarios {
   border: 0;
-  border-radius: 0;
+  border-radius: 8px;
   margin-bottom: 24px;
   padding: 14px 16px;
   box-shadow: none;
