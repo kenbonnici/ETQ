@@ -1565,18 +1565,12 @@ body {
   padding: 9px 10px;
 }
 
-.section-scenarios .section-toggle--scenarios {
+.section-scenarios-title {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   flex: 1 1 auto;
   min-width: 0;
   color: #2c5950;
-  background: transparent;
-  border: 0;
-  border-radius: 0;
-  padding: 0;
-  margin-bottom: 0;
 }
 
 .scenario-header-currency-wrap {

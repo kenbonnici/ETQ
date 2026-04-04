@@ -3364,7 +3364,7 @@ function renderInputs(): void {
     return block(section.title, section.open, section.canToggle, controlsHtml, section.className);
   }).join("");
   inputsPanel.innerHTML =
-    `<section class="input-section section-scenarios"><div class="section-scenarios-header"><div class="section-scenarios-shell"><button type="button" class="section-toggle section-toggle--scenarios" data-section="SAVED SCENARIOS"><span class="scenario-heading-block"><span>MY DATA</span><span class="scenario-heading-note">${escapeHtml(scenarioStorageAvailable ? "Stored locally. Never leaves your device." : "Local save is unavailable in this browser")}</span></span><span class="section-toggle-chevron" aria-hidden="true">${sectionState.scenariosOpen ? "▾" : "▸"}</span></button>${scenarioCurrencyHtml}</div></div>${sectionState.scenariosOpen ? scenarioManagerHtml : ""}</section>` +
+    `<section class="input-section section-scenarios"><div class="section-scenarios-header"><div class="section-scenarios-shell"><div class="section-scenarios-title"><span class="scenario-heading-block"><span>MY DATA</span><span class="scenario-heading-note">${escapeHtml(scenarioStorageAvailable ? "Stored locally. Never leaves your device." : "Local save is unavailable in this browser")}</span></span></div>${scenarioCurrencyHtml}</div></div>${scenarioManagerHtml}</section>` +
     sectionBlocksHtml;
 
   const currencySelector = inputsPanel.querySelector<HTMLSelectElement>("#currency-selector");
@@ -3713,9 +3713,6 @@ function renderInputs(): void {
   inputsPanel.querySelectorAll<HTMLButtonElement>(".section-toggle").forEach((btn) => {
     btn.addEventListener("click", () => {
       const section = btn.dataset.section;
-      if (section === "SAVED SCENARIOS") {
-        sectionState.scenariosOpen = !sectionState.scenariosOpen;
-      }
       if (section === "Major Future Events") {
         if (sectionState.deeperOpen) {
           sectionState.deeperOpen = false;
