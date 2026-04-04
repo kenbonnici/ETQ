@@ -2331,9 +2331,11 @@ function updateEarlyRetirementButtons(statutory: number | null): void {
   spinnerUp.disabled = clamped >= statutory;
 }
 
-function setRetireCheckMessage(message: string | null, tone: "positive" | "neutral" = "neutral"): void {
+function setRetireCheckMessage(message: string | null, tone: "positive" | "promising" | "warning" | "neutral" = "neutral"): void {
   retireCheckResult.textContent = message ?? "Earliest viable retirement: —";
   retireCheckResult.classList.toggle("is-positive", message !== null && tone === "positive");
+  retireCheckResult.classList.toggle("is-promising", message !== null && tone === "promising");
+  retireCheckResult.classList.toggle("is-warning", message !== null && tone === "warning");
   retireCheckResult.classList.toggle("is-neutral", message === null || tone === "neutral");
   retireCheckResult.hidden = false;
 }
@@ -2347,17 +2349,17 @@ function createRetirementIndicatorState(
   currentAge: number | null,
   hasEssentialErrors: boolean,
   statutory: number | null
-): { message: string | null; tone: "positive" | "neutral" } {
+): { message: string | null; tone: "positive" | "promising" | "warning" | "neutral" } {
   if (hasEssentialErrors || statutory === null || statutory <= getMinEarlyRetirementAge()) {
     return { message: null, tone: "neutral" };
   }
   if (earliestAge === null) {
-    return { message: "Earliest viable retirement: not yet viable", tone: "neutral" };
+    return { message: "Earliest viable retirement: not yet viable", tone: "warning" };
   }
   if (currentAge !== null && earliestAge === currentAge) {
     return { message: `Earliest viable retirement: now (${earliestAge})`, tone: "positive" };
   }
-  return { message: `Earliest viable retirement: ${earliestAge}`, tone: "neutral" };
+  return { message: `Earliest viable retirement: ${earliestAge}`, tone: "promising" };
 }
 
 function composeDisplayedRunModelResult(
