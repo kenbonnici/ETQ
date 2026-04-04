@@ -358,6 +358,10 @@ body {
   font-size: 14px;
   font-weight: 700;
   color: #334155;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   border: 1px solid #cbd5e1;
   border-radius: 8px;
@@ -372,6 +376,22 @@ body {
     border-color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
+}
+
+.retire-check-result-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.retire-check-result-value {
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.retire-check-result-age {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
 }
 
 .retire-check-result.is-positive {
@@ -412,6 +432,15 @@ body {
   color: #334155;
   background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
   border-color: #cbd5e1;
+}
+
+.retire-check-result.is-positive .retire-check-result-value {
+  font-weight: 800;
+}
+
+.retire-check-result.is-promising .retire-check-result-value,
+.retire-check-result.is-warning .retire-check-result-value {
+  font-weight: 750;
 }
 
 .cashflow-nav-btn,

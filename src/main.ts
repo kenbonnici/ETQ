@@ -218,7 +218,7 @@ app.innerHTML = `
     <section class="right">
       <header class="retirement-control">
         <div class="retirement-control-actions">
-          <p id="retire-check-result" class="retire-check-result">Earliest viable retirement: —</p>
+          <p id="retire-check-result" class="retire-check-result"><span class="retire-check-result-label">Earliest viable retirement:</span> <span class="retire-check-result-value">—</span></p>
         </div>
         <div class="retirement-stepper">
           <span class="retirement-stepper-label">Compare with retiring at</span>
@@ -319,6 +319,8 @@ const spinner = document.getElementById("early-ret-age") as HTMLInputElement;
 const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonElement;
 const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
 const retireCheckResult = document.getElementById("retire-check-result") as HTMLParagraphElement;
+const retireCheckResultLabel = retireCheckResult.querySelector(".retire-check-result-label") as HTMLSpanElement;
+const retireCheckResultValue = retireCheckResult.querySelector(".retire-check-result-value") as HTMLSpanElement;
 const openCashflowButton = document.getElementById("open-cashflow-btn") as HTMLButtonElement;
 const openNetworthButton = document.getElementById("open-networth-btn") as HTMLButtonElement;
 const cashCanvas = document.getElementById("cash-chart") as HTMLCanvasElement;
@@ -424,6 +426,24 @@ const SAMPLE_DATA_NUMERIC_OVERRIDES: Readonly<Partial<Record<FieldId, number>>> 
   [RUNTIME_FIELDS.minimumCashBuffer]: 50_000,
   [RUNTIME_FIELDS.legacyAmount]: 1_000_000
 };
+
+const RETIREMENT_INDICATOR_PREFIX = "Earliest viable retirement:";
+
+function renderRetirementIndicatorValue(message: string | null): string {
+  if (message === null) return "—";
+  const trimmed = message.startsWith(RETIREMENT_INDICATOR_PREFIX)
+    ? message.slice(RETIREMENT_INDICATOR_PREFIX.length).trim()
+    : message.trim();
+  const nowMatch = /^now\s+\((\d+)\)$/i.exec(trimmed);
+  if (nowMatch) {
+    return `now (<span class="retire-check-result-age">${escapeHtml(nowMatch[1])}</span>)`;
+  }
+  const ageMatch = /^(\d+)$/i.exec(trimmed);
+  if (ageMatch) {
+    return `<span class="retire-check-result-age">${escapeHtml(ageMatch[1])}</span>`;
+  }
+  return escapeHtml(trimmed);
+}
 
 interface ChartHoverData {
   ages: number[];
@@ -2332,7 +2352,8 @@ function updateEarlyRetirementButtons(statutory: number | null): void {
 }
 
 function setRetireCheckMessage(message: string | null, tone: "positive" | "promising" | "warning" | "neutral" = "neutral"): void {
-  retireCheckResult.textContent = message ?? "Earliest viable retirement: —";
+  retireCheckResultLabel.textContent = RETIREMENT_INDICATOR_PREFIX;
+  retireCheckResultValue.innerHTML = renderRetirementIndicatorValue(message);
   retireCheckResult.classList.toggle("is-positive", message !== null && tone === "positive");
   retireCheckResult.classList.toggle("is-promising", message !== null && tone === "promising");
   retireCheckResult.classList.toggle("is-warning", message !== null && tone === "warning");
