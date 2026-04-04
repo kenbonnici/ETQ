@@ -434,9 +434,10 @@ function renderRetirementIndicatorValue(message: string | null): string {
   const trimmed = message.startsWith(RETIREMENT_INDICATOR_PREFIX)
     ? message.slice(RETIREMENT_INDICATOR_PREFIX.length).trim()
     : message.trim();
-  const nowMatch = /^now\s+\((\d+)\)$/i.exec(trimmed);
+  const nowMatch = /^now(?:\s+\((\d+)\)|\s+at\s+(\d+))$/i.exec(trimmed);
   if (nowMatch) {
-    return `now <span class="retire-check-result-age-token">(${escapeHtml(nowMatch[1])})</span>`;
+    const age = nowMatch[1] ?? nowMatch[2];
+    return `now at <span class="retire-check-result-age-token">${escapeHtml(age)}</span>`;
   }
   const ageMatch = /^(\d+)$/i.exec(trimmed);
   if (ageMatch) {
@@ -2378,7 +2379,7 @@ function createRetirementIndicatorState(
     return { message: "Earliest viable retirement: not yet viable", tone: "warning" };
   }
   if (currentAge !== null && earliestAge === currentAge) {
-    return { message: `Earliest viable retirement: now (${earliestAge})`, tone: "positive" };
+    return { message: `Earliest viable retirement: now at ${earliestAge}`, tone: "positive" };
   }
   return { message: `Earliest viable retirement: ${earliestAge}`, tone: "promising" };
 }
