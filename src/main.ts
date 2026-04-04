@@ -429,25 +429,36 @@ const SAMPLE_DATA_NUMERIC_OVERRIDES: Readonly<Partial<Record<FieldId, number>>> 
 
 const RETIREMENT_INDICATOR_PREFIX = "Earliest viable retirement:";
 
-function renderRetirementIndicatorValue(message: string | null): string {
-  if (message === null) return "—";
+function renderRetirementIndicatorContent(message: string | null): { showPrefix: boolean; html: string } {
+  if (message === null) {
+    return { showPrefix: true, html: "—" };
+  }
   const trimmed = message.startsWith(RETIREMENT_INDICATOR_PREFIX)
     ? message.slice(RETIREMENT_INDICATOR_PREFIX.length).trim()
     : message.trim();
   const retireNowMatch = /^you can retire now at (\d+)!$/i.exec(trimmed);
   if (retireNowMatch) {
-    return `You can retire now at <span class="retire-check-result-age-token">${escapeHtml(retireNowMatch[1])}</span>!`;
+    return {
+      showPrefix: false,
+      html: `You can retire now at <span class="retire-check-result-age-token">${escapeHtml(retireNowMatch[1])}!</span>`
+    };
   }
   const nowMatch = /^now(?:\s+\((\d+)\)|\s+at\s+(\d+))$/i.exec(trimmed);
   if (nowMatch) {
     const age = nowMatch[1] ?? nowMatch[2];
-    return `now at <span class="retire-check-result-age-token">${escapeHtml(age)}</span>`;
+    return {
+      showPrefix: true,
+      html: `now at <span class="retire-check-result-age-token">${escapeHtml(age)}</span>`
+    };
   }
   const ageMatch = /^(\d+)$/i.exec(trimmed);
   if (ageMatch) {
-    return `<span class="retire-check-result-age-token">${escapeHtml(ageMatch[1])}</span>`;
+    return {
+      showPrefix: true,
+      html: `<span class="retire-check-result-age-token">${escapeHtml(ageMatch[1])}</span>`
+    };
   }
-  return escapeHtml(trimmed);
+  return { showPrefix: true, html: escapeHtml(trimmed) };
 }
 
 interface ChartHoverData {
@@ -2357,8 +2368,10 @@ function updateEarlyRetirementButtons(statutory: number | null): void {
 }
 
 function setRetireCheckMessage(message: string | null, tone: "positive" | "promising" | "warning" | "neutral" = "neutral"): void {
+  const content = renderRetirementIndicatorContent(message);
   retireCheckResultLabel.textContent = RETIREMENT_INDICATOR_PREFIX;
-  retireCheckResultValue.innerHTML = renderRetirementIndicatorValue(message);
+  retireCheckResultLabel.hidden = !content.showPrefix;
+  retireCheckResultValue.innerHTML = content.html;
   retireCheckResult.classList.toggle("is-positive", message !== null && tone === "positive");
   retireCheckResult.classList.toggle("is-promising", message !== null && tone === "promising");
   retireCheckResult.classList.toggle("is-warning", message !== null && tone === "warning");
