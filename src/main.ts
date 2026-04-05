@@ -1304,12 +1304,12 @@ function renderScenarioManager(): string {
               <span class="scenario-field-shell">
                 <select id="saved-scenario-select" ${scenarioStorageAvailable ? "" : "disabled"}>
                   <option value="" ${hasSelectedScenario ? "" : "selected"}>Select a scenario...</option>
-                  <option value="${SAMPLE_DATA_SCENARIO_ID}" ${selectedIsSampleData ? "selected" : ""}>--sample data--</option>
                   ${scenarios.map((scenario) => `
                     <option value="${escapeHtml(scenario.id)}" ${scenario.id === selectedScenarioId ? "selected" : ""}>
                       ${escapeHtml(`${scenario.name} · ${formatScenarioTimestamp(scenario.updatedAt)}`)}
                     </option>
                   `).join("")}
+                  <option value="${SAMPLE_DATA_SCENARIO_ID}" ${selectedIsSampleData ? "selected" : ""}>--sample data--</option>
                 </select>
               </span>
             </label>
