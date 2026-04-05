@@ -1223,12 +1223,12 @@ body {
 
 .chart-tooltip-row.is-primary .chart-tooltip-key {
   color: #0f4f7d;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .chart-tooltip-row.is-comparison .chart-tooltip-key {
   color: #8a4b05;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .chart-tooltip-value {
@@ -1248,7 +1248,11 @@ body {
 
 .chart-tooltip-row.is-delta .chart-tooltip-key,
 .chart-tooltip-row.is-delta .chart-tooltip-value {
-  font-weight: 800;
+  font-weight: 700;
+}
+
+.chart-tooltip-row.is-delta .chart-tooltip-key {
+  color: #64748b;
 }
 
 .chart-tooltip-context {
