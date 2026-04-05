@@ -1191,12 +1191,44 @@ body {
 }
 
 .chart-tooltip-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   color: #475569;
   font-weight: 500;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.chart-tooltip-series-marker {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 0;
+  border-top-width: 3px;
+  border-top-style: solid;
+  border-top-color: currentColor;
+  border-radius: 999px;
+}
+
+.chart-tooltip-series-marker.is-primary {
+  color: #1d8ad6;
+}
+
+.chart-tooltip-series-marker.is-comparison {
+  color: #de7a00;
+  border-top-style: dashed;
+}
+
+.chart-tooltip-row.is-primary .chart-tooltip-key {
+  color: #0f4f7d;
+  font-weight: 700;
+}
+
+.chart-tooltip-row.is-comparison .chart-tooltip-key {
+  color: #8a4b05;
+  font-weight: 600;
 }
 
 .chart-tooltip-value {
