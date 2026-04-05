@@ -1252,7 +1252,11 @@ body {
 }
 
 .chart-tooltip-row.is-delta .chart-tooltip-key {
-  color: #64748b;
+  color: #334155;
+}
+
+.chart-tooltip-row.is-delta .chart-tooltip-value {
+  color: #0f172a;
 }
 
 .chart-tooltip-context {
