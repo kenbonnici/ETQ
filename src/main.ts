@@ -190,6 +190,7 @@ let selectedSavedScenarioId: string | null = null;
 let scenarioDraftName = "";
 let scenarioManagerNotice: ScenarioManagerNotice | null = null;
 let scenarioManagerNoticeHandle: number | null = null;
+const SAMPLE_DATA_SCENARIO_ID = "__sample_data__";
 
 function applyFieldNumericConstraint(fieldId: FieldId, value: number | null): number | null {
   return applyFieldNumericConstraintForState(fieldId, value, fieldState);
@@ -1299,17 +1300,14 @@ function renderScenarioManager(): string {
             <label class="scenario-library-field">
               <span class="scenario-manager-kicker">Scenarios</span>
               <span class="scenario-field-shell">
-                <select id="saved-scenario-select" ${scenarioStorageAvailable && hasSavedScenarios ? "" : "disabled"}>
-                  ${hasSavedScenarios
-                    ? `
-                      <option value="" ${hasSelectedScenario ? "" : "selected"}>Select a scenario...</option>
-                      ${scenarios.map((scenario) => `
-                      <option value="${escapeHtml(scenario.id)}" ${scenario.id === selectedScenarioId ? "selected" : ""}>
-                        ${escapeHtml(`${scenario.name} · ${formatScenarioTimestamp(scenario.updatedAt)}`)}
-                      </option>
-                    `).join("")}
-                    `
-                    : `<option value="">No saved scenarios yet</option>`}
+                <select id="saved-scenario-select" ${scenarioStorageAvailable ? "" : "disabled"}>
+                  <option value="" ${hasSelectedScenario ? "" : "selected"}>Select a scenario...</option>
+                  <option value="${SAMPLE_DATA_SCENARIO_ID}">--sample data--</option>
+                  ${scenarios.map((scenario) => `
+                    <option value="${escapeHtml(scenario.id)}" ${scenario.id === selectedScenarioId ? "selected" : ""}>
+                      ${escapeHtml(`${scenario.name} · ${formatScenarioTimestamp(scenario.updatedAt)}`)}
+                    </option>
+                  `).join("")}
                 </select>
               </span>
             </label>
@@ -1322,6 +1320,14 @@ function renderScenarioManager(): string {
       </div>
     </div>
   `;
+}
+
+function confirmAndLoadSampleData(): void {
+  if (snapshotHasSavableData(collectPersistedScenarioSnapshot())) {
+    const shouldLoad = window.confirm("Load sample data and overwrite current inputs?");
+    if (!shouldLoad) return;
+  }
+  void loadInputsFromEtqExcelSnapshot();
 }
 
 function restoreDraftScenarioIfAvailable(): boolean {
@@ -3176,20 +3182,10 @@ function renderInputs(): void {
   const block = (title: string, open: boolean, canToggle: boolean, controlsHtml: string, sectionClass: string) => {
     const toggleHtml = `<button type="button" class="section-toggle" data-section="${title}"><span>${title}</span><span class="section-toggle-chevron" aria-hidden="true">${open ? "▾" : "▸"}</span></button>`;
     if (!canToggle) {
-      const hasHeaderAction = title === "Basics";
-      const sectionAction = hasHeaderAction
-        ? `
-          <div class="section-header-actions">
-            <button type="button" class="quickstart-load-btn" id="load-etq-excel-btn" ${excelLoadBusy ? "disabled" : ""}>${excelLoadBusy ? "Loading..." : "Sample data"}</button>
-          </div>
-        `
-        : "";
-      const headerRowClass = hasHeaderAction ? "section-header-row section-header-row--with-actions" : "section-header-row";
       return `
         <section class="input-section ${sectionClass}">
-          <div class="${headerRowClass}">
+          <div class="section-header-row">
             <h2>${title}</h2>
-            ${sectionAction}
           </div>
           ${controlsHtml}
         </section>
@@ -3430,17 +3426,6 @@ function renderInputs(): void {
     });
   }
 
-  const loadEtqExcelBtn = inputsPanel.querySelector<HTMLButtonElement>("#load-etq-excel-btn");
-  if (loadEtqExcelBtn) {
-    loadEtqExcelBtn.addEventListener("click", () => {
-      if (snapshotHasSavableData(collectPersistedScenarioSnapshot())) {
-        const shouldLoad = window.confirm("Load sample data and overwrite current inputs?");
-        if (!shouldLoad) return;
-      }
-      void loadInputsFromEtqExcelSnapshot();
-    });
-  }
-
   const clearInputsBtn = inputsPanel.querySelector<HTMLButtonElement>("#clear-inputs-btn");
   if (clearInputsBtn) {
     clearInputsBtn.addEventListener("click", () => {
@@ -3480,6 +3465,13 @@ function renderInputs(): void {
   const savedScenarioSelect = inputsPanel.querySelector<HTMLSelectElement>("#saved-scenario-select");
   if (savedScenarioSelect) {
     savedScenarioSelect.addEventListener("change", () => {
+      if (savedScenarioSelect.value === SAMPLE_DATA_SCENARIO_ID) {
+        selectedSavedScenarioId = null;
+        savedScenarioSelect.value = "";
+        confirmAndLoadSampleData();
+        renderInputs();
+        return;
+      }
       selectedSavedScenarioId = savedScenarioSelect.value || null;
       renderInputs();
     });
