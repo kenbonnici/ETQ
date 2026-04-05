@@ -1223,7 +1223,7 @@ body {
 
 .chart-tooltip-row.is-primary .chart-tooltip-key {
   color: #0f4f7d;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .chart-tooltip-row.is-comparison .chart-tooltip-key {
