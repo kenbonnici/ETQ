@@ -3995,13 +3995,13 @@ function renderChartTooltip(
       <div class="chart-tooltip-age">Age ${age} · ${year}</div>
       <div class="chart-tooltip-metric-chip">${escapeHtml(data.metricLabel)}</div>
     </div>
-    <div class="chart-tooltip-row is-primary">
-      <span class="chart-tooltip-key"><span class="chart-tooltip-series-marker is-primary" aria-hidden="true"></span>${escapeHtml(data.primaryLabel)}</span>
-      <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(primary, valueMode, compactUnit))}</span>
-    </div>
     <div class="chart-tooltip-row is-comparison">
       <span class="chart-tooltip-key"><span class="chart-tooltip-series-marker is-comparison" aria-hidden="true"></span>${escapeHtml(data.comparisonLabel)}</span>
       <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(comparison, valueMode, compactUnit))}</span>
+    </div>
+    <div class="chart-tooltip-row is-primary">
+      <span class="chart-tooltip-key"><span class="chart-tooltip-series-marker is-primary" aria-hidden="true"></span>${escapeHtml(data.primaryLabel)}</span>
+      <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(primary, valueMode, compactUnit))}</span>
     </div>
     <div class="chart-tooltip-row is-delta">
       <span class="chart-tooltip-key">Gap</span>
