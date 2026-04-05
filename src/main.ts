@@ -4313,8 +4313,8 @@ function recalc(): void {
   if (hasBlockingErrors) {
     latestRunResult = null;
     setChartLegendsVisible(false);
-    const blockedPrimaryLabel = statutory === null ? "At" : formatRetirementAgeLabel("At", statutory);
-    const blockedCompareLabel = compareAge === null ? "At Compare Age" : formatRetirementAgeLabel("At", compareAge);
+    const blockedPrimaryLabel = statutory === null ? "Retire at" : formatRetirementAgeLabel("Retire at", statutory);
+    const blockedCompareLabel = compareAge === null ? "Retire at" : formatRetirementAgeLabel("Retire at", compareAge);
     cashLegendA.textContent = blockedPrimaryLabel;
     cashLegendB.textContent = blockedCompareLabel;
     nwLegendA.textContent = blockedPrimaryLabel;
@@ -4355,9 +4355,9 @@ function recalc(): void {
   latestRunResult = displayResult;
   const contextByYear = buildChartContextByYear(displayResult);
   const primaryLabel = earliestAge !== null
-    ? formatRetirementAgeLabel("At", earliestAge)
-    : (primaryAge === null ? "At" : formatRetirementAgeLabel("At", primaryAge));
-  const comparisonLabel = compareAge === null ? "At Compare Age" : formatRetirementAgeLabel("At", compareAge);
+    ? formatRetirementAgeLabel("Retire at", earliestAge)
+    : (primaryAge === null ? "Retire at" : formatRetirementAgeLabel("Retire at", primaryAge));
+  const comparisonLabel = compareAge === null ? "Retire at" : formatRetirementAgeLabel("Retire at", compareAge);
   const activeCashSeries = cashflowScenario === "early"
     ? displayResult.outputs.cashSeriesEarly
     : displayResult.outputs.cashSeriesNorm;
