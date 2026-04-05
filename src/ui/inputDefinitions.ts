@@ -148,7 +148,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     section: "QUICK START",
     groupPath: "QUICK START",
     groupTail: [],
-    tooltip: "Net annual state pension entitlement",
+    tooltip: "Net annual pension entitlement",
     uiNote: "",
     sampleValue: "16000",
     type: "number"
@@ -2029,6 +2029,7 @@ const TOOLTIP_OVERRIDES: Partial<Record<FieldId, string>> = {
   "income.employment.netAnnual": "Annual net of tax income from employment or self-employment.",
   "housing.01Residence.marketValue": "Current market value or leave blank if not a home owner",
   "income.otherWork.netAnnual": "Net annual income from consulting, freelance, or other part-time work. Leave blank if none.",
+  "retirement.statePension.netAnnualAtStart": "Net annual pension entitlement",
   "retirement.earlyPensionReductionPerYear": "Reduction in annual pension for each year retired early",
   "debts.creditCards.balance": "Combined balance on all cards. Assumed cleared in Year 1. Leave blank if none."
 };
@@ -2086,7 +2087,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     fieldId === "retirement.statutoryAge"
     || fieldId === "retirement.statePension.netAnnualAtStart"
   ) {
-    return { section: "Retirement Income", groupTail: ["State pension"] };
+    return { section: "Retirement Income", groupTail: ["Pension"] };
   }
   if (fieldId.startsWith("income.postRetirementSupplement.")) {
     return { section: "Retirement Income", groupTail: ["Other retirement income"] };
