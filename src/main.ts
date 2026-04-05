@@ -3993,7 +3993,6 @@ function renderChartTooltip(
   tooltip.innerHTML = `
     <div class="chart-tooltip-head">
       <div class="chart-tooltip-age">Age ${age} · ${year}</div>
-      <div class="chart-tooltip-metric-chip">${escapeHtml(data.metricLabel)}</div>
     </div>
     <div class="chart-tooltip-row is-comparison">
       <span class="chart-tooltip-key"><span class="chart-tooltip-series-marker is-comparison" aria-hidden="true"></span>${escapeHtml(data.comparisonLabel)}</span>
@@ -4004,7 +4003,7 @@ function renderChartTooltip(
       <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(primary, valueMode, compactUnit))}</span>
     </div>
     <div class="chart-tooltip-row is-delta">
-      <span class="chart-tooltip-key">Gap</span>
+      <span class="chart-tooltip-key">${escapeHtml(`${data.metricLabel} gap`)}</span>
       <span class="chart-tooltip-value">${escapeHtml(formatTooltipCurrency(delta, valueMode, compactUnit))}</span>
     </div>
     ${contextItemsHtml ? `<div class="chart-tooltip-context"><ul class="chart-tooltip-context-list">${contextItemsHtml}</ul></div>` : ""}

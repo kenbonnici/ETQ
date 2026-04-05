@@ -1156,10 +1156,6 @@ body {
 }
 
 .chart-tooltip-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 10px;
   margin-bottom: 8px;
 }
 
@@ -1168,17 +1164,6 @@ body {
   font-weight: 800;
   color: #0f172a;
   line-height: 1.2;
-}
-
-.chart-tooltip-metric-chip {
-  font-size: 11px;
-  font-weight: 500;
-  color: #64748b;
-  line-height: 1;
-  padding: 4px 7px;
-  border: 1px solid #d8e1eb;
-  border-radius: 999px;
-  background: #f8fafc;
 }
 
 .chart-tooltip-row {
