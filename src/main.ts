@@ -1253,8 +1253,10 @@ function renderScenarioManager(): string {
   const scenarios = readNamedScenarios();
   const hasSavableScenarioData = snapshotHasSavableData(collectPersistedScenarioSnapshot());
   const hasSavedScenarios = scenarios.length > 0;
-  const hasSelectedScenario = selectedSavedScenarioId !== null && scenarios.some((scenario) => scenario.id === selectedSavedScenarioId);
+  const hasSelectedScenario = selectedSavedScenarioId === SAMPLE_DATA_SCENARIO_ID
+    || (selectedSavedScenarioId !== null && scenarios.some((scenario) => scenario.id === selectedSavedScenarioId));
   const selectedScenarioId = hasSelectedScenario ? selectedSavedScenarioId : "";
+  const selectedIsSampleData = selectedScenarioId === SAMPLE_DATA_SCENARIO_ID;
   const noticeHtml = scenarioManagerNotice
     ? `
       <div class="scenario-notice scenario-notice--${scenarioManagerNotice.tone}" role="status" aria-live="polite">
@@ -1302,7 +1304,7 @@ function renderScenarioManager(): string {
               <span class="scenario-field-shell">
                 <select id="saved-scenario-select" ${scenarioStorageAvailable ? "" : "disabled"}>
                   <option value="" ${hasSelectedScenario ? "" : "selected"}>Select a scenario...</option>
-                  <option value="${SAMPLE_DATA_SCENARIO_ID}">--sample data--</option>
+                  <option value="${SAMPLE_DATA_SCENARIO_ID}" ${selectedIsSampleData ? "selected" : ""}>--sample data--</option>
                   ${scenarios.map((scenario) => `
                     <option value="${escapeHtml(scenario.id)}" ${scenario.id === selectedScenarioId ? "selected" : ""}>
                       ${escapeHtml(`${scenario.name} · ${formatScenarioTimestamp(scenario.updatedAt)}`)}
@@ -1314,7 +1316,7 @@ function renderScenarioManager(): string {
           </div>
           <div class="scenario-row-actions">
             <button type="button" class="scenario-action-btn scenario-action-btn--secondary" id="load-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Load</button>
-            <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario ? "" : "disabled"}>Delete</button>
+            <button type="button" class="scenario-action-btn scenario-action-btn--danger" id="delete-saved-scenario-btn" ${scenarioStorageAvailable && hasSelectedScenario && !selectedIsSampleData ? "" : "disabled"}>Delete</button>
           </div>
         </div>
       </div>
@@ -3465,13 +3467,6 @@ function renderInputs(): void {
   const savedScenarioSelect = inputsPanel.querySelector<HTMLSelectElement>("#saved-scenario-select");
   if (savedScenarioSelect) {
     savedScenarioSelect.addEventListener("change", () => {
-      if (savedScenarioSelect.value === SAMPLE_DATA_SCENARIO_ID) {
-        selectedSavedScenarioId = null;
-        savedScenarioSelect.value = "";
-        confirmAndLoadSampleData();
-        renderInputs();
-        return;
-      }
       selectedSavedScenarioId = savedScenarioSelect.value || null;
       renderInputs();
     });
@@ -3482,6 +3477,13 @@ function renderInputs(): void {
     loadSavedScenarioBtn.addEventListener("click", () => {
       const selectedId = savedScenarioSelect?.value ?? selectedSavedScenarioId;
       if (!selectedId) return;
+      if (selectedId === SAMPLE_DATA_SCENARIO_ID) {
+        activeSavedScenarioId = null;
+        selectedSavedScenarioId = null;
+        scenarioDraftName = "";
+        confirmAndLoadSampleData();
+        return;
+      }
       const scenario = readNamedScenarios().find((entry) => entry.id === selectedId);
       if (!scenario) return;
       activeSavedScenarioId = scenario.id;
