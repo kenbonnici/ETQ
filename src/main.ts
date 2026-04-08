@@ -925,8 +925,10 @@ function applyFieldNumericConstraintForState(fieldId: FieldId, value: number | n
     }
   }
   if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) {
-    const currentAge = Number(state[RUNTIME_FIELDS.currentAge]);
-    const maxProjectionAge = Number(state[RUNTIME_FIELDS.lifeExpectancyAge]);
+    const rawCurrentAge = state[RUNTIME_FIELDS.currentAge];
+    const rawMaxProjectionAge = state[RUNTIME_FIELDS.lifeExpectancyAge];
+    const currentAge = isBlank(rawCurrentAge) ? NaN : Number(rawCurrentAge);
+    const maxProjectionAge = isBlank(rawMaxProjectionAge) ? NaN : Number(rawMaxProjectionAge);
     const resolvedCurrentAge = Number.isFinite(currentAge) ? Math.round(currentAge) : 18;
     const resolvedMaxProjectionAge = Number.isFinite(maxProjectionAge) ? Math.round(maxProjectionAge) : 120;
     if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1) {
@@ -942,10 +944,13 @@ function applyFieldNumericConstraintForState(fieldId: FieldId, value: number | n
 }
 
 function getSpendingAdjustmentAgePair(state: Partial<Record<FieldId, RawInputValue>> = fieldState): { age1: number; age2: number } {
-  const maxProjectionAge = Number(state[RUNTIME_FIELDS.lifeExpectancyAge]);
+  const rawMaxProjectionAge = state[RUNTIME_FIELDS.lifeExpectancyAge];
+  const maxProjectionAge = isBlank(rawMaxProjectionAge) ? NaN : Number(rawMaxProjectionAge);
   const resolvedMaxProjectionAge = Number.isFinite(maxProjectionAge) ? Math.round(maxProjectionAge) : 120;
-  const rawAge1 = Number(state[RUNTIME_FIELDS.spendingAdjustmentAge1]);
-  const rawAge2 = Number(state[RUNTIME_FIELDS.spendingAdjustmentAge2]);
+  const rawAge1Value = state[RUNTIME_FIELDS.spendingAdjustmentAge1];
+  const rawAge2Value = state[RUNTIME_FIELDS.spendingAdjustmentAge2];
+  const rawAge1 = isBlank(rawAge1Value) ? NaN : Number(rawAge1Value);
+  const rawAge2 = isBlank(rawAge2Value) ? NaN : Number(rawAge2Value);
   let age1 = Number.isFinite(rawAge1) ? Math.round(rawAge1) : DEFAULT_SPENDING_ADJUSTMENT_AGE_1;
   let age2 = Number.isFinite(rawAge2) ? Math.round(rawAge2) : DEFAULT_SPENDING_ADJUSTMENT_AGE_2;
 
@@ -958,11 +963,15 @@ function getSpendingAdjustmentAgePair(state: Partial<Record<FieldId, RawInputVal
   return { age1, age2 };
 }
 
-function syncSpendingAdjustmentAgeFields(changedFieldId?: FieldId): boolean {
-  const previousAge1 = fieldState[RUNTIME_FIELDS.spendingAdjustmentAge1];
-  const previousAge2 = fieldState[RUNTIME_FIELDS.spendingAdjustmentAge2];
-  let { age1, age2 } = getSpendingAdjustmentAgePair();
-  const maxProjectionAge = Number(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
+function syncSpendingAdjustmentAgeFieldsForState(
+  state: Partial<Record<FieldId, RawInputValue>>,
+  changedFieldId?: FieldId
+): boolean {
+  const previousAge1 = state[RUNTIME_FIELDS.spendingAdjustmentAge1];
+  const previousAge2 = state[RUNTIME_FIELDS.spendingAdjustmentAge2];
+  let { age1, age2 } = getSpendingAdjustmentAgePair(state);
+  const rawMaxProjectionAge = state[RUNTIME_FIELDS.lifeExpectancyAge];
+  const maxProjectionAge = isBlank(rawMaxProjectionAge) ? NaN : Number(rawMaxProjectionAge);
   const resolvedMaxProjectionAge = Number.isFinite(maxProjectionAge) ? Math.round(maxProjectionAge) : 120;
 
   if (changedFieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 && age1 >= age2) {
@@ -976,9 +985,13 @@ function syncSpendingAdjustmentAgeFields(changedFieldId?: FieldId): boolean {
     age2 = Math.max(age1 + 1, resolvedMaxProjectionAge);
   }
 
-  fieldState[RUNTIME_FIELDS.spendingAdjustmentAge1] = age1;
-  fieldState[RUNTIME_FIELDS.spendingAdjustmentAge2] = age2;
+  state[RUNTIME_FIELDS.spendingAdjustmentAge1] = age1;
+  state[RUNTIME_FIELDS.spendingAdjustmentAge2] = age2;
   return previousAge1 !== age1 || previousAge2 !== age2;
+}
+
+function syncSpendingAdjustmentAgeFields(changedFieldId?: FieldId): boolean {
+  return syncSpendingAdjustmentAgeFieldsForState(fieldState, changedFieldId);
 }
 
 function readScenarioStorageJson<T>(key: string): T | null {
@@ -1130,10 +1143,18 @@ function normalizePersistedRawInputs(raw: unknown): RawInputs {
       continue;
     }
     const numeric = Number(value);
+    if (
+      (def.fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || def.fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2)
+      && (!Number.isFinite(numeric) || numeric < 18 || numeric > 120)
+    ) {
+      sanitizedFields[def.fieldId] = null;
+      continue;
+    }
     sanitizedFields[def.fieldId] = Number.isFinite(numeric)
       ? applyFieldNumericConstraintForState(def.fieldId, numeric, sanitizedFields)
       : null;
   }
+  syncSpendingAdjustmentAgeFieldsForState(sanitizedFields);
   return pruneInactiveRawInputs(fieldStateToRawInputs(sanitizedFields));
 }
 
@@ -1283,6 +1304,7 @@ function applyPersistedScenarioSnapshot(
   notice: { message: string; tone?: ScenarioManagerNotice["tone"] } | null = null
 ): void {
   const restoredFields = rawInputsToFieldState(snapshot.rawInputs);
+  syncSpendingAdjustmentAgeFieldsForState(restoredFields);
   for (const def of INPUT_DEFINITIONS) {
     fieldState[def.fieldId] = restoredFields[def.fieldId] ?? null;
   }
@@ -2872,8 +2894,7 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
   `;
 }
 
-function renderEmbeddedAgeInput(def: InputDefinition, ariaLabel: string): string {
-  const value = fieldState[def.fieldId];
+function renderEmbeddedAgeInput(def: InputDefinition, ariaLabel: string, value: RawInputValue = fieldState[def.fieldId]): string {
   const valStr = formatFieldValue(def, value);
   return `
     <span class="embedded-field spending-adjustment-age-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
@@ -2913,7 +2934,7 @@ function renderSpendingAdjustmentsControl(): string {
             <span class="spending-adjustment-prefix">From</span>
             <span class="spending-adjustment-derived-age">${currentAge}</span>
             <span class="spending-adjustment-connector">to</span>
-            ${renderEmbeddedAgeInput(age1Def, "First spending bracket end age")}
+            ${renderEmbeddedAgeInput(age1Def, "First spending bracket end age", age1)}
           </div>
           <div class="input-shell has-suffix has-stepper spending-adjustment-value-shell">
             <input data-cell="${firstDef.cell}" data-field-id="${firstDef.fieldId}" type="text" inputmode="numeric" value="${firstValue}" aria-label="Spending adjustment up to first end age" />
@@ -2931,7 +2952,7 @@ function renderSpendingAdjustmentsControl(): string {
             <span class="spending-adjustment-prefix">From</span>
             <span class="spending-adjustment-derived-age">${secondStartAge}</span>
             <span class="spending-adjustment-connector">to</span>
-            ${renderEmbeddedAgeInput(age2Def, "Second spending bracket end age")}
+            ${renderEmbeddedAgeInput(age2Def, "Second spending bracket end age", age2)}
           </div>
           <div class="input-shell has-suffix has-stepper spending-adjustment-value-shell">
             <input data-cell="${secondDef.cell}" data-field-id="${secondDef.fieldId}" type="text" inputmode="numeric" value="${secondValue}" aria-label="Spending adjustment for middle age band" />
@@ -3163,13 +3184,13 @@ function getAgeStepperLimitMessage(fieldId: FieldId, dir: number, nextValue: num
     }
   }
   if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 && dir < 0) {
-    const currentAge = Number(fieldState[RUNTIME_FIELDS.currentAge]);
+    const currentAge = isBlank(fieldState[RUNTIME_FIELDS.currentAge]) ? NaN : Number(fieldState[RUNTIME_FIELDS.currentAge]);
     if (Number.isFinite(currentAge) && nextValue < Math.round(currentAge)) {
       return "First end age must be current age or later.";
     }
   }
   if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 && dir > 0) {
-    const maxProjectionAge = Number(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
+    const maxProjectionAge = isBlank(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]) ? NaN : Number(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
     if (Number.isFinite(maxProjectionAge) && nextValue >= Math.round(maxProjectionAge)) {
       return "First end age must leave room for the next bracket within the projection horizon.";
     }
@@ -3181,7 +3202,7 @@ function getAgeStepperLimitMessage(fieldId: FieldId, dir: number, nextValue: num
     }
   }
   if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2 && dir > 0) {
-    const maxProjectionAge = Number(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
+    const maxProjectionAge = isBlank(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]) ? NaN : Number(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
     if (Number.isFinite(maxProjectionAge) && nextValue > Math.round(maxProjectionAge)) {
       return "Second end age cannot exceed the projection horizon.";
     }

@@ -143,6 +143,32 @@ test("spending-by-age percent steppers apply to all three rows from their fixed 
   await expect(page.locator(selectors.spendingAdjustmentFinalBracket)).toHaveValue("-19%");
 });
 
+test("spending-by-age restores an invalid persisted second end age back to the default pair", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("etq:scenario:draft:v1", JSON.stringify({
+      version: 1,
+      savedAt: new Date().toISOString(),
+      rawInputs: {
+        B256: 65,
+        B257: 0
+      },
+      ui: {
+        deeperDiveOpen: false,
+        finerDetailsOpen: false,
+        earlyRetirementAge: 65,
+        selectedCurrency: "EUR",
+        livingExpensesMode: "single",
+        livingExpenseCategoryValues: {}
+      }
+    }));
+  });
+
+  await page.goto("/");
+
+  await expect(page.locator(selectors.spendingAdjustmentAge1)).toHaveValue("65");
+  await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("75");
+});
+
 test("reveals dependent slots up to five through the existing add-dependent flow", async ({ page }) => {
   await page.goto("/");
 
