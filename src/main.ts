@@ -2930,9 +2930,8 @@ function renderSpendingAdjustmentsControl(): string {
             <span class="spending-adjustment-connector">to</span>
             ${renderEmbeddedAgeInput(age1Def, "First spending bracket end age", age1)}
           </div>
-          <div class="input-shell has-suffix has-stepper spending-adjustment-value-shell">
+          <div class="input-shell has-stepper spending-adjustment-value-shell">
             <input data-cell="${firstDef.cell}" data-field-id="${firstDef.fieldId}" type="text" inputmode="numeric" value="${firstValue}" aria-label="Spending adjustment up to first end age" />
-            <span class="input-suffix" aria-hidden="true">%</span>
             <div class="field-stepper">
               <button type="button" class="field-step-btn" data-field-id="${firstDef.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease spending adjustment for ages up to ${age1}">-</button>
               <button type="button" class="field-step-btn" data-field-id="${firstDef.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase spending adjustment for ages up to ${age1}">+</button>
@@ -2948,9 +2947,8 @@ function renderSpendingAdjustmentsControl(): string {
             <span class="spending-adjustment-connector">to</span>
             ${renderEmbeddedAgeInput(age2Def, "Second spending bracket end age", age2)}
           </div>
-          <div class="input-shell has-suffix has-stepper spending-adjustment-value-shell">
+          <div class="input-shell has-stepper spending-adjustment-value-shell">
             <input data-cell="${secondDef.cell}" data-field-id="${secondDef.fieldId}" type="text" inputmode="numeric" value="${secondValue}" aria-label="Spending adjustment for middle age band" />
-            <span class="input-suffix" aria-hidden="true">%</span>
             <div class="field-stepper">
               <button type="button" class="field-step-btn" data-field-id="${secondDef.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease spending adjustment from age ${secondStartAge} to ${age2}">-</button>
               <button type="button" class="field-step-btn" data-field-id="${secondDef.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase spending adjustment from age ${secondStartAge} to ${age2}">+</button>
@@ -2965,9 +2963,8 @@ function renderSpendingAdjustmentsControl(): string {
             <span class="spending-adjustment-derived-age">${finalStartAge}</span>
             <span class="spending-adjustment-connector">onward</span>
           </div>
-          <div class="input-shell has-suffix has-stepper spending-adjustment-value-shell">
+          <div class="input-shell has-stepper spending-adjustment-value-shell">
             <input data-cell="${finalDef.cell}" data-field-id="${finalDef.fieldId}" type="text" inputmode="numeric" value="${finalValue}" aria-label="Spending adjustment from final age band onward" />
-            <span class="input-suffix" aria-hidden="true">%</span>
             <div class="field-stepper">
               <button type="button" class="field-step-btn" data-field-id="${finalDef.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease spending adjustment from age ${finalStartAge} onward">-</button>
               <button type="button" class="field-step-btn" data-field-id="${finalDef.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase spending adjustment from age ${finalStartAge} onward">+</button>
