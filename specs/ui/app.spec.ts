@@ -62,6 +62,8 @@ const selectors = {
 } as const;
 
 const stepperSelectors = {
+  spendingAdjustmentAge1Up: 'button.field-step-btn[data-field-id="spending.adjustments.firstBracket.endAge"][data-step-dir="1"]',
+  spendingAdjustmentAge2Down: 'button.field-step-btn[data-field-id="spending.adjustments.secondBracket.endAge"][data-step-dir="-1"]',
   spendingAdjustmentFirstBracketUp: 'button.field-step-btn[data-field-id="spending.adjustments.firstBracket.deltaRate"][data-step-dir="1"]',
   spendingAdjustmentSecondBracketUp: 'button.field-step-btn[data-field-id="spending.adjustments.secondBracket.deltaRate"][data-step-dir="1"]',
   spendingAdjustmentFinalBracketUp: 'button.field-step-btn[data-field-id="spending.adjustments.finalBracket.deltaRate"][data-step-dir="1"]'
@@ -165,6 +167,23 @@ test("spending-by-age percent steppers apply to all three rows from their fixed 
   await expect(page.locator(selectors.spendingAdjustmentFirstBracket)).toHaveValue("1%");
   await expect(page.locator(selectors.spendingAdjustmentSecondBracket)).toHaveValue("-9%");
   await expect(page.locator(selectors.spendingAdjustmentFinalBracket)).toHaveValue("-19%");
+});
+
+test("spending-by-age age steppers move the bracket boundaries in single-year increments", async ({ page }) => {
+  await page.goto("/");
+
+  await fillAndBlur(page, selectors.currentAge, "45");
+  await fillAndBlur(page, selectors.lifeExpectancy, "90");
+  await fillAndBlur(page, selectors.spendingAdjustmentAge1, "60");
+  await fillAndBlur(page, selectors.spendingAdjustmentAge2, "80");
+
+  await page.locator(stepperSelectors.spendingAdjustmentAge1Up).click();
+  await page.locator(stepperSelectors.spendingAdjustmentAge2Down).click();
+
+  await expect(page.locator(selectors.spendingAdjustmentAge1)).toHaveValue("61");
+  await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("79");
+  await expect(page.locator(".spending-adjustment-row .spending-adjustment-derived-age").nth(1)).toHaveText("62");
+  await expect(page.locator(".spending-adjustment-row .spending-adjustment-derived-age").nth(2)).toHaveText("80");
 });
 
 test("spending-by-age restores an invalid persisted second end age back to the default pair", async ({ page }) => {

@@ -2259,6 +2259,10 @@ body {
   margin-bottom: 8px;
 }
 
+:root {
+  --spending-adjustment-input-width: 116px;
+}
+
 .spending-adjustments-compact {
   display: grid;
   gap: 10px;
@@ -2317,18 +2321,32 @@ body {
 }
 
 .spending-adjustment-age-field {
-  display: inline-grid;
-  gap: 4px;
-  width: 52px;
+  width: var(--spending-adjustment-input-width);
   position: relative;
   z-index: 1;
 }
 
 .spending-adjustment-age-input {
-  padding: 7px 8px;
+  padding: 7px 30px 7px 10px;
   text-align: center;
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1;
+}
+
+.spending-adjustment-age-field .field-stepper {
+  right: 6px;
+  display: grid;
+  gap: 2px;
+  padding-left: 0;
+  background: none;
+  z-index: 1;
+}
+
+.spending-adjustment-age-field .field-step-btn {
+  width: 16px;
+  height: 12px;
+  border-radius: 4px;
+  font-size: 10px;
 }
 
 .spending-adjustment-value-shell input {
@@ -2347,7 +2365,7 @@ body {
 }
 
 .spending-adjustment-value-shell {
-  width: 136px;
+  width: var(--spending-adjustment-input-width);
   justify-self: end;
   border-color: #c7d5cd;
   border-radius: 10px;

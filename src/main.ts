@@ -2887,7 +2887,7 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
 function renderEmbeddedAgeInput(def: InputDefinition, ariaLabel: string, value: RawInputValue = fieldState[def.fieldId]): string {
   const valStr = formatFieldValue(def, value);
   return `
-    <span class="embedded-field spending-adjustment-age-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+    <span class="embedded-field spending-adjustment-age-field input-shell has-stepper" data-cell="${def.cell}" data-field-id="${def.fieldId}">
       <input
         class="spending-adjustment-age-input"
         data-cell="${def.cell}"
@@ -2897,6 +2897,10 @@ function renderEmbeddedAgeInput(def: InputDefinition, ariaLabel: string, value: 
         value="${valStr}"
         aria-label="${escapeHtml(ariaLabel)}"
       />
+      <div class="field-stepper">
+        <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease ${escapeHtml(ariaLabel)}">-</button>
+        <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase ${escapeHtml(ariaLabel)}">+</button>
+      </div>
     </span>
   `;
 }
