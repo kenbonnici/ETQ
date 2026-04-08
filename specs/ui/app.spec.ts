@@ -138,6 +138,23 @@ test("spending-by-age fields keep fixed defaults and allow inline age editing wi
   await expect(firstEndAge).toHaveValue("45");
 });
 
+test("spending-by-age row starts follow the edited end ages after commit", async ({ page }) => {
+  await page.goto("/");
+
+  await fillAndBlur(page, selectors.currentAge, "45");
+  await fillAndBlur(page, selectors.lifeExpectancy, "90");
+  await fillAndBlur(page, selectors.spendingAdjustmentAge1, "55");
+  await fillAndBlur(page, selectors.spendingAdjustmentAge2, "80");
+
+  const derivedAges = page.locator(".spending-adjustment-row .spending-adjustment-derived-age");
+  await expect(derivedAges.nth(0)).toHaveText("45");
+  await expect(page.locator(selectors.spendingAdjustmentAge1)).toHaveValue("55");
+  await expect(derivedAges.nth(1)).toHaveText("56");
+  await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("80");
+  await expect(derivedAges.nth(2)).toHaveText("81");
+  await expect(page.locator(".spending-adjustment-row").nth(2)).toContainText("onward");
+});
+
 test("spending-by-age percent steppers apply to all three rows from their fixed defaults", async ({ page }) => {
   await page.goto("/");
 

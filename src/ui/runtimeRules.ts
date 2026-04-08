@@ -261,7 +261,10 @@ export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, numb
 };
 
 export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
+  RUNTIME_FIELDS.currentAge,
   RUNTIME_FIELDS.stockMarketInvestments,
+  RUNTIME_FIELDS.spendingAdjustmentAge1,
+  RUNTIME_FIELDS.spendingAdjustmentAge2,
   HOME_FIELDS.homeValue,
   HOME_FIELDS.mortgageBalance,
   DOWNSIZING_FIELDS.year,
@@ -593,12 +596,14 @@ function stockMarketCrashSlotVisible(
 }
 
 function getSpendingAdjustmentAge1(values: RuntimeValues): number {
-  const raw = Number(values[RUNTIME_FIELDS.spendingAdjustmentAge1]);
+  const value = values[RUNTIME_FIELDS.spendingAdjustmentAge1];
+  const raw = isBlank(value) ? NaN : Number(value);
   return Number.isFinite(raw) ? Math.round(raw) : 65;
 }
 
 function getSpendingAdjustmentAge2(values: RuntimeValues): number {
-  const raw = Number(values[RUNTIME_FIELDS.spendingAdjustmentAge2]);
+  const value = values[RUNTIME_FIELDS.spendingAdjustmentAge2];
+  const raw = isBlank(value) ? NaN : Number(value);
   return Number.isFinite(raw) ? Math.round(raw) : 75;
 }
 

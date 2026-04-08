@@ -134,6 +134,45 @@ test("blank legacy normalizes to zero and specimen parity captures the shifted w
   assert.equal(SPECIMEN_FIELDS[ASSET_OF_VALUE_RUNTIME_GROUPS[4].liquidationRankField], 5);
 });
 
+test("spending adjustment boundaries switch at the next age after each edited end age", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 45;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 90;
+  fields[RUNTIME_FIELDS.annualLivingExpenses] = 1_000;
+  fields[RUNTIME_FIELDS.spendingAdjustmentAge1] = 55;
+  fields[RUNTIME_FIELDS.spendingAdjustmentAge2] = 80;
+  fields[RUNTIME_FIELDS.spendingAdjustmentFirstBracket] = 0;
+  fields[RUNTIME_FIELDS.spendingAdjustmentSecondBracket] = -0.1;
+  fields[RUNTIME_FIELDS.spendingAdjustmentFinalBracket] = -0.2;
+
+  const normalized = normalizeInputs(fieldStateToRawInputs(fields));
+  assert.equal(normalized.spendingAdjustmentAge1, 55);
+  assert.equal(normalized.spendingAdjustmentAge2, 80);
+
+  const result = runModel(fields, {
+    deeperDiveOpen: false,
+    finerDetailsOpen: false,
+    earlyRetirementAge: 65,
+    manualPropertyLiquidationOrder: false,
+    projectionMonthOverride: 12
+  });
+
+  const age55Idx = result.outputs.ages.findIndex((age) => age === 55);
+  const age56Idx = result.outputs.ages.findIndex((age) => age === 56);
+  const age80Idx = result.outputs.ages.findIndex((age) => age === 80);
+  const age81Idx = result.outputs.ages.findIndex((age) => age === 81);
+
+  assert.notEqual(age55Idx, -1);
+  assert.notEqual(age56Idx, -1);
+  assert.notEqual(age80Idx, -1);
+  assert.notEqual(age81Idx, -1);
+  assert.equal(result.outputs.scenarioNorm.cashFlow.livingExpenses[age55Idx], 1_000);
+  assert.equal(result.outputs.scenarioNorm.cashFlow.livingExpenses[age56Idx], 900);
+  assert.equal(result.outputs.scenarioNorm.cashFlow.livingExpenses[age80Idx], 900);
+  assert.equal(result.outputs.scenarioNorm.cashFlow.livingExpenses[age81Idx], 800);
+});
+
 test("retirement success requires both the cash buffer and the end-age legacy target", () => {
   const workbookCachedAge = runModel(SPECIMEN_FIELDS, SPECIMEN_UI_STATE);
   assert.equal(workbookCachedAge.outputs.scenarioEarly.retirementSuccessful, true);
