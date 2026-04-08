@@ -90,7 +90,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     groupTail: [],
     tooltip: "Fixed monthly amount invested into stocks from now until retirement",
     uiNote: "",
-    sampleValue: "500",
+    sampleValue: "350",
     type: "number"
   },
   {

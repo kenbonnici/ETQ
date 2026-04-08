@@ -424,6 +424,7 @@ interface ExcelSpecimenPayload {
 }
 
 const SAMPLE_DATA_NUMERIC_OVERRIDES: Readonly<Partial<Record<FieldId, number>>> = {
+  [RUNTIME_FIELDS.stockContributionMonthly]: 350,
   [RUNTIME_FIELDS.minimumCashBuffer]: 50_000,
   [RUNTIME_FIELDS.legacyAmount]: 1_000_000
 };
