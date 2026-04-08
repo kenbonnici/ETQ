@@ -3213,6 +3213,9 @@ function applyStepperDelta(fieldId: FieldId, dir: number): void {
   const next = current + dir * (step ?? 0);
   const ageLimitMessage = getAgeStepperLimitMessage(fieldId, dir, next);
   if (ageLimitMessage !== null) {
+    if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) {
+      return;
+    }
     setAttemptedFieldMessage(fieldId, ageLimitMessage);
     renderValidationState(latestValidationMessages);
     return;

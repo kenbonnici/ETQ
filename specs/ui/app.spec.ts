@@ -186,6 +186,20 @@ test("spending-by-age age steppers move the bracket boundaries in single-year in
   await expect(page.locator(".spending-adjustment-row .spending-adjustment-derived-age").nth(2)).toHaveText("80");
 });
 
+test("spending-by-age age steppers block invalid moves without showing inline errors", async ({ page }) => {
+  await page.goto("/");
+
+  await fillAndBlur(page, selectors.currentAge, "71");
+  await fillAndBlur(page, selectors.lifeExpectancy, "90");
+  await fillAndBlur(page, selectors.spendingAdjustmentAge1, "71");
+  await fillAndBlur(page, selectors.spendingAdjustmentAge2, "72");
+
+  await page.locator(stepperSelectors.spendingAdjustmentAge2Down).click();
+
+  await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("72");
+  await expect(page.locator('.field-feedback.is-error')).toHaveCount(0);
+});
+
 test("spending-by-age restores an invalid persisted second end age back to the default pair", async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("etq:scenario:draft:v1", JSON.stringify({
