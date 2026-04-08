@@ -174,6 +174,11 @@ const LIVING_EXPENSES_DEF = INPUT_DEFINITION_BY_FIELD_ID[LIVING_EXPENSES_FIELD_I
 const DOWNSIZING_MODE_OPTIONS = ["Buy", "Rent"] as const;
 const DEFAULT_SPENDING_ADJUSTMENT_AGE_1 = 65;
 const DEFAULT_SPENDING_ADJUSTMENT_AGE_2 = 75;
+const SPENDING_ADJUSTMENT_PERCENT_FIELD_IDS = new Set<FieldId>([
+  RUNTIME_FIELDS.spendingAdjustmentFirstBracket,
+  RUNTIME_FIELDS.spendingAdjustmentSecondBracket,
+  RUNTIME_FIELDS.spendingAdjustmentFinalBracket
+]);
 const DOWNSIZING_PREVIEW_INPUT_FIELDS = new Set<FieldId>([
   HOME_FIELDS.homeValue,
   HOME_FIELDS.mortgageBalance,
@@ -2627,13 +2632,18 @@ function parsePercentInput(text: string, allowNegative: boolean): number | null 
   return n / 100;
 }
 
+function isWholePercentDisplayField(fieldId: FieldId): boolean {
+  return SPENDING_ADJUSTMENT_PERCENT_FIELD_IDS.has(fieldId);
+}
+
 function formatFieldValue(def: InputDefinition, value: unknown): string {
   if (value === null || value === undefined || String(value).trim() === "") return "";
   const isYearField = def.label.trim().toLowerCase() === "year";
   if (def.type === "percent") {
     const n = Number(value);
     if (!Number.isFinite(n)) return "";
-    return `${(n * 100).toFixed(2)}%`;
+    const digits = isWholePercentDisplayField(def.fieldId) ? 0 : 2;
+    return `${(n * 100).toFixed(digits)}%`;
   }
   if (def.type === "integer" || def.type === "number") {
     const n = Number(value);
@@ -2890,15 +2900,15 @@ function renderSpendingAdjustmentsControl(): string {
 
   return `
     <div class="spending-adjustments-compact" role="group" aria-label="Spending changes by age">
-      <small class="spending-adjustments-helper">% change is relative to your current spending, not cumulative.</small>
+      <small class="spending-adjustments-helper">Each change is applied relative to your current spending.</small>
       <div class="field spending-adjustment-row" data-cell="${firstDef.cell}" data-field-id="${firstDef.fieldId}">
         <div class="spending-adjustment-row-main">
           <div class="spending-adjustment-label">
-            <span>Up to age</span>
+            <span class="spending-adjustment-prefix">Up to</span>
             ${renderEmbeddedAgeInput(age1Def, "First spending bracket end age")}
           </div>
           <div class="input-shell has-suffix has-stepper spending-adjustment-value-shell">
-            <input data-cell="${firstDef.cell}" data-field-id="${firstDef.fieldId}" type="text" inputmode="decimal" value="${firstValue}" aria-label="Spending adjustment up to first end age" />
+            <input data-cell="${firstDef.cell}" data-field-id="${firstDef.fieldId}" type="text" inputmode="numeric" value="${firstValue}" aria-label="Spending adjustment up to first end age" />
             <span class="input-suffix" aria-hidden="true">%</span>
             <div class="field-stepper">
               <button type="button" class="field-step-btn" data-field-id="${firstDef.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease spending adjustment for ages up to ${age1}">-</button>
@@ -2910,13 +2920,13 @@ function renderSpendingAdjustmentsControl(): string {
       <div class="field spending-adjustment-row" data-cell="${secondDef.cell}" data-field-id="${secondDef.fieldId}">
         <div class="spending-adjustment-row-main">
           <div class="spending-adjustment-label">
-            <span>From</span>
+            <span class="spending-adjustment-prefix">From</span>
             <span class="spending-adjustment-derived-age">${secondStartAge}</span>
-            <span>to</span>
+            <span class="spending-adjustment-connector">to</span>
             ${renderEmbeddedAgeInput(age2Def, "Second spending bracket end age")}
           </div>
           <div class="input-shell has-suffix has-stepper spending-adjustment-value-shell">
-            <input data-cell="${secondDef.cell}" data-field-id="${secondDef.fieldId}" type="text" inputmode="decimal" value="${secondValue}" aria-label="Spending adjustment for middle age band" />
+            <input data-cell="${secondDef.cell}" data-field-id="${secondDef.fieldId}" type="text" inputmode="numeric" value="${secondValue}" aria-label="Spending adjustment for middle age band" />
             <span class="input-suffix" aria-hidden="true">%</span>
             <div class="field-stepper">
               <button type="button" class="field-step-btn" data-field-id="${secondDef.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease spending adjustment from age ${secondStartAge} to ${age2}">-</button>
@@ -2928,12 +2938,12 @@ function renderSpendingAdjustmentsControl(): string {
       <div class="field spending-adjustment-row" data-cell="${finalDef.cell}" data-field-id="${finalDef.fieldId}">
         <div class="spending-adjustment-row-main">
           <div class="spending-adjustment-label">
-            <span>From</span>
+            <span class="spending-adjustment-prefix">From</span>
             <span class="spending-adjustment-derived-age">${finalStartAge}</span>
-            <span>onward</span>
+            <span class="spending-adjustment-connector">onward</span>
           </div>
           <div class="input-shell has-suffix has-stepper spending-adjustment-value-shell">
-            <input data-cell="${finalDef.cell}" data-field-id="${finalDef.fieldId}" type="text" inputmode="decimal" value="${finalValue}" aria-label="Spending adjustment from final age band onward" />
+            <input data-cell="${finalDef.cell}" data-field-id="${finalDef.fieldId}" type="text" inputmode="numeric" value="${finalValue}" aria-label="Spending adjustment from final age band onward" />
             <span class="input-suffix" aria-hidden="true">%</span>
             <div class="field-stepper">
               <button type="button" class="field-step-btn" data-field-id="${finalDef.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease spending adjustment from age ${finalStartAge} onward">-</button>
@@ -3968,7 +3978,8 @@ function renderInputs(): void {
           return;
         }
         const n = Number(current);
-        el.value = Number.isFinite(n) ? (n * 100).toFixed(2) : "";
+        const digits = isWholePercentDisplayField(fieldId) ? 0 : 2;
+        el.value = Number.isFinite(n) ? (n * 100).toFixed(digits) : "";
         queueMicrotask(() => {
           if (document.activeElement === el) el.setSelectionRange(0, el.value.length);
         });
