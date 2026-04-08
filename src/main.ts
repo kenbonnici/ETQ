@@ -1579,7 +1579,7 @@ function getProjectionBlockingLines(messages: ValidationMessage[]): string[] {
 
 function renderValidationState(messages: ValidationMessage[]): void {
   latestValidationMessages = messages;
-  const fields = inputsPanel.querySelectorAll<HTMLElement>(".field[data-field-id]");
+  const fields = inputsPanel.querySelectorAll<HTMLElement>(".field[data-field-id], .embedded-field[data-field-id]");
   fields.forEach((field) => {
     field.classList.remove("has-error", "has-warning");
     field.querySelectorAll<HTMLElement>(".field-feedback").forEach((node) => node.remove());
@@ -2857,6 +2857,78 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
   `;
 }
 
+function renderEmbeddedAgeInput(def: InputDefinition, ariaLabel: string): string {
+  const value = fieldState[def.fieldId];
+  const valStr = formatFieldValue(def, value);
+  return `
+    <span class="embedded-field spending-adjustment-age-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+      <input
+        class="spending-adjustment-age-input"
+        data-cell="${def.cell}"
+        data-field-id="${def.fieldId}"
+        type="text"
+        inputmode="numeric"
+        value="${valStr}"
+        aria-label="${escapeHtml(ariaLabel)}"
+      />
+    </span>
+  `;
+}
+
+function renderSpendingAdjustmentsControl(): string {
+  const age1Def = INPUT_DEFINITION_BY_FIELD_ID[RUNTIME_FIELDS.spendingAdjustmentAge1];
+  const age2Def = INPUT_DEFINITION_BY_FIELD_ID[RUNTIME_FIELDS.spendingAdjustmentAge2];
+  const firstDef = INPUT_DEFINITION_BY_FIELD_ID[RUNTIME_FIELDS.spendingAdjustmentFirstBracket];
+  const secondDef = INPUT_DEFINITION_BY_FIELD_ID[RUNTIME_FIELDS.spendingAdjustmentSecondBracket];
+  const finalDef = INPUT_DEFINITION_BY_FIELD_ID[RUNTIME_FIELDS.spendingAdjustmentFinalBracket];
+  const { age1, age2 } = getSpendingAdjustmentAgePair();
+  const firstValue = formatFieldValue(firstDef, fieldState[firstDef.fieldId]);
+  const secondValue = formatFieldValue(secondDef, fieldState[secondDef.fieldId]);
+  const finalValue = formatFieldValue(finalDef, fieldState[finalDef.fieldId]);
+  const secondStartAge = age1 + 1;
+  const secondLabelPrefix = secondStartAge === age2 ? "Age" : `Age ${secondStartAge} to`;
+
+  return `
+    <div class="spending-adjustments-compact" role="group" aria-label="Spending changes by age">
+      <div class="field spending-adjustment-row" data-cell="${firstDef.cell}" data-field-id="${firstDef.fieldId}">
+        <div class="spending-adjustment-row-main">
+          <div class="spending-adjustment-label">
+            <span>Up to age</span>
+            ${renderEmbeddedAgeInput(age1Def, "First spending bracket end age")}
+          </div>
+          <div class="input-shell has-suffix spending-adjustment-value-shell">
+            <input data-cell="${firstDef.cell}" data-field-id="${firstDef.fieldId}" type="text" inputmode="decimal" value="${firstValue}" aria-label="Spending adjustment up to first end age" />
+            <span class="input-suffix" aria-hidden="true">%</span>
+          </div>
+        </div>
+      </div>
+      <div class="field spending-adjustment-row" data-cell="${secondDef.cell}" data-field-id="${secondDef.fieldId}">
+        <div class="spending-adjustment-row-main">
+          <div class="spending-adjustment-label">
+            <span>${escapeHtml(secondLabelPrefix)}</span>
+            ${renderEmbeddedAgeInput(age2Def, "Second spending bracket end age")}
+          </div>
+          <div class="input-shell has-suffix spending-adjustment-value-shell">
+            <input data-cell="${secondDef.cell}" data-field-id="${secondDef.fieldId}" type="text" inputmode="decimal" value="${secondValue}" aria-label="Spending adjustment for middle age band" />
+            <span class="input-suffix" aria-hidden="true">%</span>
+          </div>
+        </div>
+      </div>
+      <div class="field spending-adjustment-row" data-cell="${finalDef.cell}" data-field-id="${finalDef.fieldId}">
+        <div class="spending-adjustment-row-main">
+          <div class="spending-adjustment-label">
+            <span>Age ${age2 + 1} onward</span>
+          </div>
+          <div class="input-shell has-suffix spending-adjustment-value-shell">
+            <input data-cell="${finalDef.cell}" data-field-id="${finalDef.fieldId}" type="text" inputmode="decimal" value="${finalValue}" aria-label="Spending adjustment from final age band onward" />
+            <span class="input-suffix" aria-hidden="true">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderGroupHeaderNameInput(fieldId: FieldId, placeholder: string): string {
   const def = INPUT_DEFINITION_BY_FIELD_ID[fieldId];
   const value = fieldState[fieldId];
@@ -3397,6 +3469,7 @@ function renderInputs(): void {
     let prevMid = "";
     let prevSub = "";
     let liquidationRendered = false;
+    let spendingAdjustmentsRendered = false;
     let subgroupCardOpen = false;
     let subgroupHeaderFieldId: FieldId | null = null;
 
@@ -3424,6 +3497,26 @@ function renderInputs(): void {
             html += `<h3 class="group-top">Asset liquidation order</h3>${controlHtml}`;
           }
           liquidationRendered = true;
+        }
+        continue;
+      }
+      if (
+        def.fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1
+        || def.fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2
+        || def.fieldId === RUNTIME_FIELDS.spendingAdjustmentFirstBracket
+        || def.fieldId === RUNTIME_FIELDS.spendingAdjustmentSecondBracket
+        || def.fieldId === RUNTIME_FIELDS.spendingAdjustmentFinalBracket
+      ) {
+        if (!spendingAdjustmentsRendered) {
+          closeSubgroupCard();
+          if (prevTop !== "Spending changes by age") {
+            html += `<h3 class="group-top">Spending changes by age</h3>`;
+            prevTop = "Spending changes by age";
+            prevMid = "";
+            prevSub = "";
+          }
+          html += renderSpendingAdjustmentsControl();
+          spendingAdjustmentsRendered = true;
         }
         continue;
       }

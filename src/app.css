@@ -2259,6 +2259,60 @@ body {
   margin-bottom: 8px;
 }
 
+.spending-adjustments-compact {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.spending-adjustment-row {
+  margin-bottom: 0;
+}
+
+.spending-adjustment-row-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 118px;
+  align-items: center;
+  gap: 12px;
+}
+
+.spending-adjustment-label {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: #213b34;
+  letter-spacing: 0.005em;
+}
+
+.spending-adjustment-age-field {
+  display: inline-grid;
+  gap: 4px;
+  width: 54px;
+}
+
+.spending-adjustment-age-input {
+  padding: 6px 8px;
+  text-align: center;
+}
+
+.spending-adjustment-value-shell input {
+  text-align: right;
+}
+
+.embedded-field.has-error input {
+  border-color: #b91c1c;
+  background: #fff7f7;
+}
+
+.embedded-field.has-warning input {
+  border-color: #c2410c;
+  background: #fffaf5;
+}
+
 .living-expenses-field {
   gap: 8px;
 }
@@ -2757,6 +2811,17 @@ input {
 
 .field-feedback.is-warning {
   color: #c2410c;
+}
+
+@media (max-width: 640px) {
+  .spending-adjustment-row-main {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .spending-adjustment-value-shell {
+    max-width: 132px;
+  }
 }
 
 small {
