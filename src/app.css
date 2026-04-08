@@ -2261,7 +2261,7 @@ body {
 
 :root {
   --spending-adjustment-age-input-width: 92px;
-  --spending-adjustment-value-input-width: 116px;
+  --spending-adjustment-value-input-width: 104px;
 }
 
 .spending-adjustments-compact {
@@ -2366,12 +2366,12 @@ body {
 }
 
 .spending-adjustment-value-shell .input-suffix {
-  right: 34px;
+  right: 32px;
   color: #567068;
 }
 
 .spending-adjustment-value-shell.has-suffix.has-stepper input {
-  padding-right: 58px;
+  padding-right: 54px;
 }
 
 .spending-adjustment-value-shell {

@@ -1,0 +1,335 @@
+# Page snapshot
+
+```yaml
+- main [ref=e3]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e7]:
+        - generic [ref=e9]:
+          - generic [ref=e10]: MY DATA
+          - generic [ref=e11]: ·Stored locally. Never leaves your device.
+        - combobox "Currency selector" [ref=e13]:
+          - option "USD"
+          - option "EUR" [selected]
+          - option "JPY"
+          - option "GBP"
+          - option "CNY"
+          - option "AUD"
+          - option "CAD"
+          - option "CHF"
+          - option "HKD"
+          - option "SGD"
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e19]: Current inputs
+            - textbox "e.g. Conservative, Aggressive..." [ref=e21]
+          - generic [ref=e22]:
+            - button "Save" [ref=e23] [cursor=pointer]
+            - button "Clear" [ref=e24] [cursor=pointer]
+        - generic [ref=e25]:
+          - generic [ref=e27]:
+            - generic [ref=e28]: Scenarios
+            - combobox "Scenarios" [ref=e30]:
+              - option "Select a scenario..." [selected]
+              - option "--sample data--"
+          - generic [ref=e31]:
+            - button "Load" [disabled] [ref=e32]
+            - button "Delete" [disabled] [ref=e33]
+    - generic [ref=e34]:
+      - heading "Basics" [level=2] [ref=e36]
+      - generic [ref=e37]:
+        - generic [ref=e38]: Your age
+        - generic [ref=e39]:
+          - textbox [ref=e40]: "40"
+          - generic [ref=e41]:
+            - button "Decrease Your age" [ref=e42] [cursor=pointer]: "-"
+            - button "Increase Your age" [ref=e43] [cursor=pointer]: +
+      - generic [ref=e44]:
+        - generic [ref=e45]: Life expectancy
+        - generic [ref=e46]:
+          - textbox [ref=e47]: "40"
+          - generic [ref=e48]:
+            - button "Decrease Life expectancy" [ref=e49] [cursor=pointer]: "-"
+            - button "Increase Life expectancy" [ref=e50] [cursor=pointer]: +
+      - generic [ref=e52]:
+        - generic [ref=e53]:
+          - generic [ref=e54]: Annual living expenses
+          - group "Living expenses entry mode" [ref=e55]:
+            - button "Detailed breakdown" [ref=e56] [cursor=pointer]:
+              - generic [ref=e59]: Detailed breakdown
+        - generic [ref=e60]:
+          - generic: €
+          - textbox [ref=e61]
+          - generic [ref=e62]:
+            - button "Decrease Annual living expenses" [ref=e63] [cursor=pointer]: "-"
+            - button "Increase Annual living expenses" [ref=e64] [cursor=pointer]: +
+      - heading "Goals" [level=3] [ref=e65]
+      - generic [ref=e66]:
+        - generic [ref=e67]: Minimum cash reserve
+        - generic [ref=e68]:
+          - generic: €
+          - textbox [ref=e69]
+          - generic [ref=e70]:
+            - button "Decrease Minimum cash reserve" [ref=e71] [cursor=pointer]: "-"
+            - button "Increase Minimum cash reserve" [ref=e72] [cursor=pointer]: +
+        - generic [ref=e73]: Emergency reserve
+      - generic [ref=e74]:
+        - generic [ref=e75]: Amount you want to leave behind
+        - generic [ref=e76]:
+          - generic: €
+          - textbox [ref=e77]
+          - generic [ref=e78]:
+            - button "Decrease Amount you want to leave behind" [ref=e79] [cursor=pointer]: "-"
+            - button "Increase Amount you want to leave behind" [ref=e80] [cursor=pointer]: +
+        - generic [ref=e81]: Wealth to preserve for your heirs
+    - generic [ref=e82]:
+      - heading "Income" [level=2] [ref=e84]
+      - generic [ref=e85]:
+        - generic [ref=e86]: Main income
+        - generic [ref=e87]:
+          - generic: €
+          - textbox [ref=e88]
+          - generic [ref=e89]:
+            - button "Decrease Main income" [ref=e90] [cursor=pointer]: "-"
+            - button "Increase Main income" [ref=e91] [cursor=pointer]: +
+        - generic [ref=e92]: Annual net of tax income from employment or self-employment.
+      - heading "Side income" [level=3] [ref=e93]
+      - generic [ref=e94]:
+        - generic [ref=e95]: Annual amount
+        - generic [ref=e96]:
+          - generic: €
+          - textbox [ref=e97]
+          - generic [ref=e98]:
+            - button "Decrease Annual amount" [ref=e99] [cursor=pointer]: "-"
+            - button "Increase Annual amount" [ref=e100] [cursor=pointer]: +
+        - generic [ref=e101]: Net annual income from consulting, freelance, or other part-time work. Leave blank if none.
+    - generic [ref=e102]:
+      - heading "Housing" [level=2] [ref=e104]
+      - generic [ref=e105]:
+        - generic [ref=e106]: Home value
+        - generic [ref=e107]:
+          - generic: €
+          - textbox [ref=e108]
+          - generic [ref=e109]:
+            - button "Decrease Home value" [ref=e110] [cursor=pointer]: "-"
+            - button "Increase Home value" [ref=e111] [cursor=pointer]: +
+        - generic [ref=e112]: Current market value or leave blank if not a home owner
+      - generic [ref=e113]:
+        - generic [ref=e114]: Monthly rent
+        - generic [ref=e115]:
+          - generic: €
+          - textbox [ref=e116]
+          - generic [ref=e117]:
+            - button "Decrease Monthly rent" [ref=e118] [cursor=pointer]: "-"
+            - button "Increase Monthly rent" [ref=e119] [cursor=pointer]: +
+      - heading "Downsizing plan" [level=3] [ref=e120]
+      - generic [ref=e121]:
+        - generic [ref=e122]: Year
+        - generic [ref=e123]:
+          - textbox [ref=e124]
+          - generic [ref=e125]:
+            - button "Decrease Year" [ref=e126] [cursor=pointer]: "-"
+            - button "Increase Year" [ref=e127] [cursor=pointer]: +
+        - generic [ref=e128]: Leave blank if none
+    - generic [ref=e129]:
+      - heading "Retirement Income" [level=2] [ref=e131]
+      - heading "Pension" [level=3] [ref=e132]
+      - generic [ref=e133]:
+        - generic [ref=e134]: Start age
+        - generic [ref=e135]:
+          - textbox [ref=e136]
+          - generic [ref=e137]:
+            - button "Decrease Start age" [ref=e138] [cursor=pointer]: "-"
+            - button "Increase Start age" [ref=e139] [cursor=pointer]: +
+        - generic [ref=e140]: Age at which pension starts
+      - generic [ref=e141]:
+        - generic [ref=e142]: Expected annual amount
+        - generic [ref=e143]:
+          - generic: €
+          - textbox [ref=e144]
+          - generic [ref=e145]:
+            - button "Decrease Expected annual amount" [ref=e146] [cursor=pointer]: "-"
+            - button "Increase Expected annual amount" [ref=e147] [cursor=pointer]: +
+        - generic [ref=e148]: Net annual pension entitlement
+      - heading "Other retirement income" [level=3] [ref=e149]
+      - generic [ref=e150]:
+        - generic [ref=e151]: Annual amount
+        - generic [ref=e152]:
+          - generic: €
+          - textbox [ref=e153]
+          - generic [ref=e154]:
+            - button "Decrease Annual amount" [ref=e155] [cursor=pointer]: "-"
+            - button "Increase Annual amount" [ref=e156] [cursor=pointer]: +
+        - generic [ref=e157]: Enter 0 or leave blank if none
+    - generic [ref=e158]:
+      - heading "Savings & Investments" [level=2] [ref=e160]
+      - generic [ref=e161]:
+        - generic [ref=e162]: Cash balance
+        - generic [ref=e163]:
+          - generic: €
+          - textbox [ref=e164]
+          - generic [ref=e165]:
+            - button "Decrease Cash balance" [ref=e166] [cursor=pointer]: "-"
+            - button "Increase Cash balance" [ref=e167] [cursor=pointer]: +
+        - generic [ref=e168]: Current and savings accounts, bonds, and term deposits
+      - generic [ref=e169]:
+        - generic [ref=e170]: Stock market investments
+        - generic [ref=e171]:
+          - generic: €
+          - textbox [ref=e172]
+          - generic [ref=e173]:
+            - button "Decrease Stock market investments" [ref=e174] [cursor=pointer]: "-"
+            - button "Increase Stock market investments" [ref=e175] [cursor=pointer]: +
+        - generic [ref=e176]: Current market value of equity portfolio
+      - generic [ref=e177]:
+        - generic [ref=e178]: Monthly stock contribution
+        - generic [ref=e179]:
+          - generic: €
+          - textbox [ref=e180]
+        - generic [ref=e181]: Fixed monthly amount invested into stocks from now until retirement
+    - generic [ref=e182]:
+      - heading "Investment Properties" [level=2] [ref=e184]
+      - textbox "Property name" [ref=e189]
+    - generic [ref=e190]:
+      - heading "Other Assets" [level=2] [ref=e192]
+      - textbox "Asset name" [ref=e197]
+    - generic [ref=e198]:
+      - heading "Family Support" [level=2] [ref=e200]
+      - textbox "Name" [ref=e205]
+    - generic [ref=e206]:
+      - heading "Debt" [level=2] [ref=e208]
+      - generic [ref=e209]:
+        - generic [ref=e210]: Credit card balance
+        - generic [ref=e211]:
+          - generic: €
+          - textbox [ref=e212]
+          - generic [ref=e213]:
+            - button "Decrease Credit card balance" [ref=e214] [cursor=pointer]: "-"
+            - button "Increase Credit card balance" [ref=e215] [cursor=pointer]: +
+        - generic [ref=e216]: Combined balance on all cards. Assumed cleared in Year 1. Leave blank if none.
+      - heading "Other loan" [level=3] [ref=e217]
+      - generic [ref=e218]:
+        - generic [ref=e219]: Balance
+        - generic [ref=e220]:
+          - generic: €
+          - textbox [ref=e221]
+          - generic [ref=e222]:
+            - button "Decrease Balance" [ref=e223] [cursor=pointer]: "-"
+            - button "Increase Balance" [ref=e224] [cursor=pointer]: +
+        - generic [ref=e225]: Leave blank if none
+    - generic [ref=e226]:
+      - heading "Major Future Events" [level=2] [ref=e228]
+      - heading "Future income events" [level=3] [ref=e229]
+      - textbox "Event name" [ref=e234]
+      - heading "Future expense events" [level=3] [ref=e235]
+      - textbox "Event name" [ref=e240]
+    - generic [ref=e241]:
+      - heading "Advanced Assumptions" [level=2] [ref=e243]
+      - heading "Spending changes by age" [level=3] [ref=e244]
+      - group "Spending changes by age" [ref=e245]:
+        - generic [ref=e246]: Each change is applied relative to your current spending.
+        - generic [ref=e248]:
+          - generic [ref=e249]:
+            - generic [ref=e250]: From
+            - generic [ref=e251]: "40"
+            - generic [ref=e252]: to
+            - generic [ref=e253]:
+              - textbox "First spending bracket end age" [ref=e254]: "65"
+              - generic [ref=e255]:
+                - button "Decrease First spending bracket end age" [ref=e256] [cursor=pointer]: "-"
+                - button "Increase First spending bracket end age" [ref=e257] [cursor=pointer]: +
+          - generic [ref=e258]:
+            - textbox "Spending adjustment up to first end age" [ref=e259]: 0%
+            - generic: "%"
+            - generic [ref=e260]:
+              - button "Decrease spending adjustment for ages up to 65" [ref=e261] [cursor=pointer]: "-"
+              - button "Increase spending adjustment for ages up to 65" [ref=e262] [cursor=pointer]: +
+        - generic [ref=e264]:
+          - generic [ref=e265]:
+            - generic [ref=e266]: From
+            - generic [ref=e267]: "66"
+            - generic [ref=e268]: to
+            - generic [ref=e269]:
+              - textbox "Second spending bracket end age" [ref=e270]: "75"
+              - generic [ref=e271]:
+                - button "Decrease Second spending bracket end age" [ref=e272] [cursor=pointer]: "-"
+                - button "Increase Second spending bracket end age" [ref=e273] [cursor=pointer]: +
+          - generic [ref=e274]:
+            - textbox "Spending adjustment for middle age band" [ref=e275]: "-10%"
+            - generic: "%"
+            - generic [ref=e276]:
+              - button "Decrease spending adjustment from age 66 to 75" [ref=e277] [cursor=pointer]: "-"
+              - button "Increase spending adjustment from age 66 to 75" [ref=e278] [cursor=pointer]: +
+        - generic [ref=e280]:
+          - generic [ref=e281]:
+            - generic [ref=e282]: From
+            - generic [ref=e283]: "76"
+            - generic [ref=e284]: onward
+          - generic [ref=e285]:
+            - textbox "Spending adjustment from final age band onward" [ref=e286]: "-20%"
+            - generic: "%"
+            - generic [ref=e287]:
+              - button "Decrease spending adjustment from age 76 onward" [ref=e288] [cursor=pointer]: "-"
+              - button "Increase spending adjustment from age 76 onward" [ref=e289] [cursor=pointer]: +
+      - heading "Growth & inflation assumptions" [level=3] [ref=e290]
+      - generic [ref=e291]:
+        - generic [ref=e292]: General inflation
+        - generic [ref=e293]:
+          - textbox [ref=e294]
+          - generic: "%"
+          - generic [ref=e295]:
+            - button "Decrease General inflation" [ref=e296] [cursor=pointer]: "-"
+            - button "Increase General inflation" [ref=e297] [cursor=pointer]: +
+      - generic [ref=e298]:
+        - generic [ref=e299]: Cash interest rate
+        - generic [ref=e300]:
+          - textbox [ref=e301]
+          - generic: "%"
+          - generic [ref=e302]:
+            - button "Decrease Cash interest rate" [ref=e303] [cursor=pointer]: "-"
+            - button "Increase Cash interest rate" [ref=e304] [cursor=pointer]: +
+      - generic [ref=e305]:
+        - generic [ref=e306]: Main income growth
+        - generic [ref=e307]:
+          - textbox [ref=e308]
+          - generic: "%"
+          - generic [ref=e309]:
+            - button "Decrease Main income growth" [ref=e310] [cursor=pointer]: "-"
+            - button "Increase Main income growth" [ref=e311] [cursor=pointer]: +
+      - generic [ref=e312]:
+        - generic [ref=e313]: Early retirement reduction
+        - generic [ref=e314]:
+          - generic: €
+          - textbox [ref=e315]
+          - generic [ref=e316]:
+            - button "Decrease Early retirement reduction" [ref=e317] [cursor=pointer]: "-"
+            - button "Increase Early retirement reduction" [ref=e318] [cursor=pointer]: +
+        - generic [ref=e319]: Reduction in annual pension for each year retired early
+      - heading "Selling costs" [level=3] [ref=e320]
+      - generic [ref=e321]:
+        - generic [ref=e322]: Stocks
+        - generic [ref=e323]:
+          - textbox [ref=e324]
+          - generic: "%"
+          - generic [ref=e325]:
+            - button "Decrease Stocks" [ref=e326] [cursor=pointer]: "-"
+            - button "Increase Stocks" [ref=e327] [cursor=pointer]: +
+        - generic [ref=e328]: Tax, broker, and other fees
+  - generic [ref=e329]:
+    - generic [ref=e330]:
+      - paragraph [ref=e332]:
+        - generic [ref=e333]: "Earliest viable retirement:"
+        - generic [ref=e334]: —
+      - generic [ref=e335]:
+        - generic [ref=e336]: Compare with retiring at
+        - button "Decrease comparison retirement age" [disabled] [ref=e337]: "-"
+        - spinbutton "Comparison retirement age" [disabled] [ref=e338]
+        - button "Increase comparison retirement age" [disabled] [ref=e339]: +
+    - article [ref=e340]:
+      - heading "Cash" [level=2] [ref=e342]
+    - article [ref=e344]:
+      - heading "Net Worth" [level=2] [ref=e346]
+  - complementary [ref=e348]:
+    - heading "Events Timeline" [level=2] [ref=e350]
+```
