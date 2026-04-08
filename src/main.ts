@@ -179,6 +179,13 @@ const SPENDING_ADJUSTMENT_PERCENT_FIELD_IDS = new Set<FieldId>([
   RUNTIME_FIELDS.spendingAdjustmentSecondBracket,
   RUNTIME_FIELDS.spendingAdjustmentFinalBracket
 ]);
+const SPENDING_ADJUSTMENT_INLINE_FIELD_IDS = new Set<FieldId>([
+  RUNTIME_FIELDS.spendingAdjustmentAge1,
+  RUNTIME_FIELDS.spendingAdjustmentAge2,
+  RUNTIME_FIELDS.spendingAdjustmentFirstBracket,
+  RUNTIME_FIELDS.spendingAdjustmentSecondBracket,
+  RUNTIME_FIELDS.spendingAdjustmentFinalBracket
+]);
 const DOWNSIZING_PREVIEW_INPUT_FIELDS = new Set<FieldId>([
   HOME_FIELDS.homeValue,
   HOME_FIELDS.mortgageBalance,
@@ -3926,7 +3933,10 @@ function renderInputs(): void {
             ? parseIntegerInput(el.value, allowNegative)
             : parseNumberInput(el.value, allowNegative);
 
-      if (def.type !== "text") {
+      const deferConstraintUntilBlur =
+        fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2;
+
+      if (def.type !== "text" && !deferConstraintUntilBlur) {
         nextValue = applyFieldNumericConstraint(fieldId, nextValue as number | null);
       }
 
@@ -3940,7 +3950,7 @@ function renderInputs(): void {
       } else {
         fieldState[fieldId] = nextValue as number | null;
       }
-      if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) {
+      if ((fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) && !deferConstraintUntilBlur) {
         syncSpendingAdjustmentAgeFields(fieldId);
       }
       if (fieldId === LIVING_EXPENSES_FIELD_ID && livingExpensesMode === "single") {
@@ -3983,9 +3993,11 @@ function renderInputs(): void {
         const n = Number(current);
         const digits = isWholePercentDisplayField(fieldId) ? 0 : 2;
         el.value = Number.isFinite(n) ? (n * 100).toFixed(digits) : "";
-        queueMicrotask(() => {
-          if (document.activeElement === el) el.setSelectionRange(0, el.value.length);
-        });
+        if (!SPENDING_ADJUSTMENT_INLINE_FIELD_IDS.has(fieldId)) {
+          queueMicrotask(() => {
+            if (document.activeElement === el) el.setSelectionRange(0, el.value.length);
+          });
+        }
         return;
       }
       if (def.type === "integer" || def.type === "number") {
@@ -3994,9 +4006,11 @@ function renderInputs(): void {
           return;
         }
         el.value = String(current);
-        queueMicrotask(() => {
-          if (document.activeElement === el) el.setSelectionRange(0, el.value.length);
-        });
+        if (!SPENDING_ADJUSTMENT_INLINE_FIELD_IDS.has(fieldId)) {
+          queueMicrotask(() => {
+            if (document.activeElement === el) el.setSelectionRange(0, el.value.length);
+          });
+        }
       }
     });
     el.addEventListener("blur", (ev) => {
