@@ -129,9 +129,10 @@ function stageTrigger(req: number[], t: number): boolean {
 
 function computeStockStage(
   required: number[],
-  stockBaseSeries: number[],
-  years: number[],
-  stockGrowthRateByYear: (year: number) => number,
+  initialStockBalance: number,
+  stockContributionSeries: number[],
+  stockGrowthRates: number[],
+  timing: ProjectionTiming,
   stockDisposalCost: number
 ): StageSeries {
   const n = required.length;
@@ -145,13 +146,21 @@ function computeStockStage(
   const netRate = 1 - stockDisposalCost;
 
   for (let i = 0; i < n; i += 1) {
-    bfwd[i] = i === 0 ? stockBaseSeries[i] : cfwd[i - 1];
+    const contribution = stockContributionSeries[i];
+    bfwd[i] = i === 0 ? initialStockBalance + contribution : cfwd[i - 1] + contribution;
 
     const grossRequired = netRate > 0 ? required[i] / netRate : 0;
     const grossSold = clamp(grossRequired, 0, bfwd[i]);
     disposal[i] = -grossSold;
 
-    growth[i] = i === 0 ? 0 : (bfwd[i] + disposal[i]) * stockGrowthRateByYear(years[i]);
+    const annualGrowthRate = stockGrowthRates[i] ?? 0;
+    const fullPeriodGrowthRate =
+      i === 0 ? safePow(1 + annualGrowthRate, timing.proRate) - 1 : annualGrowthRate;
+    const contributionGrowthRate =
+      i === 0 ? safePow(1 + annualGrowthRate, timing.proRate / 2) - 1 : safePow(1 + annualGrowthRate, 0.5) - 1;
+    growth[i] =
+      (bfwd[i] + disposal[i]) * fullPeriodGrowthRate
+      + contribution * (contributionGrowthRate - fullPeriodGrowthRate);
     cfwd[i] = bfwd[i] + disposal[i] + growth[i];
 
     disposalCosts[i] = disposal[i] * stockDisposalCost;
@@ -256,7 +265,6 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
 
   const cashBaseSeries = zeroSeries(n); // Row 53
   const homeValueSeries = zeroSeries(n); // Row 54
-  const stockBaseSeries = zeroSeries(n); // Row 59
   const homeLoanSeries = zeroSeries(n); // Row 60
   const otherLoanSeries = zeroSeries(n); // Row 65
 
@@ -283,6 +291,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
   const baseInterestSeries = zeroSeries(n);
   const downsizingHomeSaleSeries = zeroSeries(n);
   const downsizingHomePurchaseSeries = zeroSeries(n);
+  const stockContributionSeries = zeroSeries(n);
 
   const downsizingMode = inputs.downsizingNewHomeMode.trim().toUpperCase();
   const hasDownsizing = inputs.downsizingYear > 0;
@@ -357,6 +366,13 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       : inputs.housingRentAnnual * infFactor * proRate;
     housingRentSeries[idx] = housingRent;
     outflows += housingRent;
+
+    const stockContribution =
+      age < config.retirementAge
+        ? inputs.stocksContributionMonthly * (idx === 0 ? timing.monthsRemaining : 12)
+        : 0;
+    stockContributionSeries[idx] = stockContribution;
+    outflows += stockContribution;
 
     for (let d = 0; d < inputs.dependents.length; d += 1) {
       const dependent = inputs.dependents[d];
@@ -486,12 +502,6 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
     } else {
       homeValueSeries[idx] = originalHomeValue;
     }
-    if (idx === 0) {
-      stockBaseSeries[idx] = inputs.stocksBalance * safePow(1 + inputs.stockReturn, assetGrowthExponent(timing, idx));
-    } else {
-      stockBaseSeries[idx] = stockBaseSeries[idx - 1] * (1 + stockGrowthRateForYear(inputs, year));
-    }
-
     for (let p = 0; p < inputs.properties.length; p += 1) {
       propertyValueSeries[p][idx] =
         inputs.properties[p].value * safePow(1 + inputs.propertyAppreciation, assetGrowthExponent(timing, idx));
@@ -516,12 +526,16 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
   // Liquidation system (rows 68..134).
   const row68 = cashBaseSeries.map((v) => v - inputs.cashBuffer);
   const row69 = computeLiquidationRequired(row68);
+  const stockGrowthRateSeries = timeline.years.map((year, idx) =>
+    idx === 0 ? inputs.stockReturn : stockGrowthRateForYear(inputs, year)
+  );
 
   const stockStage = computeStockStage(
     row69,
-    stockBaseSeries,
-    timeline.years,
-    (year) => stockGrowthRateForYear(inputs, year),
+    inputs.stocksBalance,
+    stockContributionSeries,
+    stockGrowthRateSeries,
+    timing,
     inputs.stockSellingCosts
   ); // rows 74..79
 
@@ -623,6 +637,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       housingRentSeries[i] +
       downsizingHomePurchaseSeries[i] +
       sumAt(propertyAnnualCostSeries, i) +
+      stockContributionSeries[i] +
       livingExpensesSeries[i] +
       sumAt(expenseEventSeries, i);
     netCashFlowSeries[i] = totalInflowsSeries[i] - totalOutflowsSeries[i];
@@ -892,6 +907,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       housingRentSeries[i] +
       downsizingHomePurchaseSeries[i] +
       sumAt(displayPropertyCostsByProperty.map((row) => row.values), i) +
+      stockContributionSeries[i] +
       livingExpensesSeries[i] +
       sumAt(expenseEventSeries, i);
     displayNetCashFlowSeries[i] = displayTotalInflowsSeries[i] - displayTotalOutflowsSeries[i];
@@ -942,6 +958,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       housingRent: housingRentSeries,
       downsizingHomePurchase: downsizingHomePurchaseSeries,
       propertyCosts: displayPropertyCostsByProperty,
+      stockInvestmentContributions: stockContributionSeries,
       livingExpenses: livingExpensesSeries,
       expenseEvents: inputs.expenseEvents.map((event, idx) => ({
         key: `expense-event-${idx}`,

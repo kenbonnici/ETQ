@@ -1917,6 +1917,7 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
       projectionLeaf("housing-rent", "Housing rent", cashFlow.housingRent, 1),
       projectionLeaf("downsizing-home-purchase", "Purchase of home (downsizing)", cashFlow.downsizingHomePurchase, 1),
       projectionGroup("outflows-property-costs", "Other property costs", sumProjectionSeries(cashFlow.propertyCosts.map((row) => row.values), yearCount), 1, propertyCostChildren),
+      projectionLeaf("stock-investment-contributions", "Stock investment contributions", cashFlow.stockInvestmentContributions, 1),
       projectionLeaf("living-expenses", "Living expenses", cashFlow.livingExpenses, 1),
       projectionGroup("outflows-expense-events", "One-off expense events", sumProjectionSeries(cashFlow.expenseEvents.map((row) => row.values), yearCount), 1, expenseEventChildren),
       projectionLeaf("outflows-total-footer", "Outflows total", cashFlow.totalOutflows, 1, "total", true)

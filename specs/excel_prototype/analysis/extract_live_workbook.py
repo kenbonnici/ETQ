@@ -79,10 +79,10 @@ def main() -> None:
         "exp": {
             "years": read_ages_and_series(ws_norm, 2),
             "ages": read_ages_and_series(ws_norm, 3),
-            "cashE": read_ages_and_series(ws_early, 381),
-            "cashN": read_ages_and_series(ws_norm, 381),
-            "nwE": read_ages_and_series(ws_early, 382),
-            "nwN": read_ages_and_series(ws_norm, 382),
+            "cashE": read_ages_and_series(ws_early, 382),
+            "cashN": read_ages_and_series(ws_norm, 382),
+            "nwE": read_ages_and_series(ws_early, 383),
+            "nwN": read_ages_and_series(ws_norm, 383),
         },
     }
 

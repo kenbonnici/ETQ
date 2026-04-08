@@ -314,6 +314,7 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "income.employment.netAnnual": { nonNegative: true },
   "assets.cash.totalBalance": { nonNegative: true },
   "assets.equities.marketValue": { nonNegative: true },
+  "assets.equities.monthlyContribution": { nonNegative: true },
   "housing.01Residence.marketValue": { nonNegative: true },
   "housing.01Residence.mortgage.balance": { nonNegative: true },
   "housing.01Residence.mortgage.interestRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.15 } },

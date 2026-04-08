@@ -41,7 +41,7 @@ function applyDependencyPruning(target: RawInputs): void {
   const hasDownsizingYear = isDownsizingYearInProjectionWindow(
     target[DOWNSIZING_GROUP_BY_CELL.yearCell],
     target.B4,
-    target.B254
+    target.B255
   );
   const downsizingMode = String(target[DOWNSIZING_GROUP_BY_CELL.modeCell] ?? "").trim().toUpperCase();
   if (hasHome) {

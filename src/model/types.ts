@@ -20,6 +20,7 @@ export interface EffectiveInputs {
   netIncomeAnnual: number;
   cashBalance: number;
   stocksBalance: number;
+  stocksContributionMonthly: number;
   homeValue: number;
   homeLoanBalance: number;
   homeLoanRate: number;
@@ -131,6 +132,7 @@ export interface ScenarioCashFlowRows {
   housingRent: number[];
   downsizingHomePurchase: number[];
   propertyCosts: NamedProjectionSeries[];
+  stockInvestmentContributions: number[];
   livingExpenses: number[];
   expenseEvents: NamedProjectionSeries[];
   totalInflows: number[];
