@@ -19,6 +19,11 @@ const selectors = {
   mortgageBalance: 'input[data-field-id="housing.01Residence.mortgage.balance"]',
   mortgageInterest: 'input[data-field-id="housing.01Residence.mortgage.interestRateAnnual"]',
   mortgageRepayment: 'input[data-field-id="housing.01Residence.mortgage.monthlyRepayment"]',
+  spendingAdjustmentAge1: 'input[data-field-id="spending.adjustments.firstBracket.endAge"]',
+  spendingAdjustmentAge2: 'input[data-field-id="spending.adjustments.secondBracket.endAge"]',
+  spendingAdjustmentFirstBracket: 'input[data-field-id="spending.adjustments.firstBracket.deltaRate"]',
+  spendingAdjustmentSecondBracket: 'input[data-field-id="spending.adjustments.secondBracket.deltaRate"]',
+  spendingAdjustmentFinalBracket: 'input[data-field-id="spending.adjustments.finalBracket.deltaRate"]',
   minimumCashBuffer: 'input[data-field-id="liquidity.minimumCashBuffer"]',
   legacyAmount: 'input[data-field-id="planning.legacyAmount"]',
   stockSellingCostRate: 'input[data-field-id="liquidation.stockSellingCostRate"]',
@@ -53,6 +58,12 @@ const selectors = {
   networthChart: "#nw-chart",
   cashflowScroll: "#cashflow-table-panel .cashflow-table-scroll",
   networthScroll: "#networth-table-panel .cashflow-table-scroll"
+} as const;
+
+const stepperSelectors = {
+  spendingAdjustmentFirstBracketUp: 'button.field-step-btn[data-field-id="spending.adjustments.firstBracket.deltaRate"][data-step-dir="1"]',
+  spendingAdjustmentSecondBracketUp: 'button.field-step-btn[data-field-id="spending.adjustments.secondBracket.deltaRate"][data-step-dir="1"]',
+  spendingAdjustmentFinalBracketUp: 'button.field-step-btn[data-field-id="spending.adjustments.finalBracket.deltaRate"][data-step-dir="1"]'
 } as const;
 
 async function loadSampleData(page: Page): Promise<void> {
@@ -96,6 +107,40 @@ test("activates dependent fields and home-owner visibility rules in the rendered
   await fillAndBlur(page, selectors.homeValue, "600000");
   await expect(page.locator(selectors.housingRent)).toHaveCount(0);
   await expect(page.locator(selectors.mortgageBalance)).toBeVisible();
+});
+
+test("spending-by-age fields keep fixed defaults and allow inline age editing without rerender corruption", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.locator(selectors.spendingAdjustmentAge1)).toHaveValue("65");
+  await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("75");
+  await expect(page.locator(selectors.spendingAdjustmentFirstBracket)).toHaveValue("0%");
+  await expect(page.locator(selectors.spendingAdjustmentSecondBracket)).toHaveValue("-10%");
+  await expect(page.locator(selectors.spendingAdjustmentFinalBracket)).toHaveValue("-20%");
+
+  await fillAndBlur(page, selectors.currentAge, "40");
+
+  const firstEndAge = page.locator(selectors.spendingAdjustmentAge1);
+  await firstEndAge.click();
+  await firstEndAge.selectText();
+  await page.keyboard.press("Backspace");
+  await expect(firstEndAge).toHaveValue("");
+  await page.keyboard.type("45");
+  await expect(firstEndAge).toHaveValue("45");
+  await firstEndAge.blur();
+  await expect(firstEndAge).toHaveValue("45");
+});
+
+test("spending-by-age percent steppers apply to all three rows from their fixed defaults", async ({ page }) => {
+  await page.goto("/");
+
+  await page.locator(stepperSelectors.spendingAdjustmentFirstBracketUp).click();
+  await page.locator(stepperSelectors.spendingAdjustmentSecondBracketUp).click();
+  await page.locator(stepperSelectors.spendingAdjustmentFinalBracketUp).click();
+
+  await expect(page.locator(selectors.spendingAdjustmentFirstBracket)).toHaveValue("1%");
+  await expect(page.locator(selectors.spendingAdjustmentSecondBracket)).toHaveValue("-9%");
+  await expect(page.locator(selectors.spendingAdjustmentFinalBracket)).toHaveValue("-19%");
 });
 
 test("reveals dependent slots up to five through the existing add-dependent flow", async ({ page }) => {

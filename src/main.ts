@@ -942,17 +942,15 @@ function applyFieldNumericConstraintForState(fieldId: FieldId, value: number | n
 }
 
 function getSpendingAdjustmentAgePair(state: Partial<Record<FieldId, RawInputValue>> = fieldState): { age1: number; age2: number } {
-  const currentAge = Number(state[RUNTIME_FIELDS.currentAge]);
   const maxProjectionAge = Number(state[RUNTIME_FIELDS.lifeExpectancyAge]);
-  const resolvedCurrentAge = Number.isFinite(currentAge) ? Math.round(currentAge) : DEFAULT_SPENDING_ADJUSTMENT_AGE_1;
   const resolvedMaxProjectionAge = Number.isFinite(maxProjectionAge) ? Math.round(maxProjectionAge) : 120;
   const rawAge1 = Number(state[RUNTIME_FIELDS.spendingAdjustmentAge1]);
   const rawAge2 = Number(state[RUNTIME_FIELDS.spendingAdjustmentAge2]);
   let age1 = Number.isFinite(rawAge1) ? Math.round(rawAge1) : DEFAULT_SPENDING_ADJUSTMENT_AGE_1;
   let age2 = Number.isFinite(rawAge2) ? Math.round(rawAge2) : DEFAULT_SPENDING_ADJUSTMENT_AGE_2;
 
-  age1 = Math.max(resolvedCurrentAge, age1);
-  if (resolvedMaxProjectionAge > resolvedCurrentAge) {
+  age1 = Math.max(18, age1);
+  if (resolvedMaxProjectionAge > 18) {
     age1 = Math.min(resolvedMaxProjectionAge - 1, age1);
   }
   age2 = Math.max(age1 + 1, age2);
@@ -974,7 +972,7 @@ function syncSpendingAdjustmentAgeFields(changedFieldId?: FieldId): boolean {
     age2 = age1 + 1;
   }
   if (age2 <= age1) {
-    age1 = Math.max(Math.round(Number(fieldState[RUNTIME_FIELDS.currentAge]) || 18), resolvedMaxProjectionAge - 1);
+    age1 = Math.max(18, resolvedMaxProjectionAge - 1);
     age2 = Math.max(age1 + 1, resolvedMaxProjectionAge);
   }
 
@@ -3223,7 +3221,6 @@ function applyStepperDelta(fieldId: FieldId, dir: number): void {
   if (fieldId === RUNTIME_FIELDS.currentAge) {
     fieldState[RUNTIME_FIELDS.currentAge] = Math.max(18, Math.min(100, Math.round(asNumber(fieldState[RUNTIME_FIELDS.currentAge]))));
     enforceLiveUntilAgeConstraint(true);
-    syncSpendingAdjustmentAgeFields(fieldId);
   }
   if (fieldId === RUNTIME_FIELDS.lifeExpectancyAge) {
     syncSpendingAdjustmentAgeFields(fieldId);
@@ -3967,7 +3964,6 @@ function renderInputs(): void {
       }
       if (fieldId === RUNTIME_FIELDS.currentAge) {
         enforceLiveUntilAgeConstraint(true);
-        syncSpendingAdjustmentAgeFields(fieldId);
       }
       if (fieldId === RUNTIME_FIELDS.lifeExpectancyAge) {
         syncSpendingAdjustmentAgeFields(fieldId);
@@ -4035,8 +4031,7 @@ function renderInputs(): void {
         }
       }
       if (
-        fieldId === RUNTIME_FIELDS.currentAge
-        || fieldId === RUNTIME_FIELDS.lifeExpectancyAge
+        fieldId === RUNTIME_FIELDS.lifeExpectancyAge
         || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1
         || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2
       ) {
@@ -4056,7 +4051,6 @@ function renderInputs(): void {
         if (Number.isFinite(age)) {
           fieldState[RUNTIME_FIELDS.currentAge] = Math.max(18, Math.min(100, Math.round(age)));
           enforceLiveUntilAgeConstraint(true);
-          syncSpendingAdjustmentAgeFields(fieldId);
           queueRecalc();
         }
       }

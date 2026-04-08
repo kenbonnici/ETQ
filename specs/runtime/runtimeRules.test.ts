@@ -121,6 +121,11 @@ test("currency number fields do not fall back to a 1-unit stepper increment", ()
 test("blank legacy normalizes to zero and specimen parity captures the shifted workbook cells", () => {
   const blankFields = createEmptyFieldState();
 
+  assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentAge1], 65);
+  assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentAge2], 75);
+  assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentFirstBracket], 0);
+  assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentSecondBracket], -0.1);
+  assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentFinalBracket], -0.2);
   assert.equal(normalizeInputs(fieldStateToRawInputs(blankFields)).legacyAmount, 0);
   assert.equal(SPECIMEN_FIELDS[RUNTIME_FIELDS.legacyAmount], 1_000_000);
   assert.equal(SPECIMEN_FIELDS[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField], 10);

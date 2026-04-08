@@ -22,6 +22,9 @@ export function getExcelRefForField(fieldId: FieldId): ExcelFieldRef {
 function getDefaultFieldValue(fieldId: FieldId): RawInputValue {
   if (fieldId === "spending.adjustments.firstBracket.endAge") return 65;
   if (fieldId === "spending.adjustments.secondBracket.endAge") return 75;
+  if (fieldId === "spending.adjustments.firstBracket.deltaRate") return 0;
+  if (fieldId === "spending.adjustments.secondBracket.deltaRate") return -0.1;
+  if (fieldId === "spending.adjustments.finalBracket.deltaRate") return -0.2;
   return null;
 }
 

@@ -109,9 +109,9 @@ export const FIELD_STEPPER_STEPS: Readonly<Partial<Record<FieldId, number>>> = {
   [RUNTIME_FIELDS.lifeExpectancyAge]: 1,
   [RUNTIME_FIELDS.spendingAdjustmentAge1]: 1,
   [RUNTIME_FIELDS.spendingAdjustmentAge2]: 1,
-  [RUNTIME_FIELDS.spendingAdjustmentFirstBracket]: 0.001,
-  [RUNTIME_FIELDS.spendingAdjustmentSecondBracket]: 0.001,
-  [RUNTIME_FIELDS.spendingAdjustmentFinalBracket]: 0.001,
+  [RUNTIME_FIELDS.spendingAdjustmentFirstBracket]: 0.01,
+  [RUNTIME_FIELDS.spendingAdjustmentSecondBracket]: 0.01,
+  [RUNTIME_FIELDS.spendingAdjustmentFinalBracket]: 0.01,
   [POST_RETIREMENT_INCOME_FIELDS.amount]: 100,
   [POST_RETIREMENT_INCOME_FIELDS.fromAge]: 1,
   [POST_RETIREMENT_INCOME_FIELDS.toAge]: 1,
@@ -191,9 +191,9 @@ export const FIELD_STEPPER_DECIMALS: Readonly<Partial<Record<FieldId, number>>> 
   [RUNTIME_FIELDS.lifeExpectancyAge]: 0,
   [RUNTIME_FIELDS.spendingAdjustmentAge1]: 0,
   [RUNTIME_FIELDS.spendingAdjustmentAge2]: 0,
-  [RUNTIME_FIELDS.spendingAdjustmentFirstBracket]: 3,
-  [RUNTIME_FIELDS.spendingAdjustmentSecondBracket]: 3,
-  [RUNTIME_FIELDS.spendingAdjustmentFinalBracket]: 3,
+  [RUNTIME_FIELDS.spendingAdjustmentFirstBracket]: 2,
+  [RUNTIME_FIELDS.spendingAdjustmentSecondBracket]: 2,
+  [RUNTIME_FIELDS.spendingAdjustmentFinalBracket]: 2,
   [POST_RETIREMENT_INCOME_FIELDS.amount]: 0,
   [POST_RETIREMENT_INCOME_FIELDS.fromAge]: 0,
   [POST_RETIREMENT_INCOME_FIELDS.toAge]: 0,
@@ -344,9 +344,6 @@ export function getPropertyName(
 }
 
 export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, nextValue: unknown): boolean {
-  if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) {
-    return asNumber(prevValue) !== asNumber(nextValue);
-  }
   if (fieldId === RUNTIME_FIELDS.stockMarketInvestments) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === HOME_FIELDS.homeValue) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === DOWNSIZING_FIELDS.year) return isBlank(prevValue) !== isBlank(nextValue);
