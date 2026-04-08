@@ -2891,6 +2891,7 @@ function renderSpendingAdjustmentsControl(): string {
   const firstDef = INPUT_DEFINITION_BY_FIELD_ID[RUNTIME_FIELDS.spendingAdjustmentFirstBracket];
   const secondDef = INPUT_DEFINITION_BY_FIELD_ID[RUNTIME_FIELDS.spendingAdjustmentSecondBracket];
   const finalDef = INPUT_DEFINITION_BY_FIELD_ID[RUNTIME_FIELDS.spendingAdjustmentFinalBracket];
+  const currentAge = getCurrentAge() ?? 18;
   const { age1, age2 } = getSpendingAdjustmentAgePair();
   const firstValue = formatFieldValue(firstDef, fieldState[firstDef.fieldId]);
   const secondValue = formatFieldValue(secondDef, fieldState[secondDef.fieldId]);
@@ -2904,7 +2905,9 @@ function renderSpendingAdjustmentsControl(): string {
       <div class="field spending-adjustment-row" data-cell="${firstDef.cell}" data-field-id="${firstDef.fieldId}">
         <div class="spending-adjustment-row-main">
           <div class="spending-adjustment-label">
-            <span class="spending-adjustment-prefix">Up to</span>
+            <span class="spending-adjustment-prefix">From</span>
+            <span class="spending-adjustment-derived-age">${currentAge}</span>
+            <span class="spending-adjustment-connector">to</span>
             ${renderEmbeddedAgeInput(age1Def, "First spending bracket end age")}
           </div>
           <div class="input-shell has-suffix has-stepper spending-adjustment-value-shell">
