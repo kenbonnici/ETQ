@@ -1,0 +1,212 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2868
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww17200\viewh11000\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs28 \cf0 Codex Prompt Guidelines (ETQ)\
+\
+PURPOSE \
+\
+Guide ChatGPT in generating high-quality Codex prompts.\
+Do not duplicate AGENTS.md.\
+\
+\
+INPUT INTERPRETATION\
+\
+By default, treat all user input as a request to generate an optimised Codex prompt.\
+\
+Exception:\
+Text enclosed in < > markers is instruction to ChatGPT only and must not be included in the generated prompt.\
+\
+\
+ROLE SPLIT\
+\
+AGENTS.md handles:\
+- git workflow\
+- testing\
+- parity enforcement\
+- implementation discipline\
+\
+This file handles:\
+- prompt clarity\
+- structure\
+- scoping\
+- reasoning level selection\
+\
+\
+CORE PRINCIPLES\
+\
+Prompts must be:\
+\
+- Minimal\
+- Precise\
+- Outcome-focused\
+- Unambiguous\
+\
+Avoid:\
+- repeating AGENTS.md rules\
+- unnecessary verbosity\
+\
+\
+SCOPING RULES\
+\
+Always define scope explicitly:\
+\
+- UI rendering\
+- runtime visibility rules\
+- validation\
+- normalization\
+- field/cell mapping\
+- financial model math\
+- parity tooling\
+\
+If unclear, choose the safest minimal scope.\
+\
+\
+RELEVANT FILES TO INSPECT\
+\
+When relevant to the task, Codex should inspect:\
+\
+- src/main.ts\
+- src/model/index.ts\
+- the affected file in src/model or src/ui\
+- relevant tests in specs/runtime or specs/ui\
+\
+\
+EXPLICIT FILE CALLOUTS\
+\
+If the task touches any of these, mention it explicitly:\
+\
+- fieldRegistry.ts\
+- inputSchema.ts\
+- excelAdapter.ts\
+- normalization.ts\
+- validate.ts\
+- runScenario.ts\
+\
+\
+USEFUL TASK PHRASES\
+\
+Use when helpful:\
+\
+- this is parity-sensitive\
+- update semantic field ids and keep Excel mapping aligned\
+- change runtime visibility only, not model math\
+- change model math and run full parity checks\
+\
+Use sparingly (already enforced globally):\
+\
+- preserve Excel parity\
+- plain DOM TypeScript app, not React\
+\
+\
+WHEN TO ADD CONSTRAINTS\
+\
+Only include constraints specific to the task.\
+\
+Do not include:\
+- git workflow\
+- testing instructions\
+- parity enforcement\
+\
+\
+WHEN TO EXPAND PROMPT\
+\
+Add detail only when necessary:\
+\
+- multi-step behaviour\
+- interaction design\
+- edge cases\
+\
+Otherwise keep it short.\
+\
+\
+GOOD PROMPT EXAMPLE\
+\
+Fix timeline truncation.\
+\
+Show only primary event per year.\
+Add "+N events".\
+Click expands full list.\
+\
+Scope\
+UI rendering only. No model changes.\
+\
+Reasoning\
+LOW\
+\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+REASONING LEVEL SELECTION\
+\
+Every prompt must include:\
+\
+Reasoning\
+LOW / MEDIUM / HIGH\
+\
+LOW\
+- Styling\
+- Text changes\
+- Simple UI tweaks\
+\
+MEDIUM\
+- UI logic\
+- Conditional rendering\
+- Interaction behaviour\
+\
+HIGH\
+- Model calculations\
+- Timing / ordering logic\
+- Liquidation logic\
+- Normalization\
+- Excel mapping\
+- Cross-layer changes\
+\
+Default to lowest safe level.\
+\
+\
+\
+PROMPT STRUCTURE\
+\
+Use clean, copy-paste format.\
+\
+Task\
+<what needs to be done>\
+\
+Details\
+<specific behaviour>\
+\
+Scope\
+<affected layer>\
+\
+Constraints (only if needed)\
+<task-specific only>\
+\
+Reasoning level for user to select (outside of prompt copy and paste pane)\
+<LOW / MEDIUM / HIGH>\
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+\cf0 \
+\
+BAD PROMPT EXAMPLE\
+\
+Fix timeline truncation.\
+\
+Preserve Excel parity.\
+Run tests.\
+Use git checkpoint.\
+\
+\
+DEFAULT ASSUMPTIONS\
+\
+Do not restate:\
+\
+- Excel parity must be preserved\
+- Tests must pass\
+- Changes must be minimal\
+- Git workflow is required\
+\
+These are enforced by AGENTS.md.\
+\
+END}
