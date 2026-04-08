@@ -2265,13 +2265,19 @@ body {
   margin-bottom: 8px;
 }
 
+.spending-adjustments-helper {
+  margin-top: -2px;
+  color: #6b7f78;
+  font-size: 11px;
+}
+
 .spending-adjustment-row {
   margin-bottom: 0;
 }
 
 .spending-adjustment-row-main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 118px;
+  grid-template-columns: minmax(0, 1fr) 148px;
   align-items: center;
   gap: 12px;
 }
@@ -2288,6 +2294,11 @@ body {
   letter-spacing: 0.005em;
 }
 
+.spending-adjustment-derived-age {
+  color: #6b7f78;
+  font-weight: 500;
+}
+
 .spending-adjustment-age-field {
   display: inline-grid;
   gap: 4px;
@@ -2301,6 +2312,14 @@ body {
 
 .spending-adjustment-value-shell input {
   text-align: right;
+}
+
+.spending-adjustment-value-shell .input-suffix {
+  right: 34px;
+}
+
+.spending-adjustment-value-shell.has-suffix.has-stepper input {
+  padding-right: 92px;
 }
 
 .embedded-field.has-error input {
@@ -2820,7 +2839,7 @@ input {
   }
 
   .spending-adjustment-value-shell {
-    max-width: 132px;
+    max-width: 148px;
   }
 }
 
