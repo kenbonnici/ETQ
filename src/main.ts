@@ -2817,6 +2817,98 @@ function renderGroupHeaderNameInput(fieldId: FieldId, placeholder: string): stri
   `;
 }
 
+type RemovableGroupKind =
+  | "dependent"
+  | "property"
+  | "assetOfValue"
+  | "incomeEvent"
+  | "expenseEvent"
+  | "stockMarketCrash";
+
+function getRemovableGroupFields(kind: RemovableGroupKind): ReadonlyArray<readonly FieldId[]> {
+  switch (kind) {
+    case "dependent":
+      return DEPENDENT_RUNTIME_GROUPS.map((group) => group.fields);
+    case "property":
+      return PROPERTY_RUNTIME_GROUPS.map((group) => group.allFields);
+    case "assetOfValue":
+      return ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.allFields);
+    case "incomeEvent":
+      return INCOME_EVENT_RUNTIME_GROUPS.map((group) => group.fields);
+    case "expenseEvent":
+      return EXPENSE_EVENT_RUNTIME_GROUPS.map((group) => group.fields);
+    case "stockMarketCrash":
+      return STOCK_MARKET_CRASH_RUNTIME_GROUPS.map((group) => group.fields);
+  }
+}
+
+function getVisibleGroupCount(kind: RemovableGroupKind): number {
+  switch (kind) {
+    case "dependent":
+      return visibleDependents;
+    case "property":
+      return visibleProperties;
+    case "assetOfValue":
+      return visibleAssetsOfValue;
+    case "incomeEvent":
+      return visibleIncomeEvents;
+    case "expenseEvent":
+      return visibleExpenseEvents;
+    case "stockMarketCrash":
+      return visibleStockMarketCrashes;
+  }
+}
+
+function renderGroupRemoveButton(kind: RemovableGroupKind, idx: number): string {
+  const label = idx === 0 && getVisibleGroupCount(kind) <= 1 ? "Clear" : "Remove";
+  return `
+    <button
+      type="button"
+      class="group-item-card-action"
+      data-remove-group-kind="${kind}"
+      data-remove-group-index="${idx}"
+      aria-label="${escapeHtml(label)} this item"
+    >${escapeHtml(label)}</button>
+  `;
+}
+
+function clearGroupFields(fields: readonly FieldId[]): void {
+  for (const fieldId of fields) {
+    fieldState[fieldId] = null;
+  }
+}
+
+function copyGroupFields(sourceFields: readonly FieldId[], targetFields: readonly FieldId[]): void {
+  for (let idx = 0; idx < targetFields.length; idx += 1) {
+    fieldState[targetFields[idx]] = fieldState[sourceFields[idx]] ?? null;
+  }
+}
+
+function removeInputGroup(kind: RemovableGroupKind, idx: number): void {
+  const groups = getRemovableGroupFields(kind);
+  if (idx < 0 || idx >= groups.length) return;
+
+  const clearOnly = idx === 0 && getVisibleGroupCount(kind) <= 1;
+  if (clearOnly) {
+    clearGroupFields(groups[0]);
+  } else {
+    for (let groupIdx = idx; groupIdx < groups.length - 1; groupIdx += 1) {
+      copyGroupFields(groups[groupIdx + 1], groups[groupIdx]);
+    }
+    clearGroupFields(groups[groups.length - 1]);
+  }
+
+  const pruned = pruneInactiveFieldState(fieldState);
+  for (const key of Object.keys(pruned) as Array<FieldId>) {
+    fieldState[key] = pruned[key];
+  }
+  syncVisibleRuntimeGroupsFromState();
+  uiState.manualPropertyLiquidationOrder = hasExplicitPropertyLiquidationPreferences(fieldState);
+  setRetireCheckMessage(null);
+  queueRecalc();
+  renderInputs();
+}
+
 function renderLivingExpensesField(def: InputDefinition, label: string): string {
   const modeToggleHtml = `
     <div class="living-expenses-mode-toggle" role="group" aria-label="Living expenses entry mode">
@@ -3306,6 +3398,19 @@ function renderInputs(): void {
           const cardTitle = summary || sub;
           const usePropertyLoanHeader = top.toLowerCase() === "investment property loans" && !!propertyGroup;
           const useAssetLoanHeader = top.toLowerCase() === "other asset loans" && !!assetOfValueGroup;
+          const removeButtonHtml = dependentGroup
+            ? renderGroupRemoveButton("dependent", dependentGroup.idx)
+            : incomeEventGroup
+              ? renderGroupRemoveButton("incomeEvent", incomeEventGroup.idx)
+              : expenseEventGroup
+                ? renderGroupRemoveButton("expenseEvent", expenseEventGroup.idx)
+                : stockMarketCrashGroup
+                  ? renderGroupRemoveButton("stockMarketCrash", stockMarketCrashGroup.idx)
+                  : propertyGroup && !usePropertyLoanHeader
+                    ? renderGroupRemoveButton("property", propertyGroup.idx)
+                    : assetOfValueGroup && !useAssetLoanHeader
+                      ? renderGroupRemoveButton("assetOfValue", assetOfValueGroup.idx)
+                      : "";
           const headerInputHtml = dependentGroup
             ? renderGroupHeaderNameInput(dependentGroup.nameField, "Name")
             : incomeEventGroup
@@ -3334,8 +3439,11 @@ function renderInputs(): void {
           html += `
             <div class="group-item-card">
               <div class="group-item-card-header${headerInputHtml ? " has-name-input" : ""}">
-                ${headerInputHtml || `<h4 class="group-sub">${escapeHtml(cardTitle)}</h4>
-                ${summary && !usePropertyLoanHeader && !useAssetLoanHeader ? `<span class="group-item-card-summary">${escapeHtml(summary)}</span>` : ""}`}
+                ${headerInputHtml
+                  ? `<div class="group-item-card-header-row">${headerInputHtml}${removeButtonHtml}</div>`
+                  : `<h4 class="group-sub">${escapeHtml(cardTitle)}</h4>
+                ${summary && !usePropertyLoanHeader && !useAssetLoanHeader ? `<span class="group-item-card-summary">${escapeHtml(summary)}</span>` : ""}
+                ${removeButtonHtml}`}
               </div>
           `;
           subgroupCardOpen = true;
@@ -3840,6 +3948,15 @@ function renderInputs(): void {
         visibleStockMarketCrashes = Math.max(visibleStockMarketCrashes, Math.min(STOCK_MARKET_CRASH_RUNTIME_GROUPS.length, next));
         renderInputs();
       }
+    });
+  });
+
+  inputsPanel.querySelectorAll<HTMLButtonElement>("[data-remove-group-kind][data-remove-group-index]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const kind = btn.dataset.removeGroupKind as RemovableGroupKind | undefined;
+      const idx = Number(btn.dataset.removeGroupIndex);
+      if (!kind || !Number.isFinite(idx)) return;
+      removeInputGroup(kind, idx);
     });
   });
 
