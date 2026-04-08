@@ -6,6 +6,7 @@ const STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA = Number(EXCEL_BASELINE_SPECIMEN.
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
+  lifeExpectancy: 'input[data-field-id="planning.lifeExpectancyAge"]',
   earlyRetAge: "#early-ret-age",
   currencySelector: "#currency-selector",
   livingExpenses: 'input[data-field-id="spending.livingExpenses.annual"]',
@@ -119,6 +120,12 @@ test("spending-by-age fields keep fixed defaults and allow inline age editing wi
   await expect(page.locator(selectors.spendingAdjustmentFinalBracket)).toHaveValue("-20%");
 
   await fillAndBlur(page, selectors.currentAge, "40");
+  await expect(page.locator(selectors.spendingAdjustmentAge1)).toHaveValue("65");
+  await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("75");
+
+  await fillAndBlur(page, selectors.lifeExpectancy, "40");
+  await expect(page.locator(selectors.spendingAdjustmentAge1)).toHaveValue("65");
+  await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("75");
 
   const firstEndAge = page.locator(selectors.spendingAdjustmentAge1);
   await firstEndAge.click();

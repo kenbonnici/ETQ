@@ -944,9 +944,6 @@ function applyFieldNumericConstraintForState(fieldId: FieldId, value: number | n
 }
 
 function getSpendingAdjustmentAgePair(state: Partial<Record<FieldId, RawInputValue>> = fieldState): { age1: number; age2: number } {
-  const rawMaxProjectionAge = state[RUNTIME_FIELDS.lifeExpectancyAge];
-  const maxProjectionAge = isBlank(rawMaxProjectionAge) ? NaN : Number(rawMaxProjectionAge);
-  const resolvedMaxProjectionAge = Number.isFinite(maxProjectionAge) ? Math.round(maxProjectionAge) : 120;
   const rawAge1Value = state[RUNTIME_FIELDS.spendingAdjustmentAge1];
   const rawAge2Value = state[RUNTIME_FIELDS.spendingAdjustmentAge2];
   const rawAge1 = isBlank(rawAge1Value) ? NaN : Number(rawAge1Value);
@@ -955,11 +952,7 @@ function getSpendingAdjustmentAgePair(state: Partial<Record<FieldId, RawInputVal
   let age2 = Number.isFinite(rawAge2) ? Math.round(rawAge2) : DEFAULT_SPENDING_ADJUSTMENT_AGE_2;
 
   age1 = Math.max(18, age1);
-  if (resolvedMaxProjectionAge > 18) {
-    age1 = Math.min(resolvedMaxProjectionAge - 1, age1);
-  }
   age2 = Math.max(age1 + 1, age2);
-  age2 = Math.min(Math.max(resolvedMaxProjectionAge, age1 + 1), age2);
   return { age1, age2 };
 }
 
@@ -970,19 +963,16 @@ function syncSpendingAdjustmentAgeFieldsForState(
   const previousAge1 = state[RUNTIME_FIELDS.spendingAdjustmentAge1];
   const previousAge2 = state[RUNTIME_FIELDS.spendingAdjustmentAge2];
   let { age1, age2 } = getSpendingAdjustmentAgePair(state);
-  const rawMaxProjectionAge = state[RUNTIME_FIELDS.lifeExpectancyAge];
-  const maxProjectionAge = isBlank(rawMaxProjectionAge) ? NaN : Number(rawMaxProjectionAge);
-  const resolvedMaxProjectionAge = Number.isFinite(maxProjectionAge) ? Math.round(maxProjectionAge) : 120;
 
   if (changedFieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 && age1 >= age2) {
-    age2 = Math.min(resolvedMaxProjectionAge, age1 + 1);
+    age2 = age1 + 1;
   }
   if (changedFieldId === RUNTIME_FIELDS.spendingAdjustmentAge2 && age2 <= age1) {
     age2 = age1 + 1;
   }
   if (age2 <= age1) {
-    age1 = Math.max(18, resolvedMaxProjectionAge - 1);
-    age2 = Math.max(age1 + 1, resolvedMaxProjectionAge);
+    age1 = DEFAULT_SPENDING_ADJUSTMENT_AGE_1;
+    age2 = DEFAULT_SPENDING_ADJUSTMENT_AGE_2;
   }
 
   state[RUNTIME_FIELDS.spendingAdjustmentAge1] = age1;
@@ -3243,9 +3233,6 @@ function applyStepperDelta(fieldId: FieldId, dir: number): void {
     fieldState[RUNTIME_FIELDS.currentAge] = Math.max(18, Math.min(100, Math.round(asNumber(fieldState[RUNTIME_FIELDS.currentAge]))));
     enforceLiveUntilAgeConstraint(true);
   }
-  if (fieldId === RUNTIME_FIELDS.lifeExpectancyAge) {
-    syncSpendingAdjustmentAgeFields(fieldId);
-  }
   if (fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
     const statutory = getStatutoryAge();
     if (statutory !== null) {
@@ -3986,9 +3973,6 @@ function renderInputs(): void {
       if (fieldId === RUNTIME_FIELDS.currentAge) {
         enforceLiveUntilAgeConstraint(true);
       }
-      if (fieldId === RUNTIME_FIELDS.lifeExpectancyAge) {
-        syncSpendingAdjustmentAgeFields(fieldId);
-      }
       queueRecalc();
       const refreshedDownsizingPreview = refreshDownsizingPreviewOnInput(fieldId);
       // For numeric dependency-driver fields, defer UI structural rerender to blur
@@ -4051,11 +4035,7 @@ function renderInputs(): void {
           queueRecalc();
         }
       }
-      if (
-        fieldId === RUNTIME_FIELDS.lifeExpectancyAge
-        || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1
-        || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2
-      ) {
+      if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) {
         if (syncSpendingAdjustmentAgeFields(fieldId)) {
           queueRecalc();
         }
