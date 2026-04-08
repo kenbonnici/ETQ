@@ -126,6 +126,25 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
     pushMessage(messages, "B20", "error", "State pension start age cannot exceed plan to live until age.", true);
   }
 
+  const spendingAge1 = asNumber(raw.B256);
+  const spendingAge2 = asNumber(raw.B257);
+  if (spendingAge1 !== null) {
+    if (ageNow !== null && spendingAge1 < ageNow) {
+      pushMessage(messages, "B256", "error", "First bracket end age must be current age or later.");
+    }
+    if (lifeExpectancy !== null && spendingAge1 >= lifeExpectancy) {
+      pushMessage(messages, "B256", "error", "First bracket end age must leave room for the next bracket within the projection horizon.");
+    }
+  }
+  if (spendingAge2 !== null) {
+    if (lifeExpectancy !== null && spendingAge2 > lifeExpectancy) {
+      pushMessage(messages, "B257", "error", "Second bracket end age cannot exceed the projection horizon.");
+    }
+    if (spendingAge1 !== null && spendingAge2 <= spendingAge1) {
+      pushMessage(messages, "B257", "error", "Second bracket end age must be greater than first bracket end age.");
+    }
+  }
+
   if (lifeExpectancy !== null && lifeExpectancy > 100) {
     pushMessage(messages, "B255", "warning", "Planning past age 100 is allowed, but double-check that horizon.");
   }

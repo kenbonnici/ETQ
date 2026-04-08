@@ -172,6 +172,8 @@ const STEP_DECIMALS = FIELD_STEPPER_DECIMALS;
 const LIVING_EXPENSES_FIELD_ID = RUNTIME_FIELDS.annualLivingExpenses;
 const LIVING_EXPENSES_DEF = INPUT_DEFINITION_BY_FIELD_ID[LIVING_EXPENSES_FIELD_ID];
 const DOWNSIZING_MODE_OPTIONS = ["Buy", "Rent"] as const;
+const DEFAULT_SPENDING_ADJUSTMENT_AGE_1 = 65;
+const DEFAULT_SPENDING_ADJUSTMENT_AGE_2 = 75;
 const DOWNSIZING_PREVIEW_INPUT_FIELDS = new Set<FieldId>([
   HOME_FIELDS.homeValue,
   HOME_FIELDS.mortgageBalance,
@@ -910,7 +912,63 @@ function applyFieldNumericConstraintForState(fieldId: FieldId, value: number | n
       bounded = Math.max(numericCurrentAge, bounded);
     }
   }
+  if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) {
+    const currentAge = Number(state[RUNTIME_FIELDS.currentAge]);
+    const maxProjectionAge = Number(state[RUNTIME_FIELDS.lifeExpectancyAge]);
+    const resolvedCurrentAge = Number.isFinite(currentAge) ? Math.round(currentAge) : 18;
+    const resolvedMaxProjectionAge = Number.isFinite(maxProjectionAge) ? Math.round(maxProjectionAge) : 120;
+    if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1) {
+      bounded = Math.max(resolvedCurrentAge, bounded);
+      if (resolvedMaxProjectionAge > resolvedCurrentAge) {
+        bounded = Math.min(resolvedMaxProjectionAge - 1, bounded);
+      }
+    } else {
+      bounded = Math.min(resolvedMaxProjectionAge, bounded);
+    }
+  }
   return bounded;
+}
+
+function getSpendingAdjustmentAgePair(state: Partial<Record<FieldId, RawInputValue>> = fieldState): { age1: number; age2: number } {
+  const currentAge = Number(state[RUNTIME_FIELDS.currentAge]);
+  const maxProjectionAge = Number(state[RUNTIME_FIELDS.lifeExpectancyAge]);
+  const resolvedCurrentAge = Number.isFinite(currentAge) ? Math.round(currentAge) : DEFAULT_SPENDING_ADJUSTMENT_AGE_1;
+  const resolvedMaxProjectionAge = Number.isFinite(maxProjectionAge) ? Math.round(maxProjectionAge) : 120;
+  const rawAge1 = Number(state[RUNTIME_FIELDS.spendingAdjustmentAge1]);
+  const rawAge2 = Number(state[RUNTIME_FIELDS.spendingAdjustmentAge2]);
+  let age1 = Number.isFinite(rawAge1) ? Math.round(rawAge1) : DEFAULT_SPENDING_ADJUSTMENT_AGE_1;
+  let age2 = Number.isFinite(rawAge2) ? Math.round(rawAge2) : DEFAULT_SPENDING_ADJUSTMENT_AGE_2;
+
+  age1 = Math.max(resolvedCurrentAge, age1);
+  if (resolvedMaxProjectionAge > resolvedCurrentAge) {
+    age1 = Math.min(resolvedMaxProjectionAge - 1, age1);
+  }
+  age2 = Math.max(age1 + 1, age2);
+  age2 = Math.min(Math.max(resolvedMaxProjectionAge, age1 + 1), age2);
+  return { age1, age2 };
+}
+
+function syncSpendingAdjustmentAgeFields(changedFieldId?: FieldId): boolean {
+  const previousAge1 = fieldState[RUNTIME_FIELDS.spendingAdjustmentAge1];
+  const previousAge2 = fieldState[RUNTIME_FIELDS.spendingAdjustmentAge2];
+  let { age1, age2 } = getSpendingAdjustmentAgePair();
+  const maxProjectionAge = Number(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
+  const resolvedMaxProjectionAge = Number.isFinite(maxProjectionAge) ? Math.round(maxProjectionAge) : 120;
+
+  if (changedFieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 && age1 >= age2) {
+    age2 = Math.min(resolvedMaxProjectionAge, age1 + 1);
+  }
+  if (changedFieldId === RUNTIME_FIELDS.spendingAdjustmentAge2 && age2 <= age1) {
+    age2 = age1 + 1;
+  }
+  if (age2 <= age1) {
+    age1 = Math.max(Math.round(Number(fieldState[RUNTIME_FIELDS.currentAge]) || 18), resolvedMaxProjectionAge - 1);
+    age2 = Math.max(age1 + 1, resolvedMaxProjectionAge);
+  }
+
+  fieldState[RUNTIME_FIELDS.spendingAdjustmentAge1] = age1;
+  fieldState[RUNTIME_FIELDS.spendingAdjustmentAge2] = age2;
+  return previousAge1 !== age1 || previousAge2 !== age2;
 }
 
 function readScenarioStorageJson<T>(key: string): T | null {
@@ -1003,6 +1061,8 @@ function clearAllAttemptedFieldMessages(): void {
 function clearAgeConstraintAttemptMessages(): void {
   clearAttemptedFieldMessage(RUNTIME_FIELDS.currentAge);
   clearAttemptedFieldMessage(RUNTIME_FIELDS.statutoryRetirementAge);
+  clearAttemptedFieldMessage(RUNTIME_FIELDS.spendingAdjustmentAge1);
+  clearAttemptedFieldMessage(RUNTIME_FIELDS.spendingAdjustmentAge2);
 }
 
 function resetLivingExpensesHelperState(): void {
@@ -2995,6 +3055,30 @@ function getAgeStepperLimitMessage(fieldId: FieldId, dir: number, nextValue: num
       return "Statutory retirement age must be greater than your current age.";
     }
   }
+  if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 && dir < 0) {
+    const currentAge = Number(fieldState[RUNTIME_FIELDS.currentAge]);
+    if (Number.isFinite(currentAge) && nextValue < Math.round(currentAge)) {
+      return "First end age must be current age or later.";
+    }
+  }
+  if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 && dir > 0) {
+    const maxProjectionAge = Number(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
+    if (Number.isFinite(maxProjectionAge) && nextValue >= Math.round(maxProjectionAge)) {
+      return "First end age must leave room for the next bracket within the projection horizon.";
+    }
+  }
+  if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2 && dir < 0) {
+    const age1 = Number(fieldState[RUNTIME_FIELDS.spendingAdjustmentAge1]);
+    if (Number.isFinite(age1) && nextValue <= Math.round(age1)) {
+      return "Second end age must be greater than first end age.";
+    }
+  }
+  if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2 && dir > 0) {
+    const maxProjectionAge = Number(fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
+    if (Number.isFinite(maxProjectionAge) && nextValue > Math.round(maxProjectionAge)) {
+      return "Second end age cannot exceed the projection horizon.";
+    }
+  }
   return null;
 }
 
@@ -3024,9 +3108,16 @@ function applyStepperDelta(fieldId: FieldId, dir: number): void {
     clearAgeConstraintAttemptMessages();
   }
   fieldState[fieldId] = constrained;
+  if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) {
+    syncSpendingAdjustmentAgeFields(fieldId);
+  }
   if (fieldId === RUNTIME_FIELDS.currentAge) {
     fieldState[RUNTIME_FIELDS.currentAge] = Math.max(18, Math.min(100, Math.round(asNumber(fieldState[RUNTIME_FIELDS.currentAge]))));
     enforceLiveUntilAgeConstraint(true);
+    syncSpendingAdjustmentAgeFields(fieldId);
+  }
+  if (fieldId === RUNTIME_FIELDS.lifeExpectancyAge) {
+    syncSpendingAdjustmentAgeFields(fieldId);
   }
   if (fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
     const statutory = getStatutoryAge();
@@ -3682,7 +3773,12 @@ function renderInputs(): void {
     el.addEventListener("input", () => {
       const fieldId = el.dataset.fieldId as FieldId;
       markFieldTouched(fieldId);
-      if (fieldId === RUNTIME_FIELDS.currentAge || fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
+      if (
+        fieldId === RUNTIME_FIELDS.currentAge
+        || fieldId === RUNTIME_FIELDS.statutoryRetirementAge
+        || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1
+        || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2
+      ) {
         clearAgeConstraintAttemptMessages();
       }
       const def = INPUT_DEFINITION_BY_FIELD_ID[fieldId];
@@ -3721,6 +3817,9 @@ function renderInputs(): void {
       } else {
         fieldState[fieldId] = nextValue as number | null;
       }
+      if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) {
+        syncSpendingAdjustmentAgeFields(fieldId);
+      }
       if (fieldId === LIVING_EXPENSES_FIELD_ID && livingExpensesMode === "single") {
         livingExpenseCategoryValues = createEmptyLivingExpenseCategoryValues();
       }
@@ -3735,6 +3834,10 @@ function renderInputs(): void {
       }
       if (fieldId === RUNTIME_FIELDS.currentAge) {
         enforceLiveUntilAgeConstraint(true);
+        syncSpendingAdjustmentAgeFields(fieldId);
+      }
+      if (fieldId === RUNTIME_FIELDS.lifeExpectancyAge) {
+        syncSpendingAdjustmentAgeFields(fieldId);
       }
       queueRecalc();
       const refreshedDownsizingPreview = refreshDownsizingPreviewOnInput(fieldId);
@@ -3775,7 +3878,12 @@ function renderInputs(): void {
     el.addEventListener("blur", (ev) => {
       const fieldId = el.dataset.fieldId as FieldId;
       markFieldTouched(fieldId);
-      if (fieldId === RUNTIME_FIELDS.currentAge || fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
+      if (
+        fieldId === RUNTIME_FIELDS.currentAge
+        || fieldId === RUNTIME_FIELDS.statutoryRetirementAge
+        || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1
+        || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2
+      ) {
         clearAgeConstraintAttemptMessages();
       }
       const def = INPUT_DEFINITION_BY_FIELD_ID[fieldId];
@@ -3785,6 +3893,16 @@ function renderInputs(): void {
         const constrained = applyFieldNumericConstraint(fieldId, numericCurrent);
         if (constrained !== numericCurrent) {
           fieldState[fieldId] = constrained;
+          queueRecalc();
+        }
+      }
+      if (
+        fieldId === RUNTIME_FIELDS.currentAge
+        || fieldId === RUNTIME_FIELDS.lifeExpectancyAge
+        || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1
+        || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2
+      ) {
+        if (syncSpendingAdjustmentAgeFields(fieldId)) {
           queueRecalc();
         }
       }
@@ -3800,6 +3918,7 @@ function renderInputs(): void {
         if (Number.isFinite(age)) {
           fieldState[RUNTIME_FIELDS.currentAge] = Math.max(18, Math.min(100, Math.round(age)));
           enforceLiveUntilAgeConstraint(true);
+          syncSpendingAdjustmentAgeFields(fieldId);
           queueRecalc();
         }
       }

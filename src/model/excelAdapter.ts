@@ -19,9 +19,15 @@ export function getExcelRefForField(fieldId: FieldId): ExcelFieldRef {
   return { sheet: "Inputs", cell: getCellForFieldId(fieldId) };
 }
 
+function getDefaultFieldValue(fieldId: FieldId): RawInputValue {
+  if (fieldId === "spending.adjustments.firstBracket.endAge") return 65;
+  if (fieldId === "spending.adjustments.secondBracket.endAge") return 75;
+  return null;
+}
+
 export function createEmptyFieldState(): FieldState {
   const state: FieldState = {};
-  for (const def of INPUT_DEFINITIONS) state[def.fieldId] = null;
+  for (const def of INPUT_DEFINITIONS) state[def.fieldId] = getDefaultFieldValue(def.fieldId);
   return state;
 }
 
@@ -42,7 +48,7 @@ export function fieldStateToRawInputs(fields: FieldState): RawInputs {
 export function rawInputsToFieldState(raw: Partial<Record<string, RawInputValue>>): FieldState {
   const fields = createEmptyFieldState();
   for (const def of INPUT_DEFINITIONS) {
-    fields[def.fieldId] = raw[def.cell] ?? null;
+    fields[def.fieldId] = raw[def.cell] ?? getDefaultFieldValue(def.fieldId);
   }
   return fields;
 }

@@ -67,9 +67,11 @@ export interface EffectiveInputs {
   stockMarketCrashes: Array<{ year: number; dropPercentage: number; recoveryYears: number }>;
 
   liveUntilAge: number;
-  spendAdjustTo65: number;
-  spendAdjust66To75: number;
-  spendAdjustFrom76: number;
+  spendingAdjustmentAge1: number;
+  spendingAdjustmentAge2: number;
+  spendAdjustFirstBracket: number;
+  spendAdjustSecondBracket: number;
+  spendAdjustFinalBracket: number;
   postRetIncomeAnnual: number;
   postRetIncomeFromAge: number;
   postRetIncomeToAge: number;

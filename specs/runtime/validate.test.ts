@@ -185,6 +185,26 @@ test("validation rejects pension start ages beyond the planning horizon", () => 
   );
 });
 
+test("validation enforces spending bracket ages against current age, ordering, and horizon", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 60;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[RUNTIME_FIELDS.spendingAdjustmentAge1] = 59;
+  fields[RUNTIME_FIELDS.spendingAdjustmentAge2] = 59;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 && message.severity === "error" && message.message.includes("current age or later")),
+    true
+  );
+  assert.equal(
+    messages.some((message) => message.fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2 && message.severity === "error" && message.message.includes("greater than first bracket end age")),
+    true
+  );
+});
+
 test("validation warns on typo-like monetary amounts", () => {
   const fields = createEmptyFieldState();
   fields[RUNTIME_FIELDS.currentAge] = 48;

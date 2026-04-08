@@ -355,9 +355,11 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
 
     const livingExpenseBase = inputs.livingExpensesAnnual * infFactor * proRate;
     let livingExpense = livingExpenseBase;
-    if (age <= 65) livingExpense += inputs.spendAdjustTo65 * livingExpenseBase;
-    if (age > 65 && age <= 75) livingExpense += inputs.spendAdjust66To75 * livingExpenseBase;
-    if (age > 75) livingExpense += inputs.spendAdjustFrom76 * livingExpenseBase;
+    if (age <= inputs.spendingAdjustmentAge1) livingExpense += inputs.spendAdjustFirstBracket * livingExpenseBase;
+    if (age > inputs.spendingAdjustmentAge1 && age <= inputs.spendingAdjustmentAge2) {
+      livingExpense += inputs.spendAdjustSecondBracket * livingExpenseBase;
+    }
+    if (age > inputs.spendingAdjustmentAge2) livingExpense += inputs.spendAdjustFinalBracket * livingExpenseBase;
     livingExpensesSeries[idx] = livingExpense;
 
     let outflows = livingExpense;

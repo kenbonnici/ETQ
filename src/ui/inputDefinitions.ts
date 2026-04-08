@@ -1678,8 +1678,32 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
+    row: 256,
+    fieldId: "spending.adjustments.firstBracket.endAge",
+    label: "First bracket end age",
+    section: "FINER DETAILS",
+    groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
+    groupTail: ["Spending adjustment (at today's euros)"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "65",
+    type: "integer"
+  },
+  {
+    row: 257,
+    fieldId: "spending.adjustments.secondBracket.endAge",
+    label: "Second bracket end age",
+    section: "FINER DETAILS",
+    groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
+    groupTail: ["Spending adjustment (at today's euros)"],
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "75",
+    type: "integer"
+  },
+  {
     row: 258,
-    fieldId: "spending.adjustments.pre65.deltaRate",
+    fieldId: "spending.adjustments.firstBracket.deltaRate",
     label: "From now to 65",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
@@ -1691,7 +1715,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 259,
-    fieldId: "spending.adjustments.age66To75.deltaRate",
+    fieldId: "spending.adjustments.secondBracket.deltaRate",
     label: "From 66 to 75",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
@@ -1703,7 +1727,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   },
   {
     row: 260,
-    fieldId: "spending.adjustments.age76Plus.deltaRate",
+    fieldId: "spending.adjustments.finalBracket.deltaRate",
     label: "From age 76",
     section: "FINER DETAILS",
     groupPath: "FINER DETAILS > Spending adjustment (at today's euros)",
@@ -2153,9 +2177,11 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
   }
 
   if (
-    fieldId === "spending.adjustments.pre65.deltaRate"
-    || fieldId === "spending.adjustments.age66To75.deltaRate"
-    || fieldId === "spending.adjustments.age76Plus.deltaRate"
+    fieldId === "spending.adjustments.firstBracket.endAge"
+    || fieldId === "spending.adjustments.secondBracket.endAge"
+    || fieldId === "spending.adjustments.firstBracket.deltaRate"
+    || fieldId === "spending.adjustments.secondBracket.deltaRate"
+    || fieldId === "spending.adjustments.finalBracket.deltaRate"
   ) {
     return { section: "Advanced Assumptions", groupTail: ["Spending changes by age"] };
   }

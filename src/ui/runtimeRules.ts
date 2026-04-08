@@ -107,9 +107,11 @@ export const FIELD_STEPPER_STEPS: Readonly<Partial<Record<FieldId, number>>> = {
   [OTHER_LOAN_FIELDS.balance]: 100,
   [OTHER_LOAN_FIELDS.monthlyRepayment]: 10,
   [RUNTIME_FIELDS.lifeExpectancyAge]: 1,
-  [RUNTIME_FIELDS.spendingAdjustmentPre65]: 0.001,
-  [RUNTIME_FIELDS.spendingAdjustment66To75]: 0.001,
-  [RUNTIME_FIELDS.spendingAdjustment76Plus]: 0.001,
+  [RUNTIME_FIELDS.spendingAdjustmentAge1]: 1,
+  [RUNTIME_FIELDS.spendingAdjustmentAge2]: 1,
+  [RUNTIME_FIELDS.spendingAdjustmentFirstBracket]: 0.001,
+  [RUNTIME_FIELDS.spendingAdjustmentSecondBracket]: 0.001,
+  [RUNTIME_FIELDS.spendingAdjustmentFinalBracket]: 0.001,
   [POST_RETIREMENT_INCOME_FIELDS.amount]: 100,
   [POST_RETIREMENT_INCOME_FIELDS.fromAge]: 1,
   [POST_RETIREMENT_INCOME_FIELDS.toAge]: 1,
@@ -187,9 +189,11 @@ export const FIELD_STEPPER_DECIMALS: Readonly<Partial<Record<FieldId, number>>> 
   [OTHER_LOAN_FIELDS.balance]: 0,
   [OTHER_LOAN_FIELDS.monthlyRepayment]: 0,
   [RUNTIME_FIELDS.lifeExpectancyAge]: 0,
-  [RUNTIME_FIELDS.spendingAdjustmentPre65]: 3,
-  [RUNTIME_FIELDS.spendingAdjustment66To75]: 3,
-  [RUNTIME_FIELDS.spendingAdjustment76Plus]: 3,
+  [RUNTIME_FIELDS.spendingAdjustmentAge1]: 0,
+  [RUNTIME_FIELDS.spendingAdjustmentAge2]: 0,
+  [RUNTIME_FIELDS.spendingAdjustmentFirstBracket]: 3,
+  [RUNTIME_FIELDS.spendingAdjustmentSecondBracket]: 3,
+  [RUNTIME_FIELDS.spendingAdjustmentFinalBracket]: 3,
   [POST_RETIREMENT_INCOME_FIELDS.amount]: 0,
   [POST_RETIREMENT_INCOME_FIELDS.fromAge]: 0,
   [POST_RETIREMENT_INCOME_FIELDS.toAge]: 0,
@@ -340,6 +344,9 @@ export function getPropertyName(
 }
 
 export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, nextValue: unknown): boolean {
+  if (fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) {
+    return asNumber(prevValue) !== asNumber(nextValue);
+  }
   if (fieldId === RUNTIME_FIELDS.stockMarketInvestments) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === HOME_FIELDS.homeValue) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === DOWNSIZING_FIELDS.year) return isBlank(prevValue) !== isBlank(nextValue);
@@ -588,6 +595,16 @@ function stockMarketCrashSlotVisible(
   return group.idx === 0 || visibleStockMarketCrashes >= group.idx + 1 || anyValue(values, group.revealFields);
 }
 
+function getSpendingAdjustmentAge1(values: RuntimeValues): number {
+  const raw = Number(values[RUNTIME_FIELDS.spendingAdjustmentAge1]);
+  return Number.isFinite(raw) ? Math.round(raw) : 65;
+}
+
+function getSpendingAdjustmentAge2(values: RuntimeValues): number {
+  const raw = Number(values[RUNTIME_FIELDS.spendingAdjustmentAge2]);
+  return Number.isFinite(raw) ? Math.round(raw) : 75;
+}
+
 export function getDynamicFieldLabel(def: InputDefinition, values: RuntimeValues): string {
   const propertyByRentalIncomeField = PROPERTY_RUNTIME_GROUPS.find((group) => group.rentalIncomeField === def.fieldId);
   if (propertyByRentalIncomeField) {
@@ -595,6 +612,20 @@ export function getDynamicFieldLabel(def: InputDefinition, values: RuntimeValues
     return "Rental income";
   }
   if (def.fieldId === RUNTIME_FIELDS.generalInflation) return "General inflation";
+  if (def.fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1) return "First end age";
+  if (def.fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) return "Second end age";
+  const spendingAge1 = getSpendingAdjustmentAge1(values);
+  const spendingAge2 = Math.max(spendingAge1 + 1, getSpendingAdjustmentAge2(values));
+  if (def.fieldId === RUNTIME_FIELDS.spendingAdjustmentFirstBracket) {
+    return `From now to ${spendingAge1}`;
+  }
+  if (def.fieldId === RUNTIME_FIELDS.spendingAdjustmentSecondBracket) {
+    const startAge = spendingAge1 + 1;
+    return startAge === spendingAge2 ? `At age ${spendingAge2}` : `From ${startAge} to ${spendingAge2}`;
+  }
+  if (def.fieldId === RUNTIME_FIELDS.spendingAdjustmentFinalBracket) {
+    return `From ${spendingAge2 + 1} onward`;
+  }
   const propertyByRankField = LIQUIDATION_ASSET_RUNTIME_GROUPS.find((group) => group.liquidationRankField === def.fieldId);
   if (propertyByRankField) {
     return String(values[propertyByRankField.nameField] ?? "").trim() || propertyByRankField.fallbackName;

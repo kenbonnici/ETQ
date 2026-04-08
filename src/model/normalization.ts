@@ -19,6 +19,9 @@ export interface LiquidationPriorityOptions {
   manualOverrideActive?: boolean;
 }
 
+const DEFAULT_SPENDING_ADJUSTMENT_AGE_1 = 65;
+const DEFAULT_SPENDING_ADJUSTMENT_AGE_2 = 75;
+
 function toTrimmedString(v: RawInputValue): string {
   if (v === null || v === undefined) return "";
   return String(v).trim();
@@ -46,6 +49,27 @@ function toBoundedNumber(v: RawInputValue, min: number, max: number): number {
   const n = toNumber(v);
   if (n === 0) return 0;
   return Math.min(max, Math.max(min, n));
+}
+
+function resolveSpendingAdjustmentAges(
+  rawAge1: RawInputValue,
+  rawAge2: RawInputValue,
+  ageNow: number,
+  liveUntilAge: number
+): { age1: number; age2: number } {
+  const minAge1 = ageNow > 0 ? Math.round(ageNow) : DEFAULT_SPENDING_ADJUSTMENT_AGE_1;
+  const maxAge = liveUntilAge > 0 ? Math.round(liveUntilAge) : DEFAULT_SPENDING_ADJUSTMENT_AGE_2;
+  let age1 = Math.round(toNullableNumber(rawAge1) ?? DEFAULT_SPENDING_ADJUSTMENT_AGE_1);
+  let age2 = Math.round(toNullableNumber(rawAge2) ?? DEFAULT_SPENDING_ADJUSTMENT_AGE_2);
+
+  age1 = Math.max(minAge1, age1);
+  if (maxAge > minAge1) {
+    age1 = Math.min(age1, maxAge - 1);
+  }
+  age2 = Math.max(age1 + 1, age2);
+  age2 = Math.min(Math.max(maxAge, age1 + 1), age2);
+
+  return { age1, age2 };
 }
 
 export function deriveDefaultLiquidationPriority(raw: RawInputs): number[] {
@@ -84,6 +108,7 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
   const statutoryRetirementAge = toBoundedNumber(raw.B20, 50, 70);
   const liveUntilMinimum = ageNow > 0 ? ageNow : 19;
   const liveUntilAge = toBoundedNumber(raw.B255, liveUntilMinimum, 120);
+  const spendingAdjustmentAges = resolveSpendingAdjustmentAges(raw.B256, raw.B257, ageNow, liveUntilAge);
 
   return {
     ageNow,
@@ -153,9 +178,11 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
     })),
 
     liveUntilAge,
-    spendAdjustTo65: toNumber(raw.B258),
-    spendAdjust66To75: toNumber(raw.B259),
-    spendAdjustFrom76: toNumber(raw.B260),
+    spendingAdjustmentAge1: spendingAdjustmentAges.age1,
+    spendingAdjustmentAge2: spendingAdjustmentAges.age2,
+    spendAdjustFirstBracket: toNumber(raw.B258),
+    spendAdjustSecondBracket: toNumber(raw.B259),
+    spendAdjustFinalBracket: toNumber(raw.B260),
     postRetIncomeAnnual: toNumber(raw.B262),
     postRetIncomeFromAge: toNumber(raw.B263),
     postRetIncomeToAge: toNumber(raw.B264),
