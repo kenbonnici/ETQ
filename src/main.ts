@@ -2842,25 +2842,10 @@ function getRemovableGroupFields(kind: RemovableGroupKind): ReadonlyArray<readon
   }
 }
 
-function getVisibleGroupCount(kind: RemovableGroupKind): number {
-  switch (kind) {
-    case "dependent":
-      return visibleDependents;
-    case "property":
-      return visibleProperties;
-    case "assetOfValue":
-      return visibleAssetsOfValue;
-    case "incomeEvent":
-      return visibleIncomeEvents;
-    case "expenseEvent":
-      return visibleExpenseEvents;
-    case "stockMarketCrash":
-      return visibleStockMarketCrashes;
-  }
-}
-
 function renderGroupRemoveButton(kind: RemovableGroupKind, idx: number): string {
-  const label = idx === 0 && getVisibleGroupCount(kind) <= 1 ? "Clear" : "Remove";
+  const fields = getRemovableGroupFields(kind)[idx];
+  if (!fields || !anyValue(fieldState, fields)) return "";
+  const label = "Remove";
   return `
     <button
       type="button"
@@ -2888,15 +2873,10 @@ function removeInputGroup(kind: RemovableGroupKind, idx: number): void {
   const groups = getRemovableGroupFields(kind);
   if (idx < 0 || idx >= groups.length) return;
 
-  const clearOnly = idx === 0 && getVisibleGroupCount(kind) <= 1;
-  if (clearOnly) {
-    clearGroupFields(groups[0]);
-  } else {
-    for (let groupIdx = idx; groupIdx < groups.length - 1; groupIdx += 1) {
-      copyGroupFields(groups[groupIdx + 1], groups[groupIdx]);
-    }
-    clearGroupFields(groups[groups.length - 1]);
+  for (let groupIdx = idx; groupIdx < groups.length - 1; groupIdx += 1) {
+    copyGroupFields(groups[groupIdx + 1], groups[groupIdx]);
   }
+  clearGroupFields(groups[groups.length - 1]);
 
   const pruned = pruneInactiveFieldState(fieldState);
   for (const key of Object.keys(pruned) as Array<FieldId>) {
