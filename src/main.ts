@@ -3570,7 +3570,7 @@ function renderPropertyLiquidationOrderControl(): string {
   return `
     <div class="liquidation-reorder" data-liquidation-reorder="true">
       <div class="liquidation-title">If Money Runs Short, Sell Assets In This Order</div>
-      <small class="liquidation-help">Use the arrows to reorder sellable assets. Turn Liquidate off for assets you would never liquidate.</small>
+      <small class="liquidation-help">Use arows to reorder or turn Liqiudate off to never sell</small>
       <div class="liquidation-section" data-liquidation-zone="sellable">
         ${sellableRows ? `<ul class="liquidation-list">${sellableContent}</ul>` : sellableContent}
       </div>
