@@ -155,6 +155,7 @@ const networthExpandedGroups = new Set<string>(["networth-properties", "networth
 let liquidationPulseTimeout: number | null = null;
 let activePanelEditState: { fieldId: FieldId; value: string } | null = null;
 let suppressFocusSelectionFieldId: FieldId | null = null;
+let plannedSellYearJumpHighlightTimeout: number | null = null;
 
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
@@ -3463,9 +3464,35 @@ function renderScheduledLiquidationRow(
         <span class="liquidation-name">${escapeHtml(name)}</span>
         <span class="liquidation-value">${escapeHtml(valueText)}</span>
         <span class="liquidation-reorder-placeholder" aria-hidden="true"></span>
-        <span class="liquidation-scheduled-tag">Scheduled at ${year}</span>
+        <button
+          type="button"
+          class="liquidation-scheduled-tag liquidation-scheduled-link"
+          data-liquidation-planned-sell-year-field-id="${cfg.plannedSellYearField}"
+          aria-label="Jump to planned sell year for ${escapeHtml(name)}"
+        >Scheduled at ${year}</button>
       </li>
     `;
+}
+
+function focusPlannedSellYearField(fieldId: PlannedSellYearFieldId): void {
+  const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-planned-sell-year-field-id="${fieldId}"]`);
+  const field = inputsPanel.querySelector<HTMLElement>(`.field[data-field-id="${fieldId}"]`);
+  if (!input || !field) return;
+
+  const scrollTarget = field.closest<HTMLElement>(".group-item-card") ?? field;
+  input.focus({ preventScroll: true });
+  scrollTarget.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+  field.classList.remove("is-guided");
+  void field.offsetWidth;
+  field.classList.add("is-guided");
+
+  if (plannedSellYearJumpHighlightTimeout !== null) {
+    window.clearTimeout(plannedSellYearJumpHighlightTimeout);
+  }
+  plannedSellYearJumpHighlightTimeout = window.setTimeout(() => {
+    field.classList.remove("is-guided");
+    plannedSellYearJumpHighlightTimeout = null;
+  }, 1600);
 }
 
 function renderPropertyLiquidationOrderControl(): string {
@@ -4102,6 +4129,14 @@ function renderInputs(): void {
       setRetireCheckMessage(null);
       queueRecalc();
       renderInputs();
+    });
+  });
+
+  inputsPanel.querySelectorAll<HTMLButtonElement>("[data-liquidation-planned-sell-year-field-id]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const fieldId = btn.dataset.liquidationPlannedSellYearFieldId as PlannedSellYearFieldId | undefined;
+      if (!fieldId) return;
+      focusPlannedSellYearField(fieldId);
     });
   });
 

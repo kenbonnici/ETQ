@@ -1896,6 +1896,11 @@ body {
   margin-bottom: 0;
 }
 
+.field.is-guided {
+  border-color: #8fb8a6;
+  box-shadow: 0 0 0 3px rgb(143 184 166 / 0.18);
+}
+
 .group-item-card .add-slot-btn {
   margin-top: 4px;
   margin-bottom: 8px;
@@ -2156,6 +2161,24 @@ body {
   font-weight: 500;
   color: #475569;
   white-space: nowrap;
+}
+
+.liquidation-scheduled-link {
+  border: 0;
+  padding: 0;
+  background: none;
+  cursor: pointer;
+  transition: color 140ms ease;
+}
+
+.liquidation-scheduled-link:hover {
+  color: #1d4f42;
+}
+
+.liquidation-scheduled-link:focus-visible {
+  outline: 2px solid #86b5a3;
+  outline-offset: 2px;
+  border-radius: 6px;
 }
 
 .liquidation-reorder-controls {
