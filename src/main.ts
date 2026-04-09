@@ -22,7 +22,6 @@ import {
 import { EXCEL_BASELINE_SPECIMEN } from "./model/parity/excelBaselineSpecimen";
 import {
   ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS,
-  getProjectionYearWindow,
   parsePlannedSellYearValue,
   PlannedSellYearFieldId,
   PLANNED_SELL_YEAR_FIELDS,
@@ -2708,12 +2707,20 @@ function getPlannedSellYearFieldValue(fieldId: PlannedSellYearFieldId): number |
   return typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : null;
 }
 
+function getPlannedSellYearMinimum(): number {
+  return new Date().getFullYear();
+}
+
+function normalizePlannedSellYearValue(value: number | null): number | null {
+  if (value === null || !Number.isFinite(value)) return null;
+  return Math.max(getPlannedSellYearMinimum(), Math.trunc(value));
+}
+
 function applyPlannedSellYearStepperDelta(fieldId: PlannedSellYearFieldId, dir: number): void {
   if (!Number.isFinite(dir) || (dir !== -1 && dir !== 1)) return;
   const current = getPlannedSellYearFieldValue(fieldId);
-  const window = getProjectionYearWindow(fieldState[RUNTIME_FIELDS.currentAge], fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
-  const base = current ?? window.minYear;
-  runtimeFieldState[fieldId] = base + dir;
+  const base = current ?? getPlannedSellYearMinimum();
+  runtimeFieldState[fieldId] = normalizePlannedSellYearValue(base + dir);
   markFieldTouched(fieldId as FieldId);
   setRetireCheckMessage(null);
   queueRecalc();
@@ -2958,13 +2965,9 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
 function renderPlannedSellYearField(fieldId: PlannedSellYearFieldId): string {
   const value = fieldState[fieldId as never];
   const valueText = value === null || value === undefined || String(value).trim() === "" ? "" : String(Math.trunc(Number(value)));
-  const window = getProjectionYearWindow(fieldState[RUNTIME_FIELDS.currentAge], fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
-  const helperText = window.maxYear === null
-    ? "Optional. Enter a projection year."
-    : `Optional. Enter a year from ${window.minYear} to ${window.maxYear}.`;
 
   return `
-    <div class="field field--half" data-field-id="${fieldId}">
+    <div class="field" data-field-id="${fieldId}">
       <span>Planned sell year</span>
       <div class="input-shell has-stepper">
         <input
@@ -2980,7 +2983,7 @@ function renderPlannedSellYearField(fieldId: PlannedSellYearFieldId): string {
           <button type="button" class="field-step-btn" data-planned-sell-year-field-id="${fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase planned sell year">+</button>
         </div>
       </div>
-      <small>${escapeHtml(helperText)}</small>
+      <small>Leave blank to let model decide if and when to sell</small>
     </div>
   `;
 }
@@ -3801,12 +3804,12 @@ function renderInputs(): void {
         ? renderLivingExpensesField(def, label)
         : renderStandardFieldControl(def, label);
 
-      const plannedSalePropertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.rentalIncomeField === def.fieldId);
+      const plannedSalePropertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.annualCostsField === def.fieldId);
       if (plannedSalePropertyGroup) {
         html += renderPlannedSellYearField(plannedSalePropertyGroup.plannedSellYearField);
       }
 
-      const plannedSaleAssetGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.appreciationRateField === def.fieldId);
+      const plannedSaleAssetGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.loanRepaymentField === def.fieldId);
       if (plannedSaleAssetGroup) {
         html += renderPlannedSellYearField(plannedSaleAssetGroup.plannedSellYearField);
       }
@@ -3829,7 +3832,7 @@ function renderInputs(): void {
       ) {
         html += `<button type="button" class="add-slot-btn" data-next-property="${propertyGroup.idx + 2}">Add another property</button>`;
       }
-      const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.appreciationRateField === def.fieldId);
+      const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.loanRepaymentField === def.fieldId);
       if (
         assetOfValueGroup
         && assetOfValueGroup.idx < ASSET_OF_VALUE_RUNTIME_GROUPS.length - 1
@@ -4050,7 +4053,8 @@ function renderInputs(): void {
       if (!fieldId) return;
       const sanitized = sanitizeNumericText(el.value, "integer", false);
       if (sanitized !== el.value) el.value = sanitized;
-      runtimeFieldState[fieldId] = parseIntegerInput(el.value, false);
+      const parsed = parseIntegerInput(el.value, false);
+      runtimeFieldState[fieldId] = parsed !== null && parsed >= getPlannedSellYearMinimum() ? parsed : null;
       markFieldTouched(fieldId as FieldId);
       setRetireCheckMessage(null);
       queueRecalc();
@@ -4069,7 +4073,8 @@ function renderInputs(): void {
     el.addEventListener("blur", () => {
       const fieldId = el.dataset.plannedSellYearFieldId as PlannedSellYearFieldId | undefined;
       if (!fieldId) return;
-      runtimeFieldState[fieldId] = parseIntegerInput(el.value, false);
+      const parsed = parseIntegerInput(el.value, false);
+      runtimeFieldState[fieldId] = parsed !== null && parsed >= getPlannedSellYearMinimum() ? parsed : null;
       el.value = getPlannedSellYearFieldValue(fieldId) === null ? "" : String(getPlannedSellYearFieldValue(fieldId));
       setRetireCheckMessage(null);
       queueRecalc();
