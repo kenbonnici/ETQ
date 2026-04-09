@@ -4133,7 +4133,15 @@ function renderInputs(): void {
   });
 
   inputsPanel.querySelectorAll<HTMLButtonElement>("[data-liquidation-planned-sell-year-field-id]").forEach((btn) => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      const fieldId = btn.dataset.liquidationPlannedSellYearFieldId as PlannedSellYearFieldId | undefined;
+      if (!fieldId) return;
+      focusPlannedSellYearField(fieldId);
+    });
+
+    btn.addEventListener("click", (ev) => {
+      if (ev.detail !== 0) return;
       const fieldId = btn.dataset.liquidationPlannedSellYearFieldId as PlannedSellYearFieldId | undefined;
       if (!fieldId) return;
       focusPlannedSellYearField(fieldId);
