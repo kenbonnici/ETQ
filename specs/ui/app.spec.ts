@@ -624,6 +624,32 @@ test("liquidation up and down controls reorder sellable assets precisely", async
   ]);
 });
 
+test("scheduled liquidation links focus the target planned sell year immediately, including when switching assets", async ({ page }) => {
+  await page.setViewportSize({ width: 430, height: 595 });
+  await loadSampleData(page);
+
+  await fillAndBlur(page, 'input[data-planned-sell-year-field-id="assetsOfValue.04.plannedSellYear"]', "2033");
+  await fillAndBlur(page, 'input[data-planned-sell-year-field-id="assetsOfValue.05.plannedSellYear"]', "2038");
+
+  const firstScheduledLink = page.locator(
+    'button[data-liquidation-planned-sell-year-field-id="assetsOfValue.04.plannedSellYear"]'
+  );
+  const secondScheduledLink = page.locator(
+    'button[data-liquidation-planned-sell-year-field-id="assetsOfValue.05.plannedSellYear"]'
+  );
+  const liquidationHeading = page.getByRole("heading", { name: "Asset liquidation order" });
+
+  await firstScheduledLink.click();
+  expect(await page.evaluate(() => document.activeElement?.getAttribute("data-planned-sell-year-field-id")))
+    .toBe("assetsOfValue.04.plannedSellYear");
+
+  await liquidationHeading.scrollIntoViewIfNeeded();
+  await expect(firstScheduledLink).toBeVisible();
+  await secondScheduledLink.click();
+  expect(await page.evaluate(() => document.activeElement?.getAttribute("data-planned-sell-year-field-id")))
+    .toBe("assetsOfValue.05.plannedSellYear");
+});
+
 test("load sample data defaults the comparison age to statutory retirement", async ({ page }) => {
   await loadSampleData(page);
 
