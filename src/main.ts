@@ -158,6 +158,7 @@ let suppressFocusSelectionFieldId: FieldId | null = null;
 let plannedSellYearJumpHighlightTimeout: number | null = null;
 let pendingPlannedSellYearJumpFieldId: PlannedSellYearFieldId | null = null;
 let plannedSellYearJumpQueued = false;
+let suppressedPlannedSellYearBlurFieldId: PlannedSellYearFieldId | null = null;
 
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
@@ -3506,6 +3507,18 @@ function flushPendingPlannedSellYearJump(): void {
   }
 }
 
+function commitPlannedSellYearInputValue(
+  input: HTMLInputElement,
+  fieldId: PlannedSellYearFieldId
+): boolean {
+  const parsed = parseIntegerInput(input.value, false);
+  const nextValue = parsed !== null && parsed >= getPlannedSellYearMinimum() ? parsed : null;
+  const prevValue = getPlannedSellYearFieldValue(fieldId);
+  runtimeFieldState[fieldId] = nextValue;
+  input.value = nextValue === null ? "" : String(nextValue);
+  return nextValue !== prevValue;
+}
+
 function queuePendingPlannedSellYearJump(): void {
   if (plannedSellYearJumpQueued) return;
   plannedSellYearJumpQueued = true;
@@ -3522,6 +3535,18 @@ function requestPlannedSellYearJump(fieldId: PlannedSellYearFieldId): void {
     && inputsPanel.contains(activeElement)
     && activeElement.dataset.plannedSellYearFieldId !== fieldId
   ) {
+    const activeFieldId = activeElement.dataset.plannedSellYearFieldId as PlannedSellYearFieldId | undefined;
+    if (activeFieldId) {
+      const changed = commitPlannedSellYearInputValue(activeElement, activeFieldId);
+      suppressedPlannedSellYearBlurFieldId = activeFieldId;
+      activeElement.blur();
+      if (changed) {
+        setRetireCheckMessage(null);
+        queueRecalc();
+      }
+      queuePendingPlannedSellYearJump();
+      return;
+    }
     activeElement.blur();
     return;
   }
@@ -4156,11 +4181,13 @@ function renderInputs(): void {
     el.addEventListener("blur", () => {
       const fieldId = el.dataset.plannedSellYearFieldId as PlannedSellYearFieldId | undefined;
       if (!fieldId) return;
-      const parsed = parseIntegerInput(el.value, false);
-      runtimeFieldState[fieldId] = parsed !== null && parsed >= getPlannedSellYearMinimum() ? parsed : null;
-      el.value = getPlannedSellYearFieldValue(fieldId) === null ? "" : String(getPlannedSellYearFieldValue(fieldId));
+      const changed = commitPlannedSellYearInputValue(el, fieldId);
+      if (suppressedPlannedSellYearBlurFieldId === fieldId) {
+        suppressedPlannedSellYearBlurFieldId = null;
+        return;
+      }
       setRetireCheckMessage(null);
-      queueRecalc();
+      if (changed) queueRecalc();
       renderInputs();
     });
   });
