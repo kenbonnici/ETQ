@@ -723,7 +723,8 @@ export function buildPropertyLiquidationBuckets(
   }
   const scheduled = active
     .map((group) => ({ group, year: getScheduledSellYear(values, group) }))
-    .filter((entry): entry is { group: LiquidationAssetRuntimeConfig; year: number } => entry.year !== null);
+    .filter((entry): entry is { group: LiquidationAssetRuntimeConfig; year: number } => entry.year !== null)
+    .sort((a, b) => (b.year - a.year) || (a.group.liquidationIdx - b.group.liquidationIdx));
   const scheduledIdx = new Set(scheduled.map((entry) => entry.group.liquidationIdx));
   const liquidatable = active.filter((group) => !scheduledIdx.has(group.liquidationIdx));
   if (!manualOverrideActive) {

@@ -2091,6 +2091,16 @@ body {
   cursor: default;
 }
 
+.liquidation-section[data-liquidation-zone="never-sell"] .liquidation-item {
+  background: #f5f7f6;
+  border-color: #d8e1db;
+}
+
+.liquidation-item--scheduled-divider {
+  margin-top: 8px;
+  box-shadow: inset 0 1px 0 #c7d2cb;
+}
+
 .liquidation-item.just-moved {
   border-color: #9fb8ac;
   background: #f4faf7;
@@ -2147,8 +2157,8 @@ body {
   justify-content: flex-end;
   min-width: 112px;
   font-size: 11px;
-  font-weight: 600;
-  color: #64748b;
+  font-weight: 500;
+  color: #475569;
   white-space: nowrap;
 }
 

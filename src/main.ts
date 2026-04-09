@@ -3427,21 +3427,19 @@ function renderLiquidationRow(
 
 function renderScheduledLiquidationRow(
   cfg: ReturnType<typeof activePropertyConfigs>[number],
-  year: number
+  year: number,
+  options: { isFirstScheduled?: boolean } = {}
 ): string {
   const name = String(fieldState[cfg.nameField] ?? "").trim() || cfg.fallbackName;
   const value = asNumber(fieldState[cfg.valueField]);
   const valueText = `${currentCurrencySymbol()}${Math.round(value).toLocaleString("en-US")}`;
   return `
-      <li class="liquidation-item is-static liquidation-item--scheduled">
+      <li class="liquidation-item is-static liquidation-item--scheduled${options.isFirstScheduled ? " liquidation-item--scheduled-divider" : ""}">
         <span class="liquidation-rank liquidation-rank--empty" aria-hidden="true">•</span>
-        <div class="liquidation-name-wrap">
-          <span class="liquidation-name">${escapeHtml(name)}</span>
-          <span class="liquidation-note">selling at ${year}</span>
-        </div>
+        <span class="liquidation-name">${escapeHtml(name)}</span>
         <span class="liquidation-value">${escapeHtml(valueText)}</span>
         <span class="liquidation-reorder-placeholder" aria-hidden="true"></span>
-        <span class="liquidation-scheduled-tag">Scheduled</span>
+        <span class="liquidation-scheduled-tag">Scheduled at ${year}</span>
       </li>
     `;
 }
@@ -3455,10 +3453,12 @@ function renderPropertyLiquidationOrderControl(): string {
     moveDownDisabled: idx === sellable.length - 1
   })).join("");
   const excludedRows = excluded.map((cfg) => renderLiquidationRow(cfg, null, "include")).join("");
-  const scheduledRows = scheduled.map(({ group, year }) => renderScheduledLiquidationRow(group, year)).join("");
+  const scheduledRows = scheduled.map(({ group, year }, idx) => renderScheduledLiquidationRow(group, year, {
+    isFirstScheduled: idx === 0
+  })).join("");
   const sellableContent = sellableRows || `<div class="liquidation-empty">No assets will be liquidated.</div>`;
-  const excludedContent = excludedRows || `<div class="liquidation-empty">All active assets are currently sellable.</div>`;
-  const scheduledContent = scheduledRows || `<div class="liquidation-empty">No assets have a scheduled sale year.</div>`;
+  const nonLiquidatingRows = `${excludedRows}${scheduledRows}`;
+  const nonLiquidatingContent = nonLiquidatingRows || `<div class="liquidation-empty">All active assets are currently sellable.</div>`;
   return `
     <div class="liquidation-reorder" data-liquidation-reorder="true">
       <div class="liquidation-title">If Money Runs Short, Sell Assets In This Order</div>
@@ -3467,11 +3467,7 @@ function renderPropertyLiquidationOrderControl(): string {
         ${sellableRows ? `<ul class="liquidation-list">${sellableContent}</ul>` : sellableContent}
       </div>
       <div class="liquidation-section" data-liquidation-zone="never-sell">
-        ${excludedRows ? `<ul class="liquidation-list liquidation-list--excluded">${excludedContent}</ul>` : excludedContent}
-      </div>
-      <div class="liquidation-section" data-liquidation-zone="scheduled">
-        <div class="liquidation-section-title">Scheduled sales</div>
-        ${scheduledRows ? `<ul class="liquidation-list liquidation-list--scheduled">${scheduledContent}</ul>` : scheduledContent}
+        ${nonLiquidatingRows ? `<ul class="liquidation-list liquidation-list--excluded">${nonLiquidatingContent}</ul>` : nonLiquidatingContent}
       </div>
     </div>
   `;
