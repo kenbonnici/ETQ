@@ -4,6 +4,7 @@ import {
   PROPERTY_GROUPS_BY_CELL,
   STOCK_MARKET_CRASH_GROUPS_BY_CELL
 } from "./inputSchema";
+import { ResolvedPlannedSaleYears } from "./plannedSales";
 import { EffectiveInputs, InputCell, RawInputValue, RawInputs } from "./types";
 
 const LIQUIDATION_VALUE_CELLS = [
@@ -17,6 +18,7 @@ const PROPERTY_LIQUIDATION_CELLS = [
 
 export interface LiquidationPriorityOptions {
   manualOverrideActive?: boolean;
+  plannedSaleYears?: ResolvedPlannedSaleYears;
 }
 
 const DEFAULT_SPENDING_ADJUSTMENT_AGE_1 = 65;
@@ -72,9 +74,15 @@ function resolveSpendingAdjustmentAges(
   return { age1, age2 };
 }
 
-export function deriveDefaultLiquidationPriority(raw: RawInputs): number[] {
+export function deriveDefaultLiquidationPriority(raw: RawInputs, plannedSaleYears?: ResolvedPlannedSaleYears): number[] {
   const values = LIQUIDATION_VALUE_CELLS.map((cell) => toNumber(raw[cell]));
-  const indexed = values.map((v, i) => ({ v, i })).filter((entry) => entry.v > 0);
+  const scheduled = new Set<number>([
+    ...(plannedSaleYears?.properties ?? []).map((year, idx) => (year === null ? -1 : idx)),
+    ...(plannedSaleYears?.assetsOfValue ?? []).map((year, idx) => (year === null ? -1 : PROPERTY_GROUPS_BY_CELL.length + idx))
+  ]);
+  const indexed = values
+    .map((v, i) => ({ v, i }))
+    .filter((entry) => entry.v > 0 && !scheduled.has(entry.i));
   indexed.sort((a, b) => a.v - b.v);
   const rank = values.map(() => 0);
   indexed.forEach((x, idx) => {
@@ -85,10 +93,16 @@ export function deriveDefaultLiquidationPriority(raw: RawInputs): number[] {
 
 export function resolveLiquidationPriority(raw: RawInputs, options: LiquidationPriorityOptions = {}): number[] {
   if (!options.manualOverrideActive) {
-    return deriveDefaultLiquidationPriority(raw);
+    return deriveDefaultLiquidationPriority(raw, options.plannedSaleYears);
   }
 
-  return PROPERTY_LIQUIDATION_CELLS.map((cell) => toNullableNumber(raw[cell]) ?? 0);
+  return PROPERTY_LIQUIDATION_CELLS.map((cell, idx) => {
+    const propertyCount = PROPERTY_GROUPS_BY_CELL.length;
+    const isScheduled = idx < propertyCount
+      ? (options.plannedSaleYears?.properties[idx] ?? null) !== null
+      : (options.plannedSaleYears?.assetsOfValue[idx - propertyCount] ?? null) !== null;
+    return isScheduled ? 0 : (toNullableNumber(raw[cell]) ?? 0);
+  });
 }
 
 export function materializeLiquidationPriorityInputs(
@@ -142,7 +156,8 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
       rentalIncome: toNumber(raw[group.rentalIncomeCell]),
       loanBalance: toNumber(raw[group.loanBalanceCell]),
       loanRate: toNumber(raw[group.loanRateCell]),
-      loanRepaymentMonthly: toNumber(raw[group.loanRepaymentCell])
+      loanRepaymentMonthly: toNumber(raw[group.loanRepaymentCell]),
+      plannedSellYear: options.plannedSaleYears?.properties[PROPERTY_GROUPS_BY_CELL.indexOf(group)] ?? null
     })),
 
     assetsOfValue: ASSET_OF_VALUE_GROUPS_BY_CELL.map((group) => ({
@@ -151,7 +166,8 @@ export function normalizeInputs(raw: RawInputs, options: LiquidationPriorityOpti
       appreciationRate: toNumber(raw[group.appreciationRateCell]),
       loanBalance: toNumber(raw[group.loanBalanceCell]),
       loanRate: toNumber(raw[group.loanRateCell]),
-      loanRepaymentMonthly: toNumber(raw[group.loanRepaymentCell])
+      loanRepaymentMonthly: toNumber(raw[group.loanRepaymentCell]),
+      plannedSellYear: options.plannedSaleYears?.assetsOfValue[ASSET_OF_VALUE_GROUPS_BY_CELL.indexOf(group)] ?? null
     })),
 
     otherWorkIncomeAnnual: toNumber(raw.B120),

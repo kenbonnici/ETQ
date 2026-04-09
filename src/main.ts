@@ -20,6 +20,14 @@ import {
   ValidationMessage
 } from "./model/inputSchema";
 import { EXCEL_BASELINE_SPECIMEN } from "./model/parity/excelBaselineSpecimen";
+import {
+  ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS,
+  getProjectionYearWindow,
+  parsePlannedSellYearValue,
+  PlannedSellYearFieldId,
+  PLANNED_SELL_YEAR_FIELDS,
+  PROPERTY_PLANNED_SELL_YEAR_FIELDS
+} from "./model/plannedSales";
 import { FieldId, ModelUiState, RawInputValue, RawInputs, ScenarioOutputs } from "./model/types";
 import {
   ASSET_OF_VALUE_RUNTIME_GROUPS,
@@ -87,6 +95,8 @@ function createDefaultPersistedRawInputs(): RawInputs {
 const DEFAULT_PERSISTED_RAW_INPUTS = createDefaultPersistedRawInputs();
 
 const fieldState = createEmptyFieldState();
+type RuntimeFieldId = FieldId | PlannedSellYearFieldId;
+const runtimeFieldState = fieldState as Partial<Record<RuntimeFieldId, RawInputValue>>;
 
 let uiState: ModelUiState = {
   majorFutureEventsOpen: false,
@@ -99,6 +109,7 @@ interface PersistedScenarioSnapshotV1 {
   version: 1;
   savedAt: string;
   rawInputs: RawInputs;
+  plannedSellYears?: Partial<Record<PlannedSellYearFieldId, number | null>>;
   ui: {
     majorFutureEventsOpen: boolean;
     advancedAssumptionsOpen: boolean;
@@ -205,6 +216,44 @@ let scenarioDraftName = "";
 let scenarioManagerNotice: ScenarioManagerNotice | null = null;
 let scenarioManagerNoticeHandle: number | null = null;
 const SAMPLE_DATA_SCENARIO_ID = "__sample_data__";
+
+function clearPlannedSellYearFields(): void {
+  for (const fieldId of PLANNED_SELL_YEAR_FIELDS) {
+    runtimeFieldState[fieldId] = null;
+  }
+}
+
+function collectPlannedSellYearSnapshot(): Partial<Record<PlannedSellYearFieldId, number | null>> {
+  const snapshot: Partial<Record<PlannedSellYearFieldId, number | null>> = {};
+  for (const fieldId of PLANNED_SELL_YEAR_FIELDS) {
+    const value = runtimeFieldState[fieldId];
+    snapshot[fieldId] = typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : null;
+  }
+  return snapshot;
+}
+
+function restorePlannedSellYearSnapshot(snapshot: Partial<Record<PlannedSellYearFieldId, number | null>> | undefined): void {
+  clearPlannedSellYearFields();
+  if (!snapshot) return;
+  for (const fieldId of PLANNED_SELL_YEAR_FIELDS) {
+    const value = snapshot[fieldId];
+    runtimeFieldState[fieldId] = typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : null;
+  }
+}
+
+function normalizePersistedPlannedSellYears(raw: unknown): Partial<Record<PlannedSellYearFieldId, number | null>> {
+  const next: Partial<Record<PlannedSellYearFieldId, number | null>> = {};
+  const candidate = raw && typeof raw === "object" ? raw as Partial<Record<PlannedSellYearFieldId, unknown>> : {};
+  for (const fieldId of PLANNED_SELL_YEAR_FIELDS) {
+    next[fieldId] = parsePlannedSellYearValue(candidate[fieldId]);
+  }
+  return next;
+}
+
+function hasAnyPlannedSellYearState(snapshot: Partial<Record<PlannedSellYearFieldId, number | null>> | undefined): boolean {
+  if (!snapshot) return false;
+  return PLANNED_SELL_YEAR_FIELDS.some((fieldId) => snapshot[fieldId] !== null && snapshot[fieldId] !== undefined);
+}
 
 function applyFieldNumericConstraint(fieldId: FieldId, value: number | null): number | null {
   return applyFieldNumericConstraintForState(fieldId, value, fieldState);
@@ -373,9 +422,9 @@ const sectionState = {
 let visibleDependents = 1;
 const dependentFieldSets = DEPENDENT_RUNTIME_GROUPS.map((group) => group.fields);
 let visibleProperties = 1;
-const propertyFieldSets = PROPERTY_RUNTIME_GROUPS.map((group) => group.coreFields);
+const propertyFieldSets = PROPERTY_RUNTIME_GROUPS.map((group) => group.visibilityFields);
 let visibleAssetsOfValue = 1;
-const assetOfValueFieldSets = ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.coreFields);
+const assetOfValueFieldSets = ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.visibilityFields);
 const PROPERTY_LIQUIDATION_CELLS = PROPERTY_LIQUIDATION_FIELDS;
 let visibleIncomeEvents = 1;
 const incomeEvent1Fields = INCOME_EVENT_RUNTIME_GROUPS[0].fields;
@@ -1162,6 +1211,7 @@ function normalizePersistedSnapshot(raw: unknown): PersistedScenarioSnapshotV1 |
     version: 1,
     savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString(),
     rawInputs: normalizePersistedRawInputs(candidate.rawInputs),
+    plannedSellYears: normalizePersistedPlannedSellYears(candidate.plannedSellYears),
     ui: {
       majorFutureEventsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).majorFutureEventsOpen),
       advancedAssumptionsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).advancedAssumptionsOpen),
@@ -1182,6 +1232,7 @@ function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshotV1 {
     version: 1,
     savedAt: new Date().toISOString(),
     rawInputs: pruneInactiveRawInputs(fieldStateToRawInputs(fieldState)),
+    plannedSellYears: collectPlannedSellYearSnapshot(),
     ui: {
       majorFutureEventsOpen: sectionState.majorFutureEventsOpen,
       advancedAssumptionsOpen: sectionState.advancedAssumptionsOpen,
@@ -1195,6 +1246,7 @@ function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshotV1 {
 
 function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshotV1): boolean {
   if (INPUT_DEFINITIONS.some((def) => (snapshot.rawInputs[def.cell] ?? null) !== (DEFAULT_PERSISTED_RAW_INPUTS[def.cell] ?? null))) return true;
+  if (hasAnyPlannedSellYearState(snapshot.plannedSellYears)) return true;
   if (snapshot.ui.majorFutureEventsOpen || snapshot.ui.advancedAssumptionsOpen) return true;
   if (snapshot.ui.selectedCurrency !== DEFAULT_CURRENCY) return true;
   if (snapshot.ui.livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(snapshot.ui.livingExpenseCategoryValues)) return true;
@@ -1203,6 +1255,7 @@ function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshotV1): bool
 
 function snapshotHasSavableData(snapshot: PersistedScenarioSnapshotV1): boolean {
   if (INPUT_DEFINITIONS.some((def) => (snapshot.rawInputs[def.cell] ?? null) !== (DEFAULT_PERSISTED_RAW_INPUTS[def.cell] ?? null))) return true;
+  if (hasAnyPlannedSellYearState(snapshot.plannedSellYears)) return true;
   if (snapshot.ui.selectedCurrency !== DEFAULT_CURRENCY) return true;
   if (snapshot.ui.livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(snapshot.ui.livingExpenseCategoryValues)) return true;
   return false;
@@ -1298,6 +1351,7 @@ function applyPersistedScenarioSnapshot(
   for (const def of INPUT_DEFINITIONS) {
     fieldState[def.fieldId] = restoredFields[def.fieldId] ?? null;
   }
+  restorePlannedSellYearSnapshot(snapshot.plannedSellYears);
 
   sectionState.majorFutureEventsOpen = snapshot.ui.majorFutureEventsOpen;
   sectionState.advancedAssumptionsOpen = snapshot.ui.advancedAssumptionsOpen;
@@ -2649,6 +2703,23 @@ function parsePercentInput(text: string, allowNegative: boolean): number | null 
   return n / 100;
 }
 
+function getPlannedSellYearFieldValue(fieldId: PlannedSellYearFieldId): number | null {
+  const value = runtimeFieldState[fieldId];
+  return typeof value === "number" && Number.isFinite(value) ? Math.trunc(value) : null;
+}
+
+function applyPlannedSellYearStepperDelta(fieldId: PlannedSellYearFieldId, dir: number): void {
+  if (!Number.isFinite(dir) || (dir !== -1 && dir !== 1)) return;
+  const current = getPlannedSellYearFieldValue(fieldId);
+  const window = getProjectionYearWindow(fieldState[RUNTIME_FIELDS.currentAge], fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
+  const base = current ?? window.minYear;
+  runtimeFieldState[fieldId] = base + dir;
+  markFieldTouched(fieldId as FieldId);
+  setRetireCheckMessage(null);
+  queueRecalc();
+  renderInputs();
+}
+
 function isWholePercentDisplayField(fieldId: FieldId): boolean {
   return SPENDING_ADJUSTMENT_PERCENT_FIELD_IDS.has(fieldId);
 }
@@ -2880,6 +2951,36 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
       </div>
       ${showTooltip ? `<small>${def.tooltip}</small>` : ""}
       ${previewHtml}
+    </div>
+  `;
+}
+
+function renderPlannedSellYearField(fieldId: PlannedSellYearFieldId): string {
+  const value = fieldState[fieldId as never];
+  const valueText = value === null || value === undefined || String(value).trim() === "" ? "" : String(Math.trunc(Number(value)));
+  const window = getProjectionYearWindow(fieldState[RUNTIME_FIELDS.currentAge], fieldState[RUNTIME_FIELDS.lifeExpectancyAge]);
+  const helperText = window.maxYear === null
+    ? "Optional. Enter a projection year."
+    : `Optional. Enter a year from ${window.minYear} to ${window.maxYear}.`;
+
+  return `
+    <div class="field field--half" data-field-id="${fieldId}">
+      <span>Planned sell year</span>
+      <div class="input-shell has-stepper">
+        <input
+          data-planned-sell-year-field-id="${fieldId}"
+          type="text"
+          inputmode="numeric"
+          value="${escapeHtml(valueText)}"
+          placeholder=""
+          aria-label="Planned sell year"
+        />
+        <div class="field-stepper">
+          <button type="button" class="field-step-btn" data-planned-sell-year-field-id="${fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease planned sell year">-</button>
+          <button type="button" class="field-step-btn" data-planned-sell-year-field-id="${fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase planned sell year">+</button>
+        </div>
+      </div>
+      <small>${escapeHtml(helperText)}</small>
     </div>
   `;
 }
@@ -3259,7 +3360,7 @@ function applyStepperDelta(fieldId: FieldId, dir: number): void {
 
 function persistPropertyLiquidationOrder(order: ReturnType<typeof activePropertyConfigs>, active: ReturnType<typeof activePropertyConfigs>): void {
   uiState.manualPropertyLiquidationOrder = true;
-  for (const assignment of buildPropertyLiquidationAssignments(order, active)) {
+  for (const assignment of buildPropertyLiquidationAssignments(order, active, fieldState)) {
     fieldState[assignment.fieldId] = assignment.value;
   }
 }
@@ -3321,17 +3422,40 @@ function renderLiquidationRow(
     `;
 }
 
+function renderScheduledLiquidationRow(
+  cfg: ReturnType<typeof activePropertyConfigs>[number],
+  year: number
+): string {
+  const name = String(fieldState[cfg.nameField] ?? "").trim() || cfg.fallbackName;
+  const value = asNumber(fieldState[cfg.valueField]);
+  const valueText = `${currentCurrencySymbol()}${Math.round(value).toLocaleString("en-US")}`;
+  return `
+      <li class="liquidation-item is-static liquidation-item--scheduled">
+        <span class="liquidation-rank liquidation-rank--empty" aria-hidden="true">•</span>
+        <div class="liquidation-name-wrap">
+          <span class="liquidation-name">${escapeHtml(name)}</span>
+          <span class="liquidation-note">selling at ${year}</span>
+        </div>
+        <span class="liquidation-value">${escapeHtml(valueText)}</span>
+        <span class="liquidation-reorder-placeholder" aria-hidden="true"></span>
+        <span class="liquidation-scheduled-tag">Scheduled</span>
+      </li>
+    `;
+}
+
 function renderPropertyLiquidationOrderControl(): string {
   const active = activePropertyConfigs(fieldState);
   if (active.length === 0) return "";
-  const { sellable, excluded } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
+  const { sellable, excluded, scheduled } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
   const sellableRows = sellable.map((cfg, idx) => renderLiquidationRow(cfg, idx + 1, "exclude", {
     moveUpDisabled: idx === 0,
     moveDownDisabled: idx === sellable.length - 1
   })).join("");
   const excludedRows = excluded.map((cfg) => renderLiquidationRow(cfg, null, "include")).join("");
+  const scheduledRows = scheduled.map(({ group, year }) => renderScheduledLiquidationRow(group, year)).join("");
   const sellableContent = sellableRows || `<div class="liquidation-empty">No assets will be liquidated.</div>`;
   const excludedContent = excludedRows || `<div class="liquidation-empty">All active assets are currently sellable.</div>`;
+  const scheduledContent = scheduledRows || `<div class="liquidation-empty">No assets have a scheduled sale year.</div>`;
   return `
     <div class="liquidation-reorder" data-liquidation-reorder="true">
       <div class="liquidation-title">If Money Runs Short, Sell Assets In This Order</div>
@@ -3341,6 +3465,10 @@ function renderPropertyLiquidationOrderControl(): string {
       </div>
       <div class="liquidation-section" data-liquidation-zone="never-sell">
         ${excludedRows ? `<ul class="liquidation-list liquidation-list--excluded">${excludedContent}</ul>` : excludedContent}
+      </div>
+      <div class="liquidation-section" data-liquidation-zone="scheduled">
+        <div class="liquidation-section-title">Scheduled sales</div>
+        ${scheduledRows ? `<ul class="liquidation-list liquidation-list--scheduled">${scheduledContent}</ul>` : scheduledContent}
       </div>
     </div>
   `;
@@ -3360,6 +3488,7 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
     for (const def of INPUT_DEFINITIONS) {
       fieldState[def.fieldId] = null;
     }
+    clearPlannedSellYearFields();
     resetLivingExpensesHelperState();
 
     for (const def of INPUT_DEFINITIONS) {
@@ -3406,6 +3535,7 @@ function clearAllInputs(): void {
   for (const def of INPUT_DEFINITIONS) {
     fieldState[def.fieldId] = null;
   }
+  clearPlannedSellYearFields();
   activeSavedScenarioId = null;
   selectedSavedScenarioId = null;
   scenarioDraftName = "";
@@ -3671,6 +3801,16 @@ function renderInputs(): void {
         ? renderLivingExpensesField(def, label)
         : renderStandardFieldControl(def, label);
 
+      const plannedSalePropertyGroup = PROPERTY_RUNTIME_GROUPS.find((group) => group.rentalIncomeField === def.fieldId);
+      if (plannedSalePropertyGroup) {
+        html += renderPlannedSellYearField(plannedSalePropertyGroup.plannedSellYearField);
+      }
+
+      const plannedSaleAssetGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.appreciationRateField === def.fieldId);
+      if (plannedSaleAssetGroup) {
+        html += renderPlannedSellYearField(plannedSaleAssetGroup.plannedSellYearField);
+      }
+
       const dependentGroup = DEPENDENT_RUNTIME_GROUPS.find((group) => group.yearsField === def.fieldId);
       if (
         dependentGroup
@@ -3895,6 +4035,48 @@ function renderInputs(): void {
     });
   });
 
+  inputsPanel.querySelectorAll<HTMLInputElement>("input[data-planned-sell-year-field-id]").forEach((el) => {
+    el.addEventListener("keydown", (ev) => {
+      const fieldId = el.dataset.plannedSellYearFieldId as PlannedSellYearFieldId | undefined;
+      if (!fieldId) return;
+      if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {
+        ev.preventDefault();
+        applyPlannedSellYearStepperDelta(fieldId, ev.key === "ArrowUp" ? 1 : -1);
+      }
+    });
+
+    el.addEventListener("input", () => {
+      const fieldId = el.dataset.plannedSellYearFieldId as PlannedSellYearFieldId | undefined;
+      if (!fieldId) return;
+      const sanitized = sanitizeNumericText(el.value, "integer", false);
+      if (sanitized !== el.value) el.value = sanitized;
+      runtimeFieldState[fieldId] = parseIntegerInput(el.value, false);
+      markFieldTouched(fieldId as FieldId);
+      setRetireCheckMessage(null);
+      queueRecalc();
+    });
+
+    el.addEventListener("focus", () => {
+      const fieldId = el.dataset.plannedSellYearFieldId as PlannedSellYearFieldId | undefined;
+      if (!fieldId) return;
+      const current = getPlannedSellYearFieldValue(fieldId);
+      el.value = current === null ? "" : String(current);
+      queueMicrotask(() => {
+        if (document.activeElement === el) el.setSelectionRange(0, el.value.length);
+      });
+    });
+
+    el.addEventListener("blur", () => {
+      const fieldId = el.dataset.plannedSellYearFieldId as PlannedSellYearFieldId | undefined;
+      if (!fieldId) return;
+      runtimeFieldState[fieldId] = parseIntegerInput(el.value, false);
+      el.value = getPlannedSellYearFieldValue(fieldId) === null ? "" : String(getPlannedSellYearFieldValue(fieldId));
+      setRetireCheckMessage(null);
+      queueRecalc();
+      renderInputs();
+    });
+  });
+
   inputsPanel.querySelectorAll<HTMLInputElement>("input[data-field-id]").forEach((el) => {
     el.addEventListener("keydown", (ev) => {
       const fieldId = el.dataset.fieldId as FieldId;
@@ -4084,6 +4266,16 @@ function renderInputs(): void {
     btn.addEventListener("pointerdown", (ev) => {
       ev.preventDefault();
       stopStepperHold();
+      const plannedFieldId = btn.dataset.plannedSellYearFieldId as PlannedSellYearFieldId | undefined;
+      if (plannedFieldId) {
+        const dir = Number(btn.dataset.stepDir);
+        if (!Number.isFinite(dir) || (dir !== -1 && dir !== 1)) return;
+        applyPlannedSellYearStepperDelta(plannedFieldId, dir);
+        stepperHoldTimeout = window.setTimeout(() => {
+          stepperHoldInterval = window.setInterval(() => applyPlannedSellYearStepperDelta(plannedFieldId, dir), 80);
+        }, 320);
+        return;
+      }
       const fieldId = btn.dataset.fieldId as FieldId;
       if (!fieldId) return;
       const dir = Number(btn.dataset.stepDir);

@@ -44,6 +44,7 @@ export interface EffectiveInputs {
     loanBalance: number;
     loanRate: number;
     loanRepaymentMonthly: number;
+    plannedSellYear: number | null;
   }>;
 
   assetsOfValue: Array<{
@@ -53,6 +54,7 @@ export interface EffectiveInputs {
     loanBalance: number;
     loanRate: number;
     loanRepaymentMonthly: number;
+    plannedSellYear: number | null;
   }>;
 
   otherWorkIncomeAnnual: number;

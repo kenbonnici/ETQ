@@ -4,10 +4,15 @@ import { runScenarioEarly } from "./engines/runScenarioEarly";
 import { runScenarioNorm } from "./engines/runScenarioNorm";
 import { INPUT_DEFINITION_BY_CELL, ValidationMessage } from "./inputSchema";
 import { materializeLiquidationPriorityInputs, normalizeInputs } from "./normalization";
-import { EffectiveInputs, ModelOutputs, ModelUiState, FieldState, ScenarioOutputs } from "./types";
+import {
+  ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS,
+  PROPERTY_PLANNED_SELL_YEAR_FIELDS,
+  resolvePlannedSaleYears
+} from "./plannedSales";
+import { EffectiveInputs, ModelOutputs, ModelUiState, FieldState, RawInputValue, ScenarioOutputs } from "./types";
 import { clamp } from "./components/finance";
 import { resolveProjectionTiming } from "./projectionTiming";
-import { validateRawInputs } from "./validate";
+import { validatePlannedSellYearFields, validateRawInputs } from "./validate";
 
 export interface RunModelResult {
   outputs: ModelOutputs;
@@ -37,18 +42,27 @@ export function runModel(fields: FieldState, uiState: ModelUiState): RunModelRes
     ...uiState,
     earlyRetirementAge
   });
+  const plannedSaleYears = resolvePlannedSaleYears(fields as Partial<Record<string, RawInputValue>>, activation.activatedInputs.B4, activation.activatedInputs.B255);
   const effectiveRawInputs = materializeLiquidationPriorityInputs(activation.activatedInputs, {
-    manualOverrideActive: uiState.manualPropertyLiquidationOrder
+    manualOverrideActive: uiState.manualPropertyLiquidationOrder,
+    plannedSaleYears
   });
-  const validationMessages: ValidationMessage[] = validateRawInputs(effectiveRawInputs).map((message) => ({
-    fieldId: INPUT_DEFINITION_BY_CELL[message.cell].fieldId,
-    severity: message.severity,
-    message: message.message,
-    blocksProjection: message.blocksProjection
-  }));
+  const validationMessages: ValidationMessage[] = [
+    ...validateRawInputs(effectiveRawInputs, {
+      properties: PROPERTY_PLANNED_SELL_YEAR_FIELDS.map((fieldId) => fields[fieldId as never]),
+      assetsOfValue: ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS.map((fieldId) => fields[fieldId as never])
+    }).map((message) => ({
+      fieldId: INPUT_DEFINITION_BY_CELL[message.cell].fieldId,
+      severity: message.severity,
+      message: message.message,
+      blocksProjection: message.blocksProjection
+    })),
+    ...validatePlannedSellYearFields(fields as Partial<Record<string, unknown>>, effectiveRawInputs)
+  ];
 
   const normalized = normalizeInputs(activation.activatedInputs, {
-    manualOverrideActive: uiState.manualPropertyLiquidationOrder
+    manualOverrideActive: uiState.manualPropertyLiquidationOrder,
+    plannedSaleYears
   });
   const projectionTiming = resolveProjectionTiming(new Date(), uiState.projectionMonthOverride ?? null);
 

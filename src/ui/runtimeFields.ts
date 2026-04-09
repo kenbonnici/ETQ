@@ -13,6 +13,11 @@ import {
   PROPERTY_GROUPS,
   STOCK_MARKET_CRASH_GROUPS
 } from "../model/inputSchema";
+import {
+  ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS,
+  PROPERTY_PLANNED_SELL_YEAR_FIELDS,
+  PlannedSellYearFieldId
+} from "../model/plannedSales";
 
 export const RUNTIME_FIELDS = {
   currentAge: INPUT_DEFINITION_BY_CELL.B4.fieldId,
@@ -103,7 +108,9 @@ export const PROPERTY_RUNTIME_GROUPS = PROPERTY_GROUPS.map((group, idx) => ({
   loanRateField: group.loanRateField,
   loanRepaymentField: group.loanRepaymentField,
   liquidationRankField: group.liquidationRankField,
+  plannedSellYearField: PROPERTY_PLANNED_SELL_YEAR_FIELDS[idx],
   coreFields: [group.nameField, group.valueField, group.annualCostsField] as const,
+  visibilityFields: [group.nameField, group.valueField, group.annualCostsField, PROPERTY_PLANNED_SELL_YEAR_FIELDS[idx] as FieldId] as const,
   loanFields: [group.loanBalanceField, group.loanRateField, group.loanRepaymentField] as const,
   allFields: [
     group.nameField,
@@ -113,7 +120,8 @@ export const PROPERTY_RUNTIME_GROUPS = PROPERTY_GROUPS.map((group, idx) => ({
     group.loanBalanceField,
     group.loanRateField,
     group.loanRepaymentField,
-    group.liquidationRankField
+    group.liquidationRankField,
+    PROPERTY_PLANNED_SELL_YEAR_FIELDS[idx] as FieldId
   ] as const
 })) as ReadonlyArray<{
   idx: number;
@@ -126,10 +134,12 @@ export const PROPERTY_RUNTIME_GROUPS = PROPERTY_GROUPS.map((group, idx) => ({
   loanRateField: FieldId;
   loanRepaymentField: FieldId;
   liquidationRankField: FieldId;
+  plannedSellYearField: PlannedSellYearFieldId;
   assetKind: "property";
   coreFields: readonly [FieldId, FieldId, FieldId];
+  visibilityFields: readonly [FieldId, FieldId, FieldId, FieldId];
   loanFields: readonly [FieldId, FieldId, FieldId];
-  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
+  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
 }>;
 
 export const ASSET_OF_VALUE_RUNTIME_GROUPS = ASSET_OF_VALUE_GROUPS.map((group, idx) => ({
@@ -143,7 +153,9 @@ export const ASSET_OF_VALUE_RUNTIME_GROUPS = ASSET_OF_VALUE_GROUPS.map((group, i
   loanRateField: group.loanRateField,
   loanRepaymentField: group.loanRepaymentField,
   liquidationRankField: group.liquidationRankField,
+  plannedSellYearField: ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS[idx],
   coreFields: [group.nameField, group.valueField, group.appreciationRateField] as const,
+  visibilityFields: [group.nameField, group.valueField, group.appreciationRateField, ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS[idx] as FieldId] as const,
   loanFields: [group.loanBalanceField, group.loanRateField, group.loanRepaymentField] as const,
   allFields: [
     group.nameField,
@@ -152,7 +164,8 @@ export const ASSET_OF_VALUE_RUNTIME_GROUPS = ASSET_OF_VALUE_GROUPS.map((group, i
     group.loanBalanceField,
     group.loanRateField,
     group.loanRepaymentField,
-    group.liquidationRankField
+    group.liquidationRankField,
+    ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS[idx] as FieldId
   ] as const
 })) as ReadonlyArray<{
   idx: number;
@@ -165,9 +178,11 @@ export const ASSET_OF_VALUE_RUNTIME_GROUPS = ASSET_OF_VALUE_GROUPS.map((group, i
   loanRateField: FieldId;
   loanRepaymentField: FieldId;
   liquidationRankField: FieldId;
+  plannedSellYearField: PlannedSellYearFieldId;
   coreFields: readonly [FieldId, FieldId, FieldId];
+  visibilityFields: readonly [FieldId, FieldId, FieldId, FieldId];
   loanFields: readonly [FieldId, FieldId, FieldId];
-  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
+  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
 }>;
 
 export const LIQUIDATION_ASSET_RUNTIME_GROUPS = [

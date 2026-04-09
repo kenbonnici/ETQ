@@ -1,6 +1,7 @@
 import type { RunModelResult } from "../model/index";
 import { FieldId } from "../model/fieldRegistry";
 import { isDownsizingYearInProjectionWindow, normalizeDownsizingMode } from "../model/downsizing";
+import { PlannedSellYearFieldId, resolveValidPlannedSellYear } from "../model/plannedSales";
 import type { RawInputValue } from "../model/types";
 import type { ValidationMessage } from "../model/inputSchema";
 import type { InputDefinition } from "./inputDefinitions";
@@ -20,7 +21,7 @@ import {
   STOCK_MARKET_CRASH_RUNTIME_GROUPS
 } from "./runtimeFields";
 
-export type RuntimeValues = Partial<Record<FieldId, RawInputValue>>;
+export type RuntimeValues = Partial<Record<FieldId | PlannedSellYearFieldId, RawInputValue>>;
 
 export interface RuntimeVisibilityState {
   visibleDependents: number;
@@ -43,14 +44,17 @@ export interface PropertyRuntimeConfig {
   loanRateField: FieldId;
   loanRepaymentField: FieldId;
   liquidationRankField: FieldId;
+  plannedSellYearField: PlannedSellYearFieldId;
   coreFields: readonly [FieldId, FieldId, FieldId];
+  visibilityFields: readonly [FieldId, FieldId, FieldId, FieldId];
   loanFields: readonly [FieldId, FieldId, FieldId];
-  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
+  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
 }
 
 export interface PropertyLiquidationBuckets {
   sellable: LiquidationAssetRuntimeConfig[];
   excluded: LiquidationAssetRuntimeConfig[];
+  scheduled: Array<{ group: LiquidationAssetRuntimeConfig; year: number }>;
 }
 
 export interface AssetOfValueRuntimeConfig {
@@ -64,9 +68,11 @@ export interface AssetOfValueRuntimeConfig {
   loanRateField: FieldId;
   loanRepaymentField: FieldId;
   liquidationRankField: FieldId;
+  plannedSellYearField: PlannedSellYearFieldId;
   coreFields: readonly [FieldId, FieldId, FieldId];
+  visibilityFields: readonly [FieldId, FieldId, FieldId, FieldId];
   loanFields: readonly [FieldId, FieldId, FieldId];
-  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
+  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
 }
 
 export type LiquidationAssetRuntimeConfig = (typeof LIQUIDATION_ASSET_RUNTIME_GROUPS)[number];
@@ -143,6 +149,7 @@ for (const group of PROPERTY_RUNTIME_GROUPS) {
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanBalanceField] = 100;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanRateField] = 0.001;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanRepaymentField] = 10;
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.plannedSellYearField as FieldId] = 1;
 }
 
 for (const group of ASSET_OF_VALUE_RUNTIME_GROUPS) {
@@ -151,6 +158,7 @@ for (const group of ASSET_OF_VALUE_RUNTIME_GROUPS) {
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanBalanceField] = 100;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanRateField] = 0.001;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanRepaymentField] = 10;
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.plannedSellYearField as FieldId] = 1;
 }
 
 for (const group of INCOME_EVENT_RUNTIME_GROUPS) {
@@ -225,6 +233,7 @@ for (const group of PROPERTY_RUNTIME_GROUPS) {
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanBalanceField] = 0;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanRateField] = 3;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanRepaymentField] = 0;
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.plannedSellYearField as FieldId] = 0;
 }
 
 for (const group of ASSET_OF_VALUE_RUNTIME_GROUPS) {
@@ -233,6 +242,7 @@ for (const group of ASSET_OF_VALUE_RUNTIME_GROUPS) {
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanBalanceField] = 0;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanRateField] = 3;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanRepaymentField] = 0;
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.plannedSellYearField as FieldId] = 0;
 }
 
 for (const group of INCOME_EVENT_RUNTIME_GROUPS) {
@@ -257,6 +267,12 @@ export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, numb
   ["debts.creditCards.balance" as FieldId]: 124.5,
   ...Object.fromEntries(
     PROPERTY_RUNTIME_GROUPS.map((group) => [group.rentalIncomeField, Number(group.idx) * 5 + 62.1])
+  ) as Partial<Record<FieldId, number>>,
+  ...Object.fromEntries(
+    PROPERTY_RUNTIME_GROUPS.map((group) => [group.plannedSellYearField as FieldId, Number(group.idx) * 5 + 62.2])
+  ) as Partial<Record<FieldId, number>>,
+  ...Object.fromEntries(
+    ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => [group.plannedSellYearField as FieldId, Number(group.idx) * 5 + 89.2])
   ) as Partial<Record<FieldId, number>>
 };
 
@@ -273,7 +289,9 @@ export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
   DOWNSIZING_FIELDS.newRentAnnual,
   ...DEPENDENT_RUNTIME_GROUPS.map((group) => group.nameField),
   ...PROPERTY_RUNTIME_GROUPS.flatMap((group) => [group.nameField, group.valueField]),
+  ...PROPERTY_RUNTIME_GROUPS.map((group) => group.plannedSellYearField as FieldId),
   ...ASSET_OF_VALUE_RUNTIME_GROUPS.flatMap((group) => [group.nameField, group.valueField]),
+  ...ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.plannedSellYearField as FieldId),
   OTHER_WORK_FIELDS.income,
   ...PROPERTY_RUNTIME_GROUPS.map((group) => group.loanBalanceField),
   ...ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.loanBalanceField),
@@ -324,8 +342,8 @@ function deriveVisibleGroupCount(values: RuntimeValues, groups: ReadonlyArray<re
 export function deriveRuntimeVisibilityState(values: RuntimeValues): RuntimeVisibilityState {
   return {
     visibleDependents: deriveVisibleGroupCount(values, DEPENDENT_RUNTIME_GROUPS.map((group) => group.fields)),
-    visibleProperties: deriveVisibleGroupCount(values, PROPERTY_RUNTIME_GROUPS.map((group) => group.coreFields)),
-    visibleAssetsOfValue: deriveVisibleGroupCount(values, ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.coreFields)),
+    visibleProperties: deriveVisibleGroupCount(values, PROPERTY_RUNTIME_GROUPS.map((group) => group.visibilityFields)),
+    visibleAssetsOfValue: deriveVisibleGroupCount(values, ASSET_OF_VALUE_RUNTIME_GROUPS.map((group) => group.visibilityFields)),
     visibleIncomeEvents: deriveVisibleGroupCount(values, INCOME_EVENT_RUNTIME_GROUPS.map((group) => group.fields)),
     visibleExpenseEvents: deriveVisibleGroupCount(values, EXPENSE_EVENT_RUNTIME_GROUPS.map((group) => group.fields)),
     visibleStockMarketCrashes: deriveVisibleGroupCount(
@@ -374,10 +392,27 @@ export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, next
   if (PROPERTY_RUNTIME_GROUPS.some((group) => group.nameField === fieldId)) {
     return String(prevValue ?? "") !== String(nextValue ?? "");
   }
+  if (
+    PROPERTY_RUNTIME_GROUPS.some((group) => (group.plannedSellYearField as unknown as FieldId) === fieldId)
+    || ASSET_OF_VALUE_RUNTIME_GROUPS.some((group) => (group.plannedSellYearField as unknown as FieldId) === fieldId)
+  ) {
+    return asNumber(prevValue) !== asNumber(nextValue) || isBlank(prevValue) !== isBlank(nextValue);
+  }
   if (ASSET_OF_VALUE_RUNTIME_GROUPS.some((group) => group.nameField === fieldId)) {
     return String(prevValue ?? "") !== String(nextValue ?? "");
   }
   return false;
+}
+
+function getScheduledSellYear(
+  values: RuntimeValues,
+  group: Pick<PropertyRuntimeConfig | AssetOfValueRuntimeConfig, "plannedSellYearField">
+): number | null {
+  return resolveValidPlannedSellYear(
+    values[group.plannedSellYearField],
+    values[RUNTIME_FIELDS.currentAge],
+    values[RUNTIME_FIELDS.lifeExpectancyAge]
+  );
 }
 
 function isNonZeroNumber(value: unknown): boolean {
@@ -400,8 +435,11 @@ export function isDuplicateLiquidationRank(values: RuntimeValues, fieldId: Field
   if (!PROPERTY_LIQUIDATION_FIELDS.has(fieldId)) return false;
   const rank = Number(nextValue);
   if (!Number.isInteger(rank) || rank <= 0) return false;
+  const currentGroup = LIQUIDATION_ASSET_RUNTIME_GROUPS.find((group) => group.liquidationRankField === fieldId);
+  if (currentGroup && getScheduledSellYear(values, currentGroup) !== null) return false;
   for (const group of LIQUIDATION_ASSET_RUNTIME_GROUPS) {
     if (group.liquidationRankField === fieldId) continue;
+    if (getScheduledSellYear(values, group) !== null) continue;
     const existing = Number(values[group.liquidationRankField]);
     if (Number.isInteger(existing) && existing > 0 && existing === rank) {
       return true;
@@ -469,8 +507,12 @@ export function fieldVisible(
     if (fieldId === group.loanRateField || fieldId === group.loanRepaymentField) {
       return !isBlank(values[group.nameField]) && !isBlank(values[group.loanBalanceField]);
     }
+    if ((group.plannedSellYearField as unknown as FieldId) === fieldId) {
+      return (propertySlotVisible(values, group, visibility.visibleProperties) && !isBlank(values[group.nameField]))
+        || !isBlank(values[group.plannedSellYearField]);
+    }
     if (fieldId === group.liquidationRankField) {
-      return anyValue(values, group.coreFields);
+      return anyValue(values, group.coreFields) && getScheduledSellYear(values, group) === null;
     }
   }
 
@@ -487,8 +529,12 @@ export function fieldVisible(
     if (fieldId === group.loanRateField || fieldId === group.loanRepaymentField) {
       return !isBlank(values[group.nameField]) && !isBlank(values[group.loanBalanceField]);
     }
+    if ((group.plannedSellYearField as unknown as FieldId) === fieldId) {
+      return (assetOfValueSlotVisible(values, group, visibility.visibleAssetsOfValue) && !isBlank(values[group.nameField]))
+        || !isBlank(values[group.plannedSellYearField]);
+    }
     if (fieldId === group.liquidationRankField) {
-      return anyValue(values, group.coreFields);
+      return anyValue(values, group.coreFields) && getScheduledSellYear(values, group) === null;
     }
   }
 
@@ -662,7 +708,9 @@ export function defaultPropertyOrder(
 }
 
 export function hasExplicitPropertyLiquidationPreferences(values: RuntimeValues): boolean {
-  return LIQUIDATION_ASSET_RUNTIME_GROUPS.some((group) => !isBlank(values[group.liquidationRankField]));
+  return LIQUIDATION_ASSET_RUNTIME_GROUPS.some((group) =>
+    getScheduledSellYear(values, group) === null && !isBlank(values[group.liquidationRankField])
+  );
 }
 
 export function buildPropertyLiquidationBuckets(
@@ -671,16 +719,22 @@ export function buildPropertyLiquidationBuckets(
   manualOverrideActive: boolean
 ): PropertyLiquidationBuckets {
   if (active.length === 0) {
-    return { sellable: [], excluded: [] };
+    return { sellable: [], excluded: [], scheduled: [] };
   }
+  const scheduled = active
+    .map((group) => ({ group, year: getScheduledSellYear(values, group) }))
+    .filter((entry): entry is { group: LiquidationAssetRuntimeConfig; year: number } => entry.year !== null);
+  const scheduledIdx = new Set(scheduled.map((entry) => entry.group.liquidationIdx));
+  const liquidatable = active.filter((group) => !scheduledIdx.has(group.liquidationIdx));
   if (!manualOverrideActive) {
     return {
-      sellable: defaultPropertyOrder(values, active),
-      excluded: []
+      sellable: defaultPropertyOrder(values, liquidatable),
+      excluded: [],
+      scheduled
     };
   }
 
-  const sellable = active
+  const sellable = liquidatable
     .filter((group) => {
       const rank = parsePropertyRank(values, group.liquidationRankField);
       return rank !== null && rank > 0;
@@ -690,8 +744,8 @@ export function buildPropertyLiquidationBuckets(
       const rankB = parsePropertyRank(values, b.liquidationRankField) ?? 0;
       return (rankA - rankB) || (a.liquidationIdx - b.liquidationIdx);
     });
-  const excluded = active.filter((group) => !sellable.includes(group));
-  return { sellable, excluded };
+  const excluded = liquidatable.filter((group) => !sellable.includes(group));
+  return { sellable, excluded, scheduled };
 }
 
 export function buildPropertyLiquidationOrder(
@@ -708,7 +762,7 @@ export function syncManualPropertyOrderForNewProperties(
   previousActivePropertyIndices: ReadonlySet<number>,
   manualOverrideActive: boolean
 ): Array<{ fieldId: FieldId; value: number }> {
-  const active = activePropertyConfigs(values);
+  const active = activePropertyConfigs(values).filter((group) => getScheduledSellYear(values, group) === null);
   if (active.length <= 1) return [];
   if (!manualOverrideActive) return [];
 
@@ -730,10 +784,15 @@ export function syncManualPropertyOrderForNewProperties(
 
 export function buildPropertyLiquidationAssignments(
   order: LiquidationAssetRuntimeConfig[],
-  active: LiquidationAssetRuntimeConfig[]
+  active: LiquidationAssetRuntimeConfig[],
+  values: RuntimeValues
 ): Array<{ fieldId: FieldId; value: number | null }> {
   const assignments: Array<{ fieldId: FieldId; value: number | null }> = [];
-  const activeSet = new Set(active.map((group) => group.liquidationIdx));
+  const activeSet = new Set(
+    active
+      .filter((group) => getScheduledSellYear(values, group) === null)
+      .map((group) => group.liquidationIdx)
+  );
   for (const group of LIQUIDATION_ASSET_RUNTIME_GROUPS) {
     if (activeSet.has(group.liquidationIdx)) assignments.push({ fieldId: group.liquidationRankField, value: 0 });
   }

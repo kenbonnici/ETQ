@@ -2067,6 +2067,14 @@ body {
   gap: 6px;
 }
 
+.liquidation-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #64748b;
+}
+
 .liquidation-item {
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr) auto auto auto;
@@ -2107,6 +2115,11 @@ body {
   color: #94a3b8;
 }
 
+.liquidation-name-wrap {
+  display: grid;
+  min-width: 0;
+}
+
 .liquidation-name {
   font-size: 13px;
   color: #0f172a;
@@ -2116,10 +2129,26 @@ body {
   white-space: nowrap;
 }
 
+.liquidation-note {
+  font-size: 11px;
+  color: #64748b;
+}
+
 .liquidation-value {
   font-size: 12px;
   color: #475569;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.liquidation-scheduled-tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 112px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #64748b;
   white-space: nowrap;
 }
 

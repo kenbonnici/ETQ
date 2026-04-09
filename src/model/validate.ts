@@ -18,13 +18,26 @@ import {
   STOCK_MARKET_CRASH_GROUPS_BY_CELL
 } from "./inputSchema";
 import {
+  ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS,
+  getProjectionYearWindow,
+  parsePlannedSellYearValue,
+  PlannedSellYearFieldId,
+  PROPERTY_PLANNED_SELL_YEAR_FIELDS,
+  resolveValidPlannedSellYear
+} from "./plannedSales";
+import {
   estimateDownsizing,
   getDownsizingProjectionWindow,
   isDownsizingYearInProjectionWindow,
   normalizeDownsizingMode
 } from "./downsizing";
 import { fieldStateToRawInputs } from "./excelAdapter";
-import { FieldState, InputCell, RawInputs } from "./types";
+import { FieldId, FieldState, InputCell, RawInputs } from "./types";
+
+interface PlannedSellYearFieldValues {
+  properties: unknown[];
+  assetsOfValue: unknown[];
+}
 
 function isBlank(value: unknown): boolean {
   if (value === null || value === undefined) return true;
@@ -66,7 +79,7 @@ function monthlyInterestDue(balance: number, annualRate: number): number {
   return annualRate > 0 ? balance * (annualRate / 12) : 0;
 }
 
-export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
+export function validateRawInputs(raw: RawInputs, plannedSellYearValues: PlannedSellYearFieldValues = { properties: [], assetsOfValue: [] }): RawValidationMessage[] {
   const messages: RawValidationMessage[] = [];
   const projectionGateCells = new Set<InputCell>(PROJECTION_GATE_CELLS);
 
@@ -259,7 +272,8 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
       || !isBlank(raw[property.rentalIncomeCell])
       || !isBlank(raw[property.loanBalanceCell])
       || !isBlank(raw[property.loanRateCell])
-      || !isBlank(raw[property.loanRepaymentCell]);
+      || !isBlank(raw[property.loanRepaymentCell])
+      || !isBlank(plannedSellYearValues.properties[PROPERTY_GROUPS_BY_CELL.indexOf(property)]);
     if (!hasAny) continue;
 
     if (isBlank(raw[property.nameCell])) {
@@ -297,7 +311,8 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
       || !isBlank(raw[asset.appreciationRateCell])
       || !isBlank(raw[asset.loanBalanceCell])
       || !isBlank(raw[asset.loanRateCell])
-      || !isBlank(raw[asset.loanRepaymentCell]);
+      || !isBlank(raw[asset.loanRepaymentCell])
+      || !isBlank(plannedSellYearValues.assetsOfValue[ASSET_OF_VALUE_GROUPS_BY_CELL.indexOf(asset)]);
     if (!hasAny) continue;
 
     if (isBlank(raw[asset.nameCell])) {
@@ -486,7 +501,13 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   }
 
   const liquidationRanks = LIQUIDATION_RANK_CELLS
-    .map((cell) => ({ cell, value: asNumber(raw[cell]) }))
+    .map((cell, idx) => {
+      const propertyCount = PROPERTY_GROUPS_BY_CELL.length;
+      const isScheduled = idx < propertyCount
+        ? resolveValidPlannedSellYear(plannedSellYearValues.properties[idx], raw.B4, raw.B255) !== null
+        : resolveValidPlannedSellYear(plannedSellYearValues.assetsOfValue[idx - propertyCount], raw.B4, raw.B255) !== null;
+      return { cell, value: isScheduled ? null : asNumber(raw[cell]) };
+    })
     .filter((entry) => entry.value !== null && Number.isInteger(entry.value) && (entry.value as number) > 0) as Array<{ cell: InputCell; value: number }>;
   for (let i = 0; i < liquidationRanks.length; i += 1) {
     for (let j = i + 1; j < liquidationRanks.length; j += 1) {
@@ -519,12 +540,63 @@ export function validateRawInputs(raw: RawInputs): RawValidationMessage[] {
   return messages;
 }
 
+export function validatePlannedSellYearFields(fields: Partial<Record<string, unknown>>, raw: RawInputs): ValidationMessage[] {
+  const messages: ValidationMessage[] = [];
+  const projectionWindow = getProjectionYearWindow(raw.B4, raw.B255);
+
+  const validateYear = (fieldId: PlannedSellYearFieldId): void => {
+    const rawValue = fields[fieldId];
+    if (isBlank(rawValue)) return;
+
+    const numeric = Number(rawValue);
+    if (!Number.isFinite(numeric) || !Number.isInteger(numeric)) {
+      messages.push({
+        fieldId: fieldId as FieldId,
+        severity: "error",
+        message: "Planned sell year must be a whole calendar year.",
+        blocksProjection: false
+      });
+      return;
+    }
+
+    if (numeric < projectionWindow.minYear) {
+      messages.push({
+        fieldId: fieldId as FieldId,
+        severity: "error",
+        message: `Planned sell year must be ${projectionWindow.minYear} or later.`,
+        blocksProjection: false
+      });
+      return;
+    }
+
+    if (projectionWindow.maxYear !== null && numeric > projectionWindow.maxYear) {
+      messages.push({
+        fieldId: fieldId as FieldId,
+        severity: "error",
+        message: "Planned sell year cannot exceed the projection horizon.",
+        blocksProjection: false
+      });
+    }
+  };
+
+  PROPERTY_PLANNED_SELL_YEAR_FIELDS.forEach(validateYear);
+  ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS.forEach(validateYear);
+  return messages;
+}
+
 export function validateFieldState(fields: FieldState): ValidationMessage[] {
   const raw = fieldStateToRawInputs(fields);
-  return validateRawInputs(raw).map((message) => ({
-    fieldId: INPUT_DEFINITION_BY_CELL[message.cell].fieldId,
-    severity: message.severity,
-    message: message.message,
-    blocksProjection: message.blocksProjection
-  }));
+  const plannedSellYearValues: PlannedSellYearFieldValues = {
+    properties: PROPERTY_PLANNED_SELL_YEAR_FIELDS.map((fieldId) => fields[fieldId as never]),
+    assetsOfValue: ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS.map((fieldId) => fields[fieldId as never])
+  };
+  return [
+    ...validateRawInputs(raw, plannedSellYearValues).map((message) => ({
+      fieldId: INPUT_DEFINITION_BY_CELL[message.cell].fieldId,
+      severity: message.severity,
+      message: message.message,
+      blocksProjection: message.blocksProjection
+    })),
+    ...validatePlannedSellYearFields(fields as Partial<Record<string, unknown>>, raw)
+  ];
 }
