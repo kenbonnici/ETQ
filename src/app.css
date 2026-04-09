@@ -2053,10 +2053,10 @@ body {
   gap: 6px;
 }
 
-.liquidation-section + .liquidation-section {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #e2e8f0;
+.liquidation-divider {
+  height: 1px;
+  margin: 12px 10px;
+  background: #dbe4de;
 }
 
 .liquidation-list {
@@ -2094,11 +2094,6 @@ body {
 .liquidation-section[data-liquidation-zone="never-sell"] .liquidation-item {
   background: #f5f7f6;
   border-color: #d8e1db;
-}
-
-.liquidation-item--scheduled-divider {
-  margin-top: 8px;
-  box-shadow: inset 0 1px 0 #c7d2cb;
 }
 
 .liquidation-item.just-moved {
