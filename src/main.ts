@@ -492,12 +492,6 @@ interface ExcelSpecimenPayload {
   raw_inputs?: Partial<Record<string, unknown>>;
 }
 
-const SAMPLE_DATA_NUMERIC_OVERRIDES: Readonly<Partial<Record<FieldId, number>>> = {
-  [RUNTIME_FIELDS.stockContributionMonthly]: 350,
-  [RUNTIME_FIELDS.minimumCashBuffer]: 50_000,
-  [RUNTIME_FIELDS.legacyAmount]: 1_000_000
-};
-
 const RETIREMENT_INDICATOR_PREFIX = "Earliest viable retirement:";
 
 function renderRetirementIndicatorContent(message: string | null): { showPrefix: boolean; html: string } {
@@ -3637,17 +3631,23 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
       }
     }
 
-    for (const [fieldId, value] of Object.entries(SAMPLE_DATA_NUMERIC_OVERRIDES) as Array<[FieldId, number]>) {
-      fieldState[fieldId] = applyFieldNumericConstraint(fieldId, value);
-    }
-
     syncVisibleRuntimeGroupsFromState();
+    sectionState.majorFutureEventsOpen = true;
+    sectionState.advancedAssumptionsOpen = true;
+    uiState.majorFutureEventsOpen = true;
+    uiState.advancedAssumptionsOpen = true;
     uiState.manualPropertyLiquidationOrder = hasExplicitPropertyLiquidationPreferences(fieldState);
 
     const statutory = getStatutoryAge();
-    if (statutory !== null) {
-      uiState.earlyRetirementAge = statutory;
-    }
+    const parityEarlyRetirementAge = Number(payload.early_retirement_age);
+    uiState.earlyRetirementAge = Number.isFinite(parityEarlyRetirementAge)
+      ? Math.round(parityEarlyRetirementAge)
+      : (statutory ?? uiState.earlyRetirementAge);
+    const projectionMonthOverride = payload.projection_month_override;
+    uiState.projectionMonthOverride =
+      typeof projectionMonthOverride === "number" && Number.isFinite(projectionMonthOverride)
+        ? Math.round(projectionMonthOverride)
+        : null;
     setRetireCheckMessage(null);
     syncEarlyRetirementControl(true);
     renderInputs();
