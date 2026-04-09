@@ -157,7 +157,7 @@ let activePanelEditState: { fieldId: FieldId; value: string } | null = null;
 let suppressFocusSelectionFieldId: FieldId | null = null;
 let plannedSellYearJumpHighlightTimeout: number | null = null;
 let pendingPlannedSellYearJumpFieldId: PlannedSellYearFieldId | null = null;
-let plannedSellYearJumpFrame: number | null = null;
+let plannedSellYearJumpTimeout: number | null = null;
 
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
@@ -3507,13 +3507,13 @@ function flushPendingPlannedSellYearJump(): void {
 
 function requestPlannedSellYearJump(fieldId: PlannedSellYearFieldId): void {
   pendingPlannedSellYearJumpFieldId = fieldId;
-  if (plannedSellYearJumpFrame !== null) {
-    window.cancelAnimationFrame(plannedSellYearJumpFrame);
+  if (plannedSellYearJumpTimeout !== null) {
+    window.clearTimeout(plannedSellYearJumpTimeout);
   }
-  plannedSellYearJumpFrame = window.requestAnimationFrame(() => {
-    plannedSellYearJumpFrame = null;
+  plannedSellYearJumpTimeout = window.setTimeout(() => {
+    plannedSellYearJumpTimeout = null;
     flushPendingPlannedSellYearJump();
-  });
+  }, 0);
 }
 
 function renderPropertyLiquidationOrderControl(): string {
