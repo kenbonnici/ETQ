@@ -3507,6 +3507,15 @@ function flushPendingPlannedSellYearJump(): void {
 
 function requestPlannedSellYearJump(fieldId: PlannedSellYearFieldId): void {
   pendingPlannedSellYearJumpFieldId = fieldId;
+  const activeElement = document.activeElement;
+  if (
+    activeElement instanceof HTMLInputElement
+    && inputsPanel.contains(activeElement)
+    && activeElement.dataset.plannedSellYearFieldId !== fieldId
+  ) {
+    activeElement.blur();
+    return;
+  }
   if (plannedSellYearJumpTimeout !== null) {
     window.clearTimeout(plannedSellYearJumpTimeout);
   }
