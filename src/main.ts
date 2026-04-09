@@ -3805,7 +3805,7 @@ function renderInputs(): void {
         html += renderPlannedSellYearField(plannedSalePropertyGroup.plannedSellYearField);
       }
 
-      const plannedSaleAssetGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.loanRepaymentField === def.fieldId);
+      const plannedSaleAssetGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.appreciationRateField === def.fieldId);
       if (plannedSaleAssetGroup) {
         html += renderPlannedSellYearField(plannedSaleAssetGroup.plannedSellYearField);
       }
@@ -3828,7 +3828,7 @@ function renderInputs(): void {
       ) {
         html += `<button type="button" class="add-slot-btn" data-next-property="${propertyGroup.idx + 2}">Add another property</button>`;
       }
-      const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.loanRepaymentField === def.fieldId);
+      const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.appreciationRateField === def.fieldId);
       if (
         assetOfValueGroup
         && assetOfValueGroup.idx < ASSET_OF_VALUE_RUNTIME_GROUPS.length - 1
