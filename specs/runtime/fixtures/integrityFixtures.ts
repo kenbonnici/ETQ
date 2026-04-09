@@ -118,15 +118,15 @@ function buildPlannedSaleLoansFields(): FieldState {
 
 function buildForcedLiquidationFields(propertyFirst: boolean): FieldState {
   const fields = createEmptyFieldState();
-  fields[RUNTIME_FIELDS.currentAge] = 40;
+  fields[RUNTIME_FIELDS.currentAge] = 50;
   fields[RUNTIME_FIELDS.currentNetIncomeAnnual] = 0;
   fields[RUNTIME_FIELDS.cashBalance] = 0;
   fields[RUNTIME_FIELDS.stockMarketInvestments] = 0;
   fields[RUNTIME_FIELDS.stockContributionMonthly] = 0;
-  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 67;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 51;
   fields[RUNTIME_FIELDS.annualPensionAtRetirement] = 0;
   fields[RUNTIME_FIELDS.annualLivingExpenses] = 10_000;
-  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 42;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 53;
   fields[RUNTIME_FIELDS.propertyAnnualAppreciation] = 0;
   fields[RUNTIME_FIELDS.cashInterestRate] = 0;
   fields[RUNTIME_FIELDS.stockMarketReturn] = 0;
@@ -145,7 +145,7 @@ function buildForcedLiquidationFields(propertyFirst: boolean): FieldState {
   fields[PROPERTY_RUNTIME_GROUPS[0].rentalIncomeField] = 0;
   fields[PROPERTY_RUNTIME_GROUPS[0].loanBalanceField] = 50_000;
   fields[PROPERTY_RUNTIME_GROUPS[0].loanRateField] = 0;
-  fields[PROPERTY_RUNTIME_GROUPS[0].loanRepaymentField] = 0;
+  fields[PROPERTY_RUNTIME_GROUPS[0].loanRepaymentField] = 1;
   fields[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField] = propertyFirst ? 1 : 2;
 
   fields[ASSET_OF_VALUE_RUNTIME_GROUPS[0].nameField] = "Forced Asset";
@@ -153,7 +153,7 @@ function buildForcedLiquidationFields(propertyFirst: boolean): FieldState {
   fields[ASSET_OF_VALUE_RUNTIME_GROUPS[0].appreciationRateField] = 0;
   fields[ASSET_OF_VALUE_RUNTIME_GROUPS[0].loanBalanceField] = 20_000;
   fields[ASSET_OF_VALUE_RUNTIME_GROUPS[0].loanRateField] = 0;
-  fields[ASSET_OF_VALUE_RUNTIME_GROUPS[0].loanRepaymentField] = 0;
+  fields[ASSET_OF_VALUE_RUNTIME_GROUPS[0].loanRepaymentField] = 1;
   fields[ASSET_OF_VALUE_RUNTIME_GROUPS[0].liquidationRankField] = propertyFirst ? 2 : 1;
 
   return fields;
@@ -225,16 +225,35 @@ function buildEventsAndDependentsFields(): FieldState {
 }
 
 function buildManualLiquidationOrderFields(): FieldState {
-  const fields = baseFields();
-
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 50;
+  fields[RUNTIME_FIELDS.currentNetIncomeAnnual] = 0;
+  fields[RUNTIME_FIELDS.cashBalance] = 0;
+  fields[RUNTIME_FIELDS.stockMarketInvestments] = 0;
+  fields[RUNTIME_FIELDS.stockContributionMonthly] = 0;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 51;
+  fields[RUNTIME_FIELDS.annualPensionAtRetirement] = 0;
+  fields[RUNTIME_FIELDS.annualLivingExpenses] = 220_000;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 53;
+  fields[RUNTIME_FIELDS.propertyAnnualAppreciation] = 0;
+  fields[RUNTIME_FIELDS.cashInterestRate] = 0;
+  fields[RUNTIME_FIELDS.stockMarketReturn] = 0;
+  fields[RUNTIME_FIELDS.salaryAnnualGrowthRate] = 0;
+  fields[RUNTIME_FIELDS.rentalIncomeAnnualIncrease] = 0;
+  fields[RUNTIME_FIELDS.pensionReductionPerYearEarly] = 0;
+  fields[RUNTIME_FIELDS.minimumCashBuffer] = 0;
+  fields[RUNTIME_FIELDS.legacyAmount] = 0;
+  fields[RUNTIME_FIELDS.stockSellingCostRate] = 0;
+  fields[RUNTIME_FIELDS.propertyDisposalCostRate] = 0.08;
+  fields[RUNTIME_FIELDS.otherAssetDisposalCostRate] = 0.05;
   fields[PROPERTY_RUNTIME_GROUPS[0].nameField] = "Alpha";
   fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 300_000;
-  fields[PROPERTY_RUNTIME_GROUPS[0].annualCostsField] = 1_500;
+  fields[PROPERTY_RUNTIME_GROUPS[0].annualCostsField] = 0;
   fields[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField] = 2;
 
   fields[PROPERTY_RUNTIME_GROUPS[1].nameField] = "Beta";
   fields[PROPERTY_RUNTIME_GROUPS[1].valueField] = 180_000;
-  fields[PROPERTY_RUNTIME_GROUPS[1].annualCostsField] = 1_000;
+  fields[PROPERTY_RUNTIME_GROUPS[1].annualCostsField] = 0;
   fields[PROPERTY_RUNTIME_GROUPS[1].liquidationRankField] = 1;
 
   fields[ASSET_OF_VALUE_RUNTIME_GROUPS[0].nameField] = "Car";
@@ -266,12 +285,12 @@ export const INTEGRITY_FIXTURES: IntegrityFixture[] = [
   {
     name: "forcedPropertyFirst",
     fields: buildForcedLiquidationFields(true),
-    uiState: baseUiState(67)
+    uiState: baseUiState(51, 1, true)
   },
   {
     name: "forcedAssetFirst",
     fields: buildForcedLiquidationFields(false),
-    uiState: baseUiState(67)
+    uiState: baseUiState(51, 1, true)
   },
   {
     name: "downsizingBuy",
@@ -296,6 +315,6 @@ export const INTEGRITY_FIXTURES: IntegrityFixture[] = [
   {
     name: "manualLiquidationOrder",
     fields: buildManualLiquidationOrderFields(),
-    uiState: baseUiState(62, 1, true)
+    uiState: baseUiState(51, 1, true)
   }
 ];

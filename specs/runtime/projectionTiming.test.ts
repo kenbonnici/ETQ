@@ -5,11 +5,12 @@ import { fv } from "../../src/model/components/finance";
 import { rawInputsToFieldState } from "../../src/model/excelAdapter";
 import { runModel } from "../../src/model/index";
 import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
+import { HOME_FIELDS, RUNTIME_FIELDS } from "../../src/ui/runtimeFields";
 
 const SPECIMEN_FIELDS = rawInputsToFieldState(EXCEL_BASELINE_SPECIMEN.raw_inputs);
 const BASE_UI_STATE = {
-  deeperDiveOpen: true,
-  finerDetailsOpen: true,
+  majorFutureEventsOpen: true,
+  advancedAssumptionsOpen: true,
   earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age,
   manualPropertyLiquidationOrder: false
 } as const;
@@ -39,8 +40,9 @@ test("mid-year overrides pro-rate first-year flows and first-year loan repayment
   assertClose(january.scenarioNorm.cashFlow.employmentIncome[0], Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B6));
   assertClose(july.scenarioNorm.cashFlow.employmentIncome[0], january.scenarioNorm.cashFlow.employmentIncome[0] * 0.5);
 
-  assertClose(january.scenarioNorm.cashFlow.homeLoanRepayment[0], Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B17) * 12);
-  assertClose(july.scenarioNorm.cashFlow.homeLoanRepayment[0], Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B17) * 6);
+  const homeLoanRepayment = Number(SPECIMEN_FIELDS[HOME_FIELDS.mortgageMonthlyRepayment] ?? 0);
+  assertClose(january.scenarioNorm.cashFlow.homeLoanRepayment[0], homeLoanRepayment * 12);
+  assertClose(july.scenarioNorm.cashFlow.homeLoanRepayment[0], homeLoanRepayment * 6);
   assertClose(july.scenarioNorm.cashFlow.homeLoanRepayment[1], january.scenarioNorm.cashFlow.homeLoanRepayment[1]);
 });
 
@@ -48,8 +50,8 @@ test("mid-year overrides use partial-year growth and month-offset loan balances"
   const january = runWithMonth(1);
   const july = runWithMonth(7);
 
-  const homeValue = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B12);
-  const propertyGrowth = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B267);
+  const homeValue = Number(SPECIMEN_FIELDS[HOME_FIELDS.homeValue] ?? 0);
+  const propertyGrowth = Number(SPECIMEN_FIELDS[RUNTIME_FIELDS.propertyAnnualAppreciation] ?? 0);
   assertClose(
     january.scenarioNorm.netWorth.properties[0].values[0],
     homeValue * Math.pow(1 + propertyGrowth, 1)
@@ -59,9 +61,9 @@ test("mid-year overrides use partial-year growth and month-offset loan balances"
     homeValue * Math.pow(1 + propertyGrowth, 0.5)
   );
 
-  const homeLoanBalance = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B15);
-  const homeLoanRate = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B16);
-  const homeLoanRepayment = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B17);
+  const homeLoanBalance = Number(SPECIMEN_FIELDS[HOME_FIELDS.mortgageBalance] ?? 0);
+  const homeLoanRate = Number(SPECIMEN_FIELDS[HOME_FIELDS.mortgageInterestRateAnnual] ?? 0);
+  const homeLoanRepayment = Number(SPECIMEN_FIELDS[HOME_FIELDS.mortgageMonthlyRepayment] ?? 0);
   assertClose(
     january.scenarioNorm.netWorth.loans[0].values[0],
     Math.max(fv(homeLoanRate / 12, 12, homeLoanRepayment, -homeLoanBalance), 0)
