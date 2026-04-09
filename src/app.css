@@ -2080,9 +2080,10 @@ body {
   grid-template-columns: 24px minmax(0, 1fr) auto auto auto;
   align-items: center;
   gap: 8px;
+  min-height: 42px;
   border: 1px solid #d5e0d8;
   border-radius: 9px;
-  padding: 7px 9px;
+  padding: 6px 9px;
   background: #ffffff;
   transition: background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
 }
@@ -2150,7 +2151,7 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  min-width: 112px;
+  min-width: 102px;
   font-size: 11px;
   font-weight: 500;
   color: #475569;
@@ -2160,17 +2161,17 @@ body {
 .liquidation-reorder-controls {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .liquidation-move-btn {
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border: 1px solid #d8e1db;
-  border-radius: 8px;
+  border-radius: 7px;
   background: #ffffff;
   color: #475569;
-  font-size: 14px;
+  font-size: 13px;
   line-height: 1;
   cursor: pointer;
 }
@@ -2192,7 +2193,7 @@ body {
 }
 
 .liquidation-reorder-placeholder {
-  width: 60px;
+  width: 51px;
   display: inline-block;
 }
 
@@ -2200,8 +2201,8 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
-  min-width: 112px;
+  gap: 6px;
+  min-width: 102px;
   padding: 0;
   border: 0;
   background: transparent;
