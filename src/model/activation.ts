@@ -17,8 +17,8 @@ import { FieldState, InputCell, ModelUiState, RawInputs } from "./types";
 
 export interface ActivationResult {
   activatedInputs: RawInputs;
-  canCollapseDeeperDive: boolean;
-  canCollapseFinerDetails: boolean;
+  canCollapseMajorFutureEvents: boolean;
+  canCollapseAdvancedAssumptions: boolean;
 }
 
 function isBlank(value: unknown): boolean {
@@ -154,8 +154,8 @@ export function applySectionActivation(raw: RawInputs, uiState: ModelUiState): A
 
   return {
     activatedInputs,
-    canCollapseDeeperDive: true,
-    canCollapseFinerDetails: true
+    canCollapseMajorFutureEvents: true,
+    canCollapseAdvancedAssumptions: true
   };
 }
 

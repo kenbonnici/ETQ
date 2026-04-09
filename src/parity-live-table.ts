@@ -19,8 +19,8 @@ type LiveExtract = {
 
 const input = JSON.parse(readFileSync("/tmp/etq_live_extract.json", "utf8")) as LiveExtract;
 const outputs = runModel(rawInputsToFieldState(input.raw as RawInputs), {
-  deeperDiveOpen: true,
-  finerDetailsOpen: true,
+  majorFutureEventsOpen: true,
+  advancedAssumptionsOpen: true,
   earlyRetirementAge: input.early,
   manualPropertyLiquidationOrder: false,
   projectionMonthOverride: input.projection_month_override ?? null

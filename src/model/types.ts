@@ -8,8 +8,8 @@ export type RawInputs = Partial<Record<InputCell, RawInputValue>>;
 export type FieldState = Partial<Record<FieldId, RawInputValue>>;
 
 export interface ModelUiState {
-  deeperDiveOpen: boolean;
-  finerDetailsOpen: boolean;
+  majorFutureEventsOpen: boolean;
+  advancedAssumptionsOpen: boolean;
   earlyRetirementAge: number;
   manualPropertyLiquidationOrder: boolean;
   projectionMonthOverride?: number | null;

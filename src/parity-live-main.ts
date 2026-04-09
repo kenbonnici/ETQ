@@ -39,8 +39,8 @@ function findAgeIndex(ages: number[], age: number): number {
 
 const input = JSON.parse(readFileSync("/tmp/etq_live_extract.json", "utf8")) as LiveExtract;
 const model = runModel(rawInputsToFieldState(input.raw as RawInputs), {
-  deeperDiveOpen: true,
-  finerDetailsOpen: true,
+  majorFutureEventsOpen: true,
+  advancedAssumptionsOpen: true,
   earlyRetirementAge: input.early,
   manualPropertyLiquidationOrder: false,
   projectionMonthOverride: input.projection_month_override ?? null

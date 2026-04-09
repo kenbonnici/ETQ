@@ -293,19 +293,19 @@ export function getFieldLabel(fieldId: FieldId): string {
 export const ALL_INPUT_CELLS: InputCell[] = INPUT_DEFINITIONS.map((def) => def.cell);
 export const ALL_FIELD_IDS: FieldId[] = INPUT_DEFINITIONS.map((def) => def.fieldId);
 
-export const DEEPER_DIVE_CELLS: InputCell[] = INPUT_DEFINITIONS
+export const MAJOR_FUTURE_EVENTS_CELLS: InputCell[] = INPUT_DEFINITIONS
   .filter((def) => def.section === "Major Future Events")
   .map((def) => def.cell);
 
-export const DEEPER_DIVE_FIELDS: FieldId[] = INPUT_DEFINITIONS
+export const MAJOR_FUTURE_EVENTS_FIELDS: FieldId[] = INPUT_DEFINITIONS
   .filter((def) => def.section === "Major Future Events")
   .map((def) => def.fieldId);
 
-export const FINER_DETAILS_CELLS: InputCell[] = INPUT_DEFINITIONS
+export const ADVANCED_ASSUMPTIONS_CELLS: InputCell[] = INPUT_DEFINITIONS
   .filter((def) => def.section === "Advanced Assumptions")
   .map((def) => def.cell);
 
-export const FINER_DETAILS_FIELDS: FieldId[] = INPUT_DEFINITIONS
+export const ADVANCED_ASSUMPTIONS_FIELDS: FieldId[] = INPUT_DEFINITIONS
   .filter((def) => def.section === "Advanced Assumptions")
   .map((def) => def.fieldId);
 

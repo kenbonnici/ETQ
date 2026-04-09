@@ -89,8 +89,8 @@ const DEFAULT_PERSISTED_RAW_INPUTS = createDefaultPersistedRawInputs();
 const fieldState = createEmptyFieldState();
 
 let uiState: ModelUiState = {
-  deeperDiveOpen: false,
-  finerDetailsOpen: false,
+  majorFutureEventsOpen: false,
+  advancedAssumptionsOpen: false,
   earlyRetirementAge: 65,
   manualPropertyLiquidationOrder: false
 };
@@ -100,8 +100,8 @@ interface PersistedScenarioSnapshotV1 {
   savedAt: string;
   rawInputs: RawInputs;
   ui: {
-    deeperDiveOpen: boolean;
-    finerDetailsOpen: boolean;
+    majorFutureEventsOpen: boolean;
+    advancedAssumptionsOpen: boolean;
     earlyRetirementAge: number;
     selectedCurrency: string;
     livingExpensesMode: LivingExpensesMode;
@@ -366,8 +366,8 @@ const networthTablePanel = document.getElementById("networth-table-panel") as HT
 
 const sectionState = {
   scenariosOpen: true,
-  deeperOpen: false,
-  finerOpen: false
+  majorFutureEventsOpen: false,
+  advancedAssumptionsOpen: false
 };
 
 let visibleDependents = 1;
@@ -1163,8 +1163,8 @@ function normalizePersistedSnapshot(raw: unknown): PersistedScenarioSnapshotV1 |
     savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString(),
     rawInputs: normalizePersistedRawInputs(candidate.rawInputs),
     ui: {
-      deeperDiveOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).deeperDiveOpen),
-      finerDetailsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).finerDetailsOpen),
+      majorFutureEventsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).majorFutureEventsOpen),
+      advancedAssumptionsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).advancedAssumptionsOpen),
       earlyRetirementAge: Number((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).earlyRetirementAge),
       selectedCurrency: isTopCurrency((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).selectedCurrency)
         ? String((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).selectedCurrency)
@@ -1183,8 +1183,8 @@ function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshotV1 {
     savedAt: new Date().toISOString(),
     rawInputs: pruneInactiveRawInputs(fieldStateToRawInputs(fieldState)),
     ui: {
-      deeperDiveOpen: sectionState.deeperOpen,
-      finerDetailsOpen: sectionState.finerOpen,
+      majorFutureEventsOpen: sectionState.majorFutureEventsOpen,
+      advancedAssumptionsOpen: sectionState.advancedAssumptionsOpen,
       earlyRetirementAge: uiState.earlyRetirementAge,
       selectedCurrency,
       livingExpensesMode,
@@ -1195,7 +1195,7 @@ function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshotV1 {
 
 function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshotV1): boolean {
   if (INPUT_DEFINITIONS.some((def) => (snapshot.rawInputs[def.cell] ?? null) !== (DEFAULT_PERSISTED_RAW_INPUTS[def.cell] ?? null))) return true;
-  if (snapshot.ui.deeperDiveOpen || snapshot.ui.finerDetailsOpen) return true;
+  if (snapshot.ui.majorFutureEventsOpen || snapshot.ui.advancedAssumptionsOpen) return true;
   if (snapshot.ui.selectedCurrency !== DEFAULT_CURRENCY) return true;
   if (snapshot.ui.livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(snapshot.ui.livingExpenseCategoryValues)) return true;
   return false;
@@ -1299,10 +1299,10 @@ function applyPersistedScenarioSnapshot(
     fieldState[def.fieldId] = restoredFields[def.fieldId] ?? null;
   }
 
-  sectionState.deeperOpen = snapshot.ui.deeperDiveOpen;
-  sectionState.finerOpen = snapshot.ui.finerDetailsOpen;
-  uiState.deeperDiveOpen = snapshot.ui.deeperDiveOpen;
-  uiState.finerDetailsOpen = snapshot.ui.finerDetailsOpen;
+  sectionState.majorFutureEventsOpen = snapshot.ui.majorFutureEventsOpen;
+  sectionState.advancedAssumptionsOpen = snapshot.ui.advancedAssumptionsOpen;
+  uiState.majorFutureEventsOpen = snapshot.ui.majorFutureEventsOpen;
+  uiState.advancedAssumptionsOpen = snapshot.ui.advancedAssumptionsOpen;
   selectedCurrency = isTopCurrency(snapshot.ui.selectedCurrency) ? snapshot.ui.selectedCurrency : DEFAULT_CURRENCY;
   livingExpenseCategoryValues = sanitizeLivingExpenseCategoryValues(snapshot.ui.livingExpenseCategoryValues);
   livingExpensesMode = snapshot.ui.livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(livingExpenseCategoryValues)
@@ -4108,21 +4108,21 @@ function renderInputs(): void {
     btn.addEventListener("click", () => {
       const section = btn.dataset.section;
       if (section === "Major Future Events") {
-        if (sectionState.deeperOpen) {
-          sectionState.deeperOpen = false;
-          uiState.deeperDiveOpen = false;
+        if (sectionState.majorFutureEventsOpen) {
+          sectionState.majorFutureEventsOpen = false;
+          uiState.majorFutureEventsOpen = false;
         } else {
-          sectionState.deeperOpen = true;
-          uiState.deeperDiveOpen = true;
+          sectionState.majorFutureEventsOpen = true;
+          uiState.majorFutureEventsOpen = true;
         }
       }
       if (section === "Advanced Assumptions") {
-        if (sectionState.finerOpen) {
-          sectionState.finerOpen = false;
-          uiState.finerDetailsOpen = false;
+        if (sectionState.advancedAssumptionsOpen) {
+          sectionState.advancedAssumptionsOpen = false;
+          uiState.advancedAssumptionsOpen = false;
         } else {
-          sectionState.finerOpen = true;
-          uiState.finerDetailsOpen = true;
+          sectionState.advancedAssumptionsOpen = true;
+          uiState.advancedAssumptionsOpen = true;
         }
       }
       setRetireCheckMessage(null);

@@ -12,8 +12,8 @@ import { validateRawInputs } from "./validate";
 export interface RunModelResult {
   outputs: ModelOutputs;
   validationMessages: ValidationMessage[];
-  canCollapseDeeperDive: boolean;
-  canCollapseFinerDetails: boolean;
+  canCollapseMajorFutureEvents: boolean;
+  canCollapseAdvancedAssumptions: boolean;
 }
 
 const RETIREMENT_SUCCESS_EPSILON = 1e-6;
@@ -69,7 +69,7 @@ export function runModel(fields: FieldState, uiState: ModelUiState): RunModelRes
   return {
     outputs,
     validationMessages,
-    canCollapseDeeperDive: activation.canCollapseDeeperDive,
-    canCollapseFinerDetails: activation.canCollapseFinerDetails
+    canCollapseMajorFutureEvents: activation.canCollapseMajorFutureEvents,
+    canCollapseAdvancedAssumptions: activation.canCollapseAdvancedAssumptions
   };
 }

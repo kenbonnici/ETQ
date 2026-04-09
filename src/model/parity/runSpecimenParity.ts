@@ -10,8 +10,8 @@ export function runSpecimenParity(): ParityReport {
   const fields = rawInputsToFieldState(EXCEL_BASELINE_SPECIMEN.raw_inputs);
 
   const result = runModel(fields, {
-    deeperDiveOpen: true,
-    finerDetailsOpen: true,
+    majorFutureEventsOpen: true,
+    advancedAssumptionsOpen: true,
     earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age,
     manualPropertyLiquidationOrder: false,
     projectionMonthOverride: EXCEL_BASELINE_SPECIMEN.projection_month_override ?? null
