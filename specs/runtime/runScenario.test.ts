@@ -82,6 +82,31 @@ function buildInputs(): EffectiveInputs {
   };
 }
 
+function buildForcedSaleInputs(liquidationPriority: number[]): EffectiveInputs {
+  return {
+    ...buildInputs(),
+    livingExpensesAnnual: 10_000,
+    properties: [
+      {
+        ...buildInputs().properties[0],
+        name: "Forced Property",
+        plannedSellYear: null,
+        loanRepaymentMonthly: 0
+      }
+    ],
+    assetsOfValue: [
+      {
+        ...buildInputs().assetsOfValue[0],
+        name: "Forced Asset",
+        plannedSellYear: null,
+        loanRepaymentMonthly: 0
+      }
+    ],
+    liveUntilAge: 42,
+    liquidationPriority
+  };
+}
+
 test("planned sales keep gross liquidation inflows separate from property and other asset loan payoffs", () => {
   const scenario = runScenarioNorm(
     buildInputs(),
@@ -106,4 +131,46 @@ test("planned sales keep gross liquidation inflows separate from property and ot
   assert.equal(scenario.cashFlow.totalInflows[0], 275_000);
   assert.equal(scenario.cashFlow.totalOutflows[0], 70_000);
   assert.equal(scenario.cashFlow.netCashFlow[0], 205_000);
+});
+
+test("forced property sales show gross proceeds, settle the loan in the sale year, and stop future repayments", () => {
+  const scenario = runScenarioNorm(
+    buildForcedSaleInputs([1, 2]),
+    resolveProjectionTiming(new Date("2026-01-01T00:00:00Z"), 1)
+  );
+
+  const propertyLiquidation = scenario.cashFlow.liquidationsByProperty.find((series) => series.label === "Forced Property");
+  const propertyLoanRepayment = scenario.cashFlow.propertyLoanRepayments.find((series) => series.label === "Forced Property");
+
+  assert.ok(propertyLiquidation);
+  assert.ok(propertyLoanRepayment);
+
+  assert.equal(propertyLiquidation.values[0], 180_000);
+  assert.equal(propertyLoanRepayment.values[0], 50_000);
+  assert.equal(propertyLoanRepayment.values[1], 0);
+
+  assert.equal(scenario.cashFlow.totalInflows[0], 180_000);
+  assert.equal(scenario.cashFlow.totalOutflows[0], 60_000);
+  assert.equal(scenario.cashFlow.netCashFlow[0], 120_000);
+});
+
+test("forced other-asset sales show gross proceeds, settle the loan in the sale year, and stop future repayments", () => {
+  const scenario = runScenarioNorm(
+    buildForcedSaleInputs([2, 1]),
+    resolveProjectionTiming(new Date("2026-01-01T00:00:00Z"), 1)
+  );
+
+  const assetLiquidation = scenario.cashFlow.liquidationsByProperty.find((series) => series.label === "Forced Asset");
+  const assetLoanRepayment = scenario.cashFlow.propertyLoanRepayments.find((series) => series.label === "Forced Asset");
+
+  assert.ok(assetLiquidation);
+  assert.ok(assetLoanRepayment);
+
+  assert.equal(assetLiquidation.values[0], 95_000);
+  assert.equal(assetLoanRepayment.values[0], 20_000);
+  assert.equal(assetLoanRepayment.values[1], 0);
+
+  assert.equal(scenario.cashFlow.totalInflows[0], 95_000);
+  assert.equal(scenario.cashFlow.totalOutflows[0], 30_000);
+  assert.equal(scenario.cashFlow.netCashFlow[0], 65_000);
 });

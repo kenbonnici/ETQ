@@ -1851,6 +1851,7 @@ interface ProjectionLeafRow {
   type: "row";
   id: string;
   label: string;
+  flattenedLabel?: string;
   values: number[];
   level: number;
   tone?: "default" | "total" | "bridge";
@@ -1914,9 +1915,10 @@ function projectionLeaf(
   values: number[],
   level: number,
   tone: ProjectionLeafRow["tone"] = "default",
-  alwaysVisible = false
+  alwaysVisible = false,
+  flattenedLabel?: string
 ): ProjectionLeafRow {
-  return { type: "row", id, label, values, level, tone, alwaysVisible };
+  return { type: "row", id, label, flattenedLabel, values, level, tone, alwaysVisible };
 }
 
 function projectionGroup(
@@ -2002,7 +2004,12 @@ function flattenSingleChildProjectionGroups(nodes: ProjectionNode[]): Projection
         flattened.push(child);
         continue;
       }
-      flattened.push(shiftProjectionNodeLevel(child, node.level - child.level));
+      const flattenedChild = shiftProjectionNodeLevel(child, node.level - child.level);
+      if (flattenedChild.type === "row" && flattenedChild.flattenedLabel) {
+        flattened.push({ ...flattenedChild, label: flattenedChild.flattenedLabel });
+        continue;
+      }
+      flattened.push(flattenedChild);
       continue;
     }
     flattened.push({ ...node, children });
@@ -2016,36 +2023,39 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
   const displayInflowsTotal = cashFlow.totalInflows.map((value, idx) => value + cashFlow.interestOnCash[idx]);
   const displayNetCashFlow = cashFlow.netCashFlow.map((value, idx) => value + cashFlow.interestOnCash[idx]);
   const rentalChildren = cashFlow.rentalIncomeByProperty.map((series) =>
-    projectionLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2, "default", false, `${series.label} rental income`)
   );
   const incomeEventChildren = cashFlow.incomeEvents.map((series) =>
-    projectionLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2, "default", false, `${series.label} income event`)
   );
   const liquidationChildren = [
-    projectionLeaf("liquidation-stocks", "Stocks", cashFlow.liquidationsStocks, 2),
+    projectionLeaf("liquidation-stocks", "Stocks", cashFlow.liquidationsStocks, 2, "default", false, "Stock liquidation"),
     ...cashFlow.liquidationsByProperty.map((series) =>
-      projectionLeaf(series.key, series.label, series.values, 2)
+      projectionLeaf(series.key, series.label, series.values, 2, "default", false, `Sale of ${series.label}`)
     )
   ];
   const propertyLoanChildren = [
     ...cashFlow.propertyLoanRepayments.map((series) =>
       projectionLeaf(
         series.key,
-        /property$/i.test(series.label) ? series.label : `${series.label} property`,
+        series.label,
         series.values,
-        2
+        2,
+        "default",
+        false,
+        `${series.label} loan repayment`
       )
     ),
-    projectionLeaf("other-loan-repayment", "Other loan", cashFlow.otherLoanRepayment, 2)
+    projectionLeaf("other-loan-repayment", "Other loan", cashFlow.otherLoanRepayment, 2, "default", false, "Other loan repayment")
   ];
   const dependentChildren = cashFlow.dependentsCost.map((series) =>
-    projectionLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2, "default", false, `${series.label} dependent cost`)
   );
   const propertyCostChildren = cashFlow.propertyCosts.map((series) =>
-    projectionLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2, "default", false, `${series.label} annual costs`)
   );
   const expenseEventChildren = cashFlow.expenseEvents.map((series) =>
-    projectionLeaf(series.key, series.label, series.values, 2)
+    projectionLeaf(series.key, series.label, series.values, 2, "default", false, `${series.label} expense event`)
   );
 
   return [
@@ -2100,7 +2110,19 @@ function buildNetworthNodes(scenario: ScenarioOutputs): ProjectionNode[] {
     normalizeProjectionValue(loanValues[idx])
   );
   const propertyChildren = netWorth.properties.map((series) =>
-    projectionLeaf(series.key, series.label, series.values, 1)
+    projectionLeaf(
+      series.key,
+      series.label,
+      series.values,
+      1,
+      "default",
+      false,
+      series.key === "property-home"
+        ? "Home value"
+        : series.key.startsWith("asset-of-value-")
+          ? `${series.label} asset value`
+          : `${series.label} property value`
+    )
   );
   const loanChildren = netWorth.loans.map((series) =>
     projectionLeaf(series.key, series.label, series.values, 1)

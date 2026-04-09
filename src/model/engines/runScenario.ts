@@ -654,36 +654,6 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
   const totalOutflowsSeries = zeroSeries(n);
   const netCashFlowSeries = zeroSeries(n);
 
-  for (let i = 0; i < n; i += 1) {
-    openingCashSeries[i] = i === 0 ? inputs.cashBalance : finalCashSeries[i - 1];
-    totalInflowsSeries[i] =
-      salarySeries[i] +
-      otherWorkSeries[i] +
-      sumAt(propertyRentalSeries, i) +
-      statutoryPensionSeries[i] +
-      postRetIncomeSeries[i] +
-      sumAt(incomeEventSeries, i) +
-      downsizingHomeSaleSeries[i] +
-      sumAt(scheduledPropertyLiquidationSeries, i) +
-      sumAt(scheduledAssetOfValueLiquidationSeries, i) +
-      stockStage.netProceeds[i] +
-      liquidationStages.reduce((sum, stage) => sum + stage.netProceeds[i], 0);
-    totalOutflowsSeries[i] =
-      creditCardClearanceSeries[i] +
-      homeLoanRepaymentSeries[i] +
-      sumAt(propertyLoanRepaymentSeries, i) +
-      sumAt(assetOfValueLoanRepaymentSeries, i) +
-      otherLoanRepaymentSeries[i] +
-      sumAt(dependentCostSeries, i) +
-      housingRentSeries[i] +
-      downsizingHomePurchaseSeries[i] +
-      sumAt(propertyAnnualCostSeries, i) +
-      stockContributionSeries[i] +
-      livingExpensesSeries[i] +
-      sumAt(expenseEventSeries, i);
-    netCashFlowSeries[i] = totalInflowsSeries[i] - totalOutflowsSeries[i];
-  }
-
   // Adjusted net worth (rows 138..172 / row202).
   const adjustedPropertyValues = propertyValueSeries.map((s) => [...s]);
   const adjustedPropertyLoans = propertyLoanSeries.map((s) => [...s]);
@@ -910,13 +880,25 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
 
   const propertyStageByProperty = inputs.properties.map<PropertyStageSeries | null>(() => null);
   const assetOfValueStageByAsset = inputs.assetsOfValue.map<PropertyStageSeries | null>(() => null);
+  const adjustedPropertyLoanRepaymentSeries = propertyLoanRepaymentSeries.map((series) => [...series]);
+  const adjustedAssetOfValueLoanRepaymentSeries = assetOfValueLoanRepaymentSeries.map((series) => [...series]);
   for (let stageIdx = 0; stageIdx < liquidationStages.length; stageIdx += 1) {
     const asset = liquidationStageAssets[stageIdx];
     if (!asset) continue;
+    const stage = liquidationStages[stageIdx];
+    const saleIdx = stage.disposal.findIndex((value) => Math.abs(value) > EPS);
     if (asset.kind === "property") {
-      if (asset.idx < propertyStageByProperty.length) propertyStageByProperty[asset.idx] = liquidationStages[stageIdx];
+      if (asset.idx < propertyStageByProperty.length) propertyStageByProperty[asset.idx] = stage;
+      if (asset.idx < adjustedPropertyLoanRepaymentSeries.length && saleIdx >= 0) {
+        adjustedPropertyLoanRepaymentSeries[asset.idx][saleIdx] += Math.max(-stage.loanRepayment[saleIdx], 0);
+        for (let i = saleIdx + 1; i < n; i += 1) adjustedPropertyLoanRepaymentSeries[asset.idx][i] = 0;
+      }
     } else if (asset.idx < assetOfValueStageByAsset.length) {
-      assetOfValueStageByAsset[asset.idx] = liquidationStages[stageIdx];
+      assetOfValueStageByAsset[asset.idx] = stage;
+      if (asset.idx < adjustedAssetOfValueLoanRepaymentSeries.length && saleIdx >= 0) {
+        adjustedAssetOfValueLoanRepaymentSeries[asset.idx][saleIdx] += Math.max(-stage.loanRepayment[saleIdx], 0);
+        for (let i = saleIdx + 1; i < n; i += 1) adjustedAssetOfValueLoanRepaymentSeries[asset.idx][i] = 0;
+      }
     }
   }
 
@@ -947,7 +929,8 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       const stage = propertyStageByProperty[idx];
       const stageValues = stage
         ? stage.netProceeds.map(
-            (value, yearIdx) => value - stage.rentalForegone[yearIdx] - stage.annualCostSaved[yearIdx]
+            (value, yearIdx) =>
+              value - stage.rentalForegone[yearIdx] - stage.annualCostSaved[yearIdx] - stage.loanRepayment[yearIdx]
           )
         : zeroSeries(n);
       const values = stageValues.map((value, yearIdx) => value + scheduledPropertyLiquidationSeries[idx][yearIdx]);
@@ -961,7 +944,8 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
       const stage = assetOfValueStageByAsset[idx];
       const stageValues = stage
         ? stage.netProceeds.map(
-            (value, yearIdx) => value - stage.rentalForegone[yearIdx] - stage.annualCostSaved[yearIdx]
+            (value, yearIdx) =>
+              value - stage.rentalForegone[yearIdx] - stage.annualCostSaved[yearIdx] - stage.loanRepayment[yearIdx]
           )
         : zeroSeries(n);
       const values = stageValues.map((value, yearIdx) => value + scheduledAssetOfValueLiquidationSeries[idx][yearIdx]);
@@ -977,6 +961,34 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
   const displayTotalOutflowsSeries = zeroSeries(n);
   const displayNetCashFlowSeries = zeroSeries(n);
   for (let i = 0; i < n; i += 1) {
+    openingCashSeries[i] = i === 0 ? inputs.cashBalance : finalCashSeries[i - 1];
+    totalInflowsSeries[i] =
+      salarySeries[i] +
+      otherWorkSeries[i] +
+      sumAt(propertyRentalSeries, i) +
+      statutoryPensionSeries[i] +
+      postRetIncomeSeries[i] +
+      sumAt(incomeEventSeries, i) +
+      downsizingHomeSaleSeries[i] +
+      sumAt(scheduledPropertyLiquidationSeries, i) +
+      sumAt(scheduledAssetOfValueLiquidationSeries, i) +
+      stockStage.netProceeds[i] +
+      liquidationStages.reduce((sum, stage) => sum + stage.netProceeds[i] - stage.loanRepayment[i], 0);
+    totalOutflowsSeries[i] =
+      creditCardClearanceSeries[i] +
+      homeLoanRepaymentSeries[i] +
+      sumAt(adjustedPropertyLoanRepaymentSeries, i) +
+      sumAt(adjustedAssetOfValueLoanRepaymentSeries, i) +
+      otherLoanRepaymentSeries[i] +
+      sumAt(dependentCostSeries, i) +
+      housingRentSeries[i] +
+      downsizingHomePurchaseSeries[i] +
+      sumAt(propertyAnnualCostSeries, i) +
+      stockContributionSeries[i] +
+      livingExpensesSeries[i] +
+      sumAt(expenseEventSeries, i);
+    netCashFlowSeries[i] = totalInflowsSeries[i] - totalOutflowsSeries[i];
+
     displayTotalInflowsSeries[i] =
       salarySeries[i] +
       otherWorkSeries[i] +
@@ -990,8 +1002,8 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
     displayTotalOutflowsSeries[i] =
       creditCardClearanceSeries[i] +
       homeLoanRepaymentSeries[i] +
-      sumAt(propertyLoanRepaymentSeries, i) +
-      sumAt(assetOfValueLoanRepaymentSeries, i) +
+      sumAt(adjustedPropertyLoanRepaymentSeries, i) +
+      sumAt(adjustedAssetOfValueLoanRepaymentSeries, i) +
       otherLoanRepaymentSeries[i] +
       sumAt(dependentCostSeries, i) +
       housingRentSeries[i] +
@@ -1031,12 +1043,12 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
         ...inputs.properties.map((property, idx) => ({
           key: `property-loan-${idx}`,
           label: property.name.trim() || `Property ${idx + 1}`,
-          values: [...propertyLoanRepaymentSeries[idx]]
+          values: [...adjustedPropertyLoanRepaymentSeries[idx]]
         })),
         ...inputs.assetsOfValue.map((asset, idx) => ({
           key: `asset-of-value-loan-${idx}`,
           label: asset.name.trim() || `Asset ${idx + 1}`,
-          values: [...assetOfValueLoanRepaymentSeries[idx]]
+          values: [...adjustedAssetOfValueLoanRepaymentSeries[idx]]
         }))
       ],
       otherLoanRepayment: otherLoanRepaymentSeries,
