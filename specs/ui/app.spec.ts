@@ -2,10 +2,11 @@ import { expect, test, type Page } from "@playwright/test";
 import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
 
 const EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA = 49;
-const STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B19);
+const STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B20);
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
+  statutoryRetirementAge: 'input[data-field-id="retirement.statutoryAge"]',
   lifeExpectancy: 'input[data-field-id="planning.lifeExpectancyAge"]',
   earlyRetAge: "#early-ret-age",
   currencySelector: "#currency-selector",
@@ -20,6 +21,8 @@ const selectors = {
   mortgageBalance: 'input[data-field-id="housing.01Residence.mortgage.balance"]',
   mortgageInterest: 'input[data-field-id="housing.01Residence.mortgage.interestRateAnnual"]',
   mortgageRepayment: 'input[data-field-id="housing.01Residence.mortgage.monthlyRepayment"]',
+  propertyMarketValue: 'input[data-field-id="properties.01.marketValue"]',
+  asset3LoanBalance: 'input[data-field-id="assetsOfValue.03.loan.balance"]',
   spendingAdjustmentAge1: 'input[data-field-id="spending.adjustments.firstBracket.endAge"]',
   spendingAdjustmentAge2: 'input[data-field-id="spending.adjustments.secondBracket.endAge"]',
   spendingAdjustmentFirstBracket: 'input[data-field-id="spending.adjustments.firstBracket.deltaRate"]',
@@ -71,7 +74,8 @@ const stepperSelectors = {
 
 async function loadSampleData(page: Page): Promise<void> {
   await page.goto("/");
-  await page.getByRole("button", { name: "Sample data" }).click();
+  await page.locator("#saved-scenario-select").selectOption("__sample_data__");
+  await page.locator("#load-saved-scenario-btn").click();
   await expect(page.locator(selectors.currentAge)).toHaveValue(/\d+/);
   await expect(page.locator("#retire-check-result")).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
   await expect(page.locator(".timeline-milestone").first()).toBeVisible();
@@ -89,6 +93,13 @@ async function replaceAndBlur(page: Page, selector: string, value: string): Prom
   await input.selectText();
   await page.keyboard.type(value);
   await input.blur();
+}
+
+async function typeNaturally(page: Page, selector: string, value: string): Promise<void> {
+  const input = page.locator(selector);
+  await input.click();
+  await input.selectText();
+  await page.keyboard.type(value);
 }
 
 async function expectActiveElement(page: Page, selector: string): Promise<void> {
@@ -130,7 +141,7 @@ test("spending-by-age fields keep fixed defaults and allow inline age editing wi
   await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("75");
 
   const firstEndAge = page.locator(selectors.spendingAdjustmentAge1);
-  await firstEndAge.click();
+  await firstEndAge.focus();
   await firstEndAge.selectText();
   await page.keyboard.press("Backspace");
   await expect(firstEndAge).toHaveValue("");
@@ -190,6 +201,7 @@ test("spending-by-age age steppers block invalid moves without showing inline er
   await page.goto("/");
 
   await fillAndBlur(page, selectors.currentAge, "71");
+  await fillAndBlur(page, selectors.statutoryRetirementAge, "75");
   await fillAndBlur(page, selectors.lifeExpectancy, "90");
   await fillAndBlur(page, selectors.spendingAdjustmentAge1, "71");
   await fillAndBlur(page, selectors.spendingAdjustmentAge2, "72");
@@ -197,7 +209,9 @@ test("spending-by-age age steppers block invalid moves without showing inline er
   await page.locator(stepperSelectors.spendingAdjustmentAge2Down).click();
 
   await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("72");
-  await expect(page.locator('.field-feedback.is-error')).toHaveCount(0);
+  await expect(
+    page.locator('.field[data-field-id="spending.adjustments.secondBracket.endAge"] .field-feedback.is-error')
+  ).toHaveCount(0);
 });
 
 test("spending-by-age restores an invalid persisted second end age back to the default pair", async ({ page }) => {
@@ -316,6 +330,45 @@ test("reveals stock market crash slots progressively and only shows crash detail
 
   await page.locator('[data-next-stock-market-crash]').last().click();
   await expect(page.locator(selectors.stockMarketCrash2Year)).toBeVisible();
+});
+
+test("loan balances keep every typed digit when the first entry reveals linked loan fields", async ({ page }) => {
+  await loadSampleData(page);
+
+  const paintingLoanBalance = page.locator(selectors.asset3LoanBalance);
+  await expect(paintingLoanBalance).toBeVisible();
+
+  await typeNaturally(page, selectors.asset3LoanBalance, "123456");
+  await expect(paintingLoanBalance).toHaveValue("123456");
+  await paintingLoanBalance.blur();
+  await expect(paintingLoanBalance).toHaveValue(/123,456/);
+  await expect(page.locator('input[data-field-id="assetsOfValue.03.loan.interestRateAnnual"]')).toBeVisible();
+  await expect(page.locator('input[data-field-id="assetsOfValue.03.loan.monthlyRepayment"]')).toBeVisible();
+});
+
+test("value fields that rerender on each keystroke keep the raw edit text until blur", async ({ page }) => {
+  await loadSampleData(page);
+
+  const propertyValue = page.locator(selectors.propertyMarketValue);
+  await expect(propertyValue).toBeVisible();
+
+  await typeNaturally(page, selectors.propertyMarketValue, "123456");
+  await expect(propertyValue).toHaveValue("123456");
+  await propertyValue.blur();
+  await expect(propertyValue).toHaveValue(/123,456/);
+});
+
+test("crash year entry keeps all digits while revealing its dependent fields", async ({ page }) => {
+  await page.goto("/");
+
+  await fillAndBlur(page, selectors.stockMarketInvestments, "100000");
+  await expect(page.locator(selectors.stockMarketCrash1Year)).toBeVisible();
+
+  const crashYear = String(new Date().getFullYear() + 12);
+  await typeNaturally(page, selectors.stockMarketCrash1Year, crashYear);
+  await expect(page.locator(selectors.stockMarketCrash1Year)).toHaveValue(crashYear);
+  await expect(page.locator(selectors.stockMarketCrash1Drop)).toBeVisible();
+  await expect(page.locator(selectors.stockMarketCrash1Recovery)).toBeVisible();
 });
 
 test("tab order stays in visible dependent field order as groups appear", async ({ page }) => {
@@ -679,6 +732,8 @@ test("retirement stepper does not clear the earliest-retirement indicator while 
   const retirementIndicator = page.locator("#retire-check-result");
   await expect(retirementIndicator).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
 
+  await fillAndBlur(page, selectors.earlyRetAge, String(STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA - 1));
+  await expect(retirementIndicator).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
   await page.locator("#early-ret-up").click();
 
   const indicatorSnapshot = await retirementIndicator.evaluate((node) => ({
@@ -695,7 +750,7 @@ test("timeline cap shows the entered life expectancy age", async ({ page }) => {
   await loadSampleData(page);
 
   await expect(page.locator(".timeline-endcap-top .timeline-end-year")).toHaveText(
-    String(EXCEL_BASELINE_SPECIMEN.raw_inputs.B254)
+    String(EXCEL_BASELINE_SPECIMEN.raw_inputs.B255)
   );
 });
 

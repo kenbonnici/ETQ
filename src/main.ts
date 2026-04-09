@@ -153,6 +153,8 @@ let previousActivePropertyIndices = new Set<number>();
 const cashflowExpandedGroups = new Set<string>(["cash-bridge", "inflows", "outflows"]);
 const networthExpandedGroups = new Set<string>(["networth-properties", "networth-loans"]);
 let liquidationPulseTimeout: number | null = null;
+let activePanelEditState: { fieldId: FieldId; value: string } | null = null;
+let suppressFocusSelectionFieldId: FieldId | null = null;
 
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
@@ -443,6 +445,7 @@ let livingExpenseCategoryValues: LivingExpenseCategoryValues = createEmptyLiving
 interface PanelCursorState {
   scrollTop: number;
   activeFieldId: FieldId | null;
+  activeValue: string | null;
   selectionStart: number | null;
   selectionEnd: number | null;
 }
@@ -751,6 +754,7 @@ function capturePanelCursorState(): PanelCursorState {
   return {
     scrollTop: inputsPanel.scrollTop,
     activeFieldId: inPanel ? (active!.dataset.fieldId as FieldId | undefined) ?? null : null,
+    activeValue: inPanel ? active!.value : null,
     selectionStart: supportsSelection ? active!.selectionStart : null,
     selectionEnd: supportsSelection ? active!.selectionEnd : null
   };
@@ -785,10 +789,24 @@ function restorePanelCursorState(state: PanelCursorState): void {
   if (!state.activeFieldId) return;
   const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${state.activeFieldId}"]`);
   if (!input) return;
+  suppressFocusSelectionFieldId = state.activeFieldId;
   input.focus({ preventScroll: true });
-  if (input.type !== "number" && state.selectionStart !== null && state.selectionEnd !== null) {
-    input.setSelectionRange(state.selectionStart, state.selectionEnd);
+  if (state.activeValue !== null && input.value !== state.activeValue) {
+    input.value = state.activeValue;
   }
+  if (input.type !== "number" && state.selectionStart !== null && state.selectionEnd !== null) {
+    const maxPos = input.value.length;
+    input.setSelectionRange(
+      Math.min(state.selectionStart, maxPos),
+      Math.min(state.selectionEnd, maxPos)
+    );
+  }
+}
+
+function consumeFocusSelectionSuppression(fieldId: FieldId): boolean {
+  if (suppressFocusSelectionFieldId !== fieldId) return false;
+  suppressFocusSelectionFieldId = null;
+  return true;
 }
 
 function restorePendingLiquidationControl(): void {
@@ -2754,6 +2772,13 @@ function formatFieldValue(def: InputDefinition, value: unknown): string {
   return String(value);
 }
 
+function getRenderedFieldValue(def: InputDefinition, value: unknown = fieldState[def.fieldId]): string {
+  if (activePanelEditState?.fieldId === def.fieldId) {
+    return activePanelEditState.value;
+  }
+  return formatFieldValue(def, value);
+}
+
 function fieldHasCurrencyAdornment(def: InputDefinition): boolean {
   return def.type === "number";
 }
@@ -2920,7 +2945,7 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
     return renderDownsizingModeField(def, label);
   }
   const value = fieldState[def.fieldId];
-  const valStr = formatFieldValue(def, value);
+  const valStr = getRenderedFieldValue(def, value);
   const inputType = "text";
   const inputMode = def.type === "text" ? "text" : (def.type === "integer" ? "numeric" : "decimal");
   const showTooltip = ![RUNTIME_FIELDS.currentAge, HOME_FIELDS.housingRentAnnual].includes(def.fieldId) && !!def.tooltip;
@@ -2989,7 +3014,7 @@ function renderPlannedSellYearField(fieldId: PlannedSellYearFieldId): string {
 }
 
 function renderEmbeddedAgeInput(def: InputDefinition, ariaLabel: string, value: RawInputValue = fieldState[def.fieldId]): string {
-  const valStr = formatFieldValue(def, value);
+  const valStr = getRenderedFieldValue(def, value);
   return `
     <span class="embedded-field spending-adjustment-age-field input-shell has-stepper" data-cell="${def.cell}" data-field-id="${def.fieldId}">
       <input
@@ -3017,9 +3042,9 @@ function renderSpendingAdjustmentsControl(): string {
   const finalDef = INPUT_DEFINITION_BY_FIELD_ID[RUNTIME_FIELDS.spendingAdjustmentFinalBracket];
   const currentAge = getCurrentAge() ?? 18;
   const { age1, age2 } = getSpendingAdjustmentAgePair();
-  const firstValue = formatFieldValue(firstDef, fieldState[firstDef.fieldId]);
-  const secondValue = formatFieldValue(secondDef, fieldState[secondDef.fieldId]);
-  const finalValue = formatFieldValue(finalDef, fieldState[finalDef.fieldId]);
+  const firstValue = getRenderedFieldValue(firstDef, fieldState[firstDef.fieldId]);
+  const secondValue = getRenderedFieldValue(secondDef, fieldState[secondDef.fieldId]);
+  const finalValue = getRenderedFieldValue(finalDef, fieldState[finalDef.fieldId]);
   const secondStartAge = age1 + 1;
   const finalStartAge = age2 + 1;
 
@@ -3083,7 +3108,7 @@ function renderSpendingAdjustmentsControl(): string {
 function renderGroupHeaderNameInput(fieldId: FieldId, placeholder: string): string {
   const def = INPUT_DEFINITION_BY_FIELD_ID[fieldId];
   const value = fieldState[fieldId];
-  const valStr = formatFieldValue(def, value);
+  const valStr = getRenderedFieldValue(def, value);
   return `
     <div class="group-item-card-name-wrap" data-cell="${def.cell}" data-field-id="${fieldId}">
       <input
@@ -3192,7 +3217,7 @@ function renderLivingExpensesField(def: InputDefinition, label: string): string 
 
   if (livingExpensesMode === "single") {
     const value = fieldState[def.fieldId];
-    const valStr = formatFieldValue(def, value);
+    const valStr = getRenderedFieldValue(def, value);
     return `
       <div class="living-expenses-wrap">
         <div class="field living-expenses-field living-expenses-field--simple" data-cell="${def.cell}" data-field-id="${def.fieldId}">
@@ -3555,6 +3580,9 @@ function clearAllInputs(): void {
 
 function renderInputs(): void {
   const cursorState = capturePanelCursorState();
+  activePanelEditState = cursorState.activeFieldId && cursorState.activeValue !== null
+    ? { fieldId: cursorState.activeFieldId, value: cursorState.activeValue }
+    : null;
   visibleDependents = expandVisibleGroupCount(visibleDependents, dependentFieldSets);
   visibleProperties = expandVisibleGroupCount(visibleProperties, propertyFieldSets);
   visibleAssetsOfValue = expandVisibleGroupCount(visibleAssetsOfValue, assetOfValueFieldSets);
@@ -4172,6 +4200,7 @@ function renderInputs(): void {
       const fieldId = el.dataset.fieldId as FieldId;
       const def = INPUT_DEFINITION_BY_FIELD_ID[fieldId];
       const current = fieldState[fieldId];
+      const skipAutoSelect = consumeFocusSelectionSuppression(fieldId);
       if (def.type === "percent") {
         if (current === null || current === undefined || String(current).trim() === "") {
           el.value = "";
@@ -4180,7 +4209,7 @@ function renderInputs(): void {
         const n = Number(current);
         const digits = isWholePercentDisplayField(fieldId) ? 0 : 2;
         el.value = Number.isFinite(n) ? (n * 100).toFixed(digits) : "";
-        if (!SPENDING_ADJUSTMENT_INLINE_FIELD_IDS.has(fieldId)) {
+        if (!skipAutoSelect && !SPENDING_ADJUSTMENT_INLINE_FIELD_IDS.has(fieldId)) {
           queueMicrotask(() => {
             if (document.activeElement === el) el.setSelectionRange(0, el.value.length);
           });
@@ -4193,7 +4222,7 @@ function renderInputs(): void {
           return;
         }
         el.value = String(current);
-        if (!SPENDING_ADJUSTMENT_INLINE_FIELD_IDS.has(fieldId)) {
+        if (!skipAutoSelect && !SPENDING_ADJUSTMENT_INLINE_FIELD_IDS.has(fieldId)) {
           queueMicrotask(() => {
             if (document.activeElement === el) el.setSelectionRange(0, el.value.length);
           });
@@ -4445,6 +4474,7 @@ function renderInputs(): void {
     });
   });
 
+  activePanelEditState = null;
   restorePanelCursorState(cursorState);
   restorePendingLiquidationControl();
   renderValidationState(validateFieldState(fieldState));
