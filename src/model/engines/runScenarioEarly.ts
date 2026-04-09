@@ -5,7 +5,8 @@ import { runScenario } from "./runScenario";
 export function runScenarioEarly(
   inputs: EffectiveInputs,
   earlyRetirementAge: number,
-  timing: ProjectionTiming
+  timing: ProjectionTiming,
+  includeDebug = false
 ): ScenarioOutputs {
-  return runScenario(inputs, { retirementAge: earlyRetirementAge }, timing);
+  return runScenario(inputs, { retirementAge: earlyRetirementAge }, timing, includeDebug);
 }

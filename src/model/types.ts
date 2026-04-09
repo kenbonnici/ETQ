@@ -13,6 +13,7 @@ export interface ModelUiState {
   earlyRetirementAge: number;
   manualPropertyLiquidationOrder: boolean;
   projectionMonthOverride?: number | null;
+  debugMode?: "test";
 }
 
 export interface EffectiveInputs {
@@ -152,6 +153,25 @@ export interface ScenarioNetWorthRows {
   loans: NamedProjectionSeries[];
 }
 
+export interface ScenarioLiquidationStageDebug {
+  assetKind: "property" | "assetOfValue";
+  assetIndex: number;
+  assetLabel: string;
+  disposal: number[];
+  disposalCosts: number[];
+  rentalForegone: number[];
+  annualCostSaved: number[];
+  loanRepayment: number[];
+  loanRepaymentSaved: number[];
+  netProceeds: number[];
+}
+
+export interface ScenarioDebug {
+  adjustedPropertyLoanRepayments: NamedProjectionSeries[];
+  adjustedAssetOfValueLoanRepayments: NamedProjectionSeries[];
+  liquidationStages: ScenarioLiquidationStageDebug[];
+}
+
 export interface ScenarioOutputs {
   points: ProjectionPoint[];
   cashSeries: number[];
@@ -160,6 +180,7 @@ export interface ScenarioOutputs {
   milestoneHints: ScenarioMilestoneHint[];
   cashFlow: ScenarioCashFlowRows;
   netWorth: ScenarioNetWorthRows;
+  debug?: ScenarioDebug;
 }
 
 export interface ModelOutputs {

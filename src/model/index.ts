@@ -65,9 +65,13 @@ export function runModel(fields: FieldState, uiState: ModelUiState): RunModelRes
     plannedSaleYears
   });
   const projectionTiming = resolveProjectionTiming(new Date(), uiState.projectionMonthOverride ?? null);
+  const includeDebug = uiState.debugMode === "test";
 
-  const scenarioNorm = withRetirementSuccess(runScenarioNorm(normalized, projectionTiming), normalized);
-  const scenarioEarly = withRetirementSuccess(runScenarioEarly(normalized, earlyRetirementAge, projectionTiming), normalized);
+  const scenarioNorm = withRetirementSuccess(runScenarioNorm(normalized, projectionTiming, includeDebug), normalized);
+  const scenarioEarly = withRetirementSuccess(
+    runScenarioEarly(normalized, earlyRetirementAge, projectionTiming, includeDebug),
+    normalized
+  );
 
   const outputs: ModelOutputs = {
     ages: scenarioNorm.points.map((p) => p.age),
