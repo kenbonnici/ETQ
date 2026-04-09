@@ -156,6 +156,8 @@ let liquidationPulseTimeout: number | null = null;
 let activePanelEditState: { fieldId: FieldId; value: string } | null = null;
 let suppressFocusSelectionFieldId: FieldId | null = null;
 let plannedSellYearJumpHighlightTimeout: number | null = null;
+let pendingPlannedSellYearJumpFieldId: PlannedSellYearFieldId | null = null;
+let plannedSellYearJumpFrame: number | null = null;
 
 const TIMELINE_EDGE_PADDING = 26;
 const MILESTONE_EVENT_MIN_ABS_AMOUNT = 1000;
@@ -3474,10 +3476,10 @@ function renderScheduledLiquidationRow(
     `;
 }
 
-function focusPlannedSellYearField(fieldId: PlannedSellYearFieldId): void {
+function focusPlannedSellYearField(fieldId: PlannedSellYearFieldId): boolean {
   const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-planned-sell-year-field-id="${fieldId}"]`);
   const field = inputsPanel.querySelector<HTMLElement>(`.field[data-field-id="${fieldId}"]`);
-  if (!input || !field) return;
+  if (!input || !field) return false;
 
   const scrollTarget = field.closest<HTMLElement>(".group-item-card") ?? field;
   input.focus({ preventScroll: true });
@@ -3493,6 +3495,25 @@ function focusPlannedSellYearField(fieldId: PlannedSellYearFieldId): void {
     field.classList.remove("is-guided");
     plannedSellYearJumpHighlightTimeout = null;
   }, 1600);
+  return true;
+}
+
+function flushPendingPlannedSellYearJump(): void {
+  if (!pendingPlannedSellYearJumpFieldId) return;
+  if (focusPlannedSellYearField(pendingPlannedSellYearJumpFieldId)) {
+    pendingPlannedSellYearJumpFieldId = null;
+  }
+}
+
+function requestPlannedSellYearJump(fieldId: PlannedSellYearFieldId): void {
+  pendingPlannedSellYearJumpFieldId = fieldId;
+  if (plannedSellYearJumpFrame !== null) {
+    window.cancelAnimationFrame(plannedSellYearJumpFrame);
+  }
+  plannedSellYearJumpFrame = window.requestAnimationFrame(() => {
+    plannedSellYearJumpFrame = null;
+    flushPendingPlannedSellYearJump();
+  });
 }
 
 function renderPropertyLiquidationOrderControl(): string {
@@ -4137,14 +4158,14 @@ function renderInputs(): void {
       ev.preventDefault();
       const fieldId = btn.dataset.liquidationPlannedSellYearFieldId as PlannedSellYearFieldId | undefined;
       if (!fieldId) return;
-      focusPlannedSellYearField(fieldId);
+      requestPlannedSellYearJump(fieldId);
     });
 
     btn.addEventListener("click", (ev) => {
       if (ev.detail !== 0) return;
       const fieldId = btn.dataset.liquidationPlannedSellYearFieldId as PlannedSellYearFieldId | undefined;
       if (!fieldId) return;
-      focusPlannedSellYearField(fieldId);
+      requestPlannedSellYearJump(fieldId);
     });
   });
 
@@ -4367,6 +4388,8 @@ function renderInputs(): void {
     window.addEventListener("blur", stopStepperHold);
     stepperHoldListenersBound = true;
   }
+
+  flushPendingPlannedSellYearJump();
 
   inputsPanel.querySelectorAll<HTMLButtonElement>(".section-toggle").forEach((btn) => {
     btn.addEventListener("click", () => {
