@@ -449,7 +449,9 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
             0
           )
         : 0;
-      propertyLoanRepaymentSeries[p][idx] = effectiveRepayment;
+      const loanPayoff = plannedSellYear !== null && year === plannedSellYear ? propertyLoanSeries[p][idx] : 0;
+      propertyLoanRepaymentSeries[p][idx] = effectiveRepayment + loanPayoff;
+      outflows += loanPayoff;
     }
     for (let a = 0; a < inputs.assetsOfValue.length; a += 1) {
       const plannedSellYear = inputs.assetsOfValue[a].plannedSellYear;
@@ -474,7 +476,9 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
             0
           )
         : 0;
-      assetOfValueLoanRepaymentSeries[a][idx] = effectiveRepayment;
+      const loanPayoff = plannedSellYear !== null && year === plannedSellYear ? assetOfValueLoanSeries[a][idx] : 0;
+      assetOfValueLoanRepaymentSeries[a][idx] = effectiveRepayment + loanPayoff;
+      outflows += loanPayoff;
     }
     const otherLoanRepayment = yearlyLoanPayment(
       otherLoanMonthsTotal,
@@ -521,7 +525,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
         ? inputs.properties[p].value * safePow(1 + inputs.propertyAppreciation, assetGrowthExponent(timing, idx))
         : 0;
       scheduledPropertyLiquidationSeries[p][idx] = plannedSellYear !== null && year === plannedSellYear
-        ? Math.max(propertyValueSeries[p][idx] * (1 - inputs.propertyDisposalCosts) - propertyLoanSeries[p][idx], 0)
+        ? propertyValueSeries[p][idx] * (1 - inputs.propertyDisposalCosts)
         : 0;
     }
     for (let a = 0; a < inputs.assetsOfValue.length; a += 1) {
@@ -531,7 +535,7 @@ export function runScenario(inputs: EffectiveInputs, config: ScenarioConfig, tim
         ? inputs.assetsOfValue[a].value * safePow(1 + inputs.assetsOfValue[a].appreciationRate, assetGrowthExponent(timing, idx))
         : 0;
       scheduledAssetOfValueLiquidationSeries[a][idx] = plannedSellYear !== null && year === plannedSellYear
-        ? Math.max(assetOfValueValueSeries[a][idx] * (1 - inputs.otherAssetDisposalCosts) - assetOfValueLoanSeries[a][idx], 0)
+        ? assetOfValueValueSeries[a][idx] * (1 - inputs.otherAssetDisposalCosts)
         : 0;
     }
 
