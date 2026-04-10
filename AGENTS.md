@@ -100,13 +100,17 @@ After code changes, run:
 3. Test suite
    `npm test`
 
+4. Golden snapshots when model behaviour changes
+   `npm run test:golden`
+
 Change-complete rule
 - A change is not complete unless the required checks pass
 
 Golden drift detection
 - The standalone golden snapshot suite is the long-term drift detector for model behaviour
 - Treat snapshot updates as deliberate changes, never background churn
-- When the golden suite is present, review snapshot diffs carefully and commit them alongside the logic change that caused them
+- Use `npm run test:update-snapshots` only after deliberate logic changes
+- Review snapshot diffs carefully and commit them alongside the logic change that caused them
 
 --------------------------------------------------
 PROMPT INTERPRETATION

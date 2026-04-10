@@ -201,8 +201,76 @@ Most important invariants to preserve:
 - liquidation rank `0` means excluded
 - default liquidation order sells the cheapest eligible assets first unless the user overrides it
 
-Testing Note
+Testing Regime
 
-The standalone test regime is being rebuilt around webapp-authored fixtures and golden snapshots.
+The test regime now has three layers:
+- `npm test`
+  Runs the runtime test suite plus the Playwright UI suite.
+- `npm run test:golden`
+  Runs only the golden snapshot suite.
+- `npm run test:update-snapshots`
+  Regenerates the checked-in golden snapshots after a deliberate logic change.
 
-This guide intentionally does not document that regime in detail yet. The detailed testing workflow belongs with the standalone golden suite documentation added in the next phase of this cleanup.
+1. Golden personas
+The golden suite lives in:
+- `specs/runtime/golden.test.ts`
+- `specs/runtime/golden/fixtures.ts`
+- `specs/runtime/golden/goldenSnapshots.ts`
+
+Each golden persona is an authored semantic fixture, not an extracted external baseline.
+
+Each persona snapshots, for both the statutory and early-retirement scenarios:
+- `retirementSuccessful`
+- full `cashSeries`
+- full `netWorthSeries`
+- milestone hints
+
+This is the main drift detector for projection math. If a logic change moves yearly outputs, the checked-in snapshot diff should show exactly which persona, scenario, and series values changed.
+
+2. Adding a new golden persona
+To add coverage for a new behaviour:
+- add a new persona in `specs/runtime/golden/fixtures.ts`
+- choose inputs that exercise a distinct path rather than a tiny variant of an existing persona
+- run `npm run test:update-snapshots`
+- review the generated diff in `specs/runtime/golden/goldenSnapshots.ts`
+- commit the snapshot update in the same commit as the logic or fixture change that caused it
+
+Good persona candidates are:
+- common user journeys
+- edge cases with multiple interacting features
+- cases that should succeed
+- cases that should fail the retirement-success rule
+
+3. Snapshot update discipline
+Snapshot regeneration is intentionally manual.
+
+Use this flow:
+- make the logic change
+- run `npm run test:golden` to see the drift
+- if the drift is intended, run `npm run test:update-snapshots`
+- review the snapshot diff carefully
+- commit the updated snapshots alongside the logic change
+
+Do not refresh snapshots as background cleanup. A snapshot change should always correspond to an intentional behaviour change or a deliberate fixture change.
+
+4. Invariant coverage
+The runtime invariants suite lives in:
+- `specs/runtime/invariants.test.ts`
+- `specs/runtime/fixtures/invariantFixtures.ts`
+
+These tests do not replace the golden suite. They cover different risks:
+- accounting-level reconciliation of inflows, outflows, net cash flow, and net worth
+- loan-payoff behaviour after planned or forced disposals
+- manual liquidation ordering
+
+The golden suite catches broad output drift.
+The invariant suite checks core accounting truths that should remain valid even when outputs change intentionally.
+
+5. What the UI suite covers
+The Playwright suite in `specs/ui/app.spec.ts` covers browser behaviour such as:
+- scenario manager flows
+- persistence
+- conditional field visibility
+- rendering of charts, timeline, and tables
+
+It is not the primary drift detector for projection math. That job belongs to the runtime golden suite plus the invariant suite.
