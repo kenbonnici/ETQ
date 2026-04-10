@@ -2964,7 +2964,9 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
   const valStr = getRenderedFieldValue(def, value);
   const inputType = "text";
   const inputMode = def.type === "text" ? "text" : (def.type === "integer" ? "numeric" : "decimal");
-  const showTooltip = ![RUNTIME_FIELDS.currentAge, HOME_FIELDS.housingRentAnnual].includes(def.fieldId) && !!def.tooltip;
+  const showTooltip = def.fieldId !== RUNTIME_FIELDS.currentAge
+    && def.fieldId !== HOME_FIELDS.housingRentAnnual
+    && !!def.tooltip;
   const hasPrefix = fieldHasCurrencyAdornment(def);
   const hasSuffix = fieldHasPercentAdornment(def);
   const stepSize = STEPPER_CONFIG[def.fieldId];
