@@ -255,30 +255,10 @@ function stagePropertyOrder(priority: number[], currentValues: number[]): number
 
 function buildScenarioDebug(
   inputs: EffectiveInputs,
-  liquidationStages: PropertyStageSeries[],
-  liquidationStageAssets: Array<LiquidationAssetDescriptor | null>,
+  liquidationStages: ScenarioLiquidationStageDebug[],
   adjustedPropertyLoanRepaymentSeries: number[][],
   adjustedAssetOfValueLoanRepaymentSeries: number[][]
 ): ScenarioDebug {
-  const liquidationStageDebug: ScenarioLiquidationStageDebug[] = [];
-
-  for (let i = 0; i < liquidationStages.length; i += 1) {
-    const stage = liquidationStages[i];
-    const asset = liquidationStageAssets[i];
-    if (!asset) continue;
-    liquidationStageDebug.push({
-      assetKind: asset.kind,
-      assetIndex: asset.idx,
-      assetLabel: asset.name.trim() || asset.fallbackLabel,
-      disposal: [...stage.disposal],
-      disposalCosts: [...stage.disposalCosts],
-      rentalForegone: [...stage.rentalForegone],
-      annualCostSaved: [...stage.annualCostSaved],
-      loanRepayment: [...stage.loanRepayment],
-      netProceeds: [...stage.netProceeds]
-    });
-  }
-
   return {
     adjustedPropertyLoanRepayments: inputs.properties.map((property, idx) => ({
       key: `property-loan-${idx}`,
@@ -290,7 +270,17 @@ function buildScenarioDebug(
       label: asset.name.trim() || `Asset ${idx + 1}`,
       values: [...adjustedAssetOfValueLoanRepaymentSeries[idx]]
     })),
-    liquidationStages: liquidationStageDebug
+    liquidationStages: liquidationStages.map((stage) => ({
+      assetKind: stage.assetKind,
+      assetIndex: stage.assetIndex,
+      assetLabel: stage.assetLabel,
+      disposal: [...stage.disposal],
+      disposalCosts: [...stage.disposalCosts],
+      rentalForegone: [...stage.rentalForegone],
+      annualCostSaved: [...stage.annualCostSaved],
+      loanRepayment: [...stage.loanRepayment],
+      netProceeds: [...stage.netProceeds]
+    }))
   };
 }
 
@@ -379,11 +369,7 @@ export function runScenario(
 
     let rental = 0;
     for (let p = 0; p < inputs.properties.length; p += 1) {
-      const plannedSellYear = inputs.properties[p].plannedSellYear;
-      const heldThisYear = plannedSellYear === null || year <= plannedSellYear;
-      const r = heldThisYear
-        ? inputs.properties[p].rentalIncome * timing.proRate * safePow(1 + inputs.rentalIncomeGrowth, idx)
-        : 0;
+      const r = inputs.properties[p].rentalIncome * timing.proRate * safePow(1 + inputs.rentalIncomeGrowth, idx);
       propertyRentalSeries[p][idx] = r;
       rental += r;
     }
@@ -451,9 +437,7 @@ export function runScenario(
     }
 
     for (let p = 0; p < inputs.properties.length; p += 1) {
-      const plannedSellYear = inputs.properties[p].plannedSellYear;
-      const heldThisYear = plannedSellYear === null || year <= plannedSellYear;
-      const c = heldThisYear ? inputs.properties[p].annualCosts * infFactor * proRate : 0;
+      const c = inputs.properties[p].annualCosts * infFactor * proRate;
       propertyAnnualCostSeries[p][idx] = c;
       outflows += c;
     }
@@ -487,8 +471,6 @@ export function runScenario(
     homeLoanRepaymentSeries[idx] = scheduledHomeLoanRepayment + downsizingLoanPayoff;
     outflows += homeLoanRepaymentSeries[idx];
     for (let p = 0; p < inputs.properties.length; p += 1) {
-      const plannedSellYear = inputs.properties[p].plannedSellYear;
-      const heldThisYear = plannedSellYear === null || year <= plannedSellYear;
       const repayment = yearlyLoanPayment(
         propertyMonthsTotals[p],
         inputs.properties[p].loanRepaymentMonthly,
@@ -496,26 +478,19 @@ export function runScenario(
         timing.monthsRemaining,
         timing.monthOffset
       );
-      const effectiveRepayment = heldThisYear ? repayment : 0;
-      outflows += effectiveRepayment;
-      propertyLoanSeries[p][idx] = heldThisYear
-        ? Math.max(
-            fv(
-              inputs.properties[p].loanRate / 12,
-              (idx + 1) * 12 + timing.monthOffset,
-              inputs.properties[p].loanRepaymentMonthly,
-              -inputs.properties[p].loanBalance
-            ),
-            0
-          )
-        : 0;
-      const loanPayoff = plannedSellYear !== null && year === plannedSellYear ? propertyLoanSeries[p][idx] : 0;
-      propertyLoanRepaymentSeries[p][idx] = effectiveRepayment + loanPayoff;
-      outflows += loanPayoff;
+      outflows += repayment;
+      propertyLoanSeries[p][idx] = Math.max(
+        fv(
+          inputs.properties[p].loanRate / 12,
+          (idx + 1) * 12 + timing.monthOffset,
+          inputs.properties[p].loanRepaymentMonthly,
+          -inputs.properties[p].loanBalance
+        ),
+        0
+      );
+      propertyLoanRepaymentSeries[p][idx] = repayment;
     }
     for (let a = 0; a < inputs.assetsOfValue.length; a += 1) {
-      const plannedSellYear = inputs.assetsOfValue[a].plannedSellYear;
-      const heldThisYear = plannedSellYear === null || year <= plannedSellYear;
       const repayment = yearlyLoanPayment(
         assetOfValueMonthsTotals[a],
         inputs.assetsOfValue[a].loanRepaymentMonthly,
@@ -523,22 +498,17 @@ export function runScenario(
         timing.monthsRemaining,
         timing.monthOffset
       );
-      const effectiveRepayment = heldThisYear ? repayment : 0;
-      outflows += effectiveRepayment;
-      assetOfValueLoanSeries[a][idx] = heldThisYear
-        ? Math.max(
-            fv(
-              inputs.assetsOfValue[a].loanRate / 12,
-              (idx + 1) * 12 + timing.monthOffset,
-              inputs.assetsOfValue[a].loanRepaymentMonthly,
-              -inputs.assetsOfValue[a].loanBalance
-            ),
-            0
-          )
-        : 0;
-      const loanPayoff = plannedSellYear !== null && year === plannedSellYear ? assetOfValueLoanSeries[a][idx] : 0;
-      assetOfValueLoanRepaymentSeries[a][idx] = effectiveRepayment + loanPayoff;
-      outflows += loanPayoff;
+      outflows += repayment;
+      assetOfValueLoanSeries[a][idx] = Math.max(
+        fv(
+          inputs.assetsOfValue[a].loanRate / 12,
+          (idx + 1) * 12 + timing.monthOffset,
+          inputs.assetsOfValue[a].loanRepaymentMonthly,
+          -inputs.assetsOfValue[a].loanBalance
+        ),
+        0
+      );
+      assetOfValueLoanRepaymentSeries[a][idx] = repayment;
     }
     const otherLoanRepayment = yearlyLoanPayment(
       otherLoanMonthsTotal,
@@ -579,24 +549,12 @@ export function runScenario(
       homeValueSeries[idx] = originalHomeValue;
     }
     for (let p = 0; p < inputs.properties.length; p += 1) {
-      const plannedSellYear = inputs.properties[p].plannedSellYear;
-      const heldThisYear = plannedSellYear === null || year <= plannedSellYear;
-      propertyValueSeries[p][idx] = heldThisYear
-        ? inputs.properties[p].value * safePow(1 + inputs.propertyAppreciation, assetGrowthExponent(timing, idx))
-        : 0;
-      scheduledPropertyLiquidationSeries[p][idx] = plannedSellYear !== null && year === plannedSellYear
-        ? propertyValueSeries[p][idx] * (1 - inputs.propertyDisposalCosts)
-        : 0;
+      propertyValueSeries[p][idx] =
+        inputs.properties[p].value * safePow(1 + inputs.propertyAppreciation, assetGrowthExponent(timing, idx));
     }
     for (let a = 0; a < inputs.assetsOfValue.length; a += 1) {
-      const plannedSellYear = inputs.assetsOfValue[a].plannedSellYear;
-      const heldThisYear = plannedSellYear === null || year <= plannedSellYear;
-      assetOfValueValueSeries[a][idx] = heldThisYear
-        ? inputs.assetsOfValue[a].value * safePow(1 + inputs.assetsOfValue[a].appreciationRate, assetGrowthExponent(timing, idx))
-        : 0;
-      scheduledAssetOfValueLiquidationSeries[a][idx] = plannedSellYear !== null && year === plannedSellYear
-        ? assetOfValueValueSeries[a][idx] * (1 - inputs.otherAssetDisposalCosts)
-        : 0;
+      assetOfValueValueSeries[a][idx] =
+        inputs.assetsOfValue[a].value * safePow(1 + inputs.assetsOfValue[a].appreciationRate, assetGrowthExponent(timing, idx));
     }
 
     homeLoanSeries[idx] = downsizingActive && isInitialHomeowner ? 0 : originalHomeLoanBalance;
@@ -610,10 +568,7 @@ export function runScenario(
       0
     );
 
-    const scheduledLiquidationProceeds =
-      sumAt(scheduledPropertyLiquidationSeries, idx) +
-      sumAt(scheduledAssetOfValueLiquidationSeries, idx);
-    const preInterestCash = cashBfwd + inflowsBeforeInterest + scheduledLiquidationProceeds - outflows;
+    const preInterestCash = cashBfwd + inflowsBeforeInterest - outflows;
     const interest = Math.max(((cashBfwd + preInterestCash) / 2) * inputs.cashRate, 0);
     baseInterestSeries[idx] = interest;
     const cashCfwd = preInterestCash + interest;
@@ -623,22 +578,62 @@ export function runScenario(
   }
 
   // Liquidation system (rows 68..134).
-  const row68 = cashBaseSeries.map((v) => v - inputs.cashBuffer);
-  const row69 = computeLiquidationRequired(row68);
-  const stockGrowthRateSeries = timeline.years.map((year, idx) =>
-    idx === 0 ? inputs.stockReturn : stockGrowthRateForYear(inputs, year)
-  );
+  const EPS = 1e-9;
 
-  const stockStage = computeStockStage(
-    row69,
-    inputs.stocksBalance,
-    stockContributionSeries,
-    stockGrowthRateSeries,
-    timing,
-    inputs.stockSellingCosts
-  ); // rows 74..79
+  const computeCashFlowRows = (stockLiquidations: number[]) => {
+    const openingCash = zeroSeries(n);
+    const totalInflows = zeroSeries(n);
+    const totalOutflows = zeroSeries(n);
+    const netCashFlow = zeroSeries(n);
+    const interestOnCash = zeroSeries(n);
+    const closingCash = zeroSeries(n);
 
-  const row81 = row68.map((v, i) => v + cumulative(stockStage.netProceeds)[i]);
+    for (let i = 0; i < n; i += 1) {
+      const opening = i === 0 ? inputs.cashBalance : closingCash[i - 1];
+      const inflowsBeforeInterest =
+        salarySeries[i] +
+        otherWorkSeries[i] +
+        sumAt(propertyRentalSeries, i) +
+        statutoryPensionSeries[i] +
+        postRetIncomeSeries[i] +
+        sumAt(incomeEventSeries, i) +
+        downsizingHomeSaleSeries[i] +
+        sumAt(scheduledPropertyLiquidationSeries, i) +
+        sumAt(scheduledAssetOfValueLiquidationSeries, i) +
+        stockLiquidations[i];
+      const outflows =
+        creditCardClearanceSeries[i] +
+        homeLoanRepaymentSeries[i] +
+        sumAt(propertyLoanRepaymentSeries, i) +
+        sumAt(assetOfValueLoanRepaymentSeries, i) +
+        otherLoanRepaymentSeries[i] +
+        sumAt(dependentCostSeries, i) +
+        housingRentSeries[i] +
+        downsizingHomePurchaseSeries[i] +
+        sumAt(propertyAnnualCostSeries, i) +
+        stockContributionSeries[i] +
+        livingExpensesSeries[i] +
+        sumAt(expenseEventSeries, i);
+      const preInterestCash = opening + inflowsBeforeInterest - outflows;
+      const interest = Math.max(((opening + preInterestCash) / 2) * inputs.cashRate, 0);
+
+      openingCash[i] = opening;
+      totalInflows[i] = inflowsBeforeInterest;
+      totalOutflows[i] = outflows;
+      netCashFlow[i] = inflowsBeforeInterest - outflows;
+      interestOnCash[i] = interest;
+      closingCash[i] = preInterestCash + interest;
+    }
+
+    return {
+      openingCash,
+      totalInflows,
+      totalOutflows,
+      netCashFlow,
+      interestOnCash,
+      closingCash
+    };
+  };
 
   const liquidationAssets: LiquidationAssetDescriptor[] = [
     ...inputs.properties.map((property, idx) => ({
@@ -669,101 +664,154 @@ export function runScenario(
     }))
   ];
 
-  const order = stagePropertyOrder(
-    inputs.liquidationPriority,
-    [...inputs.properties.map((p) => p.value), ...inputs.assetsOfValue.map((asset) => asset.value)]
-  );
+  const liquidationStageDebug: ScenarioLiquidationStageDebug[] = [];
 
-  const liquidationStages: PropertyStageSeries[] = [];
-  const liquidationStageAssets: Array<LiquidationAssetDescriptor | null> = [];
-  const liquidationExtraInterestSeries: number[][] = [];
-  let cashAvailableAfterLiquidationStages = row81;
+  const applyResolvedSale = (asset: LiquidationAssetDescriptor, saleIdx: number): void => {
+    if (saleIdx < 0 || saleIdx >= n) return;
 
-  for (let stageIdx = 0; stageIdx < order.length; stageIdx += 1) {
-    const required = computeLiquidationRequired(cashAvailableAfterLiquidationStages);
-    const asset = order[stageIdx] >= 0 ? liquidationAssets[order[stageIdx]] : null;
-    const stage = computePropertyStage(
-      required,
-      asset?.valueSeries ?? zeroSeries(n),
-      asset?.rentalSeries ?? zeroSeries(n),
-      asset?.annualCostSeries ?? zeroSeries(n),
-      asset?.loanSeries ?? zeroSeries(n),
-      asset?.loanRepaymentSeries ?? zeroSeries(n),
-      asset?.appreciationRate ?? 0,
-      asset?.disposalCostRate ?? 0
-    );
-    liquidationStages.push(stage);
-    liquidationStageAssets.push(asset);
+    const valueAtSale = asset.valueSeries[saleIdx];
+    if (Math.abs(valueAtSale) <= EPS) return;
 
-    const cashAfterProceeds = cashAvailableAfterLiquidationStages.map(
-      (value, idx) => value + cumulative(stage.netProceeds)[idx]
-    );
-    const extraCash = cashAfterProceeds.map(
-      (value, idx) => Math.max(value + inputs.cashBuffer, 0) - Math.max(cashAvailableAfterLiquidationStages[idx] + inputs.cashBuffer, 0)
-    );
-    const extraInterest = extraCash.map((value) => value * inputs.cashRate);
-    liquidationExtraInterestSeries.push(extraInterest);
-    cashAvailableAfterLiquidationStages = cashAfterProceeds.map(
-      (value, idx) => value + cumulative(extraInterest)[idx]
-    );
-  }
+    const disposal = zeroSeries(n);
+    const disposalCosts = zeroSeries(n);
+    const rentalForegone = zeroSeries(n);
+    const annualCostSaved = zeroSeries(n);
+    const loanRepayment = zeroSeries(n);
+    const netProceeds = zeroSeries(n);
 
-  const finalCashSeries = zeroSeries(n);
-  const totalInterestSeries = zeroSeries(n);
-  const openingCashSeries = zeroSeries(n);
-  const totalInflowsSeries = zeroSeries(n);
-  const totalOutflowsSeries = zeroSeries(n);
-  const netCashFlowSeries = zeroSeries(n);
+    const liquidationSeries =
+      asset.kind === "property"
+        ? scheduledPropertyLiquidationSeries[asset.idx]
+        : scheduledAssetOfValueLiquidationSeries[asset.idx];
+    const loanRepaymentSeries =
+      asset.kind === "property"
+        ? propertyLoanRepaymentSeries[asset.idx]
+        : assetOfValueLoanRepaymentSeries[asset.idx];
 
-  // Adjusted net worth (rows 138..172 / row202).
-  const adjustedPropertyValues = propertyValueSeries.map((s) => [...s]);
-  const adjustedPropertyLoans = propertyLoanSeries.map((s) => [...s]);
-  const adjustedAssetOfValueValues = assetOfValueValueSeries.map((s) => [...s]);
-  const adjustedAssetOfValueLoans = assetOfValueLoanSeries.map((s) => [...s]);
+    disposal[saleIdx] = -valueAtSale;
+    disposalCosts[saleIdx] = disposal[saleIdx] * asset.disposalCostRate;
+    liquidationSeries[saleIdx] += valueAtSale * (1 - asset.disposalCostRate);
+
+    const payoff = asset.loanSeries[saleIdx];
+    if (payoff > EPS) {
+      loanRepaymentSeries[saleIdx] += payoff;
+      loanRepayment[saleIdx] = -payoff;
+    }
+    netProceeds[saleIdx] = liquidationSeries[saleIdx] - payoff;
+
+    for (let i = saleIdx + 1; i < n; i += 1) {
+      if (asset.kind === "property") {
+        const rentalValue = propertyRentalSeries[asset.idx][i];
+        const annualCostValue = propertyAnnualCostSeries[asset.idx][i];
+        if (Math.abs(rentalValue) > EPS) {
+          rentalForegone[i] = -rentalValue;
+          propertyRentalSeries[asset.idx][i] = 0;
+        }
+        if (Math.abs(annualCostValue) > EPS) {
+          annualCostSaved[i] = annualCostValue;
+          propertyAnnualCostSeries[asset.idx][i] = 0;
+        }
+        netProceeds[i] += rentalForegone[i] + annualCostSaved[i];
+      }
+
+      const scheduledRepayment = loanRepaymentSeries[i];
+      if (Math.abs(scheduledRepayment) > EPS) {
+        netProceeds[i] += scheduledRepayment;
+        loanRepaymentSeries[i] = 0;
+      }
+    }
+
+    for (let i = saleIdx; i < n; i += 1) {
+      asset.valueSeries[i] = 0;
+      asset.loanSeries[i] = 0;
+    }
+
+    liquidationStageDebug.push({
+      assetKind: asset.kind,
+      assetIndex: asset.idx,
+      assetLabel: asset.name.trim() || asset.fallbackLabel,
+      disposal,
+      disposalCosts,
+      rentalForegone,
+      annualCostSaved,
+      loanRepayment,
+      netProceeds
+    });
+  };
 
   for (let p = 0; p < inputs.properties.length; p += 1) {
     const plannedSellYear = inputs.properties[p].plannedSellYear;
     if (plannedSellYear === null) continue;
     const saleIdx = timeline.years.findIndex((year) => year === plannedSellYear);
-    if (saleIdx < 0) continue;
-    for (let i = saleIdx; i < n; i += 1) {
-      adjustedPropertyValues[p][i] = 0;
-      adjustedPropertyLoans[p][i] = 0;
-    }
+    if (saleIdx >= 0) applyResolvedSale(liquidationAssets[p], saleIdx);
   }
 
   for (let a = 0; a < inputs.assetsOfValue.length; a += 1) {
     const plannedSellYear = inputs.assetsOfValue[a].plannedSellYear;
     if (plannedSellYear === null) continue;
     const saleIdx = timeline.years.findIndex((year) => year === plannedSellYear);
-    if (saleIdx < 0) continue;
-    for (let i = saleIdx; i < n; i += 1) {
-      adjustedAssetOfValueValues[a][i] = 0;
-      adjustedAssetOfValueLoans[a][i] = 0;
-    }
+    if (saleIdx >= 0) applyResolvedSale(liquidationAssets[inputs.properties.length + a], saleIdx);
   }
 
-  const stageDisposals = liquidationStages.map((stage) => stage.disposal);
-  const stageLoanRepayments = liquidationStages.map((stage) => stage.loanRepayment);
-  const EPS = 1e-9;
+  const preStockCashRows = computeCashFlowRows(zeroSeries(n));
+  const row68 = preStockCashRows.closingCash.map((value) => value - inputs.cashBuffer);
+  const row69 = computeLiquidationRequired(row68);
+  const stockGrowthRateSeries = timeline.years.map((year, idx) =>
+    idx === 0 ? inputs.stockReturn : stockGrowthRateForYear(inputs, year)
+  );
+  const stockStage = computeStockStage(
+    row69,
+    inputs.stocksBalance,
+    stockContributionSeries,
+    stockGrowthRateSeries,
+    timing,
+    inputs.stockSellingCosts
+  );
 
-  for (let s = 0; s < liquidationStages.length; s += 1) {
-    const asset = liquidationStageAssets[s];
-    if (!asset) continue;
+  const order = stagePropertyOrder(
+    inputs.liquidationPriority,
+    [...inputs.properties.map((p) => p.value), ...inputs.assetsOfValue.map((asset) => asset.value)]
+  );
 
-    const cumDisp = cumulative(stageDisposals[s]);
-    const cumLoanRepay = cumulative(stageLoanRepayments[s]);
+  let forcedBasis = computeCashFlowRows(stockStage.netProceeds).closingCash.map((value) => value - inputs.cashBuffer);
+  for (let stageIdx = 0; stageIdx < order.length; stageIdx += 1) {
+    const assetOrderIdx = order[stageIdx];
+    if (assetOrderIdx < 0 || assetOrderIdx >= liquidationAssets.length) continue;
 
+    const asset = liquidationAssets[assetOrderIdx];
+    const plannedSellYear = asset.kind === "property"
+      ? inputs.properties[asset.idx].plannedSellYear
+      : inputs.assetsOfValue[asset.idx].plannedSellYear;
+    if (plannedSellYear !== null) continue;
+
+    const required = computeLiquidationRequired(forcedBasis);
+    let saleIdx = -1;
     for (let i = 0; i < n; i += 1) {
-      if (asset.kind === "property") {
-        if (Math.abs(cumDisp[i]) > EPS) adjustedPropertyValues[asset.idx][i] = 0;
-        if (Math.abs(cumLoanRepay[i]) > EPS) adjustedPropertyLoans[asset.idx][i] = 0;
-      } else {
-        if (Math.abs(cumDisp[i]) > EPS) adjustedAssetOfValueValues[asset.idx][i] = 0;
-        if (Math.abs(cumLoanRepay[i]) > EPS) adjustedAssetOfValueLoans[asset.idx][i] = 0;
+      if (stageTrigger(required, i) && asset.valueSeries[i] > EPS) {
+        saleIdx = i;
+        break;
       }
     }
+    if (saleIdx < 0) continue;
+
+    applyResolvedSale(asset, saleIdx);
+    forcedBasis = computeCashFlowRows(stockStage.netProceeds).closingCash.map((value) => value - inputs.cashBuffer);
   }
+
+  const finalCashRows = computeCashFlowRows(stockStage.netProceeds);
+  const openingCashSeries = finalCashRows.openingCash;
+  const totalInterestSeries = finalCashRows.interestOnCash;
+  const displayTotalInflowsSeries = finalCashRows.totalInflows;
+  const displayTotalOutflowsSeries = finalCashRows.totalOutflows;
+  const displayNetCashFlowSeries = finalCashRows.netCashFlow;
+  const finalCashSeries = finalCashRows.closingCash;
+
+  const adjustedPropertyValues = propertyValueSeries;
+  const adjustedPropertyLoans = propertyLoanSeries;
+  const adjustedAssetOfValueValues = assetOfValueValueSeries;
+  const adjustedAssetOfValueLoans = assetOfValueLoanSeries;
+  const adjustedPropertyLoanRepaymentSeries = propertyLoanRepaymentSeries;
+  const adjustedAssetOfValueLoanRepaymentSeries = assetOfValueLoanRepaymentSeries;
 
   const milestoneHints: ScenarioOutputs["milestoneHints"] = [];
   for (let i = 0; i < n; i += 1) {
@@ -870,7 +918,6 @@ export function runScenario(
     });
   }
 
-  const disposalStages = liquidationStages.map((stage) => stage.disposal);
   for (let p = 0; p < scheduledPropertyLiquidationSeries.length; p += 1) {
     const saleIdx = scheduledPropertyLiquidationSeries[p].findIndex((value) => Math.abs(value) > EPS);
     if (saleIdx < 0) continue;
@@ -896,180 +943,30 @@ export function runScenario(
     });
   }
 
-  for (let s = 0; s < disposalStages.length; s += 1) {
-    const asset = liquidationStageAssets[s];
-    if (!asset) continue;
-    const disposal = disposalStages[s];
-    const saleIdx = disposal.findIndex((value) => Math.abs(value) > EPS);
-    if (saleIdx < 0) continue;
-    const assetName = asset.name.trim() || asset.fallbackLabel;
-    const saleTarget = asset.kind === "property" && !/property/i.test(assetName)
-      ? `${assetName} Property`
-      : assetName;
-    milestoneHints.push({
-      year: timeline.years[saleIdx],
-      age: timeline.ages[saleIdx],
-      label: `Sale of ${saleTarget}`,
-      amount: Math.abs(disposal[saleIdx]) * (1 - asset.disposalCostRate)
-    });
-  }
+  const displayRentalIncomeByProperty = inputs.properties.map<NamedProjectionSeries>((property, idx) => ({
+    key: `rental-${idx}`,
+    label: property.name.trim() || `Property ${idx + 1}`,
+    values: [...propertyRentalSeries[idx]]
+  }));
 
-  const propertyStageByProperty = inputs.properties.map<PropertyStageSeries | null>(() => null);
-  const assetOfValueStageByAsset = inputs.assetsOfValue.map<PropertyStageSeries | null>(() => null);
-  const adjustedPropertyLoanRepaymentSeries = propertyLoanRepaymentSeries.map((series) => [...series]);
-  const adjustedAssetOfValueLoanRepaymentSeries = assetOfValueLoanRepaymentSeries.map((series) => [...series]);
-  for (let stageIdx = 0; stageIdx < liquidationStages.length; stageIdx += 1) {
-    const asset = liquidationStageAssets[stageIdx];
-    if (!asset) continue;
-    const stage = liquidationStages[stageIdx];
-    const saleIdx = stage.disposal.findIndex((value) => Math.abs(value) > EPS);
-    if (asset.kind === "property") {
-      if (asset.idx < propertyStageByProperty.length) propertyStageByProperty[asset.idx] = stage;
-      if (asset.idx < adjustedPropertyLoanRepaymentSeries.length && saleIdx >= 0) {
-        adjustedPropertyLoanRepaymentSeries[asset.idx][saleIdx] += Math.max(-stage.loanRepayment[saleIdx], 0);
-        for (let i = saleIdx + 1; i < n; i += 1) adjustedPropertyLoanRepaymentSeries[asset.idx][i] = 0;
-      }
-    } else if (asset.idx < assetOfValueStageByAsset.length) {
-      assetOfValueStageByAsset[asset.idx] = stage;
-      if (asset.idx < adjustedAssetOfValueLoanRepaymentSeries.length && saleIdx >= 0) {
-        adjustedAssetOfValueLoanRepaymentSeries[asset.idx][saleIdx] += Math.max(-stage.loanRepayment[saleIdx], 0);
-        for (let i = saleIdx + 1; i < n; i += 1) adjustedAssetOfValueLoanRepaymentSeries[asset.idx][i] = 0;
-      }
-    }
-  }
-
-  const displayRentalIncomeByProperty = inputs.properties.map<NamedProjectionSeries>((property, idx) => {
-    const stage = propertyStageByProperty[idx];
-    const values = propertyRentalSeries[idx].map((value, yearIdx) => value + (stage?.rentalForegone[yearIdx] ?? 0));
-    return {
-      key: `rental-${idx}`,
-      label: property.name.trim() || `Property ${idx + 1}`,
-      values
-    };
-  });
-
-  const displayPropertyCostsByProperty = inputs.properties.map<NamedProjectionSeries>((property, idx) => {
-    const stage = propertyStageByProperty[idx];
-    const values = propertyAnnualCostSeries[idx].map(
-      (value, yearIdx) => value - (stage?.annualCostSaved[yearIdx] ?? 0)
-    );
-    return {
-      key: `property-cost-${idx}`,
-      label: property.name.trim() || `Property ${idx + 1}`,
-      values
-    };
-  });
+  const displayPropertyCostsByProperty = inputs.properties.map<NamedProjectionSeries>((property, idx) => ({
+    key: `property-cost-${idx}`,
+    label: property.name.trim() || `Property ${idx + 1}`,
+    values: [...propertyAnnualCostSeries[idx]]
+  }));
 
   const displayLiquidationsByProperty = [
-    ...inputs.properties.map<NamedProjectionSeries>((property, idx) => {
-      const stage = propertyStageByProperty[idx];
-      const stageValues = stage
-        ? stage.netProceeds.map(
-            (value, yearIdx) =>
-              value
-              - stage.rentalForegone[yearIdx]
-              - stage.annualCostSaved[yearIdx]
-              - stage.loanRepayment[yearIdx]
-              - stage.loanRepaymentSaved[yearIdx]
-          )
-        : zeroSeries(n);
-      const values = stageValues.map((value, yearIdx) => value + scheduledPropertyLiquidationSeries[idx][yearIdx]);
-      return {
-        key: `liquidation-property-${idx}`,
-        label: property.name.trim() || `Property ${idx + 1}`,
-        values
-      };
-    }),
-    ...inputs.assetsOfValue.map<NamedProjectionSeries>((asset, idx) => {
-      const stage = assetOfValueStageByAsset[idx];
-      const stageValues = stage
-        ? stage.netProceeds.map(
-            (value, yearIdx) =>
-              value
-              - stage.rentalForegone[yearIdx]
-              - stage.annualCostSaved[yearIdx]
-              - stage.loanRepayment[yearIdx]
-              - stage.loanRepaymentSaved[yearIdx]
-          )
-        : zeroSeries(n);
-      const values = stageValues.map((value, yearIdx) => value + scheduledAssetOfValueLiquidationSeries[idx][yearIdx]);
-      return {
-        key: `liquidation-asset-of-value-${idx}`,
-        label: asset.name.trim() || `Asset ${idx + 1}`,
-        values
-      };
-    })
+    ...inputs.properties.map<NamedProjectionSeries>((property, idx) => ({
+      key: `liquidation-property-${idx}`,
+      label: property.name.trim() || `Property ${idx + 1}`,
+      values: [...scheduledPropertyLiquidationSeries[idx]]
+    })),
+    ...inputs.assetsOfValue.map<NamedProjectionSeries>((asset, idx) => ({
+      key: `liquidation-asset-of-value-${idx}`,
+      label: asset.name.trim() || `Asset ${idx + 1}`,
+      values: [...scheduledAssetOfValueLiquidationSeries[idx]]
+    }))
   ];
-
-  const displayTotalInflowsSeries = zeroSeries(n);
-  const displayTotalOutflowsSeries = zeroSeries(n);
-  const displayNetCashFlowSeries = zeroSeries(n);
-  for (let i = 0; i < n; i += 1) {
-    totalInflowsSeries[i] =
-      salarySeries[i] +
-      otherWorkSeries[i] +
-      sumAt(propertyRentalSeries, i) +
-      statutoryPensionSeries[i] +
-      postRetIncomeSeries[i] +
-      sumAt(incomeEventSeries, i) +
-      downsizingHomeSaleSeries[i] +
-      sumAt(scheduledPropertyLiquidationSeries, i) +
-      sumAt(scheduledAssetOfValueLiquidationSeries, i) +
-      stockStage.netProceeds[i] +
-      liquidationStages.reduce(
-        (sum, stage) => sum + stage.netProceeds[i] - stage.loanRepayment[i] - stage.loanRepaymentSaved[i],
-        0
-      );
-    totalOutflowsSeries[i] =
-      creditCardClearanceSeries[i] +
-      homeLoanRepaymentSeries[i] +
-      sumAt(adjustedPropertyLoanRepaymentSeries, i) +
-      sumAt(adjustedAssetOfValueLoanRepaymentSeries, i) +
-      otherLoanRepaymentSeries[i] +
-      sumAt(dependentCostSeries, i) +
-      housingRentSeries[i] +
-      downsizingHomePurchaseSeries[i] +
-      sumAt(propertyAnnualCostSeries, i) +
-      stockContributionSeries[i] +
-      livingExpensesSeries[i] +
-      sumAt(expenseEventSeries, i);
-    netCashFlowSeries[i] = totalInflowsSeries[i] - totalOutflowsSeries[i];
-
-    displayTotalInflowsSeries[i] =
-      salarySeries[i] +
-      otherWorkSeries[i] +
-      sumAt(displayRentalIncomeByProperty.map((row) => row.values), i) +
-      statutoryPensionSeries[i] +
-      postRetIncomeSeries[i] +
-      sumAt(incomeEventSeries, i) +
-      downsizingHomeSaleSeries[i] +
-      stockStage.netProceeds[i] +
-      sumAt(displayLiquidationsByProperty.map((row) => row.values), i);
-    displayTotalOutflowsSeries[i] =
-      creditCardClearanceSeries[i] +
-      homeLoanRepaymentSeries[i] +
-      sumAt(adjustedPropertyLoanRepaymentSeries, i) +
-      sumAt(adjustedAssetOfValueLoanRepaymentSeries, i) +
-      otherLoanRepaymentSeries[i] +
-      sumAt(dependentCostSeries, i) +
-      housingRentSeries[i] +
-      downsizingHomePurchaseSeries[i] +
-      sumAt(displayPropertyCostsByProperty.map((row) => row.values), i) +
-      stockContributionSeries[i] +
-      livingExpensesSeries[i] +
-      sumAt(expenseEventSeries, i);
-    displayNetCashFlowSeries[i] = displayTotalInflowsSeries[i] - displayTotalOutflowsSeries[i];
-  }
-
-  for (let i = 0; i < n; i += 1) {
-    const openingCash = i === 0 ? inputs.cashBalance : finalCashSeries[i - 1];
-    const preInterestCash = openingCash + displayNetCashFlowSeries[i];
-    const interest = Math.max(((openingCash + preInterestCash) / 2) * inputs.cashRate, 0);
-
-    openingCashSeries[i] = openingCash;
-    totalInterestSeries[i] = interest;
-    finalCashSeries[i] = preInterestCash + interest;
-  }
 
   const points: ProjectionPoint[] = [];
   for (let i = 0; i < n; i += 1) {
@@ -1199,8 +1096,7 @@ export function runScenario(
     debug: includeDebug
       ? buildScenarioDebug(
           inputs,
-          liquidationStages,
-          liquidationStageAssets,
+          liquidationStageDebug,
           adjustedPropertyLoanRepaymentSeries,
           adjustedAssetOfValueLoanRepaymentSeries
         )

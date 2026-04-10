@@ -14,10 +14,10 @@ export interface IntegrityScenarioSnapshots {
 export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
   "excelSpecimen": {
     "scenarioNorm": {
-      "cashSeries": "55979a27735d3c8c|sum=47866829.21|min=62919.06|max=2387718.61",
+      "cashSeries": "078ec32a623505f3|sum=47866829.21|min=62919.06|max=2387718.61",
       "netWorthSeries": "1e1b75bc4b5515f7|sum=141528816.97|min=1680453.19|max=6388120.02",
       "cashFlowRows": {
-        "openingCash": "cbd83dab46dcaf05|sum=45529110.59|min=50000.00|max=2322070.36",
+        "openingCash": "2662c784e849c7d3|sum=45529110.59|min=50000.00|max=2322070.36",
         "employmentIncome": "a9055134f5b3ba93|sum=1720927.02|min=0.00|max=128376.52",
         "otherWorkIncome": "ae823cf39d5cd30d|sum=24466.93|min=0.00|max=2560.17",
         "statutoryPension": "394297b6e516a4df|sum=621907.48|min=0.00|max=38920.57",
@@ -35,7 +35,7 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "53e02ae07a7b4ae4|sum=5206962.38|min=87183.86|max=616343.85",
         "totalOutflows": "cf960404ae2fcaa2|sum=4022280.06|min=81100.00|max=427287.87",
         "netCashFlow": "09309b38393a7904|sum=1184682.32|min=-7502.57|max=189055.98",
-        "closingCash": "55979a27735d3c8c|sum=47866829.21|min=62919.06|max=2387718.61",
+        "closingCash": "078ec32a623505f3|sum=47866829.21|min=62919.06|max=2387718.61",
         "rentalIncomeByProperty/Sliema": "fb7ac58f2b7f90f3|sum=595568.00|min=9000.00|max=26084.50",
         "rentalIncomeByProperty/Gzira": "a28782d8b93fc6ef|sum=496306.67|min=7500.00|max=21737.09",
         "rentalIncomeByProperty/Qormi": "6d6911e393758b3a|sum=397045.34|min=6000.00|max=17389.67",
@@ -69,7 +69,7 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "expenseEvents/New AC": "c5ac018c5f0a8dee|sum=18276.04|min=0.00|max=18276.04"
       },
       "netWorthRows": {
-        "cash": "55979a27735d3c8c|sum=47866829.21|min=62919.06|max=2387718.61",
+        "cash": "078ec32a623505f3|sum=47866829.21|min=62919.06|max=2387718.61",
         "stockMarketEquity": "c94b521dbb5d0898|sum=5334631.28|min=33643.30|max=315603.10",
         "properties/Home": "c41a91159f4ce673|sum=17983759.44|min=287684.74|max=740812.01",
         "properties/Sliema": "32c454b6b25634b2|sum=20297288.34|min=306725.00|max=888974.42",
@@ -113,16 +113,16 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
       ]
     },
     "scenarioEarly": {
-      "cashSeries": "9ce6f83d66d97577|sum=9231933.75|min=70510.26|max=668293.45",
-      "netWorthSeries": "4202611bab29a1b3|sum=52493677.24|min=1022842.84|max=1680419.57",
+      "cashSeries": "61b5642f97871adc|sum=9296965.58|min=53867.97|max=745965.62",
+      "netWorthSeries": "b56b89ec2017fb64|sum=55953224.31|min=1230139.99|max=1679846.99",
       "cashFlowRows": {
-        "openingCash": "9b82e8a6f9a85192|sum=8999902.93|min=50000.00|max=668293.45",
+        "openingCash": "2cf31ea203095f13|sum=8857637.60|min=50000.00|max=745965.62",
         "employmentIncome": "f17f5d4ff9945f23|sum=60000.00|min=0.00|max=60000.00",
         "otherWorkIncome": "ae823cf39d5cd30d|sum=24466.93|min=0.00|max=2560.17",
         "statutoryPension": "841c74270d1ec36c|sum=435335.24|min=0.00|max=27244.40",
         "otherPostRetirementIncome": "4b287316adfdfe43|sum=211913.69|min=0.00|max=20154.98",
         "liquidationsStocks": "59bad009f793e035|sum=33273.57|min=0.00|max=33273.57",
-        "interestOnCash": "d7e70bad9743b2b8|sum=203227.79|min=1288.51|max=15193.60",
+        "interestOnCash": "5432b4b177fbc994|sum=224130.90|min=1966.64|max=17855.79",
         "downsizingHomeSale": "8f2f7b72b8a331bf|sum=489064.06|min=0.00|max=489064.06",
         "creditCardsCleared": "87e520fbebe1e18a|sum=1000.00|min=0.00|max=1000.00",
         "homeLoanRepayment": "1f305f632dafcbdc|sum=56393.64|min=0.00|max=42893.64",
@@ -131,28 +131,28 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "downsizingHomePurchase": "b96ada549191dedf|sum=287684.74|min=0.00|max=287684.74",
         "stockInvestmentContributions": "b46528d0b5db2465|sum=3150.00|min=0.00|max=3150.00",
         "livingExpenses": "3eb6426341e4f3c2|sum=2688088.67|min=37500.00|max=97301.41",
-        "totalInflows": "d4040a68dfcff0b6|sum=3696591.11|min=23492.76|max=640628.77",
-        "totalOutflows": "cddf99aed9e902b2|sum=3650978.83|min=76363.44|max=418492.06",
-        "netCashFlow": "c579060dc042c995|sum=45612.28|min=-86899.83|max=548540.44",
-        "closingCash": "9ce6f83d66d97577|sum=9231933.75|min=70510.26|max=668293.45",
-        "rentalIncomeByProperty/Sliema": "a5ebb5153101513d|sum=428178.74|min=0.00|max=21209.09",
-        "rentalIncomeByProperty/Gzira": "52a744f2740c4ef2|sum=117133.43|min=0.00|max=10693.21",
-        "rentalIncomeByProperty/Qormi": "99573efba43a588c|sum=183220.68|min=0.00|max=11161.77",
+        "totalInflows": "0a4ef61d9badad6d|sum=3896329.84|min=24682.08|max=698392.37",
+        "totalOutflows": "60c1a7ab705da72c|sum=3681132.77|min=76363.44|max=418492.06",
+        "netCashFlow": "2484499bc789e754|sum=215197.07|min=-87248.99|max=601642.06",
+        "closingCash": "61b5642f97871adc|sum=9296965.58|min=53867.97|max=745965.62",
+        "rentalIncomeByProperty/Sliema": "6460b6096afdcca6|sum=472524.83|min=0.00|max=22500.72",
+        "rentalIncomeByProperty/Gzira": "c78656e9a1b6b40a|sum=128147.43|min=0.00|max=11014.00",
+        "rentalIncomeByProperty/Qormi": "4c4af830fbccd1b4|sum=206558.82|min=0.00|max=11841.52",
         "rentalIncomeByProperty/Gudja": "c47a4fbf80abb462|sum=11590.88|min=0.00|max=3978.38",
-        "rentalIncomeByProperty/Marsa": "ba8e05267a18452c|sum=43350.14|min=0.00|max=5995.64",
+        "rentalIncomeByProperty/Marsa": "f32869ad0008a622|sum=55886.41|min=0.00|max=6360.77",
         "incomeEvents/Inheritance": "5b4e41ad01e0778d|sum=62443.15|min=0.00|max=62443.15",
         "incomeEvents/Sell Painting": "ae73ef46f4253ca7|sum=10768.91|min=0.00|max=10768.91",
         "incomeEvents/Sell Jewels": "b162f69ce834c7b9|sum=5798.47|min=0.00|max=5798.47",
-        "liquidationsByProperty/Sliema": "b3db9ebee577c499|sum=596499.92|min=0.00|max=596499.92",
-        "liquidationsByProperty/Gzira": "040b50c0548462fb|sum=180446.13|min=0.00|max=180446.13",
-        "liquidationsByProperty/Qormi": "5c7800dae4514de2|sum=345313.87|min=0.00|max=345313.87",
-        "liquidationsByProperty/Gudja": "9ea9340534b6e9b9|sum=71610.06|min=0.00|max=71610.06",
-        "liquidationsByProperty/Marsa": "a1fb876e416c4dd1|sum=124523.53|min=0.00|max=124523.53",
-        "liquidationsByProperty/Jewelry": "addcc3467e48c285|sum=49733.18|min=0.00|max=49733.18",
+        "liquidationsByProperty/Sliema": "8ad9fc3190630b5d|sum=651811.57|min=0.00|max=651811.57",
+        "liquidationsByProperty/Gzira": "7e996106bcfaeb1f|sum=191435.30|min=0.00|max=191435.30",
+        "liquidationsByProperty/Qormi": "b8f54589bfd97df4|sum=377333.79|min=0.00|max=377333.79",
+        "liquidationsByProperty/Gudja": "14b35337bbaaa4a1|sum=73758.36|min=0.00|max=73758.36",
+        "liquidationsByProperty/Marsa": "71fab587f7f412ae|sum=136070.23|min=0.00|max=136070.23",
+        "liquidationsByProperty/Jewelry": "21c8da794503789a|sum=50727.84|min=0.00|max=50727.84",
         "liquidationsByProperty/Car": "5b6f3c358d869e63|sum=37720.62|min=0.00|max=37720.62",
         "liquidationsByProperty/Painting": "c2bf9c91d602c261|sum=20039.37|min=0.00|max=20039.37",
-        "liquidationsByProperty/Boat": "3e09f6a8c6eb0ca8|sum=70972.90|min=0.00|max=70972.90",
-        "liquidationsByProperty/Antiques": "65d2d9ec4192cee3|sum=83193.66|min=0.00|max=83193.66",
+        "liquidationsByProperty/Boat": "8e61ca9b038127d0|sum=57807.87|min=0.00|max=57807.87",
+        "liquidationsByProperty/Antiques": "5ca4776bb90d1fa5|sum=91852.52|min=0.00|max=91852.52",
         "propertyLoanRepayments/Sliema": "8d7918d0816cf05a|sum=57608.31|min=0.00|max=6000.00",
         "propertyLoanRepayments/Gzira": "ffcd93c5eb2d4d3c|sum=8823.40|min=0.00|max=2400.00",
         "propertyLoanRepayments/Qormi": "71e53fe3a272da35|sum=17296.86|min=0.00|max=3000.00",
@@ -162,33 +162,33 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "propertyLoanRepayments/Car": "197fdef14418e02a|sum=6085.42|min=0.00|max=6085.42",
         "propertyLoanRepayments/Painting": "aa5f73c602a1535a|sum=7767.05|min=0.00|max=7767.05",
         "propertyLoanRepayments/Boat": "5ce00e700ab8e7b5|sum=48345.29|min=0.00|max=7488.00",
-        "propertyLoanRepayments/Antiques": "31b4f0f85693e3c6|sum=3977.35|min=0.00|max=1667.35",
+        "propertyLoanRepayments/Antiques": "b0c6057ba7bd420d|sum=3979.16|min=0.00|max=1320.00",
         "dependentsCost/John": "d2d39445ff31ffaa|sum=5651.25|min=0.00|max=2101.25",
         "dependentsCost/Jack": "2f2cbfe180cffb21|sum=5006.33|min=0.00|max=1103.81",
         "dependentsCost/Bill": "64c251448fb3a6d4|sum=7100.00|min=0.00|max=4100.00",
         "dependentsCost/Stephen": "fb4709d3a2ee4241|sum=7064.06|min=0.00|max=2626.56",
         "dependentsCost/Jane": "67d7e2def6eea3b5|sum=17553.93|min=0.00|max=3235.83",
-        "propertyCosts/Sliema": "7a5a00f36f79b14b|sum=218263.52|min=0.00|max=10232.04",
-        "propertyCosts/Gzira": "7ac62871cfea4ecc|sum=29780.88|min=0.00|max=2689.78",
-        "propertyCosts/Qormi": "942da35e9b506148|sum=34335.43|min=0.00|max=2015.50",
+        "propertyCosts/Sliema": "84c80ffefbd13ff5|sum=239501.39|min=0.00|max=10750.03",
+        "propertyCosts/Gzira": "7ac0d20fc9b76c42|sum=32537.91|min=0.00|max=2757.02",
+        "propertyCosts/Qormi": "1077d4b991b31284|sum=38518.85|min=0.00|max=2117.53",
         "propertyCosts/Gudja": "ae41574377b6e691|sum=2825.63|min=0.00|max=1050.63",
-        "propertyCosts/Marsa": "2394defd97c223fb|sum=6788.89|min=0.00|max=950.95",
+        "propertyCosts/Marsa": "71b0a0c99410c8d0|sum=8762.71|min=0.00|max=999.09",
         "expenseEvents/Wedding": "14eac7089a43b1be|sum=51203.38|min=0.00|max=51203.38",
         "expenseEvents/New Car": "ed089040b989ff1d|sum=37691.17|min=0.00|max=37691.17",
         "expenseEvents/New AC": "c5ac018c5f0a8dee|sum=18276.04|min=0.00|max=18276.04"
       },
       "netWorthRows": {
-        "cash": "9ce6f83d66d97577|sum=9231933.75|min=70510.26|max=668293.45",
+        "cash": "61b5642f97871adc|sum=9296965.58|min=53867.97|max=745965.62",
         "stockMarketEquity": "db29ed4f70ec0f5b|sum=35024.81|min=0.00|max=35024.81",
         "properties/Home": "c41a91159f4ce673|sum=17983759.44|min=287684.74|max=740812.01",
-        "properties/Sliema": "e69767b5cc77ca9e|sum=13869751.77|min=0.00|max=701764.61",
-        "properties/Gzira": "e4d6df81649f860b|sum=2176525.12|min=0.00|max=212289.57",
-        "properties/Qormi": "35a6b59d25413c71|sum=6450249.70|min=0.00|max=406251.61",
+        "properties/Sliema": "adca2fb5774aad0c|sum=15337071.40|min=0.00|max=744502.08",
+        "properties/Gzira": "e5492d1474c3721f|sum=2395183.38|min=0.00|max=218658.25",
+        "properties/Qormi": "2242512acd4db95e|sum=7299681.19|min=0.00|max=430992.33",
         "properties/Gudja": "5eea464fa538037b|sum=166040.47|min=0.00|max=84247.13",
-        "properties/Marsa": "a27d76a5f7d98c28|sum=940107.48|min=0.00|max=146498.28",
+        "properties/Marsa": "da09ca34a4be1775|sum=1246420.73|min=0.00|max=155420.02",
         "properties/Jewelry": "1f0b7dc8ae51c16f|sum=50748.14|min=0.00|max=50748.14",
-        "properties/Boat": "a3fcf54ee2ab3fe0|sum=2088132.88|min=0.00|max=173206.91",
-        "properties/Antiques": "f2b6292856f4617c|sum=168118.44|min=0.00|max=84891.49",
+        "properties/Boat": "b7040cb34e2e45de|sum=2284385.64|min=0.00|max=173206.91",
+        "properties/Antiques": "c0c0bd854dd3d6bc|sum=525005.67|min=0.00|max=91889.28",
         "loans/Home loan": "6df3d2d4663b57ab|sum=180304.67|min=0.00|max=48409.16",
         "loans/Sliema loan": "1335e0ebbe437f6d|sum=238858.25|min=0.00|max=46591.05",
         "loans/Gzira loan": "25b69a552fe1f536|sum=13549.19|min=0.00|max=6816.31",
@@ -197,7 +197,7 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "loans/Marsa loan": "d49c249bf69cd9e0|sum=34098.96|min=0.00|max=8649.58",
         "loans/Jewelry loan": "26786b038e3b0c45|sum=1875.03|min=0.00|max=1875.03",
         "loans/Boat loan": "30d7315cc8d26135|sum=127516.66|min=0.00|max=36106.78",
-        "loans/Antiques loan": "2ba2adbe6d87eedc|sum=4522.29|min=0.00|max=2886.40",
+        "loans/Antiques loan": "c1ead4e9e0a9c6d1|sum=4869.64|min=0.00|max=2886.40",
         "loans/Other loan": "f9b92cc9e3661181|sum=17513.51|min=0.00|max=3724.54"
       },
       "milestones": [
@@ -215,17 +215,17 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "2026|48|Car loan fully repaid",
         "2026|48|Painting loan fully repaid",
         "2032|54|Boat loan fully repaid",
-        "2028|50|Antiques loan fully repaid",
-        "2026|48|Sale of Painting|20448.33",
-        "2026|48|Sale of Car|38490.42",
-        "2027|49|Sale of Jewelry|50748.14",
-        "2028|50|Sale of Gudja Property|84247.13",
-        "2028|50|Sale of Antiques|84891.49",
-        "2033|55|Sale of Marsa Property|146498.28",
-        "2038|60|Sale of Gzira Property|212289.57",
-        "2044|66|Sale of Boat|72421.33",
-        "2047|69|Sale of Qormi Property|406251.61",
-        "2055|77|Sale of Sliema Property|701764.61"
+        "2029|51|Antiques loan fully repaid",
+        "2057|79|Sale of Sliema Property|651811.57",
+        "2039|61|Sale of Gzira Property|191435.30",
+        "2049|71|Sale of Qormi Property|377333.79",
+        "2028|50|Sale of Gudja Property|73758.36",
+        "2035|57|Sale of Marsa Property|136070.23",
+        "2027|49|Sale of Jewelry|50727.84",
+        "2026|48|Sale of Car|37720.62",
+        "2026|48|Sale of Painting|20039.37",
+        "2047|69|Sale of Boat|57807.87",
+        "2032|54|Sale of Antiques|91852.52"
       ]
     }
   },
@@ -284,16 +284,16 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
       ]
     },
     "scenarioEarly": {
-      "cashSeries": "1c537d500a1f2b54|sum=8598443.16|min=10000.00|max=598481.19",
-      "netWorthSeries": "fc47848906179c87|sum=61311268.54|min=684471.81|max=2070981.99",
+      "cashSeries": "bbddfc672277b8fc|sum=8608100.21|min=10113.24|max=598481.19",
+      "netWorthSeries": "9675d4b2e7bbf178|sum=61320925.59|min=684471.81|max=2072377.84",
       "cashFlowRows": {
-        "openingCash": "d7e49dacd56a1f55|sum=8623443.16|min=10000.00|max=598481.19",
+        "openingCash": "c3c0ac0b38d96aea|sum=8631704.35|min=10113.24|max=598481.19",
         "employmentIncome": "062f2eb1c04bc473|sum=965670.46|min=0.00|max=89522.95",
         "otherWorkIncome": "2bc453aa106a4438|sum=88081.99|min=0.00|max=7609.45",
         "statutoryPension": "0d3c54e8f5c5a839|sum=695177.36|min=0.00|max=34909.11",
         "otherPostRetirementIncome": "1bf0ec67c2940295|sum=42471.95|min=0.00|max=6433.75",
         "liquidationsStocks": "736e92dd8580361a|sum=427506.85|min=0.00|max=37161.31",
-        "interestOnCash": "a6f09ced3543908d|sum=84374.32|min=0.00|max=5786.70",
+        "interestOnCash": "4a752e61d756a2a3|sum=85770.17|min=101.13|max=5786.70",
         "downsizingHomeSale": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "creditCardsCleared": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "homeLoanRepayment": "1d80a5092956c7e9|sum=191507.10|min=0.00|max=13200.00",
@@ -305,7 +305,7 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "209192fff4e9c99d|sum=2609419.80|min=0.00|max=330757.05",
         "totalOutflows": "da1539e8ec0cb9ad|sum=2718794.12|min=51416.86|max=108490.48",
         "netCashFlow": "1f6f1e81e3c8e813|sum=-109374.32|min=-64944.27|max=222266.57",
-        "closingCash": "1c537d500a1f2b54|sum=8598443.16|min=10000.00|max=598481.19",
+        "closingCash": "bbddfc672277b8fc|sum=8608100.21|min=10113.24|max=598481.19",
         "rentalIncomeByProperty/Harbour Flat": "e17685dfce6c3728|sum=56203.63|min=0.00|max=11690.27",
         "incomeEvents/Bonus": "cd8e0cfd4ad505a3|sum=20808.00|min=0.00|max=20808.00",
         "liquidationsByProperty/Harbour Flat": "db5f60ae6a4e2426|sum=234637.07|min=0.00|max=234637.07",
@@ -317,7 +317,7 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "expenseEvents/Wedding": "4946ecceb40a505b|sum=12734.50|min=0.00|max=12734.50"
       },
       "netWorthRows": {
-        "cash": "1c537d500a1f2b54|sum=8598443.16|min=10000.00|max=598481.19",
+        "cash": "bbddfc672277b8fc|sum=8608100.21|min=10113.24|max=598481.19",
         "stockMarketEquity": "f84f3b19f3645f27|sum=20750570.78|min=138929.56|max=749525.83",
         "properties/Home": "ecb3d47690504d1f|sum=32103879.09|min=391400.00|max=1315064.44",
         "properties/Harbour Flat": "d8cec1585f117ed9|sum=948009.88|min=0.00|max=247611.94",
@@ -352,10 +352,10 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
   },
   "forcedPropertyFirst": {
     "scenarioNorm": {
-      "cashSeries": "ae6f566503dfd133|sum=329892.00|min=99940.00|max=119988.00",
-      "netWorthSeries": "a926b5b148b3b57d|sum=569964.00|min=179976.00|max=200000.00",
+      "cashSeries": "0e128abdfb3a5d2d|sum=329928.00|min=99964.00|max=119988.00",
+      "netWorthSeries": "5cee15a2f705e4f1|sum=570000.00|min=180000.00|max=200000.00",
       "cashFlowRows": {
-        "openingCash": "6e0f29c8e9f479af|sum=229952.00|min=0.00|max=119988.00",
+        "openingCash": "e04c8b38228b2796|sum=229964.00|min=0.00|max=119988.00",
         "employmentIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "otherWorkIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
@@ -373,27 +373,27 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "4ef039a62236e2e6|sum=180000.00|min=0.00|max=180000.00",
         "totalOutflows": "7b39c481bf242ed9|sum=80036.00|min=10012.00|max=60012.00",
         "netCashFlow": "6b80c49087e27938|sum=99964.00|min=-10012.00|max=119988.00",
-        "closingCash": "ae6f566503dfd133|sum=329892.00|min=99940.00|max=119988.00",
+        "closingCash": "0e128abdfb3a5d2d|sum=329928.00|min=99964.00|max=119988.00",
         "liquidationsByProperty/Forced Property": "4ef039a62236e2e6|sum=180000.00|min=0.00|max=180000.00",
         "propertyLoanRepayments/Forced Property": "df49068ba7a261c7|sum=50000.00|min=0.00|max=50000.00",
         "propertyLoanRepayments/Forced Asset": "33434474faf8caf7|sum=36.00|min=12.00|max=12.00"
       },
       "netWorthRows": {
-        "cash": "ae6f566503dfd133|sum=329892.00|min=99940.00|max=119988.00",
+        "cash": "0e128abdfb3a5d2d|sum=329928.00|min=99964.00|max=119988.00",
         "stockMarketEquity": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "properties/Forced Asset": "a5d69765c1be01f3|sum=300000.00|min=100000.00|max=100000.00",
         "loans/Forced Asset loan": "7507d4464b518d84|sum=59928.00|min=19964.00|max=19988.00"
       },
       "milestones": [
         "2026|50|Forced Property loan fully repaid",
-        "2026|50|Sale of Forced Property|200000.00"
+        "2026|50|Sale of Forced Property|180000.00"
       ]
     },
     "scenarioEarly": {
-      "cashSeries": "ae6f566503dfd133|sum=329892.00|min=99940.00|max=119988.00",
-      "netWorthSeries": "a926b5b148b3b57d|sum=569964.00|min=179976.00|max=200000.00",
+      "cashSeries": "0e128abdfb3a5d2d|sum=329928.00|min=99964.00|max=119988.00",
+      "netWorthSeries": "5cee15a2f705e4f1|sum=570000.00|min=180000.00|max=200000.00",
       "cashFlowRows": {
-        "openingCash": "6e0f29c8e9f479af|sum=229952.00|min=0.00|max=119988.00",
+        "openingCash": "e04c8b38228b2796|sum=229964.00|min=0.00|max=119988.00",
         "employmentIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "otherWorkIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
@@ -411,29 +411,29 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "4ef039a62236e2e6|sum=180000.00|min=0.00|max=180000.00",
         "totalOutflows": "7b39c481bf242ed9|sum=80036.00|min=10012.00|max=60012.00",
         "netCashFlow": "6b80c49087e27938|sum=99964.00|min=-10012.00|max=119988.00",
-        "closingCash": "ae6f566503dfd133|sum=329892.00|min=99940.00|max=119988.00",
+        "closingCash": "0e128abdfb3a5d2d|sum=329928.00|min=99964.00|max=119988.00",
         "liquidationsByProperty/Forced Property": "4ef039a62236e2e6|sum=180000.00|min=0.00|max=180000.00",
         "propertyLoanRepayments/Forced Property": "df49068ba7a261c7|sum=50000.00|min=0.00|max=50000.00",
         "propertyLoanRepayments/Forced Asset": "33434474faf8caf7|sum=36.00|min=12.00|max=12.00"
       },
       "netWorthRows": {
-        "cash": "ae6f566503dfd133|sum=329892.00|min=99940.00|max=119988.00",
+        "cash": "0e128abdfb3a5d2d|sum=329928.00|min=99964.00|max=119988.00",
         "stockMarketEquity": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "properties/Forced Asset": "a5d69765c1be01f3|sum=300000.00|min=100000.00|max=100000.00",
         "loans/Forced Asset loan": "7507d4464b518d84|sum=59928.00|min=19964.00|max=19988.00"
       },
       "milestones": [
         "2026|50|Forced Property loan fully repaid",
-        "2026|50|Sale of Forced Property|200000.00"
+        "2026|50|Sale of Forced Property|180000.00"
       ]
     }
   },
   "forcedAssetFirst": {
     "scenarioNorm": {
-      "cashSeries": "12379e44c6b0be0d|sum=164892.00|min=44940.00|max=64988.00",
-      "netWorthSeries": "0767b894a7ee617e|sum=614964.00|min=194976.00|max=215000.00",
+      "cashSeries": "197666aa0a63a971|sum=164928.00|min=44964.00|max=64988.00",
+      "netWorthSeries": "6c3a99a0a0f4bfb1|sum=615000.00|min=195000.00|max=215000.00",
       "cashFlowRows": {
-        "openingCash": "4b14ff2dab74dbea|sum=119952.00|min=0.00|max=64988.00",
+        "openingCash": "baab8553be0d4d39|sum=119964.00|min=0.00|max=64988.00",
         "employmentIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "otherWorkIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
@@ -451,27 +451,27 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "52dde8a16a4c2f0e|sum=95000.00|min=0.00|max=95000.00",
         "totalOutflows": "13b1a251662afe3b|sum=50036.00|min=10012.00|max=30012.00",
         "netCashFlow": "301ba7a5921ddf8a|sum=44964.00|min=-10012.00|max=64988.00",
-        "closingCash": "12379e44c6b0be0d|sum=164892.00|min=44940.00|max=64988.00",
+        "closingCash": "197666aa0a63a971|sum=164928.00|min=44964.00|max=64988.00",
         "liquidationsByProperty/Forced Asset": "52dde8a16a4c2f0e|sum=95000.00|min=0.00|max=95000.00",
         "propertyLoanRepayments/Forced Property": "33434474faf8caf7|sum=36.00|min=12.00|max=12.00",
         "propertyLoanRepayments/Forced Asset": "75ec4938a5eebf90|sum=20000.00|min=0.00|max=20000.00"
       },
       "netWorthRows": {
-        "cash": "12379e44c6b0be0d|sum=164892.00|min=44940.00|max=64988.00",
+        "cash": "197666aa0a63a971|sum=164928.00|min=44964.00|max=64988.00",
         "stockMarketEquity": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "properties/Forced Property": "6c3b7919f66f2c0f|sum=600000.00|min=200000.00|max=200000.00",
         "loans/Forced Property loan": "a78e852c46c8476f|sum=149928.00|min=49964.00|max=49988.00"
       },
       "milestones": [
         "2026|50|Forced Asset loan fully repaid",
-        "2026|50|Sale of Forced Asset|100000.00"
+        "2026|50|Sale of Forced Asset|95000.00"
       ]
     },
     "scenarioEarly": {
-      "cashSeries": "12379e44c6b0be0d|sum=164892.00|min=44940.00|max=64988.00",
-      "netWorthSeries": "0767b894a7ee617e|sum=614964.00|min=194976.00|max=215000.00",
+      "cashSeries": "197666aa0a63a971|sum=164928.00|min=44964.00|max=64988.00",
+      "netWorthSeries": "6c3a99a0a0f4bfb1|sum=615000.00|min=195000.00|max=215000.00",
       "cashFlowRows": {
-        "openingCash": "4b14ff2dab74dbea|sum=119952.00|min=0.00|max=64988.00",
+        "openingCash": "baab8553be0d4d39|sum=119964.00|min=0.00|max=64988.00",
         "employmentIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "otherWorkIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
@@ -489,20 +489,20 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "52dde8a16a4c2f0e|sum=95000.00|min=0.00|max=95000.00",
         "totalOutflows": "13b1a251662afe3b|sum=50036.00|min=10012.00|max=30012.00",
         "netCashFlow": "301ba7a5921ddf8a|sum=44964.00|min=-10012.00|max=64988.00",
-        "closingCash": "12379e44c6b0be0d|sum=164892.00|min=44940.00|max=64988.00",
+        "closingCash": "197666aa0a63a971|sum=164928.00|min=44964.00|max=64988.00",
         "liquidationsByProperty/Forced Asset": "52dde8a16a4c2f0e|sum=95000.00|min=0.00|max=95000.00",
         "propertyLoanRepayments/Forced Property": "33434474faf8caf7|sum=36.00|min=12.00|max=12.00",
         "propertyLoanRepayments/Forced Asset": "75ec4938a5eebf90|sum=20000.00|min=0.00|max=20000.00"
       },
       "netWorthRows": {
-        "cash": "12379e44c6b0be0d|sum=164892.00|min=44940.00|max=64988.00",
+        "cash": "197666aa0a63a971|sum=164928.00|min=44964.00|max=64988.00",
         "stockMarketEquity": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "properties/Forced Property": "6c3b7919f66f2c0f|sum=600000.00|min=200000.00|max=200000.00",
         "loans/Forced Property loan": "a78e852c46c8476f|sum=149928.00|min=49964.00|max=49988.00"
       },
       "milestones": [
         "2026|50|Forced Asset loan fully repaid",
-        "2026|50|Sale of Forced Asset|100000.00"
+        "2026|50|Sale of Forced Asset|95000.00"
       ]
     }
   },
@@ -544,16 +544,16 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
       ]
     },
     "scenarioEarly": {
-      "cashSeries": "06faed82ce1c7a7f|sum=7430934.07|min=10000.00|max=561569.68",
-      "netWorthSeries": "afe5cb2470b34f95|sum=52651401.76|min=636970.52|max=1689781.94",
+      "cashSeries": "82ff0776dd18fb1d|sum=7444074.65|min=10134.91|max=561569.68",
+      "netWorthSeries": "396b99715b6b378f|sum=52664542.33|min=636970.52|max=1691431.76",
       "cashFlowRows": {
-        "openingCash": "2b576b0728c91f0a|sum=7455934.07|min=10000.00|max=561569.68",
+        "openingCash": "4f798d1ef538ec2c|sum=7467424.83|min=10134.91|max=561569.68",
         "employmentIncome": "062f2eb1c04bc473|sum=965670.46|min=0.00|max=89522.95",
         "otherWorkIncome": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "0d3c54e8f5c5a839|sum=695177.36|min=0.00|max=34909.11",
         "otherPostRetirementIncome": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "liquidationsStocks": "f36a3b80b6167205|sum=486891.03|min=0.00|max=37161.31",
-        "interestOnCash": "2fc2fb803648fba6|sum=72536.75|min=0.00|max=5392.83",
+        "interestOnCash": "4b8bca3a5f5fb400|sum=74186.56|min=101.35|max=5392.83",
         "downsizingHomeSale": "2d731f3e8c0aba68|sum=549264.06|min=0.00|max=549264.06",
         "creditCardsCleared": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "homeLoanRepayment": "40d329542fff51b8|sum=102640.82|min=0.00|max=57640.82",
@@ -565,10 +565,10 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "6a9983c1c6cfac07|sum=2697002.91|min=0.00|max=628757.87",
         "totalOutflows": "46b9a4568272323a|sum=2794539.66|min=50729.67|max=418257.65",
         "netCashFlow": "ca587f0d3216179f|sum=-97536.75|min=-54911.43|max=210500.22",
-        "closingCash": "06faed82ce1c7a7f|sum=7430934.07|min=10000.00|max=561569.68"
+        "closingCash": "82ff0776dd18fb1d|sum=7444074.65|min=10134.91|max=561569.68"
       },
       "netWorthRows": {
-        "cash": "06faed82ce1c7a7f|sum=7430934.07|min=10000.00|max=561569.68",
+        "cash": "82ff0776dd18fb1d|sum=7444074.65|min=10134.91|max=561569.68",
         "stockMarketEquity": "fd73761b2f497b0c|sum=22292451.77|min=153148.17|max=780394.78",
         "properties/Home": "c6e17c65c9dfb271|sum=23278230.38|min=310453.60|max=899780.93",
         "loans/Home loan": "78c1d1e2cbc10578|sum=350214.47|min=0.00|max=83612.65"
@@ -597,16 +597,16 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
   },
   "downsizingRent": {
     "scenarioNorm": {
-      "cashSeries": "979014d40f54991c|sum=-188248922.78|min=-12528960.59|max=355309.22",
-      "netWorthSeries": "b8580f87ffc109cf|sum=-185179924.89|min=-12528960.59|max=783223.40",
+      "cashSeries": "5f7033dbcf28001b|sum=-188235579.81|min=-12528589.95|max=355309.22",
+      "netWorthSeries": "21278ebf5340e631|sum=-185166581.92|min=-12528589.95|max=783223.40",
       "cashFlowRows": {
-        "openingCash": "f6b6eda0833a8104|sum=-175684962.20|min=-12010954.48|max=355309.22",
+        "openingCash": "c393bfbb1944dbf0|sum=-175671989.86|min=-12010583.84|max=355309.22",
         "employmentIncome": "168ca45486d317a3|sum=1440869.11|min=0.00|max=98840.57",
         "otherWorkIncome": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "f24c2057d9d798be|sum=807302.74|min=0.00|max=40539.61",
         "otherPostRetirementIncome": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "liquidationsStocks": "8ed22b50eebdad0b|sum=298772.50|min=-150.31|max=172688.00",
-        "interestOnCash": "1a889f5db41db099|sum=8201.23|min=0.00|max=2507.34",
+        "interestOnCash": "c0db9c87c3e41111|sum=8571.87|min=0.00|max=2507.34",
         "downsizingHomeSale": "c7ad0a38f0c7f3ec|sum=490604.79|min=0.00|max=490604.79",
         "creditCardsCleared": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "homeLoanRepayment": "43016a82e396fe63|sum=78292.81|min=0.00|max=47092.81",
@@ -618,10 +618,10 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "c8ade2957500ac56|sum=3037549.14|min=25054.03|max=568539.90",
         "totalOutflows": "39d14d7b359bab56|sum=15609710.95|min=53800.00|max=558545.71",
         "netCashFlow": "cd5f324351d7f025|sum=-12572161.82|min=-518006.11|max=238344.46",
-        "closingCash": "979014d40f54991c|sum=-188248922.78|min=-12528960.59|max=355309.22"
+        "closingCash": "5f7033dbcf28001b|sum=-188235579.81|min=-12528589.95|max=355309.22"
       },
       "netWorthRows": {
-        "cash": "979014d40f54991c|sum=-188248922.78|min=-12528960.59|max=355309.22",
+        "cash": "5f7033dbcf28001b|sum=-188235579.81|min=-12528589.95|max=355309.22",
         "stockMarketEquity": "c2a226d459ad005a|sum=1307220.46|min=-151.83|max=229432.71",
         "properties/Home": "56b508b9a0c37577|sum=1982202.47|min=0.00|max=517734.05",
         "loans/Home loan": "d56f3e53569af58f|sum=220425.04|min=0.00|max=64220.97"
@@ -645,16 +645,16 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
       ]
     },
     "scenarioEarly": {
-      "cashSeries": "8ec4b0e3b461d63f|sum=-202849615.75|min=-13115233.06|max=355309.22",
-      "netWorthSeries": "47bd65b746562377|sum=-199779858.71|min=-13115233.06|max=783223.40",
+      "cashSeries": "ce388ce99266d7e2|sum=-202836272.78|min=-13114862.42|max=355309.22",
+      "netWorthSeries": "f5c3af4c4e5a5206|sum=-199766515.74|min=-13114862.42|max=783223.40",
       "cashFlowRows": {
-        "openingCash": "735f65d3f5e55a0f|sum=-189699382.69|min=-12591596.45|max=355309.22",
+        "openingCash": "2883d6e297676ada|sum=-189686410.36|min=-12591225.82|max=355309.22",
         "employmentIncome": "062f2eb1c04bc473|sum=965670.46|min=0.00|max=89522.95",
         "otherWorkIncome": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "0d3c54e8f5c5a839|sum=695177.36|min=0.00|max=34909.11",
         "otherPostRetirementIncome": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "liquidationsStocks": "dae9bfe006e21775|sum=269824.05|min=-150.31|max=172688.00",
-        "interestOnCash": "1a889f5db41db099|sum=8201.23|min=0.00|max=2507.34",
+        "interestOnCash": "c0db9c87c3e41111|sum=8571.87|min=0.00|max=2507.34",
         "downsizingHomeSale": "c7ad0a38f0c7f3ec|sum=490604.79|min=0.00|max=490604.79",
         "creditCardsCleared": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "homeLoanRepayment": "43016a82e396fe63|sum=78292.81|min=0.00|max=47092.81",
@@ -666,10 +666,10 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "4d9ac4f70144fc4f|sum=2421276.66|min=-150.31|max=568539.90",
         "totalOutflows": "d456a43a1fe2fdf4|sum=15579710.95|min=53800.00|max=558545.71",
         "netCashFlow": "1434fd98d9216c13|sum=-13158434.29|min=-523636.61|max=238344.46",
-        "closingCash": "8ec4b0e3b461d63f|sum=-202849615.75|min=-13115233.06|max=355309.22"
+        "closingCash": "ce388ce99266d7e2|sum=-202836272.78|min=-13114862.42|max=355309.22"
       },
       "netWorthRows": {
-        "cash": "8ec4b0e3b461d63f|sum=-202849615.75|min=-13115233.06|max=355309.22",
+        "cash": "ce388ce99266d7e2|sum=-202836272.78|min=-13114862.42|max=355309.22",
         "stockMarketEquity": "d2c7d98d41e00155|sum=1307979.61|min=-151.83|max=229432.71",
         "properties/Home": "56b508b9a0c37577|sum=1982202.47|min=0.00|max=517734.05",
         "loans/Home loan": "d56f3e53569af58f|sum=220425.04|min=0.00|max=64220.97"
@@ -720,16 +720,16 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
       "milestones": []
     },
     "scenarioEarly": {
-      "cashSeries": "c4640ae4483e0144|sum=10888669.73|min=5000.00|max=617855.79",
-      "netWorthSeries": "607cf3fd058623b3|sum=45742117.71|min=324561.80|max=1723457.94",
+      "cashSeries": "777c5d14301b426c|sum=10889932.96|min=5081.79|max=617855.79",
+      "netWorthSeries": "8fa7d6c00f502c29|sum=45743380.94|min=324561.80|max=1723798.95",
       "cashFlowRows": {
-        "openingCash": "e9c470ee5a3f4057|sum=10903669.73|min=5000.00|max=617855.79",
+        "openingCash": "631bd4e0d99cd593|sum=10904591.95|min=5081.79|max=617855.79",
         "employmentIncome": "79351baa375d980d|sum=1245126.02|min=0.00|max=95002.47",
         "otherWorkIncome": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "4c018a9f0567ddf8|sum=762452.59|min=0.00|max=38287.41",
         "otherPostRetirementIncome": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "liquidationsStocks": "7813b854d0b93953|sum=178777.17|min=0.00|max=33783.01",
-        "interestOnCash": "db13a58a97475880|sum=108089.46|min=0.00|max=5909.38",
+        "interestOnCash": "4aafe51157def666|sum=108430.47|min=50.82|max=5909.38",
         "downsizingHomeSale": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "creditCardsCleared": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "homeLoanRepayment": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
@@ -741,10 +741,10 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "d380504a2fadd86a|sum=2186355.77|min=0.00|max=95002.47",
         "totalOutflows": "df105a6a547b82af|sum=2309445.24|min=40000.00|max=72070.41",
         "netCashFlow": "47f7eee04ab4a039|sum=-123089.46|min=-54911.43|max=42223.32",
-        "closingCash": "c4640ae4483e0144|sum=10888669.73|min=5000.00|max=617855.79"
+        "closingCash": "777c5d14301b426c|sum=10889932.96|min=5081.79|max=617855.79"
       },
       "netWorthRows": {
-        "cash": "c4640ae4483e0144|sum=10888669.73|min=5000.00|max=617855.79",
+        "cash": "777c5d14301b426c|sum=10889932.96|min=5081.79|max=617855.79",
         "stockMarketEquity": "a75f061b1e2e8a24|sum=34853447.98|min=238875.00|max=1718457.94"
       },
       "milestones": [
@@ -795,16 +795,16 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
       "milestones": []
     },
     "scenarioEarly": {
-      "cashSeries": "d52efbcc5529d2cc|sum=6056039.18|min=10000.00|max=499084.98",
-      "netWorthSeries": "a92f02db72ef7f23|sum=28632007.77|min=205080.67|max=871978.29",
+      "cashSeries": "9e6589c4d7c2fb22|sum=6069018.75|min=10023.23|max=499084.98",
+      "netWorthSeries": "05222cb11bc34536|sum=28644987.35|min=205080.67|max=871978.29",
       "cashFlowRows": {
-        "openingCash": "9905d513718391cc|sum=6081039.18|min=10000.00|max=499084.98",
+        "openingCash": "c687261bd05946be|sum=6092382.09|min=10023.23|max=499084.98",
         "employmentIncome": "74d7d06783d4e13f|sum=1056983.87|min=0.00|max=91313.41",
         "otherWorkIncome": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "f57eb4a1e2e59e75|sum=717602.44|min=0.00|max=36035.21",
         "otherPostRetirementIncome": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "liquidationsStocks": "745a132788440b0e|sum=483760.24|min=0.00|max=36035.21",
-        "interestOnCash": "bde86c167aca002f|sum=58867.82|min=0.00|max=4770.23",
+        "interestOnCash": "0cea4fd5b2254b91|sum=60504.48|min=100.23|max=4770.23",
         "downsizingHomeSale": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "creditCardsCleared": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
         "homeLoanRepayment": "3a0a7b3f5ef63fb6|sum=0.00|min=0.00|max=0.00",
@@ -816,7 +816,7 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "totalInflows": "3517147809282e02|sum=2403620.46|min=0.00|max=185287.15",
         "totalOutflows": "a3687431f60ab888|sum=2487488.29|min=51416.86|max=88711.80",
         "netCashFlow": "48f8414e83199118|sum=-83867.82|min=-54911.43|max=130527.38",
-        "closingCash": "d52efbcc5529d2cc|sum=6056039.18|min=10000.00|max=499084.98",
+        "closingCash": "9e6589c4d7c2fb22|sum=6069018.75|min=10023.23|max=499084.98",
         "incomeEvents/Inheritance": "a4f41b4f6a4491a2|sum=47754.36|min=0.00|max=47754.36",
         "incomeEvents/Business Sale": "2078351303b2a481|sum=97519.55|min=0.00|max=97519.55",
         "dependentsCost/Chris": "4da2660b331bbada|sum=37848.73|min=0.00|max=6624.48",
@@ -825,7 +825,7 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "expenseEvents/Medical": "2efa05d70f34ba22|sum=20270.92|min=0.00|max=20270.92"
       },
       "netWorthRows": {
-        "cash": "d52efbcc5529d2cc|sum=6056039.18|min=10000.00|max=499084.98",
+        "cash": "9e6589c4d7c2fb22|sum=6069018.75|min=10023.23|max=499084.98",
         "stockMarketEquity": "1b91627ea327b9fd|sum=22575968.59|min=153148.17|max=802519.62"
       },
       "milestones": [
@@ -850,10 +850,10 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
   },
   "manualLiquidationOrder": {
     "scenarioNorm": {
-      "cashSeries": "7edef30ed62d1ad3|sum=78520.00|min=-181540.00|max=221600.00",
-      "netWorthSeries": "67fb7dc7311596cb|sum=117320.00|min=-181540.00|max=260400.00",
+      "cashSeries": "282bf557122a1092|sum=76308.40|min=-182645.80|max=221600.00",
+      "netWorthSeries": "e3e7814649ee1b7a|sum=115108.40|min=-182645.80|max=260400.00",
       "cashFlowRows": {
-        "openingCash": "c0482d7e3b87a4c6|sum=260060.00|min=0.00|max=221600.00",
+        "openingCash": "0a2e1c7b4a692bb6|sum=258954.20|min=0.00|max=221600.00",
         "employmentIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "otherWorkIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
@@ -868,30 +868,30 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "downsizingHomePurchase": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "stockInvestmentContributions": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "livingExpenses": "af57c1fcaabdaa86|sum=660000.00|min=220000.00|max=220000.00",
-        "totalInflows": "8325b149d82a56a4|sum=478460.00|min=0.00|max=441600.00",
+        "totalInflows": "ef81cd64d039edf3|sum=477354.20|min=0.00|max=441600.00",
         "totalOutflows": "af57c1fcaabdaa86|sum=660000.00|min=220000.00|max=220000.00",
-        "netCashFlow": "f649e8104eae56ef|sum=-181540.00|min=-220000.00|max=221600.00",
-        "closingCash": "7edef30ed62d1ad3|sum=78520.00|min=-181540.00|max=221600.00",
+        "netCashFlow": "918643bfe03a4ed2|sum=-182645.80|min=-220000.00|max=221600.00",
+        "closingCash": "282bf557122a1092|sum=76308.40|min=-182645.80|max=221600.00",
         "liquidationsByProperty/Alpha": "e8df78eaf2d66520|sum=276000.00|min=0.00|max=276000.00",
         "liquidationsByProperty/Beta": "05f609689ab9d880|sum=165600.00|min=0.00|max=165600.00",
-        "liquidationsByProperty/Car": "a5f856951941c87e|sum=36860.00|min=0.00|max=36860.00"
+        "liquidationsByProperty/Car": "54bd108399e112b8|sum=35754.20|min=0.00|max=35754.20"
       },
       "netWorthRows": {
-        "cash": "7edef30ed62d1ad3|sum=78520.00|min=-181540.00|max=221600.00",
+        "cash": "282bf557122a1092|sum=76308.40|min=-182645.80|max=221600.00",
         "stockMarketEquity": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "properties/Car": "36cc5903b765922c|sum=38800.00|min=0.00|max=38800.00"
       },
       "milestones": [
-        "2026|50|Sale of Beta Property|180000.00",
-        "2026|50|Sale of Alpha Property|300000.00",
-        "2027|51|Sale of Car|38800.00"
+        "2026|50|Sale of Alpha Property|276000.00",
+        "2026|50|Sale of Beta Property|165600.00",
+        "2027|51|Sale of Car|35754.20"
       ]
     },
     "scenarioEarly": {
-      "cashSeries": "7edef30ed62d1ad3|sum=78520.00|min=-181540.00|max=221600.00",
-      "netWorthSeries": "67fb7dc7311596cb|sum=117320.00|min=-181540.00|max=260400.00",
+      "cashSeries": "282bf557122a1092|sum=76308.40|min=-182645.80|max=221600.00",
+      "netWorthSeries": "e3e7814649ee1b7a|sum=115108.40|min=-182645.80|max=260400.00",
       "cashFlowRows": {
-        "openingCash": "c0482d7e3b87a4c6|sum=260060.00|min=0.00|max=221600.00",
+        "openingCash": "0a2e1c7b4a692bb6|sum=258954.20|min=0.00|max=221600.00",
         "employmentIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "otherWorkIncome": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "statutoryPension": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
@@ -906,24 +906,24 @@ export const INTEGRITY_SNAPSHOTS: Record<string, IntegrityScenarioSnapshots> = {
         "downsizingHomePurchase": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "stockInvestmentContributions": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "livingExpenses": "af57c1fcaabdaa86|sum=660000.00|min=220000.00|max=220000.00",
-        "totalInflows": "8325b149d82a56a4|sum=478460.00|min=0.00|max=441600.00",
+        "totalInflows": "ef81cd64d039edf3|sum=477354.20|min=0.00|max=441600.00",
         "totalOutflows": "af57c1fcaabdaa86|sum=660000.00|min=220000.00|max=220000.00",
-        "netCashFlow": "f649e8104eae56ef|sum=-181540.00|min=-220000.00|max=221600.00",
-        "closingCash": "7edef30ed62d1ad3|sum=78520.00|min=-181540.00|max=221600.00",
+        "netCashFlow": "918643bfe03a4ed2|sum=-182645.80|min=-220000.00|max=221600.00",
+        "closingCash": "282bf557122a1092|sum=76308.40|min=-182645.80|max=221600.00",
         "liquidationsByProperty/Alpha": "e8df78eaf2d66520|sum=276000.00|min=0.00|max=276000.00",
         "liquidationsByProperty/Beta": "05f609689ab9d880|sum=165600.00|min=0.00|max=165600.00",
-        "liquidationsByProperty/Car": "a5f856951941c87e|sum=36860.00|min=0.00|max=36860.00"
+        "liquidationsByProperty/Car": "54bd108399e112b8|sum=35754.20|min=0.00|max=35754.20"
       },
       "netWorthRows": {
-        "cash": "7edef30ed62d1ad3|sum=78520.00|min=-181540.00|max=221600.00",
+        "cash": "282bf557122a1092|sum=76308.40|min=-182645.80|max=221600.00",
         "stockMarketEquity": "2a08979e80022521|sum=0.00|min=0.00|max=0.00",
         "properties/Car": "36cc5903b765922c|sum=38800.00|min=0.00|max=38800.00"
       },
       "milestones": [
-        "2026|50|Sale of Beta Property|180000.00",
-        "2026|50|Sale of Alpha Property|300000.00",
-        "2027|51|Sale of Car|38800.00"
+        "2026|50|Sale of Alpha Property|276000.00",
+        "2026|50|Sale of Beta Property|165600.00",
+        "2027|51|Sale of Car|35754.20"
       ]
     }
   }
-} as const;
+};
