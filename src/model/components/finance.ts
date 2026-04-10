@@ -3,7 +3,7 @@ export function safePow(base: number, exp: number): number {
   return Math.pow(base, exp);
 }
 
-// Excel-like FV(rate, nper, pmt, pv) with end-of-period payments (type=0).
+// FV helper with end-of-period payments (type=0).
 export function fv(rate: number, nper: number, pmt: number, pv: number): number {
   if (rate === 0) return -(pv + pmt * nper);
   const v = Math.pow(1 + rate, nper);

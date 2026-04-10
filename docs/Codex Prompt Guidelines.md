@@ -2,13 +2,13 @@
 
 ## Purpose
 
-Guide ChatGPT in generating high-quality Codex prompts.
+Guide ChatGPT in generating high-quality Codex prompts for this repo.
 
 Do not duplicate `AGENTS.md`.
 
 ## Input Interpretation
 
-By default, treat all user input as a request to generate an optimised Codex prompt.
+By default, treat all user input as a request to generate an optimized Codex prompt.
 
 Exception:
 Text enclosed in `< >` markers is instruction to ChatGPT only and must not be included in the generated prompt.
@@ -16,10 +16,9 @@ Text enclosed in `< >` markers is instruction to ChatGPT only and must not be in
 ## Role Split
 
 `AGENTS.md` handles:
-- git workflow
-- testing
-- parity enforcement
 - implementation discipline
+- testing expectations
+- repo invariants
 
 This file handles:
 - prompt clarity
@@ -29,7 +28,7 @@ This file handles:
 
 ## Core Principles
 
-Prompts must be:
+Prompts should be:
 - minimal
 - precise
 - outcome-focused
@@ -48,9 +47,7 @@ Always define scope explicitly:
 - validation
 - normalization
 - projection timing
-- field/cell mapping
 - financial model math
-- parity tooling
 
 If unclear, choose the safest minimal scope.
 
@@ -68,7 +65,6 @@ When relevant to the task, Codex should inspect:
 If the task touches any of these, mention it explicitly:
 - `fieldRegistry.ts`
 - `inputSchema.ts`
-- `excelAdapter.ts`
 - `normalization.ts`
 - `projectionTiming.ts`
 - `validate.ts`
@@ -77,18 +73,16 @@ If the task touches any of these, mention it explicitly:
 ## Useful Task Phrases
 
 Use when helpful:
-- `this is parity-sensitive`
-- `update semantic field ids and keep Excel mapping aligned`
 - `change runtime visibility only, not model math`
-- `change UI state/persistence only, not model behavior`
+- `change UI state and persistence only, not model behavior`
 - `change projection timing behavior and verify displayed axis vs first-period prorating`
-- `change scenario-manager behavior only; keep model inputs/outputs unchanged`
+- `change scenario-manager behavior only; keep model inputs and outputs unchanged`
 - `change downsizing preview/UI only, not downsizing model math`
-- `change model math and run full parity checks`
+- `change model math and review downstream runtime coverage carefully`
 
 Use sparingly, since they are already enforced globally:
-- `preserve Excel parity`
 - `plain DOM TypeScript app, not React`
+- `pipeline ordering is load-bearing`
 
 ## When to Add Constraints
 
@@ -96,13 +90,13 @@ Only include constraints specific to the task.
 
 Do not include:
 - git workflow
-- testing instructions
-- parity enforcement
+- generic testing instructions
+- repo-wide invariants already covered by `AGENTS.md`
 
 ## When to Expand Prompt
 
 Add detail only when necessary:
-- multi-step behaviour
+- multi-step behavior
 - interaction design
 - edge cases
 - persistence behavior
@@ -112,7 +106,7 @@ Otherwise keep it short.
 
 ## Current Webapp Areas Worth Naming
 
-When the task is about one of these, name it directly in the prompt instead of describing it vaguely:
+When the task is about one of these, name it directly in the prompt:
 - scenario manager and local `localStorage` persistence
 - earliest-viable-retirement indicator
 - living-expenses single vs expanded-category mode
@@ -121,18 +115,18 @@ When the task is about one of these, name it directly in the prompt instead of d
 - projection tables, scenario tabs, and expand/collapse behavior
 - chart and timeline rendering
 
-This helps keep prompts aligned with the current app structure in `src/main.ts`.
+This keeps prompts aligned with the actual app structure in `src/main.ts`.
 
 ## Timing Guidance
 
 Be careful with projection-timing wording.
 
 Current behavior is:
-- the displayed projection axis starts at current year and current age
+- the displayed projection axis starts at the current year and current age
 - first-period math is still adjusted through prorating and month offset
-- `projectionMonthOverride` exists for deterministic testing and parity work
+- `projectionMonthOverride` exists for deterministic testing
 
-Do not write prompts that assume the app currently shifts the visible axis to next year / next age unless the task is explicitly to change that behavior.
+Do not write prompts that assume the app shifts the visible axis to next year or next age unless the task is explicitly to change that behavior.
 
 ## Good Prompt Example
 
@@ -141,9 +135,9 @@ Task
 Fix timeline truncation.
 
 Details
-Show only primary event per year.
+Show only the primary event per year.
 Add "+N events".
-Click expands full list.
+Click expands the full list.
 
 Scope
 UI rendering only. No model changes.
@@ -154,7 +148,7 @@ LOW
 
 ## Reasoning Level Selection
 
-Every prompt must include:
+Every prompt should include:
 
 ```text
 Reasoning
@@ -171,7 +165,7 @@ LOW / MEDIUM / HIGH
 
 - UI logic
 - conditional rendering
-- interaction behaviour
+- interaction behavior
 - local persistence
 - scenario-manager behavior
 - downsizing preview rendering
@@ -179,10 +173,9 @@ LOW / MEDIUM / HIGH
 ### HIGH
 
 - model calculations
-- timing / ordering logic
+- timing or ordering logic
 - liquidation logic
 - normalization
-- Excel mapping
 - cross-layer changes
 
 Default to the lowest safe level.
@@ -196,7 +189,7 @@ Task
 <what needs to be done>
 
 Details
-<specific behaviour>
+<specific behavior>
 
 Scope
 <affected layer>
@@ -225,28 +218,19 @@ Examples:
 ```text
 Fix timeline truncation.
 
-Preserve Excel parity.
-Run tests.
-Use git checkpoint.
+Run the standard checks.
+Follow the repo rules.
 ```
 
 ## Default Assumptions
 
 Do not restate:
-- Excel parity must be preserved
-- tests must pass
-- changes must be minimal
-- git workflow is required
-
-These are enforced by `AGENTS.md`.
+- repo invariants from `AGENTS.md`
+- generic testing expectations
+- minimal-diff guidance
 
 Do not restate current repo facts unless they are directly relevant to the task.
 
-Examples of repo facts that usually do not need repeating:
-- the app compares early vs statutory retirement
-- the app uses local scenario persistence
-- the app has living-expense helper modes
-
-Only mention them when the task is specifically about those areas.
+Only mention current app behavior when it meaningfully narrows the work.
 
 ## End

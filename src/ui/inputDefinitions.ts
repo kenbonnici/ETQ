@@ -136,7 +136,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     fieldId: "housing.rentAnnual",
     label: "Home monthly rent",
     tooltip: "Monthly rent if not a home owner",
-    uiNote: "show only if not a home owner (B13=\"\")",
+    uiNote: "Show only when no home value is entered",
     sampleValue: "",
     type: "number"
   },
