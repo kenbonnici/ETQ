@@ -3567,7 +3567,7 @@ function requestPlannedSellYearJump(fieldId: PlannedSellYearFieldId): void {
 
 function renderPropertyLiquidationOrderControl(): string {
   const active = activePropertyConfigs(fieldState);
-  if (active.length === 0) return "";
+  if (active.length < 2) return "";
   const { sellable, excluded, scheduled } = buildPropertyLiquidationBuckets(fieldState, active, uiState.manualPropertyLiquidationOrder);
   const sellableRows = sellable.map((cfg, idx) => renderLiquidationRow(cfg, idx + 1, "exclude", {
     moveUpDisabled: idx === 0,
