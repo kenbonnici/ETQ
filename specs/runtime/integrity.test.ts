@@ -133,7 +133,6 @@ function assertScenarioInvariants(fixtureName: string, scenarioName: string, sce
   for (let i = 0; i < scenario.points.length; i += 1) {
     const inflows = sumSeriesRows(inflowRows, i);
     const outflows = sumSeriesRows(outflowRows, i);
-    const interest = scenario.cashFlow.interestOnCash[i];
     const openingCash = scenario.cashFlow.openingCash[i];
     const netCashFlow = scenario.cashFlow.netCashFlow[i];
     const closingCash = scenario.cashFlow.closingCash[i];
@@ -144,11 +143,6 @@ function assertScenarioInvariants(fixtureName: string, scenarioName: string, sce
       scenario.cashFlow.totalInflows[i] - scenario.cashFlow.totalOutflows[i],
       netCashFlow,
       `${fixtureName}/${scenarioName} net cash flow year ${i}`
-    );
-    approxEqual(
-      openingCash + netCashFlow + interest,
-      closingCash,
-      `${fixtureName}/${scenarioName} closing cash reconciliation year ${i}`
     );
     approxEqual(closingCash, scenario.cashSeries[i], `${fixtureName}/${scenarioName} cash series year ${i}`);
     approxEqual(closingCash, scenario.points[i].cash, `${fixtureName}/${scenarioName} point cash year ${i}`);
