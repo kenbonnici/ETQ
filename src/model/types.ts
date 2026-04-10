@@ -162,7 +162,6 @@ export interface ScenarioLiquidationStageDebug {
   rentalForegone: number[];
   annualCostSaved: number[];
   loanRepayment: number[];
-  loanRepaymentSaved: number[];
   netProceeds: number[];
 }
 

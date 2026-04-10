@@ -107,6 +107,31 @@ function buildForcedSaleInputs(liquidationPriority: number[]): EffectiveInputs {
   };
 }
 
+function buildForcedSaleInputsWithOngoingLoanRepayments(liquidationPriority: number[]): EffectiveInputs {
+  return {
+    ...buildInputs(),
+    livingExpensesAnnual: 10_000,
+    properties: [
+      {
+        ...buildInputs().properties[0],
+        name: "Forced Property",
+        plannedSellYear: null,
+        loanRepaymentMonthly: 1_000
+      }
+    ],
+    assetsOfValue: [
+      {
+        ...buildInputs().assetsOfValue[0],
+        name: "Forced Asset",
+        plannedSellYear: null,
+        loanRepaymentMonthly: 500
+      }
+    ],
+    liveUntilAge: 42,
+    liquidationPriority
+  };
+}
+
 test("planned sales keep gross liquidation inflows separate from property and other asset loan payoffs", () => {
   const scenario = runScenarioNorm(
     buildInputs(),
@@ -173,4 +198,23 @@ test("forced other-asset sales show gross proceeds, settle the loan in the sale 
   assert.equal(scenario.cashFlow.totalInflows[0], 95_000);
   assert.equal(scenario.cashFlow.totalOutflows[0], 30_000);
   assert.equal(scenario.cashFlow.netCashFlow[0], 65_000);
+});
+
+test("forced sales do not create future inflows from saved loan repayments after the asset is sold", () => {
+  const scenario = runScenarioNorm(
+    buildForcedSaleInputsWithOngoingLoanRepayments([1, 2]),
+    resolveProjectionTiming(new Date("2026-01-01T00:00:00Z"), 1)
+  );
+
+  const propertyLiquidation = scenario.cashFlow.liquidationsByProperty.find((series) => series.label === "Forced Property");
+  const propertyLoanRepayment = scenario.cashFlow.propertyLoanRepayments.find((series) => series.label === "Forced Property");
+
+  assert.ok(propertyLiquidation);
+  assert.ok(propertyLoanRepayment);
+
+  assert.equal(propertyLiquidation.values[0], 180_000);
+  assert.equal(propertyLiquidation.values[1], 0);
+  assert.equal(propertyLoanRepayment.values[0], 50_000);
+  assert.equal(propertyLoanRepayment.values[1], 0);
+  assert.equal(scenario.cashFlow.totalInflows[1], 0);
 });

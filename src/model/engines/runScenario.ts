@@ -27,7 +27,6 @@ interface PropertyStageSeries extends StageSeries {
   rentalForegone: number[];
   annualCostSaved: number[];
   loanRepayment: number[];
-  loanRepaymentSaved: number[];
 }
 
 interface LiquidationAssetDescriptor {
@@ -198,7 +197,6 @@ function computePropertyStage(
   const rentalForegone = zeroSeries(n);
   const annualCostSaved = zeroSeries(n);
   const loanRepayment = zeroSeries(n);
-  const loanRepaymentSaved = zeroSeries(n);
   const netProceeds = zeroSeries(n);
 
   const EPS = 1e-9;
@@ -214,15 +212,13 @@ function computePropertyStage(
     rentalForegone[i] = Math.abs(bfwd[i]) <= EPS ? -rentalSeries[i] : 0;
     annualCostSaved[i] = Math.abs(bfwd[i]) <= EPS ? annualCostSeries[i] : 0;
     loanRepayment[i] = bfwd[i] > EPS && Math.abs(cfwd[i]) <= EPS ? -loanBalanceSeries[i] : 0;
-    loanRepaymentSaved[i] = Math.abs(bfwd[i]) <= EPS ? loanRepaymentSeries[i] : 0;
 
     netProceeds[i] =
       -disposal[i] +
       disposalCosts[i] +
       rentalForegone[i] +
       annualCostSaved[i] +
-      loanRepayment[i] +
-      loanRepaymentSaved[i];
+      loanRepayment[i];
   }
 
   return {
@@ -234,7 +230,6 @@ function computePropertyStage(
     rentalForegone,
     annualCostSaved,
     loanRepayment,
-    loanRepaymentSaved,
     netProceeds
   };
 }
@@ -275,7 +270,6 @@ function buildScenarioDebug(
       rentalForegone: [...stage.rentalForegone],
       annualCostSaved: [...stage.annualCostSaved],
       loanRepayment: [...stage.loanRepayment],
-      loanRepaymentSaved: [...stage.loanRepaymentSaved],
       netProceeds: [...stage.netProceeds]
     });
   }
@@ -998,7 +992,6 @@ export function runScenario(
               - stage.rentalForegone[yearIdx]
               - stage.annualCostSaved[yearIdx]
               - stage.loanRepayment[yearIdx]
-              - stage.loanRepaymentSaved[yearIdx]
           )
         : zeroSeries(n);
       const values = stageValues.map((value, yearIdx) => value + scheduledPropertyLiquidationSeries[idx][yearIdx]);
@@ -1017,7 +1010,6 @@ export function runScenario(
               - stage.rentalForegone[yearIdx]
               - stage.annualCostSaved[yearIdx]
               - stage.loanRepayment[yearIdx]
-              - stage.loanRepaymentSaved[yearIdx]
           )
         : zeroSeries(n);
       const values = stageValues.map((value, yearIdx) => value + scheduledAssetOfValueLiquidationSeries[idx][yearIdx]);
@@ -1046,7 +1038,7 @@ export function runScenario(
       sumAt(scheduledAssetOfValueLiquidationSeries, i) +
       stockStage.netProceeds[i] +
       liquidationStages.reduce(
-        (sum, stage) => sum + stage.netProceeds[i] - stage.loanRepayment[i] - stage.loanRepaymentSaved[i],
+        (sum, stage) => sum + stage.netProceeds[i] - stage.loanRepayment[i],
         0
       );
     totalOutflowsSeries[i] =
