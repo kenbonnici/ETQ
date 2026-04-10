@@ -1,5 +1,5 @@
 import "./app.css";
-import { pruneInactiveFieldState, pruneInactiveRawInputs } from "./model/activation";
+import { pruneInactiveFieldState } from "./model/activation";
 import {
   estimateDownsizing,
   isDownsizingYearInProjectionWindow,
@@ -7,9 +7,9 @@ import {
 } from "./model/downsizing";
 import { runModel } from "./model";
 import { validateFieldState } from "./model/validate";
-import { createEmptyFieldState, fieldStateToRawInputs, rawInputsToFieldState } from "./model/excelAdapter";
 import type { RunModelResult } from "./model/index";
 import {
+  createEmptyFieldState,
   INPUT_DEFINITION_BY_FIELD_ID,
   ALLOW_NEGATIVE_FIELDS,
   COERCED_NUMERIC_BOUNDS,
@@ -19,7 +19,11 @@ import {
   SKIP_REVEAL_CRITICAL_FIELDS,
   ValidationMessage
 } from "./model/inputSchema";
-import { EXCEL_BASELINE_SPECIMEN } from "./model/parity/excelBaselineSpecimen";
+import {
+  createSampleDataFieldState,
+  SAMPLE_DATA_EARLY_RETIREMENT_AGE,
+  SAMPLE_DATA_PROJECTION_MONTH_OVERRIDE
+} from "./model/sampleData";
 import {
   ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS,
   parsePlannedSellYearValue,
@@ -27,7 +31,7 @@ import {
   PLANNED_SELL_YEAR_FIELDS,
   PROPERTY_PLANNED_SELL_YEAR_FIELDS
 } from "./model/plannedSales";
-import { FieldId, ModelUiState, RawInputValue, RawInputs, ScenarioOutputs } from "./model/types";
+import { FieldId, FieldState, ModelUiState, RawInputValue, ScenarioOutputs } from "./model/types";
 import {
   ASSET_OF_VALUE_RUNTIME_GROUPS,
   DEPENDENT_RUNTIME_GROUPS,
@@ -83,15 +87,15 @@ const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
 
 const DEFAULT_CURRENCY = "EUR";
-const SCENARIO_DRAFT_STORAGE_KEY = "etq:scenario:draft:v1";
-const NAMED_SCENARIOS_STORAGE_KEY = "etq:scenario:named:v1";
+const SCENARIO_DRAFT_STORAGE_KEY = "etq:scenario:draft:v2";
+const NAMED_SCENARIOS_STORAGE_KEY = "etq:scenario:named:v2";
 const SCENARIO_MAX_NAME_LENGTH = 60;
 
-function createDefaultPersistedRawInputs(): RawInputs {
-  return pruneInactiveRawInputs(fieldStateToRawInputs(createEmptyFieldState()));
+function createDefaultPersistedFields(): FieldState {
+  return pruneInactiveFieldState(createEmptyFieldState());
 }
 
-const DEFAULT_PERSISTED_RAW_INPUTS = createDefaultPersistedRawInputs();
+const DEFAULT_PERSISTED_FIELDS = createDefaultPersistedFields();
 
 const fieldState = createEmptyFieldState();
 type RuntimeFieldId = FieldId | PlannedSellYearFieldId;
@@ -104,10 +108,10 @@ let uiState: ModelUiState = {
   manualPropertyLiquidationOrder: false
 };
 
-interface PersistedScenarioSnapshotV1 {
-  version: 1;
+interface PersistedScenarioSnapshotV2 {
+  version: 2;
   savedAt: string;
-  rawInputs: RawInputs;
+  fields: FieldState;
   plannedSellYears?: Partial<Record<PlannedSellYearFieldId, number | null>>;
   ui: {
     majorFutureEventsOpen: boolean;
@@ -123,7 +127,7 @@ interface NamedScenarioRecordV1 {
   id: string;
   name: string;
   updatedAt: string;
-  snapshot: PersistedScenarioSnapshotV1;
+  snapshot: PersistedScenarioSnapshotV2;
 }
 
 interface ScenarioManagerNotice {
@@ -139,7 +143,7 @@ let selectedCurrency = DEFAULT_CURRENCY;
 let stepperHoldTimeout: number | null = null;
 let stepperHoldInterval: number | null = null;
 let stepperHoldListenersBound = false;
-let excelLoadBusy = false;
+let sampleDataLoadBusy = false;
 let latestValidationMessages: ValidationMessage[] = [];
 let validationRevealAll = false;
 const touchedCells = new Set<FieldId>();
@@ -484,12 +488,6 @@ interface TimelineMilestone {
 interface TimelineYearEvent {
   label: string;
   amount: number | null;
-}
-
-interface ExcelSpecimenPayload {
-  early_retirement_age?: number;
-  projection_month_override?: number | null;
-  raw_inputs?: Partial<Record<string, unknown>>;
 }
 
 const RETIREMENT_INDICATOR_PREFIX = "Earliest viable retirement:";
@@ -1179,12 +1177,10 @@ function setLivingExpensesMode(nextMode: LivingExpensesMode): void {
   queueRecalc();
 }
 
-function normalizePersistedRawInputs(raw: unknown): RawInputs {
-  const candidateFields = rawInputsToFieldState(
-    raw && typeof raw === "object"
-      ? raw as Partial<Record<string, RawInputValue>>
-      : {}
-  );
+function normalizePersistedFields(raw: unknown): FieldState {
+  const candidateFields = raw && typeof raw === "object"
+    ? raw as Partial<Record<string, RawInputValue>>
+    : {};
   const sanitizedFields = createEmptyFieldState();
   for (const def of INPUT_DEFINITIONS) {
     const value = candidateFields[def.fieldId];
@@ -1209,32 +1205,32 @@ function normalizePersistedRawInputs(raw: unknown): RawInputs {
       : null;
   }
   syncSpendingAdjustmentAgeFieldsForState(sanitizedFields);
-  return pruneInactiveRawInputs(fieldStateToRawInputs(sanitizedFields));
+  return pruneInactiveFieldState(sanitizedFields);
 }
 
-function normalizePersistedSnapshot(raw: unknown): PersistedScenarioSnapshotV1 | null {
+function normalizePersistedSnapshot(raw: unknown): PersistedScenarioSnapshotV2 | null {
   if (!raw || typeof raw !== "object") return null;
-  const candidate = raw as Partial<PersistedScenarioSnapshotV1>;
-  if (candidate.version !== 1) return null;
+  const candidate = raw as Partial<PersistedScenarioSnapshotV2>;
+  if (candidate.version !== 2) return null;
 
   const ui = candidate.ui && typeof candidate.ui === "object" ? candidate.ui : {};
   const livingExpenseValues = sanitizeLivingExpenseCategoryValues(
-    (ui as Partial<PersistedScenarioSnapshotV1["ui"]>).livingExpenseCategoryValues
+    (ui as Partial<PersistedScenarioSnapshotV2["ui"]>).livingExpenseCategoryValues
   );
 
   return {
-    version: 1,
+    version: 2,
     savedAt: typeof candidate.savedAt === "string" ? candidate.savedAt : new Date().toISOString(),
-    rawInputs: normalizePersistedRawInputs(candidate.rawInputs),
+    fields: normalizePersistedFields(candidate.fields),
     plannedSellYears: normalizePersistedPlannedSellYears(candidate.plannedSellYears),
     ui: {
-      majorFutureEventsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).majorFutureEventsOpen),
-      advancedAssumptionsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).advancedAssumptionsOpen),
-      earlyRetirementAge: Number((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).earlyRetirementAge),
-      selectedCurrency: isTopCurrency((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).selectedCurrency)
-        ? String((ui as Partial<PersistedScenarioSnapshotV1["ui"]>).selectedCurrency)
+      majorFutureEventsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV2["ui"]>).majorFutureEventsOpen),
+      advancedAssumptionsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV2["ui"]>).advancedAssumptionsOpen),
+      earlyRetirementAge: Number((ui as Partial<PersistedScenarioSnapshotV2["ui"]>).earlyRetirementAge),
+      selectedCurrency: isTopCurrency((ui as Partial<PersistedScenarioSnapshotV2["ui"]>).selectedCurrency)
+        ? String((ui as Partial<PersistedScenarioSnapshotV2["ui"]>).selectedCurrency)
         : DEFAULT_CURRENCY,
-      livingExpensesMode: (ui as Partial<PersistedScenarioSnapshotV1["ui"]>).livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(livingExpenseValues)
+      livingExpensesMode: (ui as Partial<PersistedScenarioSnapshotV2["ui"]>).livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(livingExpenseValues)
         ? "expanded"
         : "single",
       livingExpenseCategoryValues: livingExpenseValues
@@ -1242,11 +1238,11 @@ function normalizePersistedSnapshot(raw: unknown): PersistedScenarioSnapshotV1 |
   };
 }
 
-function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshotV1 {
+function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshotV2 {
   return {
-    version: 1,
+    version: 2,
     savedAt: new Date().toISOString(),
-    rawInputs: pruneInactiveRawInputs(fieldStateToRawInputs(fieldState)),
+    fields: pruneInactiveFieldState(fieldState),
     plannedSellYears: collectPlannedSellYearSnapshot(),
     ui: {
       majorFutureEventsOpen: sectionState.majorFutureEventsOpen,
@@ -1259,8 +1255,8 @@ function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshotV1 {
   };
 }
 
-function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshotV1): boolean {
-  if (INPUT_DEFINITIONS.some((def) => (snapshot.rawInputs[def.cell] ?? null) !== (DEFAULT_PERSISTED_RAW_INPUTS[def.cell] ?? null))) return true;
+function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshotV2): boolean {
+  if (INPUT_DEFINITIONS.some((def) => (snapshot.fields[def.fieldId] ?? null) !== (DEFAULT_PERSISTED_FIELDS[def.fieldId] ?? null))) return true;
   if (hasAnyPlannedSellYearState(snapshot.plannedSellYears)) return true;
   if (snapshot.ui.majorFutureEventsOpen || snapshot.ui.advancedAssumptionsOpen) return true;
   if (snapshot.ui.selectedCurrency !== DEFAULT_CURRENCY) return true;
@@ -1268,8 +1264,8 @@ function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshotV1): bool
   return false;
 }
 
-function snapshotHasSavableData(snapshot: PersistedScenarioSnapshotV1): boolean {
-  if (INPUT_DEFINITIONS.some((def) => (snapshot.rawInputs[def.cell] ?? null) !== (DEFAULT_PERSISTED_RAW_INPUTS[def.cell] ?? null))) return true;
+function snapshotHasSavableData(snapshot: PersistedScenarioSnapshotV2): boolean {
+  if (INPUT_DEFINITIONS.some((def) => (snapshot.fields[def.fieldId] ?? null) !== (DEFAULT_PERSISTED_FIELDS[def.fieldId] ?? null))) return true;
   if (hasAnyPlannedSellYearState(snapshot.plannedSellYears)) return true;
   if (snapshot.ui.selectedCurrency !== DEFAULT_CURRENCY) return true;
   if (snapshot.ui.livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(snapshot.ui.livingExpenseCategoryValues)) return true;
@@ -1284,11 +1280,11 @@ function syncScenarioActionButtonState(): void {
   if (clearButton) clearButton.disabled = !hasSavableScenarioData;
 }
 
-function readDraftScenarioSnapshot(): PersistedScenarioSnapshotV1 | null {
+function readDraftScenarioSnapshot(): PersistedScenarioSnapshotV2 | null {
   return normalizePersistedSnapshot(readScenarioStorageJson<unknown>(SCENARIO_DRAFT_STORAGE_KEY));
 }
 
-function writeDraftScenarioSnapshot(snapshot: PersistedScenarioSnapshotV1): void {
+function writeDraftScenarioSnapshot(snapshot: PersistedScenarioSnapshotV2): void {
   if (!scenarioStorageAvailable) return;
   if (!snapshotHasMeaningfulState(snapshot)) {
     removeScenarioStorageKey(SCENARIO_DRAFT_STORAGE_KEY);
@@ -1358,10 +1354,10 @@ function createScenarioId(): string {
 }
 
 function applyPersistedScenarioSnapshot(
-  snapshot: PersistedScenarioSnapshotV1,
+  snapshot: PersistedScenarioSnapshotV2,
   notice: { message: string; tone?: ScenarioManagerNotice["tone"] } | null = null
 ): void {
-  const restoredFields = rawInputsToFieldState(snapshot.rawInputs);
+  const restoredFields = snapshot.fields;
   syncSpendingAdjustmentAgeFieldsForState(restoredFields);
   for (const def of INPUT_DEFINITIONS) {
     fieldState[def.fieldId] = restoredFields[def.fieldId] ?? null;
@@ -1481,7 +1477,7 @@ function confirmAndLoadSampleData(): void {
     const shouldLoad = window.confirm("Load sample data and overwrite current inputs?");
     if (!shouldLoad) return;
   }
-  void loadInputsFromEtqExcelSnapshot();
+  void loadSampleDataScenario();
 }
 
 function restoreDraftScenarioIfAvailable(): boolean {
@@ -2936,7 +2932,7 @@ function renderDownsizingModeField(def: InputDefinition, label: string): string 
   const previewHtml = wrapDownsizingPreview(def.fieldId);
 
   return `
-    <div class="field field-choice-field" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+    <div class="field field-choice-field" data-field-id="${def.fieldId}">
       <div class="field-choice-row">
         <span class="field-choice-label">${label}</span>
         <div class="field-choice-toggle" role="group" aria-label="${escapeHtml(label)}">
@@ -2968,7 +2964,9 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
   const valStr = getRenderedFieldValue(def, value);
   const inputType = "text";
   const inputMode = def.type === "text" ? "text" : (def.type === "integer" ? "numeric" : "decimal");
-  const showTooltip = ![RUNTIME_FIELDS.currentAge, HOME_FIELDS.housingRentAnnual].includes(def.fieldId) && !!def.tooltip;
+  const showTooltip = def.fieldId !== RUNTIME_FIELDS.currentAge
+    && def.fieldId !== HOME_FIELDS.housingRentAnnual
+    && !!def.tooltip;
   const hasPrefix = fieldHasCurrencyAdornment(def);
   const hasSuffix = fieldHasPercentAdornment(def);
   const stepSize = STEPPER_CONFIG[def.fieldId];
@@ -2988,11 +2986,11 @@ function renderStandardFieldControl(def: InputDefinition, label: string): string
   const previewHtml = wrapDownsizingPreview(def.fieldId);
 
   return `
-    <div class="${fieldClass}" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+    <div class="${fieldClass}" data-field-id="${def.fieldId}">
       <span>${label}</span>
       <div class="${inputShellClass}">
         ${hasPrefix ? `<span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>` : ""}
-        <input data-cell="${def.cell}" data-field-id="${def.fieldId}" type="${inputType}" inputmode="${inputMode}" value="${valStr}" placeholder="" />
+        <input data-field-id="${def.fieldId}" type="${inputType}" inputmode="${inputMode}" value="${valStr}" placeholder="" />
         ${hasSuffix ? `<span class="input-suffix" aria-hidden="true">%</span>` : ""}
         ${hasStepper ? `
           <div class="field-stepper">
@@ -3036,10 +3034,9 @@ function renderPlannedSellYearField(fieldId: PlannedSellYearFieldId): string {
 function renderEmbeddedAgeInput(def: InputDefinition, ariaLabel: string, value: RawInputValue = fieldState[def.fieldId]): string {
   const valStr = getRenderedFieldValue(def, value);
   return `
-    <span class="embedded-field spending-adjustment-age-field input-shell has-stepper" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+    <span class="embedded-field spending-adjustment-age-field input-shell has-stepper" data-field-id="${def.fieldId}">
       <input
         class="spending-adjustment-age-input"
-        data-cell="${def.cell}"
         data-field-id="${def.fieldId}"
         type="text"
         inputmode="numeric"
@@ -3071,7 +3068,7 @@ function renderSpendingAdjustmentsControl(): string {
   return `
     <div class="spending-adjustments-compact" role="group" aria-label="Spending changes by age">
       <small class="spending-adjustments-helper">Each change is applied relative to your current spending.</small>
-      <div class="field spending-adjustment-row" data-cell="${firstDef.cell}" data-field-id="${firstDef.fieldId}">
+      <div class="field spending-adjustment-row" data-field-id="${firstDef.fieldId}">
         <div class="spending-adjustment-row-main">
           <div class="spending-adjustment-label">
             <span class="spending-adjustment-prefix">From</span>
@@ -3080,7 +3077,7 @@ function renderSpendingAdjustmentsControl(): string {
             ${renderEmbeddedAgeInput(age1Def, "First spending bracket end age", age1)}
           </div>
           <div class="input-shell has-stepper spending-adjustment-value-shell">
-            <input data-cell="${firstDef.cell}" data-field-id="${firstDef.fieldId}" type="text" inputmode="numeric" value="${firstValue}" aria-label="Spending adjustment up to first end age" />
+            <input data-field-id="${firstDef.fieldId}" type="text" inputmode="numeric" value="${firstValue}" aria-label="Spending adjustment up to first end age" />
             <div class="field-stepper">
               <button type="button" class="field-step-btn" data-field-id="${firstDef.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease spending adjustment for ages up to ${age1}">-</button>
               <button type="button" class="field-step-btn" data-field-id="${firstDef.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase spending adjustment for ages up to ${age1}">+</button>
@@ -3088,7 +3085,7 @@ function renderSpendingAdjustmentsControl(): string {
           </div>
         </div>
       </div>
-      <div class="field spending-adjustment-row" data-cell="${secondDef.cell}" data-field-id="${secondDef.fieldId}">
+      <div class="field spending-adjustment-row" data-field-id="${secondDef.fieldId}">
         <div class="spending-adjustment-row-main">
           <div class="spending-adjustment-label">
             <span class="spending-adjustment-prefix">From</span>
@@ -3097,7 +3094,7 @@ function renderSpendingAdjustmentsControl(): string {
             ${renderEmbeddedAgeInput(age2Def, "Second spending bracket end age", age2)}
           </div>
           <div class="input-shell has-stepper spending-adjustment-value-shell">
-            <input data-cell="${secondDef.cell}" data-field-id="${secondDef.fieldId}" type="text" inputmode="numeric" value="${secondValue}" aria-label="Spending adjustment for middle age band" />
+            <input data-field-id="${secondDef.fieldId}" type="text" inputmode="numeric" value="${secondValue}" aria-label="Spending adjustment for middle age band" />
             <div class="field-stepper">
               <button type="button" class="field-step-btn" data-field-id="${secondDef.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease spending adjustment from age ${secondStartAge} to ${age2}">-</button>
               <button type="button" class="field-step-btn" data-field-id="${secondDef.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase spending adjustment from age ${secondStartAge} to ${age2}">+</button>
@@ -3105,7 +3102,7 @@ function renderSpendingAdjustmentsControl(): string {
           </div>
         </div>
       </div>
-      <div class="field spending-adjustment-row" data-cell="${finalDef.cell}" data-field-id="${finalDef.fieldId}">
+      <div class="field spending-adjustment-row" data-field-id="${finalDef.fieldId}">
         <div class="spending-adjustment-row-main">
           <div class="spending-adjustment-label">
             <span class="spending-adjustment-prefix">From</span>
@@ -3113,7 +3110,7 @@ function renderSpendingAdjustmentsControl(): string {
             <span class="spending-adjustment-connector">onward</span>
           </div>
           <div class="input-shell has-stepper spending-adjustment-value-shell">
-            <input data-cell="${finalDef.cell}" data-field-id="${finalDef.fieldId}" type="text" inputmode="numeric" value="${finalValue}" aria-label="Spending adjustment from final age band onward" />
+            <input data-field-id="${finalDef.fieldId}" type="text" inputmode="numeric" value="${finalValue}" aria-label="Spending adjustment from final age band onward" />
             <div class="field-stepper">
               <button type="button" class="field-step-btn" data-field-id="${finalDef.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease spending adjustment from age ${finalStartAge} onward">-</button>
               <button type="button" class="field-step-btn" data-field-id="${finalDef.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase spending adjustment from age ${finalStartAge} onward">+</button>
@@ -3130,10 +3127,9 @@ function renderGroupHeaderNameInput(fieldId: FieldId, placeholder: string): stri
   const value = fieldState[fieldId];
   const valStr = getRenderedFieldValue(def, value);
   return `
-    <div class="group-item-card-name-wrap" data-cell="${def.cell}" data-field-id="${fieldId}">
+    <div class="group-item-card-name-wrap" data-field-id="${fieldId}">
       <input
         class="group-item-card-name-input"
-        data-cell="${def.cell}"
         data-field-id="${fieldId}"
         type="text"
         inputmode="text"
@@ -3240,11 +3236,11 @@ function renderLivingExpensesField(def: InputDefinition, label: string): string 
     const valStr = getRenderedFieldValue(def, value);
     return `
       <div class="living-expenses-wrap">
-        <div class="field living-expenses-field living-expenses-field--simple" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+        <div class="field living-expenses-field living-expenses-field--simple" data-field-id="${def.fieldId}">
           ${topRowHtml}
           <div class="input-shell has-prefix has-stepper">
             <span class="input-prefix" aria-hidden="true">${escapeHtml(currentCurrencySymbol())}</span>
-            <input data-cell="${def.cell}" data-field-id="${def.fieldId}" type="text" inputmode="decimal" value="${valStr}" placeholder="" />
+            <input data-field-id="${def.fieldId}" type="text" inputmode="decimal" value="${valStr}" placeholder="" />
             <div class="field-stepper">
               <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="-1" tabindex="-1" aria-label="Decrease ${escapeHtml(label)}">-</button>
               <button type="button" class="field-step-btn" data-field-id="${def.fieldId}" data-step-dir="1" tabindex="-1" aria-label="Increase ${escapeHtml(label)}">+</button>
@@ -3277,7 +3273,7 @@ function renderLivingExpensesField(def: InputDefinition, label: string): string 
   }).join("");
 
   return `
-    <div class="field living-expenses-field living-expenses-field--expanded" data-cell="${def.cell}" data-field-id="${def.fieldId}">
+    <div class="field living-expenses-field living-expenses-field--expanded" data-field-id="${def.fieldId}">
       ${topRowHtml}
       <div class="living-expenses-expanded-panel">
         <div class="input-shell has-prefix living-expenses-derived-shell">
@@ -3598,16 +3594,15 @@ function renderPropertyLiquidationOrderControl(): string {
   `;
 }
 
-async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
-  if (excelLoadBusy) return;
-  excelLoadBusy = true;
+async function loadSampleDataScenario(): Promise<void> {
+  if (sampleDataLoadBusy) return;
+  sampleDataLoadBusy = true;
   validationRevealAll = false;
   clearTouchedFields();
   clearAllAttemptedFieldMessages();
   renderInputs();
   try {
-    const payload = EXCEL_BASELINE_SPECIMEN as unknown as ExcelSpecimenPayload;
-    const incoming = payload.raw_inputs ?? {};
+    const incoming = createSampleDataFieldState();
 
     for (const def of INPUT_DEFINITIONS) {
       fieldState[def.fieldId] = null;
@@ -3616,9 +3611,8 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
     resetLivingExpensesHelperState();
 
     for (const def of INPUT_DEFINITIONS) {
-      const cell = def.cell;
-      if (!(cell in incoming)) continue;
-      const nextRaw = incoming[cell];
+      if (!(def.fieldId in incoming)) continue;
+      const nextRaw = incoming[def.fieldId];
       if (nextRaw === null || nextRaw === undefined || String(nextRaw).trim() === "") {
         fieldState[def.fieldId] = null;
         continue;
@@ -3639,24 +3633,19 @@ async function loadInputsFromEtqExcelSnapshot(): Promise<void> {
     uiState.manualPropertyLiquidationOrder = hasExplicitPropertyLiquidationPreferences(fieldState);
 
     const statutory = getStatutoryAge();
-    const parityEarlyRetirementAge = Number(payload.early_retirement_age);
-    uiState.earlyRetirementAge = Number.isFinite(parityEarlyRetirementAge)
-      ? Math.round(parityEarlyRetirementAge)
+    uiState.earlyRetirementAge = Number.isFinite(SAMPLE_DATA_EARLY_RETIREMENT_AGE)
+      ? Math.round(SAMPLE_DATA_EARLY_RETIREMENT_AGE)
       : (statutory ?? uiState.earlyRetirementAge);
-    const projectionMonthOverride = payload.projection_month_override;
-    uiState.projectionMonthOverride =
-      typeof projectionMonthOverride === "number" && Number.isFinite(projectionMonthOverride)
-        ? Math.round(projectionMonthOverride)
-        : null;
+    uiState.projectionMonthOverride = SAMPLE_DATA_PROJECTION_MONTH_OVERRIDE;
     setRetireCheckMessage(null);
     syncEarlyRetirementControl(true);
     renderInputs();
     queueRecalc();
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to load ETQ workbook snapshot";
+    const message = error instanceof Error ? error.message : "Unable to load sample data";
     window.alert(message);
   } finally {
-    excelLoadBusy = false;
+    sampleDataLoadBusy = false;
     renderInputs();
   }
 }

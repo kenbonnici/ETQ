@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { pruneInactiveFieldState } from "../../src/model/activation";
-import { createEmptyFieldState } from "../../src/model/excelAdapter";
+import { createEmptyFieldState } from "../../src/model/inputSchema";
 import { DOWNSIZING_FIELDS, HOME_FIELDS, RUNTIME_FIELDS } from "../../src/ui/runtimeFields";
 
 test("invalid downsizing years prune dependent downsizing inputs before calculation", () => {

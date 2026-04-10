@@ -8,12 +8,12 @@
     "build": "vite build",
     "preview": "vite preview",
     "test": "npm run test:runtime && npm run test:ui",
-    "test:integrity": "node --import tsx --test specs/runtime/integrity.test.ts",
+    "test:golden": "node --import tsx --test specs/runtime/golden.test.ts",
+    "test:invariants": "node --import tsx --test specs/runtime/invariants.test.ts",
     "test:runtime": "node --import tsx --test specs/runtime/*.test.ts",
+    "test:update-snapshots": "node --import tsx specs/runtime/golden/updateSnapshots.ts",
     "test:ui": "playwright test",
-    "typecheck": "tsc --noEmit",
-    "parity": "tsx src/parity-main.ts",
-    "parity:live": "python3 specs/excel_prototype/analysis/extract_live_workbook.py && tsx src/parity-live-main.ts"
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@playwright/test": "^1.58.2",

@@ -1,19 +1,18 @@
 ETQ Codex Operating Rules
 
 Purpose
-Defines how Codex must operate when executing changes.
+Defines how Codex must operate when executing changes in this repository.
 This is a mandatory rules layer.
 
 --------------------------------------------------
 PROJECT CONTEXT
 --------------------------------------------------
 
-ETQ is a deterministic Excel parity financial model implemented as a plain TypeScript DOM application.
+ETQ is a deterministic retirement-planning web application implemented as a plain TypeScript DOM app.
 
-It must behave identically to the Excel model.
+The webapp is the source of truth.
 
-Core principle
-Preserve Excel parity at all times unless explicitly instructed otherwise.
+Do not treat Excel, extracted workbook artifacts, or historical parity tooling as verification targets.
 
 --------------------------------------------------
 DEFAULT BEHAVIOUR
@@ -22,13 +21,16 @@ DEFAULT BEHAVIOUR
 Approach
 - Make minimal, targeted changes only
 - Do not refactor broadly unless explicitly instructed
-- Do not introduce new architecture or abstractions
+- Do not introduce new architecture or abstractions unless the task requires it
 
 Scope discipline
 Work only within the required layer:
-- UI (rendering, layout, interaction)
+- UI rendering and interaction
+- UI state and persistence
 - Activation / visibility rules
-- Normalisation
+- Validation
+- Normalization
+- Projection timing
 - Model / calculation engine
 
 Do not cross layers unless necessary.
@@ -39,91 +41,76 @@ Technology constraints
 - No frameworks
 - No React, Vue, or component libraries
 
---------------------------------------------------
-MANDATORY GIT WORKFLOW
---------------------------------------------------
-
-Before making any change:
-
-1. Stage all current changes
-   git add -A
-
-2. Create checkpoint commit
-   git commit -m "checkpoint before <short description>"
-
-This step is mandatory and must never be skipped.
-
-- Work on main branch only
-- Do not create branches unless explicitly instructed
+Large-file constraint
+- `src/main.ts` is intentionally large
+- Do not propose framework migration or broad componentization as incidental cleanup
 
 --------------------------------------------------
-EXCEL PARITY RULES (CRITICAL)
+CORE INVARIANTS
 --------------------------------------------------
 
 Must always preserve:
-
-- Field ID to Excel cell mapping integrity
-- Blank inputs treated as zero (unless explicitly designed otherwise)
-- Pruning of inactive fields before calculations
-- Correct ordering of operations
-- Timing logic (year start, age progression)
-- Projection start: next year and next age
+- Deterministic model outputs for a given input set
+- Pipeline ordering:
+  activation -> validate -> normalize -> timing -> engine
+- Pruning of inactive fields before downstream calculation
+- Timing logic, including first-year prorating and month offsets
+- Projection axis behavior as implemented in the webapp
 - Default liquidation order:
-  sell cheapest assets first unless user overrides
+  sell cheapest eligible assets first unless the user overrides
+- Liquidation rank `0` means excluded from staged liquidation
 
 Never introduce:
-
-- Rounding drift
-- Hidden assumptions not present in Excel
-- Changes to calculation sequencing
+- Hidden sequencing changes
+- Silent behavioural drift
+- Incidental scope creep
 
 --------------------------------------------------
-HIGH RISK AREAS
+HIGH-RISK AREAS
 --------------------------------------------------
 
 Changes here require extra caution:
-
-- excelAdapter.ts
-- normalization.ts
-- runScenario.ts
+- `src/model/index.ts`
+- `src/model/activation.ts`
+- `src/model/validate.ts`
+- `src/model/normalization.ts`
+- `src/model/projectionTiming.ts`
 - liquidation logic
 - timing logic
 - dependency / activation rules
 
 If modifying any of the above:
 - proceed conservatively
-- ensure full validation is run
+- preserve pipeline order
+- run the full required checks before concluding the change
 
 --------------------------------------------------
-REGRESSION TESTING POLICY
+TESTING AND VERIFICATION
 --------------------------------------------------
 
-After every code change, always run:
+Current baseline checks
+After code changes, run:
 
 1. Type check
-   npm run typecheck
+   `npm run typecheck`
 
 2. Build
-   npm run build
+   `npm run build`
 
-3. Parity tests
-   npm run parity
+3. Test suite
+   `npm test`
 
-Additionally, run:
+4. Golden snapshots when model behaviour changes
+   `npm run test:golden`
 
-   npm run parity:live
+Change-complete rule
+- A change is not complete unless the required checks pass
 
-At the following checkpoints:
-
-- Before any commit
-- After changes affecting:
-  - model math
-  - timing or order of operations
-  - liquidation logic
-  - input mapping
-- Whenever specs/ETQ.xlsx changes
-
-A change is not complete unless all checks pass.
+Golden drift detection
+- The standalone golden snapshot suite is the long-term drift detector for model behaviour
+- Treat snapshot updates as deliberate changes, never background churn
+- Use `npm run test:update-snapshots` only after deliberate logic changes
+- Review snapshot diffs carefully and commit them alongside the logic change that caused them
 
 --------------------------------------------------
 PROMPT INTERPRETATION
@@ -136,18 +123,18 @@ Assume prompts are minimal and outcome-focused.
 - Do not expand scope beyond the request
 
 If ambiguity exists:
-prioritise safety, minimal impact, and parity preservation
+prioritise safety, minimal impact, and preserving current webapp behaviour
 
 --------------------------------------------------
 UI AND UX RULES
 --------------------------------------------------
 
-- Maintain clean, minimal UI
-- Avoid spreadsheet-like clutter unless required
+- Maintain a clean, minimal UI
+- Avoid clutter
 - Prefer clarity over density
 
 When modifying UI:
-- Do not alter underlying calculation logic
+- Do not alter underlying calculation logic unless the task explicitly calls for it
 
 --------------------------------------------------
 CHANGE MANAGEMENT PRINCIPLES
@@ -159,30 +146,28 @@ Prefer:
 - Reversible changes
 
 Avoid:
-- Wide refactors
-- File structure changes
-- Renaming core identifiers unless required
+- Wide refactors without approval
+- File-structure churn without need
+- Renaming stable core identifiers unless required by the task
 
 --------------------------------------------------
 OUTPUT EXPECTATION
 --------------------------------------------------
 
 All changes must:
-
 - Compile cleanly
-- Pass all parity checks
+- Pass the required checks
 - Maintain deterministic outputs
-- Match Excel behaviour exactly
+- Preserve current webapp behaviour unless the task explicitly changes it
 
 --------------------------------------------------
 FAILSAFE
 --------------------------------------------------
 
-If a change risks breaking parity or core logic:
-
+If a change risks breaking core logic or pipeline sequencing:
 - Do not proceed blindly
 - Implement the safest minimal version
-- Preserve existing behaviour
+- Surface the risk clearly
 
 --------------------------------------------------
 OPTIONAL GUARDRAIL

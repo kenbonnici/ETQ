@@ -1,8 +1,0 @@
-Scenario: excel_specimen
-Overall pass: true
-Global max abs delta: 6.51925802230835e-9
-First divergence: none
-cashSeriesEarly: pass=true compared=37 maxAbsDelta=7.712515071034431e-10
-cashSeriesNorm: pass=true compared=37 maxAbsDelta=3.259629011154175e-9
-netWorthSeriesEarly: pass=true compared=37 maxAbsDelta=6.51925802230835e-9
-netWorthSeriesNorm: pass=true compared=37 maxAbsDelta=4.6566128730773926e-9

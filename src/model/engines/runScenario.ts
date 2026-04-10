@@ -295,7 +295,7 @@ export function runScenario(
 
   const pensionReduction = computePensionReduction(inputs, config.retirementAge);
 
-  // Excel repayment schedules are based on fixed initial NPER horizons.
+  // Repayment schedules are based on fixed initial NPER horizons.
   const homeMonthsTotal = nperMonths(
     inputs.homeLoanBalance,
     inputs.homeLoanRate,

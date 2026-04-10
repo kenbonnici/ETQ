@@ -1,5 +1,6 @@
 import { InputDefinition, INPUT_DEFINITIONS, INPUT_SECTION_ORDER } from "../ui/inputDefinitions";
-import { FIELD_ID_TO_CELL, FieldId, InputCell } from "./fieldRegistry";
+import { FieldId } from "./fieldRegistry";
+import { FieldState, RawInputValue } from "./types";
 
 export type { InputDefinition };
 export { INPUT_DEFINITIONS, INPUT_SECTION_ORDER };
@@ -8,13 +9,6 @@ export type ValidationSeverity = "error" | "warning";
 
 export interface ValidationMessage {
   fieldId: FieldId;
-  severity: ValidationSeverity;
-  message: string;
-  blocksProjection: boolean;
-}
-
-export interface RawValidationMessage {
-  cell: InputCell;
   severity: ValidationSeverity;
   message: string;
   blocksProjection: boolean;
@@ -41,12 +35,6 @@ type DependentGroup = {
   yearsField: FieldId;
 };
 
-type DependentGroupByCell = {
-  nameCell: InputCell;
-  annualCostCell: InputCell;
-  yearsCell: InputCell;
-};
-
 type PropertyGroup = {
   nameField: FieldId;
   valueField: FieldId;
@@ -56,17 +44,6 @@ type PropertyGroup = {
   loanRateField: FieldId;
   loanRepaymentField: FieldId;
   liquidationRankField: FieldId;
-};
-
-type PropertyGroupByCell = {
-  nameCell: InputCell;
-  valueCell: InputCell;
-  annualCostsCell: InputCell;
-  rentalIncomeCell: InputCell;
-  loanBalanceCell: InputCell;
-  loanRateCell: InputCell;
-  loanRepaymentCell: InputCell;
-  liquidationRankCell: InputCell;
 };
 
 type AssetOfValueGroup = {
@@ -79,38 +56,16 @@ type AssetOfValueGroup = {
   liquidationRankField: FieldId;
 };
 
-type AssetOfValueGroupByCell = {
-  nameCell: InputCell;
-  valueCell: InputCell;
-  appreciationRateCell: InputCell;
-  loanBalanceCell: InputCell;
-  loanRateCell: InputCell;
-  loanRepaymentCell: InputCell;
-  liquidationRankCell: InputCell;
-};
-
 type EventGroup = {
   nameField: FieldId;
   amountField: FieldId;
   yearField: FieldId;
 };
 
-type EventGroupByCell = {
-  nameCell: InputCell;
-  amountCell: InputCell;
-  yearCell: InputCell;
-};
-
 type StockMarketCrashGroup = {
   yearField: FieldId;
   dropField: FieldId;
   recoveryField: FieldId;
-};
-
-type StockMarketCrashGroupByCell = {
-  yearCell: InputCell;
-  dropCell: InputCell;
-  recoveryCell: InputCell;
 };
 
 type HomeLoanGroup = {
@@ -121,14 +76,6 @@ type HomeLoanGroup = {
   repaymentField: FieldId;
 };
 
-type HomeLoanGroupByCell = {
-  homeValueCell: InputCell;
-  rentCell: InputCell;
-  balanceCell: InputCell;
-  rateCell: InputCell;
-  repaymentCell: InputCell;
-};
-
 type DownsizingGroup = {
   yearField: FieldId;
   modeField: FieldId;
@@ -136,21 +83,9 @@ type DownsizingGroup = {
   rentField: FieldId;
 };
 
-type DownsizingGroupByCell = {
-  yearCell: InputCell;
-  modeCell: InputCell;
-  purchaseCostCell: InputCell;
-  rentCell: InputCell;
-};
-
 type OtherWorkGroup = {
   incomeField: FieldId;
   untilAgeField: FieldId;
-};
-
-type OtherWorkGroupByCell = {
-  incomeCell: InputCell;
-  untilAgeCell: InputCell;
 };
 
 type OtherLoanGroup = {
@@ -159,128 +94,11 @@ type OtherLoanGroup = {
   repaymentField: FieldId;
 };
 
-type OtherLoanGroupByCell = {
-  balanceCell: InputCell;
-  rateCell: InputCell;
-  repaymentCell: InputCell;
-};
-
 type PostRetirementIncomeGroup = {
   amountField: FieldId;
   fromAgeField: FieldId;
   toAgeField: FieldId;
 };
-
-type PostRetirementIncomeGroupByCell = {
-  amountCell: InputCell;
-  fromAgeCell: InputCell;
-  toAgeCell: InputCell;
-};
-
-function mapFieldRecordToCells<T>(record: Partial<Record<FieldId, T>>): Partial<Record<InputCell, T>> {
-  return Object.fromEntries(
-    Object.entries(record).map(([fieldId, value]) => [FIELD_ID_TO_CELL[fieldId as FieldId], value])
-  ) as Partial<Record<InputCell, T>>;
-}
-
-function mapFieldListToCells<const T extends readonly FieldId[]>(fields: T): { readonly [K in keyof T]: InputCell } {
-  return fields.map((fieldId) => FIELD_ID_TO_CELL[fieldId]) as { readonly [K in keyof T]: InputCell };
-}
-
-function dependentGroupToCells(group: DependentGroup): DependentGroupByCell {
-  return {
-    nameCell: FIELD_ID_TO_CELL[group.nameField],
-    annualCostCell: FIELD_ID_TO_CELL[group.annualCostField],
-    yearsCell: FIELD_ID_TO_CELL[group.yearsField]
-  };
-}
-
-function propertyGroupToCells(group: PropertyGroup): PropertyGroupByCell {
-  return {
-    nameCell: FIELD_ID_TO_CELL[group.nameField],
-    valueCell: FIELD_ID_TO_CELL[group.valueField],
-    annualCostsCell: FIELD_ID_TO_CELL[group.annualCostsField],
-    rentalIncomeCell: FIELD_ID_TO_CELL[group.rentalIncomeField],
-    loanBalanceCell: FIELD_ID_TO_CELL[group.loanBalanceField],
-    loanRateCell: FIELD_ID_TO_CELL[group.loanRateField],
-    loanRepaymentCell: FIELD_ID_TO_CELL[group.loanRepaymentField],
-    liquidationRankCell: FIELD_ID_TO_CELL[group.liquidationRankField]
-  };
-}
-
-function assetOfValueGroupToCells(group: AssetOfValueGroup): AssetOfValueGroupByCell {
-  return {
-    nameCell: FIELD_ID_TO_CELL[group.nameField],
-    valueCell: FIELD_ID_TO_CELL[group.valueField],
-    appreciationRateCell: FIELD_ID_TO_CELL[group.appreciationRateField],
-    loanBalanceCell: FIELD_ID_TO_CELL[group.loanBalanceField],
-    loanRateCell: FIELD_ID_TO_CELL[group.loanRateField],
-    loanRepaymentCell: FIELD_ID_TO_CELL[group.loanRepaymentField],
-    liquidationRankCell: FIELD_ID_TO_CELL[group.liquidationRankField]
-  };
-}
-
-function eventGroupToCells(group: EventGroup): EventGroupByCell {
-  return {
-    nameCell: FIELD_ID_TO_CELL[group.nameField],
-    amountCell: FIELD_ID_TO_CELL[group.amountField],
-    yearCell: FIELD_ID_TO_CELL[group.yearField]
-  };
-}
-
-function stockMarketCrashGroupToCells(group: StockMarketCrashGroup): StockMarketCrashGroupByCell {
-  return {
-    yearCell: FIELD_ID_TO_CELL[group.yearField],
-    dropCell: FIELD_ID_TO_CELL[group.dropField],
-    recoveryCell: FIELD_ID_TO_CELL[group.recoveryField]
-  };
-}
-
-function homeLoanGroupToCells(group: HomeLoanGroup): HomeLoanGroupByCell {
-  return {
-    homeValueCell: FIELD_ID_TO_CELL[group.homeValueField],
-    rentCell: FIELD_ID_TO_CELL[group.rentField],
-    balanceCell: FIELD_ID_TO_CELL[group.balanceField],
-    rateCell: FIELD_ID_TO_CELL[group.rateField],
-    repaymentCell: FIELD_ID_TO_CELL[group.repaymentField]
-  };
-}
-
-function downsizingGroupToCells(group: DownsizingGroup): DownsizingGroupByCell {
-  return {
-    yearCell: FIELD_ID_TO_CELL[group.yearField],
-    modeCell: FIELD_ID_TO_CELL[group.modeField],
-    purchaseCostCell: FIELD_ID_TO_CELL[group.purchaseCostField],
-    rentCell: FIELD_ID_TO_CELL[group.rentField]
-  };
-}
-
-function otherWorkGroupToCells(group: OtherWorkGroup): OtherWorkGroupByCell {
-  return {
-    incomeCell: FIELD_ID_TO_CELL[group.incomeField],
-    untilAgeCell: FIELD_ID_TO_CELL[group.untilAgeField]
-  };
-}
-
-function otherLoanGroupToCells(group: OtherLoanGroup): OtherLoanGroupByCell {
-  return {
-    balanceCell: FIELD_ID_TO_CELL[group.balanceField],
-    rateCell: FIELD_ID_TO_CELL[group.rateField],
-    repaymentCell: FIELD_ID_TO_CELL[group.repaymentField]
-  };
-}
-
-function postRetirementIncomeGroupToCells(group: PostRetirementIncomeGroup): PostRetirementIncomeGroupByCell {
-  return {
-    amountCell: FIELD_ID_TO_CELL[group.amountField],
-    fromAgeCell: FIELD_ID_TO_CELL[group.fromAgeField],
-    toAgeCell: FIELD_ID_TO_CELL[group.toAgeField]
-  };
-}
-
-export const INPUT_DEFINITION_BY_CELL: Record<InputCell, InputDefinition> = Object.fromEntries(
-  INPUT_DEFINITIONS.map((def) => [def.cell, def])
-) as Record<InputCell, InputDefinition>;
 
 export const INPUT_DEFINITION_BY_FIELD_ID: Record<FieldId, InputDefinition> = Object.fromEntries(
   INPUT_DEFINITIONS.map((def) => [def.fieldId, def])
@@ -290,20 +108,28 @@ export function getFieldLabel(fieldId: FieldId): string {
   return INPUT_DEFINITION_BY_FIELD_ID[fieldId]?.label ?? fieldId;
 }
 
-export const ALL_INPUT_CELLS: InputCell[] = INPUT_DEFINITIONS.map((def) => def.cell);
-export const ALL_FIELD_IDS: FieldId[] = INPUT_DEFINITIONS.map((def) => def.fieldId);
+export function getDefaultFieldValue(fieldId: FieldId): RawInputValue {
+  if (fieldId === "spending.adjustments.firstBracket.endAge") return 65;
+  if (fieldId === "spending.adjustments.secondBracket.endAge") return 75;
+  if (fieldId === "spending.adjustments.firstBracket.deltaRate") return 0;
+  if (fieldId === "spending.adjustments.secondBracket.deltaRate") return -0.1;
+  if (fieldId === "spending.adjustments.finalBracket.deltaRate") return -0.2;
+  return null;
+}
 
-export const MAJOR_FUTURE_EVENTS_CELLS: InputCell[] = INPUT_DEFINITIONS
-  .filter((def) => def.section === "Major Future Events")
-  .map((def) => def.cell);
+export function createEmptyFieldState(): FieldState {
+  const state: FieldState = {};
+  for (const def of INPUT_DEFINITIONS) {
+    state[def.fieldId] = getDefaultFieldValue(def.fieldId);
+  }
+  return state;
+}
+
+export const ALL_FIELD_IDS: FieldId[] = INPUT_DEFINITIONS.map((def) => def.fieldId);
 
 export const MAJOR_FUTURE_EVENTS_FIELDS: FieldId[] = INPUT_DEFINITIONS
   .filter((def) => def.section === "Major Future Events")
   .map((def) => def.fieldId);
-
-export const ADVANCED_ASSUMPTIONS_CELLS: InputCell[] = INPUT_DEFINITIONS
-  .filter((def) => def.section === "Advanced Assumptions")
-  .map((def) => def.cell);
 
 export const ADVANCED_ASSUMPTIONS_FIELDS: FieldId[] = INPUT_DEFINITIONS
   .filter((def) => def.section === "Advanced Assumptions")
@@ -518,24 +344,16 @@ for (const fieldId of NUMBER_AMOUNT_FIELDS) {
   };
 }
 
-export const FIELD_VALIDATION_RULES_BY_CELL = mapFieldRecordToCells(FIELD_VALIDATION_RULES);
-
 export const COERCED_NUMERIC_BOUNDS: Partial<Record<FieldId, NumericConstraint>> = Object.fromEntries(
   Object.entries(FIELD_VALIDATION_RULES)
     .filter(([, rule]) => rule?.clampBounds)
     .map(([fieldId, rule]) => [fieldId, rule?.clampBounds])
 ) as Partial<Record<FieldId, NumericConstraint>>;
 
-export const COERCED_NUMERIC_BOUNDS_BY_CELL = mapFieldRecordToCells(COERCED_NUMERIC_BOUNDS);
-
 export const ALLOW_NEGATIVE_FIELDS = new Set<FieldId>(
   (Object.entries(FIELD_VALIDATION_RULES) as Array<[FieldId, FieldValidationRule]>)
     .filter(([, rule]) => rule.allowNegative)
     .map(([fieldId]) => fieldId)
-);
-
-export const ALLOW_NEGATIVE_INPUT_CELLS = new Set<InputCell>(
-  [...ALLOW_NEGATIVE_FIELDS].map((fieldId) => FIELD_ID_TO_CELL[fieldId])
 );
 
 export const REQUIRED_CORE_FIELDS = [
@@ -545,17 +363,13 @@ export const REQUIRED_CORE_FIELDS = [
   "planning.lifeExpectancyAge"
 ] as const satisfies readonly FieldId[];
 
-export const REQUIRED_CORE_CELLS = mapFieldListToCells(REQUIRED_CORE_FIELDS);
-
 export const PROJECTION_GATE_FIELDS = [
   "profile.currentAge",
   "retirement.statutoryAge",
   "planning.lifeExpectancyAge"
 ] as const satisfies readonly FieldId[];
 
-export const PROJECTION_GATE_CELLS = mapFieldListToCells(PROJECTION_GATE_FIELDS);
 export const SKIP_REVEAL_CRITICAL_FIELDS = PROJECTION_GATE_FIELDS;
-export const SKIP_REVEAL_CRITICAL_CELLS = PROJECTION_GATE_CELLS;
 
 export const LIQUIDATION_RANK_FIELDS = [
   "properties.01.liquidationPriority",
@@ -569,8 +383,6 @@ export const LIQUIDATION_RANK_FIELDS = [
   "assetsOfValue.04.liquidationPriority",
   "assetsOfValue.05.liquidationPriority"
 ] as const satisfies readonly FieldId[];
-
-export const LIQUIDATION_RANK_CELLS = mapFieldListToCells(LIQUIDATION_RANK_FIELDS);
 
 export const DEPENDENT_GROUPS = [
   {
@@ -599,8 +411,6 @@ export const DEPENDENT_GROUPS = [
     yearsField: "dependents.05.supportYearsRemaining"
   }
 ] as Array<DependentGroup>;
-
-export const DEPENDENT_GROUPS_BY_CELL = DEPENDENT_GROUPS.map(dependentGroupToCells) as Array<DependentGroupByCell>;
 
 export const PROPERTY_GROUPS = [
   {
@@ -655,8 +465,6 @@ export const PROPERTY_GROUPS = [
   }
 ] as Array<PropertyGroup>;
 
-export const PROPERTY_GROUPS_BY_CELL = PROPERTY_GROUPS.map(propertyGroupToCells) as Array<PropertyGroupByCell>;
-
 export const ASSET_OF_VALUE_GROUPS = [
   {
     nameField: "assetsOfValue.01.displayName",
@@ -705,8 +513,6 @@ export const ASSET_OF_VALUE_GROUPS = [
   }
 ] as Array<AssetOfValueGroup>;
 
-export const ASSET_OF_VALUE_GROUPS_BY_CELL = ASSET_OF_VALUE_GROUPS.map(assetOfValueGroupToCells) as Array<AssetOfValueGroupByCell>;
-
 export const INCOME_EVENT_GROUPS = [
   {
     nameField: "cashflowEvents.income.01.name",
@@ -725,8 +531,6 @@ export const INCOME_EVENT_GROUPS = [
   }
 ] as Array<EventGroup>;
 
-export const INCOME_EVENT_GROUPS_BY_CELL = INCOME_EVENT_GROUPS.map(eventGroupToCells) as Array<EventGroupByCell>;
-
 export const EXPENSE_EVENT_GROUPS = [
   {
     nameField: "cashflowEvents.expense.01.name",
@@ -744,8 +548,6 @@ export const EXPENSE_EVENT_GROUPS = [
     yearField: "cashflowEvents.expense.03.year"
   }
 ] as Array<EventGroup>;
-
-export const EXPENSE_EVENT_GROUPS_BY_CELL = EXPENSE_EVENT_GROUPS.map(eventGroupToCells) as Array<EventGroupByCell>;
 
 export const STOCK_MARKET_CRASH_GROUPS = [
   {
@@ -775,10 +577,6 @@ export const STOCK_MARKET_CRASH_GROUPS = [
   }
 ] as Array<StockMarketCrashGroup>;
 
-export const STOCK_MARKET_CRASH_GROUPS_BY_CELL = STOCK_MARKET_CRASH_GROUPS.map(
-  stockMarketCrashGroupToCells
-) as Array<StockMarketCrashGroupByCell>;
-
 export const HOME_LOAN_GROUP = {
   homeValueField: "housing.01Residence.marketValue",
   rentField: "housing.rentAnnual",
@@ -787,8 +585,6 @@ export const HOME_LOAN_GROUP = {
   repaymentField: "housing.01Residence.mortgage.monthlyRepayment"
 } as const satisfies HomeLoanGroup;
 
-export const HOME_LOAN_GROUP_BY_CELL = homeLoanGroupToCells(HOME_LOAN_GROUP);
-
 export const DOWNSIZING_GROUP = {
   yearField: "housing.downsize.year",
   modeField: "housing.downsize.newHomeMode",
@@ -796,14 +592,10 @@ export const DOWNSIZING_GROUP = {
   rentField: "housing.downsize.newRentAnnual"
 } as const satisfies DownsizingGroup;
 
-export const DOWNSIZING_GROUP_BY_CELL = downsizingGroupToCells(DOWNSIZING_GROUP);
-
 export const OTHER_WORK_GROUP = {
   incomeField: "income.otherWork.netAnnual",
   untilAgeField: "income.otherWork.endAge"
 } as const satisfies OtherWorkGroup;
-
-export const OTHER_WORK_GROUP_BY_CELL = otherWorkGroupToCells(OTHER_WORK_GROUP);
 
 export const OTHER_LOAN_GROUP = {
   balanceField: "debts.other.balance",
@@ -811,12 +603,8 @@ export const OTHER_LOAN_GROUP = {
   repaymentField: "debts.other.monthlyRepayment"
 } as const satisfies OtherLoanGroup;
 
-export const OTHER_LOAN_GROUP_BY_CELL = otherLoanGroupToCells(OTHER_LOAN_GROUP);
-
 export const POST_RETIREMENT_INCOME_GROUP = {
   amountField: "income.postRetirementSupplement.annual",
   fromAgeField: "income.postRetirementSupplement.startAge",
   toAgeField: "income.postRetirementSupplement.endAge"
 } as const satisfies PostRetirementIncomeGroup;
-
-export const POST_RETIREMENT_INCOME_GROUP_BY_CELL = postRetirementIncomeGroupToCells(POST_RETIREMENT_INCOME_GROUP);

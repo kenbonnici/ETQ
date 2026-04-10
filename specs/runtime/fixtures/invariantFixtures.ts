@@ -1,6 +1,10 @@
-import { createEmptyFieldState, rawInputsToFieldState } from "../../../src/model/excelAdapter";
+import { createEmptyFieldState } from "../../../src/model/inputSchema";
+import {
+  createSampleDataFieldState,
+  SAMPLE_DATA_EARLY_RETIREMENT_AGE,
+  SAMPLE_DATA_PROJECTION_MONTH_OVERRIDE
+} from "../../../src/model/sampleData";
 import { FieldState, ModelUiState } from "../../../src/model/types";
-import { EXCEL_BASELINE_SPECIMEN } from "../../../src/model/parity/excelBaselineSpecimen";
 import {
   ASSET_OF_VALUE_RUNTIME_GROUPS,
   DEPENDENT_RUNTIME_GROUPS,
@@ -16,7 +20,7 @@ import {
   STOCK_MARKET_CRASH_RUNTIME_GROUPS
 } from "../../../src/ui/runtimeFields";
 
-export interface IntegrityFixture {
+export interface InvariantFixture {
   name: string;
   fields: FieldState;
   uiState: ModelUiState;
@@ -264,16 +268,16 @@ function buildManualLiquidationOrderFields(): FieldState {
   return fields;
 }
 
-export const INTEGRITY_FIXTURES: IntegrityFixture[] = [
+export const INVARIANT_FIXTURES: InvariantFixture[] = [
   {
-    name: "excelSpecimen",
-    fields: rawInputsToFieldState(EXCEL_BASELINE_SPECIMEN.raw_inputs),
+    name: "sampleDataScenario",
+    fields: createSampleDataFieldState(),
     uiState: {
       majorFutureEventsOpen: true,
       advancedAssumptionsOpen: true,
-      earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age,
+      earlyRetirementAge: SAMPLE_DATA_EARLY_RETIREMENT_AGE,
       manualPropertyLiquidationOrder: false,
-      projectionMonthOverride: EXCEL_BASELINE_SPECIMEN.projection_month_override ?? null,
+      projectionMonthOverride: SAMPLE_DATA_PROJECTION_MONTH_OVERRIDE,
       debugMode: "test"
     }
   },
