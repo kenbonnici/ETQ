@@ -1,8 +1,14 @@
 import { expect, test, type Page } from "@playwright/test";
-import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
+import {
+  createSampleDataFieldState,
+  SAMPLE_DATA_EARLY_RETIREMENT_AGE
+} from "../../src/model/sampleData";
 
-const EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA = 49;
-const STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA = Number(EXCEL_BASELINE_SPECIMEN.raw_inputs.B20);
+const SAMPLE_DATA_FIELDS = createSampleDataFieldState();
+const EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA = SAMPLE_DATA_EARLY_RETIREMENT_AGE;
+const SAMPLE_DATA_CURRENT_AGE = Number(SAMPLE_DATA_FIELDS["profile.currentAge"]);
+const SAMPLE_DATA_RETIREMENT_HINT = `Earliest viable retirement: You can retire now at ${SAMPLE_DATA_CURRENT_AGE}!`;
+const STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA = Number(SAMPLE_DATA_FIELDS["retirement.statutoryAge"]);
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
@@ -77,7 +83,7 @@ async function loadSampleData(page: Page): Promise<void> {
   await page.locator("#saved-scenario-select").selectOption("__sample_data__");
   await page.locator("#load-saved-scenario-btn").click();
   await expect(page.locator(selectors.currentAge)).toHaveValue(/\d+/);
-  await expect(page.locator("#retire-check-result")).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
+  await expect(page.locator("#retire-check-result")).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
   await expect(page.locator(".timeline-milestone").first()).toBeVisible();
 }
 
@@ -216,16 +222,16 @@ test("spending-by-age age steppers block invalid moves without showing inline er
 
 test("spending-by-age restores an invalid persisted second end age back to the default pair", async ({ page }) => {
   await page.addInitScript(() => {
-    window.localStorage.setItem("etq:scenario:draft:v1", JSON.stringify({
-      version: 1,
+    window.localStorage.setItem("etq:scenario:draft:v2", JSON.stringify({
+      version: 2,
       savedAt: new Date().toISOString(),
-      rawInputs: {
-        B256: 65,
-        B257: 0
+      fields: {
+        "spending.adjustments.firstBracket.endAge": 65,
+        "spending.adjustments.secondBracket.endAge": 0
       },
       ui: {
-        deeperDiveOpen: false,
-        finerDetailsOpen: false,
+        majorFutureEventsOpen: false,
+        advancedAssumptionsOpen: false,
         earlyRetirementAge: 65,
         selectedCurrency: "EUR",
         livingExpensesMode: "single",
@@ -475,7 +481,7 @@ test("living expenses default to single-total entry and expanded mode aggregates
   await expect(page.locator(selectors.livingExpensesDerivedTotal)).toHaveValue(/50,000/);
 });
 
-test("load sample data restores dependents 4 and 5 from the Excel specimen", async ({ page }) => {
+test("load sample data restores dependents 4 and 5 from the semantic sample fixture", async ({ page }) => {
   await loadSampleData(page);
 
   await expect(page.locator(selectors.dependent4Name)).toBeVisible();
@@ -489,7 +495,7 @@ test("load sample data restores dependents 4 and 5 from the Excel specimen", asy
   await expect(page.locator('input[data-field-id="dependents.05.supportYearsRemaining"]')).toHaveValue("6");
 });
 
-test("load sample data restores properties 4 and 5 from the Excel specimen", async ({ page }) => {
+test("load sample data restores properties 4 and 5 from the semantic sample fixture", async ({ page }) => {
   await loadSampleData(page);
 
   await expect(page.locator(selectors.property4Name)).toBeVisible();
@@ -503,7 +509,7 @@ test("load sample data restores properties 4 and 5 from the Excel specimen", asy
   await expect(page.locator('input[data-field-id="properties.05.rentalIncomeNetAnnual"]')).toHaveValue(/6,500/);
 });
 
-test("load sample data restores assets of value 4 and 5 from the Excel specimen", async ({ page }) => {
+test("load sample data restores assets of value 4 and 5 from the semantic sample fixture", async ({ page }) => {
   await loadSampleData(page);
 
   await expect(page.locator(selectors.asset4Name)).toBeVisible();
@@ -517,7 +523,7 @@ test("load sample data restores assets of value 4 and 5 from the Excel specimen"
   await expect(page.locator('input[data-field-id="assetsOfValue.05.appreciationRateAnnual"]')).toHaveValue(/2.00%/);
 });
 
-test("load sample data restores the active stock market crash scenario from the Excel specimen", async ({ page }) => {
+test("load sample data restores the active stock market crash scenario from the semantic sample fixture", async ({ page }) => {
   await loadSampleData(page);
 
   await expect(page.locator(selectors.stockMarketCrash4Year)).toBeVisible();
@@ -529,7 +535,7 @@ test("load sample data restores the active stock market crash scenario from the 
   await expect(page.locator('input[data-field-id="stockMarketCrashes.05.year"]')).toHaveValue("2050");
 });
 
-test("finer details honors workbook liquidation order and lets users exclude a property from liquidation", async ({ page }) => {
+test("finer details honors the configured liquidation order and lets users exclude a property from liquidation", async ({ page }) => {
   await loadSampleData(page);
 
   const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
@@ -681,7 +687,7 @@ test("earliest retirement stays live while the comparison age changes independen
   await fillAndBlur(page, selectors.earlyRetAge, "48");
 
   await expect(page.locator(selectors.earlyRetAge)).toHaveValue("48");
-  await expect(page.locator("#retire-check-result")).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
+  await expect(page.locator("#retire-check-result")).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
 });
 
 test("properties, assets, and debts are split into clearer intent-based sections", async ({ page }) => {
@@ -744,14 +750,14 @@ test("earliest-retirement indicator follows projection-blocking validation", asy
   await loadSampleData(page);
 
   const retirementIndicator = page.locator("#retire-check-result");
-  await expect(retirementIndicator).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
+  await expect(retirementIndicator).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
 
   await fillAndBlur(page, selectors.currentAge, "");
   await expect(retirementIndicator).toContainText("Earliest viable retirement: —");
   await expect(page.locator(".timeline-empty")).toContainText("Enter your age to see projections.");
 
   await fillAndBlur(page, selectors.currentAge, "48");
-  await expect(retirementIndicator).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
+  await expect(retirementIndicator).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
   await expect(page.locator(".timeline-milestone").first()).toBeVisible();
 });
 
@@ -759,10 +765,10 @@ test("retirement stepper does not clear the earliest-retirement indicator while 
   await loadSampleData(page);
 
   const retirementIndicator = page.locator("#retire-check-result");
-  await expect(retirementIndicator).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
+  await expect(retirementIndicator).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
 
   await fillAndBlur(page, selectors.earlyRetAge, String(STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA - 1));
-  await expect(retirementIndicator).toContainText(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
+  await expect(retirementIndicator).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
   await page.locator("#early-ret-up").click();
 
   const indicatorSnapshot = await retirementIndicator.evaluate((node) => ({
@@ -770,7 +776,7 @@ test("retirement stepper does not clear the earliest-retirement indicator while 
     isNeutral: node.classList.contains("is-neutral")
   }));
 
-  expect(indicatorSnapshot.text).toContain(`Earliest viable retirement: ${EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA}`);
+  expect(indicatorSnapshot.text).toContain(SAMPLE_DATA_RETIREMENT_HINT);
   expect(indicatorSnapshot.text).not.toContain("—");
   expect(indicatorSnapshot.isNeutral).toBe(false);
 });
@@ -779,7 +785,7 @@ test("timeline cap shows the entered life expectancy age", async ({ page }) => {
   await loadSampleData(page);
 
   await expect(page.locator(".timeline-endcap-top .timeline-end-year")).toHaveText(
-    String(EXCEL_BASELINE_SPECIMEN.raw_inputs.B255)
+    String(SAMPLE_DATA_FIELDS["planning.lifeExpectancyAge"])
   );
 });
 

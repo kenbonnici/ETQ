@@ -1,11 +1,10 @@
-import { FIELD_ID_TO_CELL, FieldId, InputCell } from "../model/fieldRegistry";
+import { FieldId } from "../model/fieldRegistry";
 
 export type InputType = "number" | "integer" | "percent" | "text";
 
 export interface InputDefinition {
   row: number;
   fieldId: FieldId;
-  cell: InputCell;
   label: string;
   section: string;
   groupPath: string;
@@ -16,8 +15,7 @@ export interface InputDefinition {
   type: InputType;
 }
 
-type AuthoredInputDefinition = Omit<InputDefinition, "cell" | "section" | "groupPath" | "groupTail">;
-type RemappedInputDefinition = Omit<InputDefinition, "cell">;
+type AuthoredInputDefinition = Omit<InputDefinition, "section" | "groupPath" | "groupTail">;
 
 export const INPUT_SECTION_ORDER = [
   "Basics",
@@ -1709,7 +1707,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
   return { section: "Advanced Assumptions", groupTail: [] };
 }
 
-function remapInputDefinition(def: AuthoredInputDefinition): RemappedInputDefinition {
+function remapInputDefinition(def: AuthoredInputDefinition): InputDefinition {
   const grouping = deriveIntentGrouping(def.fieldId);
   return {
     ...def,
@@ -1721,7 +1719,4 @@ function remapInputDefinition(def: AuthoredInputDefinition): RemappedInputDefini
   };
 }
 
-export const INPUT_DEFINITIONS: InputDefinition[] = AUTHORED_INPUT_DEFINITIONS.map(remapInputDefinition).map((def) => ({
-  ...def,
-  cell: FIELD_ID_TO_CELL[def.fieldId]
-}));
+export const INPUT_DEFINITIONS: InputDefinition[] = AUTHORED_INPUT_DEFINITIONS.map(remapInputDefinition);

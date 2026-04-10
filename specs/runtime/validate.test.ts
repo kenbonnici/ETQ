@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { createEmptyFieldState } from "../../src/model/excelAdapter";
+import { createEmptyFieldState } from "../../src/model/inputSchema";
 import { validateFieldState } from "../../src/model/validate";
 import {
   DEPENDENT_RUNTIME_GROUPS,

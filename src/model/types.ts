@@ -1,10 +1,9 @@
-import { FieldId, InputCell } from "./fieldRegistry";
-export type { FieldId, InputCell };
+import { FieldId } from "./fieldRegistry";
+export type { FieldId };
 
 export type Numeric = number | null;
 
 export type RawInputValue = number | string | null | undefined;
-export type RawInputs = Partial<Record<InputCell, RawInputValue>>;
 export type FieldState = Partial<Record<FieldId, RawInputValue>>;
 
 export interface ModelUiState {

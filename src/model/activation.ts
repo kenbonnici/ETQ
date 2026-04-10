@@ -1,22 +1,21 @@
 import {
-  ASSET_OF_VALUE_GROUPS_BY_CELL,
-  DOWNSIZING_GROUP_BY_CELL,
-  DEPENDENT_GROUPS_BY_CELL,
-  HOME_LOAN_GROUP_BY_CELL,
-  INCOME_EVENT_GROUPS_BY_CELL,
-  EXPENSE_EVENT_GROUPS_BY_CELL,
-  OTHER_LOAN_GROUP_BY_CELL,
-  OTHER_WORK_GROUP_BY_CELL,
-  POST_RETIREMENT_INCOME_GROUP_BY_CELL,
-  PROPERTY_GROUPS_BY_CELL,
-  STOCK_MARKET_CRASH_GROUPS_BY_CELL
+  ASSET_OF_VALUE_GROUPS,
+  DOWNSIZING_GROUP,
+  DEPENDENT_GROUPS,
+  HOME_LOAN_GROUP,
+  INCOME_EVENT_GROUPS,
+  EXPENSE_EVENT_GROUPS,
+  OTHER_LOAN_GROUP,
+  OTHER_WORK_GROUP,
+  POST_RETIREMENT_INCOME_GROUP,
+  PROPERTY_GROUPS,
+  STOCK_MARKET_CRASH_GROUPS
 } from "./inputSchema";
 import { isDownsizingYearInProjectionWindow } from "./downsizing";
-import { fieldStateToRawInputs, rawInputsToFieldState } from "./excelAdapter";
-import { FieldState, InputCell, ModelUiState, RawInputs } from "./types";
+import { FieldState, FieldId, ModelUiState } from "./types";
 
 export interface ActivationResult {
-  activatedInputs: RawInputs;
+  activatedFields: FieldState;
   canCollapseMajorFutureEvents: boolean;
   canCollapseAdvancedAssumptions: boolean;
 }
@@ -32,139 +31,135 @@ function asNumber(value: unknown): number {
   return Number.isFinite(num) ? num : 0;
 }
 
-function clearCells(target: RawInputs, cells: readonly InputCell[]): void {
-  for (const cell of cells) target[cell] = null;
+function clearFields(target: FieldState, fields: readonly FieldId[]): void {
+  for (const fieldId of fields) target[fieldId] = null;
 }
 
-function applyDependencyPruning(target: RawInputs): void {
-  const hasHome = asNumber(target[HOME_LOAN_GROUP_BY_CELL.homeValueCell]) > 0;
+function applyDependencyPruning(target: FieldState): void {
+  const hasHome = asNumber(target[HOME_LOAN_GROUP.homeValueField]) > 0;
   const hasDownsizingYear = isDownsizingYearInProjectionWindow(
-    target[DOWNSIZING_GROUP_BY_CELL.yearCell],
-    target.B4,
-    target.B255
+    target[DOWNSIZING_GROUP.yearField],
+    target["profile.currentAge"],
+    target["planning.lifeExpectancyAge"]
   );
-  const downsizingMode = String(target[DOWNSIZING_GROUP_BY_CELL.modeCell] ?? "").trim().toUpperCase();
+  const downsizingMode = String(target[DOWNSIZING_GROUP.modeField] ?? "").trim().toUpperCase();
   if (hasHome) {
-    target[HOME_LOAN_GROUP_BY_CELL.rentCell] = null;
+    target[HOME_LOAN_GROUP.rentField] = null;
   } else {
-    clearCells(target, [HOME_LOAN_GROUP_BY_CELL.balanceCell, HOME_LOAN_GROUP_BY_CELL.rateCell, HOME_LOAN_GROUP_BY_CELL.repaymentCell]);
+    clearFields(target, [HOME_LOAN_GROUP.balanceField, HOME_LOAN_GROUP.rateField, HOME_LOAN_GROUP.repaymentField]);
   }
 
-  if (!(asNumber(target[HOME_LOAN_GROUP_BY_CELL.balanceCell]) > 0)) {
-    clearCells(target, [HOME_LOAN_GROUP_BY_CELL.rateCell, HOME_LOAN_GROUP_BY_CELL.repaymentCell]);
+  if (!(asNumber(target[HOME_LOAN_GROUP.balanceField]) > 0)) {
+    clearFields(target, [HOME_LOAN_GROUP.rateField, HOME_LOAN_GROUP.repaymentField]);
   }
 
   if (!hasDownsizingYear) {
-    clearCells(target, [
-      DOWNSIZING_GROUP_BY_CELL.modeCell,
-      DOWNSIZING_GROUP_BY_CELL.purchaseCostCell,
-      DOWNSIZING_GROUP_BY_CELL.rentCell
+    clearFields(target, [
+      DOWNSIZING_GROUP.modeField,
+      DOWNSIZING_GROUP.purchaseCostField,
+      DOWNSIZING_GROUP.rentField
     ]);
   } else if (!hasHome) {
-    clearCells(target, [
-      DOWNSIZING_GROUP_BY_CELL.modeCell,
-      DOWNSIZING_GROUP_BY_CELL.purchaseCostCell
+    clearFields(target, [
+      DOWNSIZING_GROUP.modeField,
+      DOWNSIZING_GROUP.purchaseCostField
     ]);
   } else if (downsizingMode === "BUY") {
-    clearCells(target, [DOWNSIZING_GROUP_BY_CELL.rentCell]);
+    clearFields(target, [DOWNSIZING_GROUP.rentField]);
   } else if (downsizingMode === "RENT") {
-    clearCells(target, [DOWNSIZING_GROUP_BY_CELL.purchaseCostCell]);
+    clearFields(target, [DOWNSIZING_GROUP.purchaseCostField]);
   } else {
-    clearCells(target, [DOWNSIZING_GROUP_BY_CELL.purchaseCostCell, DOWNSIZING_GROUP_BY_CELL.rentCell]);
+    clearFields(target, [DOWNSIZING_GROUP.purchaseCostField, DOWNSIZING_GROUP.rentField]);
   }
 
-  for (const dep of DEPENDENT_GROUPS_BY_CELL) {
-    if (isBlank(target[dep.nameCell])) {
-      clearCells(target, [dep.annualCostCell, dep.yearsCell]);
+  for (const dep of DEPENDENT_GROUPS) {
+    if (isBlank(target[dep.nameField])) {
+      clearFields(target, [dep.annualCostField, dep.yearsField]);
     }
   }
 
-  for (const property of PROPERTY_GROUPS_BY_CELL) {
-    if (isBlank(target[property.nameCell])) {
-      clearCells(target, [
-        property.valueCell,
-        property.annualCostsCell,
-        property.rentalIncomeCell,
-        property.loanBalanceCell,
-        property.loanRateCell,
-        property.loanRepaymentCell,
-        property.liquidationRankCell
+  for (const property of PROPERTY_GROUPS) {
+    if (isBlank(target[property.nameField])) {
+      clearFields(target, [
+        property.valueField,
+        property.annualCostsField,
+        property.rentalIncomeField,
+        property.loanBalanceField,
+        property.loanRateField,
+        property.loanRepaymentField,
+        property.liquidationRankField
       ]);
       continue;
     }
 
-    if (!(asNumber(target[property.loanBalanceCell]) > 0)) {
-      clearCells(target, [property.loanRateCell, property.loanRepaymentCell]);
+    if (!(asNumber(target[property.loanBalanceField]) > 0)) {
+      clearFields(target, [property.loanRateField, property.loanRepaymentField]);
     }
   }
 
-  for (const asset of ASSET_OF_VALUE_GROUPS_BY_CELL) {
-    if (isBlank(target[asset.nameCell])) {
-      clearCells(target, [
-        asset.valueCell,
-        asset.appreciationRateCell,
-        asset.loanBalanceCell,
-        asset.loanRateCell,
-        asset.loanRepaymentCell,
-        asset.liquidationRankCell
+  for (const asset of ASSET_OF_VALUE_GROUPS) {
+    if (isBlank(target[asset.nameField])) {
+      clearFields(target, [
+        asset.valueField,
+        asset.appreciationRateField,
+        asset.loanBalanceField,
+        asset.loanRateField,
+        asset.loanRepaymentField,
+        asset.liquidationRankField
       ]);
       continue;
     }
 
-    if (!(asNumber(target[asset.loanBalanceCell]) > 0)) {
-      clearCells(target, [asset.loanRateCell, asset.loanRepaymentCell]);
+    if (!(asNumber(target[asset.loanBalanceField]) > 0)) {
+      clearFields(target, [asset.loanRateField, asset.loanRepaymentField]);
     }
   }
 
-  if (!(asNumber(target[OTHER_WORK_GROUP_BY_CELL.incomeCell]) > 0)) {
-    target[OTHER_WORK_GROUP_BY_CELL.untilAgeCell] = null;
+  if (!(asNumber(target[OTHER_WORK_GROUP.incomeField]) > 0)) {
+    target[OTHER_WORK_GROUP.untilAgeField] = null;
   }
 
-  if (!(asNumber(target[OTHER_LOAN_GROUP_BY_CELL.balanceCell]) > 0)) {
-    clearCells(target, [OTHER_LOAN_GROUP_BY_CELL.rateCell, OTHER_LOAN_GROUP_BY_CELL.repaymentCell]);
+  if (!(asNumber(target[OTHER_LOAN_GROUP.balanceField]) > 0)) {
+    clearFields(target, [OTHER_LOAN_GROUP.rateField, OTHER_LOAN_GROUP.repaymentField]);
   }
 
-  for (const event of INCOME_EVENT_GROUPS_BY_CELL) {
-    if (isBlank(target[event.nameCell])) {
-      clearCells(target, [event.amountCell, event.yearCell]);
+  for (const event of INCOME_EVENT_GROUPS) {
+    if (isBlank(target[event.nameField])) {
+      clearFields(target, [event.amountField, event.yearField]);
     }
   }
 
-  for (const event of EXPENSE_EVENT_GROUPS_BY_CELL) {
-    if (isBlank(target[event.nameCell])) {
-      clearCells(target, [event.amountCell, event.yearCell]);
+  for (const event of EXPENSE_EVENT_GROUPS) {
+    if (isBlank(target[event.nameField])) {
+      clearFields(target, [event.amountField, event.yearField]);
     }
   }
 
-  for (const crash of STOCK_MARKET_CRASH_GROUPS_BY_CELL) {
-    if (isBlank(target[crash.yearCell])) {
-      clearCells(target, [crash.dropCell, crash.recoveryCell]);
+  for (const crash of STOCK_MARKET_CRASH_GROUPS) {
+    if (isBlank(target[crash.yearField])) {
+      clearFields(target, [crash.dropField, crash.recoveryField]);
     }
   }
 
-  if (!(asNumber(target[POST_RETIREMENT_INCOME_GROUP_BY_CELL.amountCell]) > 0)) {
-    clearCells(target, [POST_RETIREMENT_INCOME_GROUP_BY_CELL.fromAgeCell, POST_RETIREMENT_INCOME_GROUP_BY_CELL.toAgeCell]);
+  if (!(asNumber(target[POST_RETIREMENT_INCOME_GROUP.amountField]) > 0)) {
+    clearFields(target, [POST_RETIREMENT_INCOME_GROUP.fromAgeField, POST_RETIREMENT_INCOME_GROUP.toAgeField]);
   }
 }
 
-export function applySectionActivation(raw: RawInputs, uiState: ModelUiState): ActivationResult {
+export function applySectionActivation(fields: FieldState, uiState: ModelUiState): ActivationResult {
   void uiState;
-  const activatedInputs: RawInputs = { ...raw };
-  applyDependencyPruning(activatedInputs);
+  const activatedFields: FieldState = { ...fields };
+  applyDependencyPruning(activatedFields);
 
   return {
-    activatedInputs,
+    activatedFields,
     canCollapseMajorFutureEvents: true,
     canCollapseAdvancedAssumptions: true
   };
 }
 
-export function pruneInactiveRawInputs(raw: RawInputs): RawInputs {
-  const next: RawInputs = { ...raw };
+export function pruneInactiveFieldState(fields: FieldState): FieldState {
+  const next: FieldState = { ...fields };
   applyDependencyPruning(next);
   return next;
-}
-
-export function pruneInactiveFieldState(fields: FieldState): FieldState {
-  return rawInputsToFieldState(pruneInactiveRawInputs(fieldStateToRawInputs(fields)));
 }

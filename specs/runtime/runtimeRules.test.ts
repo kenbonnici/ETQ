@@ -4,11 +4,13 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { runModel } from "../../src/model";
-import { createEmptyFieldState, fieldStateToRawInputs, rawInputsToFieldState } from "../../src/model/excelAdapter";
-import { FIELD_ID_TO_CELL } from "../../src/model/fieldRegistry";
+import { createEmptyFieldState } from "../../src/model/inputSchema";
 import { normalizeInputs } from "../../src/model/normalization";
-import { EXCEL_BASELINE_SPECIMEN } from "../../src/model/parity/excelBaselineSpecimen";
-import { runSpecimenParity } from "../../src/model/parity/runSpecimenParity";
+import {
+  createSampleDataFieldState,
+  createSampleDataUiState,
+  SAMPLE_DATA_EARLY_RETIREMENT_AGE
+} from "../../src/model/sampleData";
 import { FieldState } from "../../src/model/types";
 import { INPUT_DEFINITIONS } from "../../src/ui/inputDefinitions";
 import {
@@ -43,14 +45,8 @@ import {
   STOCK_MARKET_CRASH_RUNTIME_GROUPS
 } from "../../src/ui/runtimeFields";
 
-const SPECIMEN_FIELDS = rawInputsToFieldState(EXCEL_BASELINE_SPECIMEN.raw_inputs);
-const SPECIMEN_UI_STATE = {
-  majorFutureEventsOpen: true,
-  advancedAssumptionsOpen: true,
-  earlyRetirementAge: EXCEL_BASELINE_SPECIMEN.early_retirement_age,
-  manualPropertyLiquidationOrder: false,
-  projectionMonthOverride: EXCEL_BASELINE_SPECIMEN.projection_month_override ?? null
-};
+const SAMPLE_FIELDS = createSampleDataFieldState();
+const SAMPLE_UI_STATE = createSampleDataUiState();
 const DEFAULT_VISIBILITY: RuntimeVisibilityState = {
   visibleDependents: 1,
   visibleProperties: 1,
@@ -59,51 +55,16 @@ const DEFAULT_VISIBILITY: RuntimeVisibilityState = {
   visibleExpenseEvents: 1,
   visibleStockMarketCrashes: 1
 };
-const LEGACY_AWARE_RETIREMENT_AGE = 49;
+const LEGACY_AWARE_RETIREMENT_AGE = SAMPLE_DATA_EARLY_RETIREMENT_AGE;
 
 function cloneFields(fields: FieldState): FieldState {
   return { ...fields };
 }
 
-test("Excel adapter round-trips and parity diagnostics remain callable", () => {
-  assert.deepEqual(fieldStateToRawInputs(SPECIMEN_FIELDS), {
-    ...EXCEL_BASELINE_SPECIMEN.raw_inputs,
-    B256: 65,
-    B257: 75
-  });
-  assert.equal(SPECIMEN_FIELDS["dependents.04.displayName"], "Stephen");
-  assert.equal(SPECIMEN_FIELDS["dependents.05.displayName"], "Jane");
-
-  const parity = runSpecimenParity();
-  assert.equal(typeof parity.overallPass, "boolean");
-  assert.equal(parity.seriesResults.length > 0, true);
-});
-
-test("specimen early parity depends on the workbook early-retirement age, not statutory age", () => {
-  const expectedEarly = EXCEL_BASELINE_SPECIMEN.excel_outputs.cashSeriesEarly as unknown as number[];
-  const correct = runModel(SPECIMEN_FIELDS, SPECIMEN_UI_STATE);
-  const forcedStatutory = runModel(SPECIMEN_FIELDS, {
-    ...SPECIMEN_UI_STATE,
-    earlyRetirementAge: Number(SPECIMEN_FIELDS[RUNTIME_FIELDS.statutoryRetirementAge])
-  });
-
-  const maxAbsEarlyDeltaWhenForcedToStatutory = Math.max(...forcedStatutory.outputs.cashSeriesEarly.map(
-    (value, idx) => Math.abs(value - expectedEarly[idx])
-  ));
-
-  assert.equal(correct.outputs.cashSeriesNorm.length, forcedStatutory.outputs.cashSeriesNorm.length);
-  assert.deepEqual(forcedStatutory.outputs.cashSeriesNorm, correct.outputs.cashSeriesNorm);
-  assert.equal(maxAbsEarlyDeltaWhenForcedToStatutory > 1_000, true);
-});
-
-test("input definitions preserve row order and derive cells from semantic field ids", () => {
+test("input definitions preserve row order and semantic field ids", () => {
   const rows = INPUT_DEFINITIONS.map((def) => def.row);
   assert.deepEqual(rows, [...rows].sort((a, b) => a - b));
   assert.equal(new Set(rows).size, rows.length);
-
-  for (const def of INPUT_DEFINITIONS) {
-    assert.equal(def.cell, FIELD_ID_TO_CELL[def.fieldId]);
-  }
 });
 
 test("currency number fields do not fall back to a 1-unit stepper increment", () => {
@@ -115,7 +76,7 @@ test("currency number fields do not fall back to a 1-unit stepper increment", ()
   assert.deepEqual(oneUnitCurrencySteps.map((row) => row.fieldId), [RUNTIME_FIELDS.stockContributionMonthly]);
 });
 
-test("blank legacy normalizes to zero and specimen parity captures the shifted workbook cells", () => {
+test("blank legacy normalizes to zero and sample data keeps the expected liquidation ordering", () => {
   const blankFields = createEmptyFieldState();
 
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentAge1], 65);
@@ -123,12 +84,12 @@ test("blank legacy normalizes to zero and specimen parity captures the shifted w
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentFirstBracket], 0);
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentSecondBracket], -0.1);
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentFinalBracket], -0.2);
-  assert.equal(normalizeInputs(fieldStateToRawInputs(blankFields)).legacyAmount, 0);
-  assert.equal(SPECIMEN_FIELDS[RUNTIME_FIELDS.legacyAmount], 1_000_000);
-  assert.equal(SPECIMEN_FIELDS[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField], 10);
-  assert.equal(SPECIMEN_FIELDS[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField], 6);
-  assert.equal(SPECIMEN_FIELDS[ASSET_OF_VALUE_RUNTIME_GROUPS[0].liquidationRankField], 3);
-  assert.equal(SPECIMEN_FIELDS[ASSET_OF_VALUE_RUNTIME_GROUPS[4].liquidationRankField], 5);
+  assert.equal(normalizeInputs(blankFields).legacyAmount, 0);
+  assert.equal(SAMPLE_FIELDS[RUNTIME_FIELDS.legacyAmount], 1_000_000);
+  assert.equal(SAMPLE_FIELDS[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField], 10);
+  assert.equal(SAMPLE_FIELDS[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField], 6);
+  assert.equal(SAMPLE_FIELDS[ASSET_OF_VALUE_RUNTIME_GROUPS[0].liquidationRankField], 3);
+  assert.equal(SAMPLE_FIELDS[ASSET_OF_VALUE_RUNTIME_GROUPS[4].liquidationRankField], 5);
 });
 
 test("spending adjustment boundaries switch at the next age after each edited end age", () => {
@@ -143,13 +104,13 @@ test("spending adjustment boundaries switch at the next age after each edited en
   fields[RUNTIME_FIELDS.spendingAdjustmentSecondBracket] = -0.1;
   fields[RUNTIME_FIELDS.spendingAdjustmentFinalBracket] = -0.2;
 
-  const normalized = normalizeInputs(fieldStateToRawInputs(fields));
+  const normalized = normalizeInputs(fields);
   assert.equal(normalized.spendingAdjustmentAge1, 55);
   assert.equal(normalized.spendingAdjustmentAge2, 80);
 
   const result = runModel(fields, {
-    deeperDiveOpen: false,
-    finerDetailsOpen: false,
+    majorFutureEventsOpen: false,
+    advancedAssumptionsOpen: false,
     earlyRetirementAge: 65,
     manualPropertyLiquidationOrder: false,
     projectionMonthOverride: 12
@@ -171,40 +132,43 @@ test("spending adjustment boundaries switch at the next age after each edited en
 });
 
 test("retirement success requires both the cash buffer and the end-age legacy target", () => {
-  const workbookCachedAge = runModel(SPECIMEN_FIELDS, SPECIMEN_UI_STATE);
-  assert.equal(workbookCachedAge.outputs.scenarioEarly.retirementSuccessful, true);
+  const sampleDataAge = runModel(SAMPLE_FIELDS, SAMPLE_UI_STATE);
+  assert.equal(sampleDataAge.outputs.scenarioEarly.retirementSuccessful, true);
 
-  const legacyAwareSuccess = runModel(SPECIMEN_FIELDS, {
-    ...SPECIMEN_UI_STATE,
+  const legacyAwareSuccess = runModel(SAMPLE_FIELDS, {
+    ...SAMPLE_UI_STATE,
     earlyRetirementAge: LEGACY_AWARE_RETIREMENT_AGE
   });
   assert.equal(legacyAwareSuccess.outputs.scenarioEarly.retirementSuccessful, true);
 
-  const oneYearEarlier = runModel(SPECIMEN_FIELDS, {
-    ...SPECIMEN_UI_STATE,
-    earlyRetirementAge: LEGACY_AWARE_RETIREMENT_AGE - 1
-  });
-  assert.equal(oneYearEarlier.outputs.scenarioEarly.retirementSuccessful, false);
+  const higherCashBufferFields = cloneFields(SAMPLE_FIELDS);
+  higherCashBufferFields[RUNTIME_FIELDS.minimumCashBuffer] = 500_000;
 
-  const higherLegacyFields = cloneFields(SPECIMEN_FIELDS);
+  const cashShortfall = runModel(higherCashBufferFields, {
+    ...SAMPLE_UI_STATE,
+    earlyRetirementAge: LEGACY_AWARE_RETIREMENT_AGE
+  });
+  assert.equal(cashShortfall.outputs.scenarioEarly.retirementSuccessful, false);
+
+  const higherLegacyFields = cloneFields(SAMPLE_FIELDS);
   const finalNetWorth = legacyAwareSuccess.outputs.scenarioEarly.netWorthSeries[
     legacyAwareSuccess.outputs.scenarioEarly.netWorthSeries.length - 1
   ] ?? 0;
   higherLegacyFields[RUNTIME_FIELDS.legacyAmount] = finalNetWorth + 1;
 
   const legacyShortfall = runModel(higherLegacyFields, {
-    ...SPECIMEN_UI_STATE,
+    ...SAMPLE_UI_STATE,
     earlyRetirementAge: LEGACY_AWARE_RETIREMENT_AGE
   });
   assert.equal(legacyShortfall.outputs.scenarioEarly.retirementSuccessful, false);
 });
 
 test("validation and retire-check gating still key off semantic core fields", () => {
-  const fields = cloneFields(SPECIMEN_FIELDS);
+  const fields = cloneFields(SAMPLE_FIELDS);
   fields[RUNTIME_FIELDS.currentAge] = null;
   fields[RUNTIME_FIELDS.annualLivingExpenses] = null;
 
-  const result = runModel(fields, SPECIMEN_UI_STATE);
+  const result = runModel(fields, SAMPLE_UI_STATE);
 
   assert.equal(
     result.validationMessages.some((message) => message.fieldId === RUNTIME_FIELDS.currentAge && message.blocksProjection),
@@ -370,19 +334,19 @@ test("auto liquidation order re-sorts from current property values after repeate
   fields[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField] = 2;
 
   assert.deepEqual(
-    normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
+    normalizeInputs(fields, { manualOverrideActive: false }).liquidationPriority,
     [5, 3, 4, 1, 2, 0, 0, 0, 0, 0]
   );
 
   fields[PROPERTY_RUNTIME_GROUPS[0].valueField] = 100_000;
   assert.deepEqual(
-    normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
+    normalizeInputs(fields, { manualOverrideActive: false }).liquidationPriority,
     [2, 4, 5, 1, 3, 0, 0, 0, 0, 0]
   );
 
   fields[PROPERTY_RUNTIME_GROUPS[2].valueField] = 50_000;
   assert.deepEqual(
-    normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false }).liquidationPriority,
+    normalizeInputs(fields, { manualOverrideActive: false }).liquidationPriority,
     [3, 5, 1, 2, 4, 0, 0, 0, 0, 0]
   );
 });
@@ -407,7 +371,7 @@ test("manual liquidation order stays fixed across value edits and blank entries 
   fields[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField] = null;
 
   assert.deepEqual(
-    normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: true }).liquidationPriority,
+    normalizeInputs(fields, { manualOverrideActive: true }).liquidationPriority,
     [2, 1, 0, 0, 0, 0, 0, 0, 0, 0]
   );
 
@@ -418,7 +382,7 @@ test("manual liquidation order stays fixed across value edits and blank entries 
   fields[PROPERTY_RUNTIME_GROUPS[4].valueField] = 200_000;
 
   assert.deepEqual(
-    normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: true }).liquidationPriority,
+    normalizeInputs(fields, { manualOverrideActive: true }).liquidationPriority,
     [2, 1, 0, 0, 0, 0, 0, 0, 0, 0]
   );
   assert.deepEqual(
@@ -456,12 +420,12 @@ test("property value edits trigger inputs-panel rerenders so liquidation rows st
   );
 });
 
-test("timeline milestone generation still uses semantic fields with specimen data", () => {
-  const result = runModel(SPECIMEN_FIELDS, SPECIMEN_UI_STATE);
+test("timeline milestone generation still uses semantic fields with sample data", () => {
+  const result = runModel(SAMPLE_FIELDS, SAMPLE_UI_STATE);
   const milestones = buildTimelineMilestones(
-    SPECIMEN_FIELDS,
+    SAMPLE_FIELDS,
     result,
-    Number(SPECIMEN_FIELDS[RUNTIME_FIELDS.statutoryRetirementAge]),
+    Number(SAMPLE_FIELDS[RUNTIME_FIELDS.statutoryRetirementAge]),
     1000,
     () => ""
   );
@@ -484,8 +448,8 @@ test("timeline milestones include downsizing sale, purchase, and rent-start even
   homeownerBuy[DOWNSIZING_FIELDS.newHomePurchaseCost] = 250_000;
 
   const homeownerBuyResult = runModel(homeownerBuy, {
-    deeperDiveOpen: true,
-    finerDetailsOpen: true,
+    majorFutureEventsOpen: true,
+    advancedAssumptionsOpen: true,
     earlyRetirementAge: 60
   });
   const homeownerBuyLabels = buildTimelineMilestones(
@@ -509,8 +473,8 @@ test("timeline milestones include downsizing sale, purchase, and rent-start even
   homeownerRent[DOWNSIZING_FIELDS.newRentAnnual] = 2_000;
 
   const homeownerRentResult = runModel(homeownerRent, {
-    deeperDiveOpen: true,
-    finerDetailsOpen: true,
+    majorFutureEventsOpen: true,
+    advancedAssumptionsOpen: true,
     earlyRetirementAge: 60
   });
   const homeownerRentLabels = buildTimelineMilestones(
@@ -598,7 +562,7 @@ test("normalization and scenario outputs include stock market crash slots and ap
   fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField] = 0.2;
   fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].recoveryField] = 2;
 
-  const normalized = normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false });
+  const normalized = normalizeInputs(fields, { manualOverrideActive: false });
   assert.equal(normalized.stockMarketCrashes.length, 5);
   assert.deepEqual(normalized.stockMarketCrashes[0], {
     year: currentYear + 1,
@@ -607,8 +571,8 @@ test("normalization and scenario outputs include stock market crash slots and ap
   });
 
   const result = runModel(fields, {
-    deeperDiveOpen: true,
-    finerDetailsOpen: true,
+    majorFutureEventsOpen: true,
+    advancedAssumptionsOpen: true,
     earlyRetirementAge: 65,
     manualPropertyLiquidationOrder: false,
     projectionMonthOverride: 1
@@ -647,14 +611,14 @@ test("normalization and scenario outputs include dependent slots four and five",
   fields[DEPENDENT_RUNTIME_GROUPS[4].annualCostField] = 3_200;
   fields[DEPENDENT_RUNTIME_GROUPS[4].yearsField] = 2;
 
-  const normalized = normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false });
+  const normalized = normalizeInputs(fields, { manualOverrideActive: false });
   assert.equal(normalized.dependents.length, 5);
   assert.deepEqual(normalized.dependents[3], { name: "Jordan", annualCost: 2_400, yearsToSupport: 4 });
   assert.deepEqual(normalized.dependents[4], { name: "Taylor", annualCost: 3_200, yearsToSupport: 2 });
 
   const result = runModel(fields, {
-    deeperDiveOpen: true,
-    finerDetailsOpen: true,
+    majorFutureEventsOpen: true,
+    advancedAssumptionsOpen: true,
     earlyRetirementAge: 55,
     manualPropertyLiquidationOrder: false,
     projectionMonthOverride: 1
@@ -684,7 +648,7 @@ test("normalization and scenario outputs include property slots four and five", 
   fields[PROPERTY_RUNTIME_GROUPS[4].annualCostsField] = 800;
   fields[PROPERTY_RUNTIME_GROUPS[4].rentalIncomeField] = 6_500;
 
-  const normalized = normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false });
+  const normalized = normalizeInputs(fields, { manualOverrideActive: false });
   assert.equal(normalized.properties.length, 5);
   assert.deepEqual(normalized.properties[3], {
     name: "Gudja",
@@ -708,8 +672,8 @@ test("normalization and scenario outputs include property slots four and five", 
   });
 
   const result = runModel(fields, {
-    deeperDiveOpen: true,
-    finerDetailsOpen: true,
+    majorFutureEventsOpen: true,
+    advancedAssumptionsOpen: true,
     earlyRetirementAge: 55,
     manualPropertyLiquidationOrder: false
   });
@@ -735,7 +699,7 @@ test("normalization and output reporting include assets of value in the combined
   fields[ASSET_OF_VALUE_RUNTIME_GROUPS[4].valueField] = 82_000;
   fields[ASSET_OF_VALUE_RUNTIME_GROUPS[4].appreciationRateField] = 0.02;
 
-  const normalized = normalizeInputs(fieldStateToRawInputs(fields), { manualOverrideActive: false });
+  const normalized = normalizeInputs(fields, { manualOverrideActive: false });
   assert.equal(normalized.assetsOfValue.length, 5);
   assert.deepEqual(normalized.assetsOfValue[3], {
     name: "Boat",
@@ -757,8 +721,8 @@ test("normalization and output reporting include assets of value in the combined
   });
 
   const result = runModel(fields, {
-    deeperDiveOpen: true,
-    finerDetailsOpen: true,
+    majorFutureEventsOpen: true,
+    advancedAssumptionsOpen: true,
     earlyRetirementAge: 55,
     manualPropertyLiquidationOrder: false
   });
