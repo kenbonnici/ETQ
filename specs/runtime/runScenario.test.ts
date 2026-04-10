@@ -218,3 +218,110 @@ test("forced sales do not create future inflows from saved loan repayments after
   assert.equal(propertyLoanRepayment.values[1], 0);
   assert.equal(scenario.cashFlow.totalInflows[1], 0);
 });
+
+test("planned and forced property sales use the same cash posting when the sale year is the same", () => {
+  const plannedInputs = buildInputs();
+  plannedInputs.cashBalance = -5_000;
+  plannedInputs.liveUntilAge = 42;
+  plannedInputs.expenseEvents = [{ name: "Force", amount: 50_000, year: 2027 }];
+  plannedInputs.properties[0] = {
+    name: "Parity Property",
+    value: 200_000,
+    annualCosts: 1_000,
+    rentalIncome: 5_000,
+    loanBalance: 50_000,
+    loanRate: 0.04,
+    loanRepaymentMonthly: 1_000,
+    plannedSellYear: 2026
+  };
+  plannedInputs.assetsOfValue = [];
+  plannedInputs.liquidationPriority = [1];
+
+  const forcedInputs = structuredClone(plannedInputs);
+  forcedInputs.properties[0].plannedSellYear = null;
+
+  const timing = resolveProjectionTiming(new Date("2026-01-01T00:00:00Z"), 1);
+  const planned = runScenarioNorm(plannedInputs, timing);
+  const forced = runScenarioNorm(forcedInputs, timing);
+
+  const plannedLiquidation = planned.cashFlow.liquidationsByProperty.find((series) => series.label === "Parity Property");
+  const forcedLiquidation = forced.cashFlow.liquidationsByProperty.find((series) => series.label === "Parity Property");
+  const plannedLoanRepayment = planned.cashFlow.propertyLoanRepayments.find((series) => series.label === "Parity Property");
+  const forcedLoanRepayment = forced.cashFlow.propertyLoanRepayments.find((series) => series.label === "Parity Property");
+  const plannedRental = planned.cashFlow.rentalIncomeByProperty.find((series) => series.label === "Parity Property");
+  const forcedRental = forced.cashFlow.rentalIncomeByProperty.find((series) => series.label === "Parity Property");
+  const plannedCosts = planned.cashFlow.propertyCosts.find((series) => series.label === "Parity Property");
+  const forcedCosts = forced.cashFlow.propertyCosts.find((series) => series.label === "Parity Property");
+  const plannedMilestone = planned.milestoneHints.find((hint) => hint.label === "Sale of Parity Property");
+  const forcedMilestone = forced.milestoneHints.find((hint) => hint.label === "Sale of Parity Property");
+
+  assert.ok(plannedLiquidation);
+  assert.ok(forcedLiquidation);
+  assert.ok(plannedLoanRepayment);
+  assert.ok(forcedLoanRepayment);
+  assert.ok(plannedRental);
+  assert.ok(forcedRental);
+  assert.ok(plannedCosts);
+  assert.ok(forcedCosts);
+  assert.ok(plannedMilestone);
+  assert.ok(forcedMilestone);
+
+  assert.deepEqual(forcedLiquidation.values.slice(0, 3), plannedLiquidation.values.slice(0, 3));
+  assert.deepEqual(forcedLoanRepayment.values.slice(0, 3), plannedLoanRepayment.values.slice(0, 3));
+  assert.deepEqual(forcedRental.values.slice(0, 3), plannedRental.values.slice(0, 3));
+  assert.deepEqual(forcedCosts.values.slice(0, 3), plannedCosts.values.slice(0, 3));
+  assert.deepEqual(forced.cashFlow.totalInflows.slice(0, 3), planned.cashFlow.totalInflows.slice(0, 3));
+  assert.deepEqual(forced.cashFlow.totalOutflows.slice(0, 3), planned.cashFlow.totalOutflows.slice(0, 3));
+  assert.deepEqual(forced.cashFlow.netCashFlow.slice(0, 3), planned.cashFlow.netCashFlow.slice(0, 3));
+  assert.deepEqual(forced.cashFlow.closingCash.slice(0, 3), planned.cashFlow.closingCash.slice(0, 3));
+  assert.deepEqual(forced.netWorth.cash.slice(0, 3), planned.netWorth.cash.slice(0, 3));
+  assert.equal(forcedMilestone.amount, plannedMilestone.amount);
+});
+
+test("planned and forced other-asset sales use the same cash posting when the sale year is the same", () => {
+  const plannedInputs = buildInputs();
+  plannedInputs.cashBalance = -5_000;
+  plannedInputs.liveUntilAge = 42;
+  plannedInputs.expenseEvents = [{ name: "Force", amount: 50_000, year: 2027 }];
+  plannedInputs.properties = [];
+  plannedInputs.assetsOfValue[0] = {
+    name: "Parity Boat",
+    value: 100_000,
+    appreciationRate: 0,
+    loanBalance: 20_000,
+    loanRate: 0.04,
+    loanRepaymentMonthly: 500,
+    plannedSellYear: 2026
+  };
+  plannedInputs.liquidationPriority = [1];
+
+  const forcedInputs = structuredClone(plannedInputs);
+  forcedInputs.assetsOfValue[0].plannedSellYear = null;
+
+  const timing = resolveProjectionTiming(new Date("2026-01-01T00:00:00Z"), 1);
+  const planned = runScenarioNorm(plannedInputs, timing);
+  const forced = runScenarioNorm(forcedInputs, timing);
+
+  const plannedLiquidation = planned.cashFlow.liquidationsByProperty.find((series) => series.label === "Parity Boat");
+  const forcedLiquidation = forced.cashFlow.liquidationsByProperty.find((series) => series.label === "Parity Boat");
+  const plannedLoanRepayment = planned.cashFlow.propertyLoanRepayments.find((series) => series.label === "Parity Boat");
+  const forcedLoanRepayment = forced.cashFlow.propertyLoanRepayments.find((series) => series.label === "Parity Boat");
+  const plannedMilestone = planned.milestoneHints.find((hint) => hint.label === "Sale of Parity Boat");
+  const forcedMilestone = forced.milestoneHints.find((hint) => hint.label === "Sale of Parity Boat");
+
+  assert.ok(plannedLiquidation);
+  assert.ok(forcedLiquidation);
+  assert.ok(plannedLoanRepayment);
+  assert.ok(forcedLoanRepayment);
+  assert.ok(plannedMilestone);
+  assert.ok(forcedMilestone);
+
+  assert.deepEqual(forcedLiquidation.values.slice(0, 3), plannedLiquidation.values.slice(0, 3));
+  assert.deepEqual(forcedLoanRepayment.values.slice(0, 3), plannedLoanRepayment.values.slice(0, 3));
+  assert.deepEqual(forced.cashFlow.totalInflows.slice(0, 3), planned.cashFlow.totalInflows.slice(0, 3));
+  assert.deepEqual(forced.cashFlow.totalOutflows.slice(0, 3), planned.cashFlow.totalOutflows.slice(0, 3));
+  assert.deepEqual(forced.cashFlow.netCashFlow.slice(0, 3), planned.cashFlow.netCashFlow.slice(0, 3));
+  assert.deepEqual(forced.cashFlow.closingCash.slice(0, 3), planned.cashFlow.closingCash.slice(0, 3));
+  assert.deepEqual(forced.netWorth.cash.slice(0, 3), planned.netWorth.cash.slice(0, 3));
+  assert.equal(forcedMilestone.amount, plannedMilestone.amount);
+});

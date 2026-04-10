@@ -27,6 +27,7 @@ interface PropertyStageSeries extends StageSeries {
   rentalForegone: number[];
   annualCostSaved: number[];
   loanRepayment: number[];
+  loanRepaymentSaved: number[];
 }
 
 interface LiquidationAssetDescriptor {
@@ -197,6 +198,7 @@ function computePropertyStage(
   const rentalForegone = zeroSeries(n);
   const annualCostSaved = zeroSeries(n);
   const loanRepayment = zeroSeries(n);
+  const loanRepaymentSaved = zeroSeries(n);
   const netProceeds = zeroSeries(n);
 
   const EPS = 1e-9;
@@ -212,13 +214,15 @@ function computePropertyStage(
     rentalForegone[i] = Math.abs(bfwd[i]) <= EPS ? -rentalSeries[i] : 0;
     annualCostSaved[i] = Math.abs(bfwd[i]) <= EPS ? annualCostSeries[i] : 0;
     loanRepayment[i] = bfwd[i] > EPS && Math.abs(cfwd[i]) <= EPS ? -loanBalanceSeries[i] : 0;
+    loanRepaymentSaved[i] = Math.abs(bfwd[i]) <= EPS ? loanRepaymentSeries[i] : 0;
 
     netProceeds[i] =
       -disposal[i] +
       disposalCosts[i] +
       rentalForegone[i] +
       annualCostSaved[i] +
-      loanRepayment[i];
+      loanRepayment[i] +
+      loanRepaymentSaved[i];
   }
 
   return {
@@ -230,6 +234,7 @@ function computePropertyStage(
     rentalForegone,
     annualCostSaved,
     loanRepayment,
+    loanRepaymentSaved,
     netProceeds
   };
 }
@@ -703,10 +708,8 @@ export function runScenario(
     );
   }
 
-  const finalCashSeries = cashAvailableAfterLiquidationStages.map((v) => v + inputs.cashBuffer); // row180 / row213
-  const totalInterestSeries = baseInterestSeries.map(
-    (value, i) => value + liquidationExtraInterestSeries.reduce((sum, series) => sum + series[i], 0)
-  );
+  const finalCashSeries = zeroSeries(n);
+  const totalInterestSeries = zeroSeries(n);
   const openingCashSeries = zeroSeries(n);
   const totalInflowsSeries = zeroSeries(n);
   const totalOutflowsSeries = zeroSeries(n);
@@ -760,31 +763,6 @@ export function runScenario(
         if (Math.abs(cumLoanRepay[i]) > EPS) adjustedAssetOfValueLoans[asset.idx][i] = 0;
       }
     }
-  }
-
-  const points: ProjectionPoint[] = [];
-  for (let i = 0; i < n; i += 1) {
-    const year = timeline.years[i];
-    const age = timeline.ages[i];
-
-    const netWorth =
-      finalCashSeries[i] +
-      homeValueSeries[i] +
-      sumAt(adjustedPropertyValues, i) +
-      sumAt(adjustedAssetOfValueValues, i) +
-      stockStage.cfwd[i] -
-      homeLoanSeries[i] -
-      sumAt(adjustedPropertyLoans, i) -
-      sumAt(adjustedAssetOfValueLoans, i) -
-      otherLoanSeries[i];
-
-    points.push({
-      yearIndex: i,
-      year,
-      age,
-      cash: finalCashSeries[i],
-      netWorth
-    });
   }
 
   const milestoneHints: ScenarioOutputs["milestoneHints"] = [];
@@ -932,7 +910,7 @@ export function runScenario(
       year: timeline.years[saleIdx],
       age: timeline.ages[saleIdx],
       label: `Sale of ${saleTarget}`,
-      amount: Math.abs(disposal[saleIdx])
+      amount: Math.abs(disposal[saleIdx]) * (1 - asset.disposalCostRate)
     });
   }
 
@@ -992,6 +970,7 @@ export function runScenario(
               - stage.rentalForegone[yearIdx]
               - stage.annualCostSaved[yearIdx]
               - stage.loanRepayment[yearIdx]
+              - stage.loanRepaymentSaved[yearIdx]
           )
         : zeroSeries(n);
       const values = stageValues.map((value, yearIdx) => value + scheduledPropertyLiquidationSeries[idx][yearIdx]);
@@ -1010,6 +989,7 @@ export function runScenario(
               - stage.rentalForegone[yearIdx]
               - stage.annualCostSaved[yearIdx]
               - stage.loanRepayment[yearIdx]
+              - stage.loanRepaymentSaved[yearIdx]
           )
         : zeroSeries(n);
       const values = stageValues.map((value, yearIdx) => value + scheduledAssetOfValueLiquidationSeries[idx][yearIdx]);
@@ -1025,7 +1005,6 @@ export function runScenario(
   const displayTotalOutflowsSeries = zeroSeries(n);
   const displayNetCashFlowSeries = zeroSeries(n);
   for (let i = 0; i < n; i += 1) {
-    openingCashSeries[i] = i === 0 ? inputs.cashBalance : finalCashSeries[i - 1];
     totalInflowsSeries[i] =
       salarySeries[i] +
       otherWorkSeries[i] +
@@ -1038,7 +1017,7 @@ export function runScenario(
       sumAt(scheduledAssetOfValueLiquidationSeries, i) +
       stockStage.netProceeds[i] +
       liquidationStages.reduce(
-        (sum, stage) => sum + stage.netProceeds[i] - stage.loanRepayment[i],
+        (sum, stage) => sum + stage.netProceeds[i] - stage.loanRepayment[i] - stage.loanRepaymentSaved[i],
         0
       );
     totalOutflowsSeries[i] =
@@ -1080,6 +1059,41 @@ export function runScenario(
       livingExpensesSeries[i] +
       sumAt(expenseEventSeries, i);
     displayNetCashFlowSeries[i] = displayTotalInflowsSeries[i] - displayTotalOutflowsSeries[i];
+  }
+
+  for (let i = 0; i < n; i += 1) {
+    const openingCash = i === 0 ? inputs.cashBalance : finalCashSeries[i - 1];
+    const preInterestCash = openingCash + displayNetCashFlowSeries[i];
+    const interest = Math.max(((openingCash + preInterestCash) / 2) * inputs.cashRate, 0);
+
+    openingCashSeries[i] = openingCash;
+    totalInterestSeries[i] = interest;
+    finalCashSeries[i] = preInterestCash + interest;
+  }
+
+  const points: ProjectionPoint[] = [];
+  for (let i = 0; i < n; i += 1) {
+    const year = timeline.years[i];
+    const age = timeline.ages[i];
+
+    const netWorth =
+      finalCashSeries[i] +
+      homeValueSeries[i] +
+      sumAt(adjustedPropertyValues, i) +
+      sumAt(adjustedAssetOfValueValues, i) +
+      stockStage.cfwd[i] -
+      homeLoanSeries[i] -
+      sumAt(adjustedPropertyLoans, i) -
+      sumAt(adjustedAssetOfValueLoans, i) -
+      otherLoanSeries[i];
+
+    points.push({
+      yearIndex: i,
+      year,
+      age,
+      cash: finalCashSeries[i],
+      netWorth
+    });
   }
 
   return {
