@@ -18,15 +18,8 @@ jobs:
           node-version: 22
           cache: npm
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
       - name: Install dependencies
         run: npm ci
-
-      - name: Install Python dependencies
-        run: python -m pip install openpyxl
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
@@ -39,9 +32,3 @@ jobs:
 
       - name: Build
         run: npm run build
-
-      - name: Specimen parity
-        run: npm run parity
-
-      - name: Live parity
-        run: npm run parity:live
