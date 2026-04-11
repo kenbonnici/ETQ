@@ -60,6 +60,18 @@ test("mid-year overrides pro-rate first-year flows and first-year loan repayment
   assertClose(july.scenarioNorm.cashFlow.homeLoanRepayment[1], january.scenarioNorm.cashFlow.homeLoanRepayment[1]);
 });
 
+test("mid-year overrides pro-rate rental income only in the first year", () => {
+  const january = runWithMonth(1);
+  const july = runWithMonth(7);
+
+  const januaryRental = january.scenarioNorm.cashFlow.rentalIncomeByProperty[0].values;
+  const julyRental = july.scenarioNorm.cashFlow.rentalIncomeByProperty[0].values;
+
+  assertClose(julyRental[0], januaryRental[0] * 0.5);
+  assertClose(julyRental[1], januaryRental[1]);
+  assertClose(julyRental[2], januaryRental[2]);
+});
+
 test("mid-year overrides use partial-year growth and month-offset loan balances", () => {
   const january = runWithMonth(1);
   const july = runWithMonth(7);

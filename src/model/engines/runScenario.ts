@@ -369,7 +369,7 @@ export function runScenario(
 
     let rental = 0;
     for (let p = 0; p < inputs.properties.length; p += 1) {
-      const r = inputs.properties[p].rentalIncome * timing.proRate * safePow(1 + inputs.rentalIncomeGrowth, idx);
+      const r = inputs.properties[p].rentalIncome * proRate * safePow(1 + inputs.rentalIncomeGrowth, idx);
       propertyRentalSeries[p][idx] = r;
       rental += r;
     }
