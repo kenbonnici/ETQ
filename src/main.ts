@@ -21,8 +21,7 @@ import {
 } from "./model/inputSchema";
 import {
   createSampleDataFieldState,
-  SAMPLE_DATA_EARLY_RETIREMENT_AGE,
-  SAMPLE_DATA_PROJECTION_MONTH_OVERRIDE
+  SAMPLE_DATA_EARLY_RETIREMENT_AGE
 } from "./model/sampleData";
 import {
   ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS,
@@ -3636,7 +3635,7 @@ async function loadSampleDataScenario(): Promise<void> {
     uiState.earlyRetirementAge = Number.isFinite(SAMPLE_DATA_EARLY_RETIREMENT_AGE)
       ? Math.round(SAMPLE_DATA_EARLY_RETIREMENT_AGE)
       : (statutory ?? uiState.earlyRetirementAge);
-    uiState.projectionMonthOverride = SAMPLE_DATA_PROJECTION_MONTH_OVERRIDE;
+    uiState.projectionMonthOverride = null;
     setRetireCheckMessage(null);
     syncEarlyRetirementControl(true);
     renderInputs();
