@@ -9,6 +9,7 @@ const EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA = SAMPLE_DATA_EARLY_RETIREMENT_AGE
 const SAMPLE_DATA_CURRENT_AGE = Number(SAMPLE_DATA_FIELDS["profile.currentAge"]);
 const SAMPLE_DATA_RETIREMENT_HINT = `Earliest viable retirement: You can retire now at ${SAMPLE_DATA_CURRENT_AGE}!`;
 const STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA = Number(SAMPLE_DATA_FIELDS["retirement.statutoryAge"]);
+const FIXED_SAMPLE_DATA_TEST_DATE_ISO = "2026-01-01T00:00:00Z";
 
 const selectors = {
   currentAge: 'input[data-field-id="profile.currentAge"]',
@@ -79,6 +80,24 @@ const stepperSelectors = {
 } as const;
 
 async function loadSampleData(page: Page): Promise<void> {
+  await page.addInitScript((fixedDateIso: string) => {
+    const RealDate = Date;
+    const fixedTime = new RealDate(fixedDateIso).getTime();
+
+    class FixedDate extends RealDate {
+      constructor(value?: ConstructorParameters<typeof Date>[0]) {
+        super(value ?? fixedTime);
+      }
+
+      static now(): number {
+        return fixedTime;
+      }
+    }
+
+    Object.defineProperty(FixedDate, "parse", { value: RealDate.parse });
+    Object.defineProperty(FixedDate, "UTC", { value: RealDate.UTC });
+    window.Date = FixedDate as DateConstructor;
+  }, FIXED_SAMPLE_DATA_TEST_DATE_ISO);
   await page.goto("/");
   await page.locator("#saved-scenario-select").selectOption("__sample_data__");
   await page.locator("#load-saved-scenario-btn").click();
