@@ -38,9 +38,21 @@ test("projection timeline now starts from the current year and current age", () 
 test("mid-year overrides pro-rate first-year flows and first-year loan repayments only", () => {
   const january = runWithMonth(1);
   const july = runWithMonth(7);
+  const openingCash = Number(SAMPLE_FIELDS[RUNTIME_FIELDS.cashBalance] ?? 0);
 
   assertClose(january.scenarioNorm.cashFlow.employmentIncome[0], Number(SAMPLE_FIELDS[RUNTIME_FIELDS.currentNetIncomeAnnual]));
   assertClose(july.scenarioNorm.cashFlow.employmentIncome[0], january.scenarioNorm.cashFlow.employmentIncome[0] * 0.5);
+  assertClose(
+    january.scenarioNorm.cashFlow.interestOnCash[0],
+    ((openingCash + (openingCash + january.scenarioNorm.cashFlow.netCashFlow[0])) / 2)
+      * Number(SAMPLE_FIELDS[RUNTIME_FIELDS.cashInterestRate] ?? 0)
+  );
+  assertClose(
+    july.scenarioNorm.cashFlow.interestOnCash[0],
+    ((openingCash + (openingCash + july.scenarioNorm.cashFlow.netCashFlow[0])) / 2)
+      * Number(SAMPLE_FIELDS[RUNTIME_FIELDS.cashInterestRate] ?? 0)
+      * 0.5
+  );
 
   const homeLoanRepayment = Number(SAMPLE_FIELDS[HOME_FIELDS.mortgageMonthlyRepayment] ?? 0);
   assertClose(january.scenarioNorm.cashFlow.homeLoanRepayment[0], homeLoanRepayment * 12);

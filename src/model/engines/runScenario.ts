@@ -569,7 +569,8 @@ export function runScenario(
     );
 
     const preInterestCash = cashBfwd + inflowsBeforeInterest - outflows;
-    const interest = Math.max(((cashBfwd + preInterestCash) / 2) * inputs.cashRate, 0);
+    const interestRate = inputs.cashRate * firstYearFactor(timing, idx);
+    const interest = Math.max(((cashBfwd + preInterestCash) / 2) * interestRate, 0);
     baseInterestSeries[idx] = interest;
     const cashCfwd = preInterestCash + interest;
 
@@ -615,7 +616,8 @@ export function runScenario(
         livingExpensesSeries[i] +
         sumAt(expenseEventSeries, i);
       const preInterestCash = opening + inflowsBeforeInterest - outflows;
-      const interest = Math.max(((opening + preInterestCash) / 2) * inputs.cashRate, 0);
+      const interestRate = inputs.cashRate * firstYearFactor(timing, i);
+      const interest = Math.max(((opening + preInterestCash) / 2) * interestRate, 0);
 
       openingCash[i] = opening;
       totalInflows[i] = inflowsBeforeInterest;
