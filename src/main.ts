@@ -137,6 +137,7 @@ interface ScenarioManagerNotice {
 let debounceHandle: number | null = null;
 let draftPersistHandle: number | null = null;
 let pendingFocusFieldId: FieldId | null = null;
+let pendingSequentialFocusIndex: number | null = null;
 let pendingLiquidationControl: { propertyIdx: number; control: "up" | "down" | "toggle"; pulse: boolean } | null = null;
 let selectedCurrency = DEFAULT_CURRENCY;
 let stepperHoldTimeout: number | null = null;
@@ -1572,6 +1573,58 @@ function getAdjacentVisibleFieldId(fieldId: FieldId, reverse: boolean): FieldId 
   if (currentIndex < 0) return null;
   const nextIndex = currentIndex + (reverse ? -1 : 1);
   return orderedFields[nextIndex] ?? null;
+}
+
+function isSequentialFocusableElement(element: HTMLElement): boolean {
+  if (element.tabIndex < 0) return false;
+  if (element instanceof HTMLInputElement) {
+    if (element.disabled || element.readOnly || element.type === "hidden") return false;
+  } else if (element instanceof HTMLSelectElement) {
+    if (element.disabled) return false;
+  } else {
+    return false;
+  }
+  if (element.closest("[hidden]")) return false;
+  return element.getClientRects().length > 0;
+}
+
+function getSequentialFocusableElements(): HTMLElement[] {
+  return Array.from(app!.querySelectorAll<HTMLElement>("input, select"))
+    .filter((element) => isSequentialFocusableElement(element))
+    .sort((a, b) => {
+      const aRect = a.getBoundingClientRect();
+      const bRect = b.getBoundingClientRect();
+      if (Math.abs(aRect.top - bRect.top) > 8) return aRect.top - bRect.top;
+      if (Math.abs(aRect.left - bRect.left) > 8) return aRect.left - bRect.left;
+      return 0;
+    });
+}
+
+function queueSequentialFocus(index: number): void {
+  pendingSequentialFocusIndex = index;
+  queueMicrotask(() => {
+    if (pendingSequentialFocusIndex === null) return;
+    const focusable = getSequentialFocusableElements();
+    const next = focusable[pendingSequentialFocusIndex] ?? null;
+    pendingSequentialFocusIndex = null;
+    if (!next) return;
+    next.focus({ preventScroll: true });
+  });
+}
+
+function handleEnterAdvance(event: KeyboardEvent): void {
+  if (event.key !== "Enter" || event.defaultPrevented || event.isComposing) return;
+  if (event.altKey || event.ctrlKey || event.metaKey) return;
+  const target = event.target;
+  if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
+  const focusable = getSequentialFocusableElements();
+  const currentIndex = focusable.indexOf(target);
+  if (currentIndex < 0) return;
+  const nextIndex = currentIndex + (event.shiftKey ? -1 : 1);
+  if (nextIndex < 0 || nextIndex >= focusable.length) return;
+  event.preventDefault();
+  queueSequentialFocus(nextIndex);
+  target.blur();
 }
 
 function getRenderedFieldToggleButton(fieldId: FieldId): HTMLButtonElement | null {
@@ -4038,11 +4091,6 @@ function renderInputs(): void {
     scenarioNameInput.addEventListener("input", () => {
       scenarioDraftName = scenarioNameInput.value;
     });
-    scenarioNameInput.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter") return;
-      event.preventDefault();
-      saveCurrentScenario();
-    });
   }
 
   const saveNamedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
@@ -5180,6 +5228,8 @@ spinner.addEventListener("blur", () => {
   setRetireCheckMessage(null);
   queueRecalc();
 });
+
+app.addEventListener("keydown", handleEnterAdvance);
 
 spinnerDown.addEventListener("click", () => adjustEarlyRetirementAge(-1));
 spinnerUp.addEventListener("click", () => adjustEarlyRetirementAge(1));
