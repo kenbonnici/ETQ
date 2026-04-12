@@ -1608,7 +1608,7 @@ function queueSequentialFocus(index: number): void {
     const next = focusable[pendingSequentialFocusIndex] ?? null;
     pendingSequentialFocusIndex = null;
     if (!next) return;
-    next.focus({ preventScroll: true });
+    next.focus();
   });
 }
 
