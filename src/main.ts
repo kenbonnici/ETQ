@@ -3653,14 +3653,18 @@ function renderPropertyLiquidationOrderControl(): string {
   `;
 }
 
-function focusSiblingLiquidationMoveButton(
+function getLiquidationRowControls(row: HTMLElement): HTMLButtonElement[] {
+  return Array.from(row.querySelectorAll<HTMLButtonElement>(".liquidation-move-btn, .liquidation-toggle"))
+    .filter((candidate) => !candidate.disabled);
+}
+
+function focusSiblingLiquidationControl(
   button: HTMLButtonElement,
   direction: "left" | "right"
 ): void {
-  const controls = button.closest<HTMLElement>(".liquidation-reorder-controls");
-  if (!controls) return;
-  const orderedButtons = Array.from(controls.querySelectorAll<HTMLButtonElement>(".liquidation-move-btn"))
-    .filter((candidate) => !candidate.disabled);
+  const row = button.closest<HTMLElement>(".liquidation-item");
+  if (!row) return;
+  const orderedButtons = getLiquidationRowControls(row);
   const currentIndex = orderedButtons.indexOf(button);
   if (currentIndex < 0) return;
   const nextIndex = currentIndex + (direction === "left" ? -1 : 1);
@@ -3682,6 +3686,14 @@ function focusAdjacentLiquidationControl(
   if (currentIndex < 0) return;
   const nextRow = rows[currentIndex + (direction === "up" ? -1 : 1)];
   if (!nextRow) return;
+
+  if (button.classList.contains("liquidation-toggle")) {
+    const nextToggleButton = nextRow.querySelector<HTMLButtonElement>(".liquidation-toggle");
+    if (nextToggleButton && !nextToggleButton.disabled) {
+      nextToggleButton.focus();
+    }
+    return;
+  }
 
   const moveDirection = button.dataset.liquidationMove;
   if (moveDirection === "up" || moveDirection === "down") {
@@ -4637,6 +4649,16 @@ function renderInputs(): void {
 
   inputsPanel.querySelectorAll<HTMLButtonElement>(".liquidation-toggle").forEach((btn) => {
     btn.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        focusSiblingLiquidationControl(btn, "left");
+        return;
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        focusSiblingLiquidationControl(btn, "right");
+        return;
+      }
       if (event.key === "ArrowUp") {
         event.preventDefault();
         focusAdjacentLiquidationControl(btn, "up");
@@ -4684,12 +4706,12 @@ function renderInputs(): void {
     btn.addEventListener("keydown", (event) => {
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        focusSiblingLiquidationMoveButton(btn, "left");
+        focusSiblingLiquidationControl(btn, "left");
         return;
       }
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        focusSiblingLiquidationMoveButton(btn, "right");
+        focusSiblingLiquidationControl(btn, "right");
         return;
       }
       if (event.key === "ArrowUp") {

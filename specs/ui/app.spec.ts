@@ -649,7 +649,7 @@ test("liquidation up and down controls reorder sellable assets precisely", async
   ]);
 });
 
-test("liquidation reorder buttons let keyboard users switch between up and down before pressing enter", async ({ page }) => {
+test("liquidation reorder controls let keyboard users move across up, down, and liquidate", async ({ page }) => {
   await loadSampleData(page);
 
   const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
@@ -658,6 +658,7 @@ test("liquidation reorder buttons let keyboard users switch between up and down 
   });
   const jewelryDownButton = jewelryRow.locator('[data-liquidation-move="down"]');
   const jewelryUpButton = jewelryRow.locator('[data-liquidation-move="up"]');
+  const jewelryToggle = jewelryRow.locator(".liquidation-toggle");
 
   await jewelryDownButton.focus();
   await expect(jewelryDownButton).toBeFocused();
@@ -666,6 +667,12 @@ test("liquidation reorder buttons let keyboard users switch between up and down 
   await expect(jewelryUpButton).toBeFocused();
 
   await page.keyboard.press("ArrowRight");
+  await expect(jewelryDownButton).toBeFocused();
+
+  await page.keyboard.press("ArrowRight");
+  await expect(jewelryToggle).toBeFocused();
+
+  await page.keyboard.press("ArrowLeft");
   await expect(jewelryDownButton).toBeFocused();
 
   await page.keyboard.press("Enter");
