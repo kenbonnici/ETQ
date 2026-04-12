@@ -98,6 +98,11 @@ function zeroSeries(n: number): number[] {
   return Array.from({ length: n }, () => 0);
 }
 
+function valueAtSaleYear(valueSeries: number[], saleIdx: number): number {
+  if (saleIdx <= 0) return valueSeries[saleIdx] ?? 0;
+  return valueSeries[saleIdx - 1] ?? valueSeries[saleIdx] ?? 0;
+}
+
 function cumulative(series: number[]): number[] {
   const out = zeroSeries(series.length);
   let acc = 0;
@@ -671,7 +676,7 @@ export function runScenario(
   const applyResolvedSale = (asset: LiquidationAssetDescriptor, saleIdx: number): void => {
     if (saleIdx < 0 || saleIdx >= n) return;
 
-    const valueAtSale = asset.valueSeries[saleIdx];
+    const valueAtSale = valueAtSaleYear(asset.valueSeries, saleIdx);
     if (Math.abs(valueAtSale) <= EPS) return;
 
     const disposal = zeroSeries(n);

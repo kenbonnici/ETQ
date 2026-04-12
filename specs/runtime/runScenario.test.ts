@@ -132,6 +132,10 @@ function buildForcedSaleInputsWithOngoingLoanRepayments(liquidationPriority: num
   };
 }
 
+function assertAlmostEqual(actual: number, expected: number): void {
+  assert.ok(Math.abs(actual - expected) < 1e-9, `expected ${actual} to equal ${expected}`);
+}
+
 test("planned sales keep gross liquidation inflows separate from property and other asset loan payoffs", () => {
   const scenario = runScenarioNorm(
     buildInputs(),
@@ -324,4 +328,76 @@ test("planned and forced other-asset sales use the same cash posting when the sa
   assert.deepEqual(forced.cashFlow.closingCash.slice(0, 3), planned.cashFlow.closingCash.slice(0, 3));
   assert.deepEqual(forced.netWorth.cash.slice(0, 3), planned.netWorth.cash.slice(0, 3));
   assert.equal(forcedMilestone.amount, plannedMilestone.amount);
+});
+
+test("planned and forced property sales use the opening-of-sale-year property value", () => {
+  const plannedInputs = buildInputs();
+  plannedInputs.cashBalance = 0;
+  plannedInputs.liveUntilAge = 43;
+  plannedInputs.properties[0] = {
+    name: "Conservative Property",
+    value: 100_000,
+    annualCosts: 0,
+    rentalIncome: 0,
+    loanBalance: 0,
+    loanRate: 0,
+    loanRepaymentMonthly: 0,
+    plannedSellYear: 2027
+  };
+  plannedInputs.assetsOfValue = [];
+  plannedInputs.propertyAppreciation = 0.1;
+  plannedInputs.expenseEvents = [{ name: "Force", amount: 200_000, year: 2028 }];
+  plannedInputs.liquidationPriority = [1];
+
+  const forcedInputs = structuredClone(plannedInputs);
+  forcedInputs.properties[0].plannedSellYear = null;
+
+  const timing = resolveProjectionTiming(new Date("2026-01-01T00:00:00Z"), 1);
+  const planned = runScenarioNorm(plannedInputs, timing);
+  const forced = runScenarioNorm(forcedInputs, timing);
+
+  const plannedLiquidation = planned.cashFlow.liquidationsByProperty.find((series) => series.label === "Conservative Property");
+  const forcedLiquidation = forced.cashFlow.liquidationsByProperty.find((series) => series.label === "Conservative Property");
+
+  assert.ok(plannedLiquidation);
+  assert.ok(forcedLiquidation);
+
+  assertAlmostEqual(plannedLiquidation.values[1], 99_000);
+  assertAlmostEqual(forcedLiquidation.values[1], 99_000);
+  assertAlmostEqual(plannedLiquidation.values[1], forcedLiquidation.values[1]);
+});
+
+test("planned and forced other-asset sales use the opening-of-sale-year asset value", () => {
+  const plannedInputs = buildInputs();
+  plannedInputs.cashBalance = 0;
+  plannedInputs.liveUntilAge = 43;
+  plannedInputs.properties = [];
+  plannedInputs.assetsOfValue[0] = {
+    name: "Conservative Asset",
+    value: 100_000,
+    appreciationRate: 0.1,
+    loanBalance: 0,
+    loanRate: 0,
+    loanRepaymentMonthly: 0,
+    plannedSellYear: 2027
+  };
+  plannedInputs.expenseEvents = [{ name: "Force", amount: 200_000, year: 2028 }];
+  plannedInputs.liquidationPriority = [1];
+
+  const forcedInputs = structuredClone(plannedInputs);
+  forcedInputs.assetsOfValue[0].plannedSellYear = null;
+
+  const timing = resolveProjectionTiming(new Date("2026-01-01T00:00:00Z"), 1);
+  const planned = runScenarioNorm(plannedInputs, timing);
+  const forced = runScenarioNorm(forcedInputs, timing);
+
+  const plannedLiquidation = planned.cashFlow.liquidationsByProperty.find((series) => series.label === "Conservative Asset");
+  const forcedLiquidation = forced.cashFlow.liquidationsByProperty.find((series) => series.label === "Conservative Asset");
+
+  assert.ok(plannedLiquidation);
+  assert.ok(forcedLiquidation);
+
+  assertAlmostEqual(plannedLiquidation.values[1], 104_500);
+  assertAlmostEqual(forcedLiquidation.values[1], 104_500);
+  assertAlmostEqual(plannedLiquidation.values[1], forcedLiquidation.values[1]);
 });
