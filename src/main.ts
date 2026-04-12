@@ -1600,6 +1600,10 @@ function getSequentialFocusableElements(): HTMLElement[] {
     });
 }
 
+function getSequentialFocusableIndex(element: HTMLElement): number {
+  return getSequentialFocusableElements().indexOf(element);
+}
+
 function queueSequentialFocus(index: number): void {
   pendingSequentialFocusIndex = index;
   queueMicrotask(() => {
@@ -1610,6 +1614,16 @@ function queueSequentialFocus(index: number): void {
     if (!next) return;
     next.focus();
   });
+}
+
+function queueSequentialFocusFromElement(element: HTMLElement, reverse: boolean): boolean {
+  const currentIndex = getSequentialFocusableIndex(element);
+  if (currentIndex < 0) return false;
+  const nextIndex = currentIndex + (reverse ? -1 : 1);
+  const focusable = getSequentialFocusableElements();
+  if (nextIndex < 0 || nextIndex >= focusable.length) return false;
+  pendingSequentialFocusIndex = nextIndex;
+  return true;
 }
 
 function handleEnterAdvance(event: KeyboardEvent): void {
@@ -1632,24 +1646,35 @@ function getRenderedFieldToggleButton(fieldId: FieldId): HTMLButtonElement | nul
     ?? inputsPanel.querySelector<HTMLButtonElement>(`button[data-toggle-field-id="${fieldId}"]`);
 }
 
-function focusRenderedField(fieldId: FieldId | null): boolean {
+function focusRenderedField(fieldId: FieldId | null, options: { preventScroll?: boolean } = {}): boolean {
   if (!fieldId) return false;
+  const preventScroll = options.preventScroll ?? true;
   const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${fieldId}"]`);
   if (input) {
-    input.focus({ preventScroll: true });
+    input.focus({ preventScroll });
     return true;
   }
   const toggleButton = getRenderedFieldToggleButton(fieldId);
   if (!toggleButton) return false;
-  toggleButton.focus({ preventScroll: true });
+  toggleButton.focus({ preventScroll });
   return true;
 }
 
 function restorePendingOrRelatedFocus(nextFieldId: string | null): void {
+  if (pendingSequentialFocusIndex !== null) {
+    const nextIndex = pendingSequentialFocusIndex;
+    pendingSequentialFocusIndex = null;
+    const focusable = getSequentialFocusableElements();
+    const next = focusable[nextIndex] ?? null;
+    if (next) {
+      next.focus();
+      return;
+    }
+  }
   const pendingFieldId = pendingFocusFieldId;
   pendingFocusFieldId = null;
-  if (focusRenderedField(pendingFieldId)) return;
-  if (focusRenderedField((nextFieldId as FieldId | null) ?? null)) return;
+  if (focusRenderedField(pendingFieldId, { preventScroll: false })) return;
+  if (focusRenderedField((nextFieldId as FieldId | null) ?? null, { preventScroll: false })) return;
 }
 
 function hasUserEnteredValue(fieldId: FieldId): boolean {
@@ -4277,6 +4302,10 @@ function renderInputs(): void {
       if (ev.key === "ArrowUp" || ev.key === "ArrowDown") {
         ev.preventDefault();
         applyPlannedSellYearStepperDelta(fieldId, ev.key === "ArrowUp" ? 1 : -1);
+        return;
+      }
+      if (ev.key === "Tab") {
+        queueSequentialFocusFromElement(el, ev.shiftKey);
       }
     });
 
@@ -4313,6 +4342,7 @@ function renderInputs(): void {
       setRetireCheckMessage(null);
       if (changed) queueRecalc();
       renderInputs();
+      restorePendingOrRelatedFocus(null);
     });
   });
 
@@ -4342,7 +4372,9 @@ function renderInputs(): void {
       }
       if (ev.key !== "Tab") return;
       if (STRUCTURAL_RERENDER_CELLS.has(fieldId)) {
-        pendingFocusFieldId = getAdjacentVisibleFieldId(fieldId, ev.shiftKey);
+        if (!queueSequentialFocusFromElement(el, ev.shiftKey)) {
+          pendingFocusFieldId = getAdjacentVisibleFieldId(fieldId, ev.shiftKey);
+        }
       }
     });
 

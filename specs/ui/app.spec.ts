@@ -437,6 +437,22 @@ test("tab order skips hidden housing rent and reveals mortgage fields in sequenc
   await expectActiveElement(page, selectors.mortgageInterest);
 });
 
+test("tab order follows displayed fields through planned sell year in investment properties", async ({ page }) => {
+  await loadSampleData(page);
+
+  await page.locator(selectors.propertyAnnualCost).focus();
+  await expectActiveElement(page, selectors.propertyAnnualCost);
+
+  await page.locator(selectors.propertyAnnualCost).press("Tab");
+  await expectActiveElement(page, 'input[data-planned-sell-year-field-id="properties.01.plannedSellYear"]');
+
+  await page.locator('input[data-planned-sell-year-field-id="properties.01.plannedSellYear"]').press("Tab");
+  await expectActiveElement(page, selectors.property2Name);
+
+  await page.locator(selectors.property2Name).press("Shift+Tab");
+  await expectActiveElement(page, 'input[data-planned-sell-year-field-id="properties.01.plannedSellYear"]');
+});
+
 test("downsizing cheaper-home warning clears once the replacement cost is reduced", async ({ page }) => {
   await page.goto("/");
 
