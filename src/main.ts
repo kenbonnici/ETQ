@@ -2817,6 +2817,13 @@ function hasValidDownsizingYearForUi(): boolean {
   );
 }
 
+function defaultDownsizingModeToBuy(): void {
+  if (!hasValidDownsizingYearForUi()) return;
+  if (asNumber(fieldState[HOME_FIELDS.homeValue]) <= 0) return;
+  if (normalizeDownsizingMode(fieldState[DOWNSIZING_FIELDS.newHomeMode]) !== null) return;
+  fieldState[DOWNSIZING_FIELDS.newHomeMode] = "Buy";
+}
+
 function getDownsizingPreviewAnchorFieldId(): FieldId | null {
   if (!hasValidDownsizingYearForUi()) return null;
   const hasHome = asNumber(fieldState[HOME_FIELDS.homeValue]) > 0;
@@ -4282,6 +4289,7 @@ function renderInputs(): void {
       } else {
         fieldState[fieldId] = nextValue as number | null;
       }
+      if (fieldId === DOWNSIZING_FIELDS.year) defaultDownsizingModeToBuy();
       if ((fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1 || fieldId === RUNTIME_FIELDS.spendingAdjustmentAge2) && !deferConstraintUntilBlur) {
         syncSpendingAdjustmentAgeFields(fieldId);
       }
