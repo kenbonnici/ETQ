@@ -683,6 +683,36 @@ test("liquidation reorder buttons let keyboard users switch between up and down 
   ]);
 });
 
+test("liquidation reorder buttons let keyboard users move up and down between asset rows", async ({ page }) => {
+  await loadSampleData(page);
+
+  const jewelryRow = page.locator('[data-liquidation-zone="sellable"] .liquidation-item').filter({
+    has: page.locator(".liquidation-name", { hasText: "Jewelry" })
+  });
+  const gudjaRow = page.locator('[data-liquidation-zone="sellable"] .liquidation-item').filter({
+    has: page.locator(".liquidation-name", { hasText: "Gudja" })
+  });
+  const carRow = page.locator('[data-liquidation-zone="sellable"] .liquidation-item').filter({
+    has: page.locator(".liquidation-name", { hasText: "Car" })
+  });
+
+  const jewelryDownButton = jewelryRow.locator('[data-liquidation-move="down"]');
+  const gudjaDownButton = gudjaRow.locator('[data-liquidation-move="down"]');
+  const carDownButton = carRow.locator('[data-liquidation-move="down"]');
+
+  await jewelryDownButton.focus();
+  await expect(jewelryDownButton).toBeFocused();
+
+  await page.keyboard.press("ArrowDown");
+  await expect(gudjaDownButton).toBeFocused();
+
+  await page.keyboard.press("ArrowUp");
+  await expect(jewelryDownButton).toBeFocused();
+
+  await page.keyboard.press("ArrowUp");
+  await expect(carDownButton).toBeFocused();
+});
+
 test("scheduled liquidation links focus the target planned sell year immediately, including when switching assets", async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 595 });
   await loadSampleData(page);

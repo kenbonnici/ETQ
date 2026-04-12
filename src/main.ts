@@ -3669,6 +3669,37 @@ function focusSiblingLiquidationMoveButton(
   nextButton.focus();
 }
 
+function focusAdjacentLiquidationControl(
+  button: HTMLButtonElement,
+  direction: "up" | "down"
+): void {
+  const row = button.closest<HTMLElement>(".liquidation-item");
+  const list = row?.closest<HTMLElement>(".liquidation-list");
+  if (!row || !list) return;
+
+  const rows = Array.from(list.querySelectorAll<HTMLElement>(".liquidation-item"));
+  const currentIndex = rows.indexOf(row);
+  if (currentIndex < 0) return;
+  const nextRow = rows[currentIndex + (direction === "up" ? -1 : 1)];
+  if (!nextRow) return;
+
+  const moveDirection = button.dataset.liquidationMove;
+  if (moveDirection === "up" || moveDirection === "down") {
+    const nextMoveButton = nextRow.querySelector<HTMLButtonElement>(
+      `.liquidation-move-btn[data-liquidation-move="${moveDirection}"]:not(:disabled)`
+    );
+    if (nextMoveButton) {
+      nextMoveButton.focus();
+      return;
+    }
+  }
+
+  const nextToggleButton = nextRow.querySelector<HTMLButtonElement>(".liquidation-toggle");
+  if (nextToggleButton && !nextToggleButton.disabled) {
+    nextToggleButton.focus();
+  }
+}
+
 async function loadSampleDataScenario(): Promise<void> {
   if (sampleDataLoadBusy) return;
   sampleDataLoadBusy = true;
@@ -4605,6 +4636,18 @@ function renderInputs(): void {
   });
 
   inputsPanel.querySelectorAll<HTMLButtonElement>(".liquidation-toggle").forEach((btn) => {
+    btn.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        focusAdjacentLiquidationControl(btn, "up");
+        return;
+      }
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        focusAdjacentLiquidationControl(btn, "down");
+      }
+    });
+
     btn.addEventListener("click", () => {
       const propertyIdx = Number(btn.dataset.liquidationIdx);
       if (!Number.isFinite(propertyIdx)) return;
@@ -4647,6 +4690,16 @@ function renderInputs(): void {
       if (event.key === "ArrowRight") {
         event.preventDefault();
         focusSiblingLiquidationMoveButton(btn, "right");
+        return;
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        focusAdjacentLiquidationControl(btn, "up");
+        return;
+      }
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        focusAdjacentLiquidationControl(btn, "down");
       }
     });
 
