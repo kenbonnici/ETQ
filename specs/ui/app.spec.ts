@@ -649,6 +649,40 @@ test("liquidation up and down controls reorder sellable assets precisely", async
   ]);
 });
 
+test("liquidation reorder buttons let keyboard users switch between up and down before pressing enter", async ({ page }) => {
+  await loadSampleData(page);
+
+  const sellableItems = page.locator('[data-liquidation-zone="sellable"] .liquidation-item .liquidation-name');
+  const jewelryRow = page.locator('[data-liquidation-zone="sellable"] .liquidation-item').filter({
+    has: page.locator(".liquidation-name", { hasText: "Jewelry" })
+  });
+  const jewelryDownButton = jewelryRow.locator('[data-liquidation-move="down"]');
+  const jewelryUpButton = jewelryRow.locator('[data-liquidation-move="up"]');
+
+  await jewelryDownButton.focus();
+  await expect(jewelryDownButton).toBeFocused();
+
+  await page.keyboard.press("ArrowLeft");
+  await expect(jewelryUpButton).toBeFocused();
+
+  await page.keyboard.press("ArrowRight");
+  await expect(jewelryDownButton).toBeFocused();
+
+  await page.keyboard.press("Enter");
+  await expect(sellableItems).toHaveText([
+    "Painting",
+    "Car",
+    "Gudja",
+    "Jewelry",
+    "Antiques",
+    "Marsa",
+    "Gzira",
+    "Boat",
+    "Qormi",
+    "Sliema"
+  ]);
+});
+
 test("scheduled liquidation links focus the target planned sell year immediately, including when switching assets", async ({ page }) => {
   await page.setViewportSize({ width: 430, height: 595 });
   await loadSampleData(page);

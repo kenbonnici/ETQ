@@ -3653,6 +3653,22 @@ function renderPropertyLiquidationOrderControl(): string {
   `;
 }
 
+function focusSiblingLiquidationMoveButton(
+  button: HTMLButtonElement,
+  direction: "left" | "right"
+): void {
+  const controls = button.closest<HTMLElement>(".liquidation-reorder-controls");
+  if (!controls) return;
+  const orderedButtons = Array.from(controls.querySelectorAll<HTMLButtonElement>(".liquidation-move-btn"))
+    .filter((candidate) => !candidate.disabled);
+  const currentIndex = orderedButtons.indexOf(button);
+  if (currentIndex < 0) return;
+  const nextIndex = currentIndex + (direction === "left" ? -1 : 1);
+  const nextButton = orderedButtons[nextIndex];
+  if (!nextButton) return;
+  nextButton.focus();
+}
+
 async function loadSampleDataScenario(): Promise<void> {
   if (sampleDataLoadBusy) return;
   sampleDataLoadBusy = true;
@@ -4622,6 +4638,18 @@ function renderInputs(): void {
   });
 
   inputsPanel.querySelectorAll<HTMLButtonElement>(".liquidation-move-btn").forEach((btn) => {
+    btn.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        focusSiblingLiquidationMoveButton(btn, "left");
+        return;
+      }
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        focusSiblingLiquidationMoveButton(btn, "right");
+      }
+    });
+
     btn.addEventListener("click", () => {
       const propertyIdx = Number(btn.dataset.liquidationIdx);
       const direction = btn.dataset.liquidationMove;
