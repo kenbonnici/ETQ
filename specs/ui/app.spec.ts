@@ -954,6 +954,18 @@ test("retirement stepper does not clear the earliest-retirement indicator while 
   expect(indicatorSnapshot.isNeutral).toBe(false);
 });
 
+test("editing inputs does not flash the retirement indicator back to awaiting state", async ({ page }) => {
+  await loadSampleData(page);
+
+  const retirementIndicator = page.locator("#retire-check-result");
+  await expect(retirementIndicator).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
+
+  await page.locator(selectors.propertyName).fill("Sliema updated");
+
+  await expect(retirementIndicator).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
+  await expect(retirementIndicator).not.toContainText("Awaiting minimum inputs");
+});
+
 test("timeline cap shows the entered life expectancy age", async ({ page }) => {
   await loadSampleData(page);
 

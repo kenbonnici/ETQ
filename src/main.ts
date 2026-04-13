@@ -1213,7 +1213,6 @@ function setLivingExpensesMode(nextMode: LivingExpensesMode): void {
   if (livingExpensesMode === "expanded") {
     syncLivingExpensesFieldFromExpandedMode();
   }
-  setRetireCheckMessage(null);
   renderInputs();
   queueRecalc();
 }
@@ -2903,7 +2902,6 @@ function applyPlannedSellYearStepperDelta(fieldId: PlannedSellYearFieldId, dir: 
   const base = current ?? getPlannedSellYearMinimum();
   runtimeFieldState[fieldId] = normalizePlannedSellYearValue(base + dir);
   markFieldTouched(fieldId as FieldId);
-  setRetireCheckMessage(null);
   queueRecalc();
   renderInputs();
 }
@@ -3396,7 +3394,6 @@ function removeInputGroup(kind: RemovableGroupKind, idx: number): void {
   }
   syncVisibleRuntimeGroupsFromState();
   uiState.manualPropertyLiquidationOrder = hasExplicitPropertyLiquidationPreferences(fieldState);
-  setRetireCheckMessage(null);
   queueRecalc();
   renderInputs();
 }
@@ -3582,7 +3579,6 @@ function applyStepperDelta(fieldId: FieldId, dir: number): void {
   const input = inputsPanel.querySelector<HTMLInputElement>(`input[data-field-id="${fieldId}"]`);
   if (input) input.value = formatFieldValue(def, fieldState[fieldId]);
 
-  setRetireCheckMessage(null);
   const refreshedDownsizingPreview = refreshDownsizingPreviewOnInput(fieldId);
   if (!refreshedDownsizingPreview && STRUCTURAL_RERENDER_CELLS.has(fieldId)) {
     renderInputs();
@@ -3741,7 +3737,6 @@ function requestPlannedSellYearJump(fieldId: PlannedSellYearFieldId): void {
       suppressedPlannedSellYearBlurFieldId = activeFieldId;
       activeElement.blur();
       if (changed) {
-        setRetireCheckMessage(null);
         queueRecalc();
       }
       queuePendingPlannedSellYearJump();
@@ -4387,7 +4382,6 @@ function renderInputs(): void {
         fieldState[key] = pruned[key];
       }
       const panelScrollTop = inputsPanel.scrollTop;
-      setRetireCheckMessage(null);
       queueRecalc();
       renderInputs();
       window.requestAnimationFrame(() => {
@@ -4409,7 +4403,6 @@ function renderInputs(): void {
       markFieldTouched(LIVING_EXPENSES_FIELD_ID);
       syncLivingExpensesFieldFromExpandedMode();
       syncRenderedLivingExpensesDerivedTotal();
-      setRetireCheckMessage(null);
       queueRecalc();
     });
 
@@ -4450,7 +4443,6 @@ function renderInputs(): void {
       const parsed = parseIntegerInput(el.value, false);
       runtimeFieldState[fieldId] = parsed !== null && parsed >= getPlannedSellYearMinimum() ? parsed : null;
       markFieldTouched(fieldId as FieldId);
-      setRetireCheckMessage(null);
       queueRecalc();
     });
 
@@ -4472,7 +4464,6 @@ function renderInputs(): void {
         suppressedPlannedSellYearBlurFieldId = null;
         return;
       }
-      setRetireCheckMessage(null);
       if (changed) queueRecalc();
       renderInputs();
       restorePendingOrRelatedFocus(null);
@@ -4568,7 +4559,6 @@ function renderInputs(): void {
       if (fieldId === LIVING_EXPENSES_FIELD_ID && livingExpensesMode === "single") {
         livingExpenseCategoryValues = createEmptyLivingExpenseCategoryValues();
       }
-      setRetireCheckMessage(null);
       if (fieldId === RUNTIME_FIELDS.statutoryRetirementAge) {
         const statutory = getStatutoryAge();
         if (statutory !== null) {
@@ -4741,7 +4731,6 @@ function renderInputs(): void {
           uiState.advancedAssumptionsOpen = true;
         }
       }
-      setRetireCheckMessage(null);
       queueRecalc();
       renderInputs();
     });
@@ -4861,7 +4850,6 @@ function renderInputs(): void {
       }
 
       pendingLiquidationControl = { propertyIdx, control: "toggle", pulse: true };
-      setRetireCheckMessage(null);
       queueRecalc();
       renderInputs();
     });
@@ -4907,7 +4895,6 @@ function renderInputs(): void {
 
       pendingLiquidationControl = { propertyIdx, control: direction, pulse: true };
       persistPropertyLiquidationOrder(order, active);
-      setRetireCheckMessage(null);
       queueRecalc();
       renderInputs();
     });
@@ -5466,7 +5453,6 @@ spinner.addEventListener("input", () => {
   if (statutory === null) return;
   spinner.max = String(statutory);
   spinner.min = String(getMinEarlyRetirementAge());
-  setRetireCheckMessage(null);
   const raw = spinner.value.trim();
   if (raw === "") {
     updateEarlyRetirementButtons(statutory);
@@ -5505,7 +5491,6 @@ spinner.addEventListener("blur", () => {
   uiState.earlyRetirementAge = Math.max(getMinEarlyRetirementAge(), Math.min(statutory, v));
   spinner.value = String(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
-  setRetireCheckMessage(null);
   queueRecalc();
 });
 
