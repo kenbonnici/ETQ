@@ -68,7 +68,13 @@ const selectors = {
   cashChart: "#cash-chart",
   networthChart: "#nw-chart",
   cashflowScroll: "#cashflow-table-panel .cashflow-table-scroll",
-  networthScroll: "#networth-table-panel .cashflow-table-scroll"
+  networthScroll: "#networth-table-panel .cashflow-table-scroll",
+  scenarioDraftStatus: "#scenario-draft-status",
+  scenarioNameInput: "#scenario-name-input",
+  saveNamedScenarioButton: "#save-named-scenario-btn",
+  savedScenarioSelect: "#saved-scenario-select",
+  loadSavedScenarioButton: "#load-saved-scenario-btn",
+  clearInputsButton: "#clear-inputs-btn"
 } as const;
 
 const stepperSelectors = {
@@ -568,6 +574,25 @@ test("load sample data restores the active stock market crash scenario from the 
   await expect(page.locator(selectors.stockMarketCrash2Year)).toHaveValue("2032");
   await expect(page.locator('input[data-field-id="stockMarketCrashes.05.year"]')).toBeVisible();
   await expect(page.locator('input[data-field-id="stockMarketCrashes.05.year"]')).toHaveValue("2050");
+});
+
+test("editing a loaded scenario shows unsaved changes in My Data", async ({ page }) => {
+  await loadSampleData(page);
+
+  await fillAndBlur(page, selectors.scenarioNameInput, "Regression Scenario");
+  await page.locator(selectors.saveNamedScenarioButton).click();
+  await expect(page.locator(selectors.scenarioDraftStatus)).toBeHidden();
+
+  await page.locator(selectors.clearInputsButton).click();
+  await page.getByRole("button", { name: "OK" }).click();
+  await expect(page.locator(selectors.scenarioDraftStatus)).toBeHidden();
+
+  await page.locator(selectors.savedScenarioSelect).selectOption({ index: 1 });
+  await page.locator(selectors.loadSavedScenarioButton).click();
+  await expect(page.locator(selectors.scenarioDraftStatus)).toBeHidden();
+
+  await fillAndBlur(page, selectors.livingExpenses, "40000");
+  await expect(page.locator(selectors.scenarioDraftStatus)).toHaveText("Unsaved changes");
 });
 
 test("finer details honors the configured liquidation order and lets users exclude a property from liquidation", async ({ page }) => {

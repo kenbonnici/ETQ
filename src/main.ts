@@ -1302,12 +1302,43 @@ function snapshotHasSavableData(snapshot: PersistedScenarioSnapshotV2): boolean 
   return false;
 }
 
+function snapshotsMatchForScenarioStatus(a: PersistedScenarioSnapshotV2, b: PersistedScenarioSnapshotV2): boolean {
+  if (INPUT_DEFINITIONS.some((def) => (a.fields[def.fieldId] ?? null) !== (b.fields[def.fieldId] ?? null))) return false;
+  if (PLANNED_SELL_YEAR_FIELDS.some((fieldId) => (a.plannedSellYears?.[fieldId] ?? null) !== (b.plannedSellYears?.[fieldId] ?? null))) return false;
+  if (a.ui.selectedCurrency !== b.ui.selectedCurrency) return false;
+  if (a.ui.livingExpensesMode !== b.ui.livingExpensesMode) return false;
+  return LIVING_EXPENSE_CATEGORY_DEFINITIONS.every(({ id }) => a.ui.livingExpenseCategoryValues[id] === b.ui.livingExpenseCategoryValues[id]);
+}
+
+function getScenarioDraftStatus(scenarios: NamedScenarioRecordV1[]): "not-saved" | "unsaved-changes" | null {
+  const currentSnapshot = collectPersistedScenarioSnapshot();
+  if (!snapshotHasSavableData(currentSnapshot)) return null;
+  if (!activeSavedScenarioId) return "not-saved";
+  const activeScenario = scenarios.find((scenario) => scenario.id === activeSavedScenarioId);
+  if (!activeScenario) return "not-saved";
+  return snapshotsMatchForScenarioStatus(currentSnapshot, activeScenario.snapshot) ? null : "unsaved-changes";
+}
+
+function syncScenarioDraftStatusIndicator(): void {
+  const statusEl = inputsPanel.querySelector<HTMLSpanElement>("#scenario-draft-status");
+  if (!statusEl) return;
+  const draftStatus = getScenarioDraftStatus(readNamedScenarios());
+  if (draftStatus === null) {
+    statusEl.textContent = "";
+    statusEl.hidden = true;
+    return;
+  }
+  statusEl.textContent = draftStatus === "not-saved" ? "Not saved" : "Unsaved changes";
+  statusEl.hidden = false;
+}
+
 function syncScenarioActionButtonState(): void {
   const hasSavableScenarioData = scenarioStorageAvailable && snapshotHasSavableData(collectPersistedScenarioSnapshot());
   const saveButton = inputsPanel.querySelector<HTMLButtonElement>("#save-named-scenario-btn");
   if (saveButton) saveButton.disabled = !hasSavableScenarioData;
   const clearButton = inputsPanel.querySelector<HTMLButtonElement>("#clear-inputs-btn");
   if (clearButton) clearButton.disabled = !hasSavableScenarioData;
+  syncScenarioDraftStatusIndicator();
 }
 
 function readDraftScenarioSnapshot(): PersistedScenarioSnapshotV2 | null {
@@ -1430,6 +1461,7 @@ function applyPersistedScenarioSnapshot(
 function renderScenarioManager(): string {
   const scenarios = readNamedScenarios();
   const hasSavableScenarioData = snapshotHasSavableData(collectPersistedScenarioSnapshot());
+  const draftStatus = getScenarioDraftStatus(scenarios);
   const hasSavedScenarios = scenarios.length > 0;
   const hasSelectedScenario = selectedSavedScenarioId === SAMPLE_DATA_SCENARIO_ID
     || (selectedSavedScenarioId !== null && scenarios.some((scenario) => scenario.id === selectedSavedScenarioId));
@@ -1452,6 +1484,11 @@ function renderScenarioManager(): string {
           <div class="scenario-row-main">
             <div class="scenario-manager-kicker-row">
               <div class="scenario-manager-kicker">Current inputs</div>
+              <span
+                id="scenario-draft-status"
+                class="scenario-manager-status scenario-manager-status--warning"
+                ${draftStatus ? "" : "hidden"}
+              >${draftStatus === "not-saved" ? "Not saved" : draftStatus === "unsaved-changes" ? "Unsaved changes" : ""}</span>
             </div>
             <div class="scenario-field-shell">
               <input

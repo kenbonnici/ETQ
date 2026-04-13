@@ -1479,7 +1479,10 @@ body {
 }
 
 .scenario-manager-kicker-row {
-  display: block;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
   margin-bottom: 5px;
 }
 
@@ -1490,6 +1493,19 @@ body {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: #5f756e;
+}
+
+.scenario-manager-status {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.scenario-manager-status--warning {
+  color: #b42318;
 }
 
 .scenario-heading-block {
