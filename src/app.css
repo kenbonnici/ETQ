@@ -658,10 +658,18 @@ body {
 }
 
 .cashflow-scenario-toggle .cashflow-scenario-btn.is-active {
-  border-color: #2f8572;
-  background: #7ec2b6;
   color: #ffffff;
   box-shadow: 0 1px 2px rgb(21 52 47 / 0.12);
+}
+
+#projection-scenario-early.is-active {
+  border-color: #0369a1;
+  background: #0284c7;
+}
+
+#projection-scenario-norm.is-active {
+  border-color: #b45309;
+  background: #d97706;
 }
 
 .cashflow-page-actions {
@@ -1132,9 +1140,17 @@ body {
   transform: translateY(-1px);
 }
 
+.chart-legend-line + span {
+  color: #0369a1;
+}
+
 .chart-legend-line.is-dashed {
   border-top-color: #d97706;
   border-top-style: dashed;
+}
+
+.chart-legend-line.is-dashed + span {
+  color: #b45309;
 }
 
 .chart-card canvas {
