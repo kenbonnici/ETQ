@@ -12,6 +12,7 @@ export function createSampleDataFieldState(): FieldState {
   fields["assets.cash.totalBalance"] = 50000;
   fields["assets.equities.marketValue"] = 30000;
   fields["assets.equities.monthlyContribution"] = 350;
+  fields["housing.status"] = "Owner";
   fields["housing.01Residence.marketValue"] = 500000;
   fields["housing.01Residence.mortgage.balance"] = 50000;
   fields["housing.01Residence.mortgage.interestRateAnnual"] = 0.03;

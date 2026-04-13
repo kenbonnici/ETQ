@@ -426,6 +426,15 @@ function isPositiveNumber(value: unknown): boolean {
   return asNumber(value) > 0;
 }
 
+function resolveHousingStatus(values: RuntimeValues): "OWNER" | "RENTER" | null {
+  const explicit = String(values[HOME_FIELDS.housingStatus] ?? "").trim().toUpperCase();
+  if (explicit === "OWNER") return "OWNER";
+  if (explicit === "RENTER") return "RENTER";
+  if (asNumber(values[HOME_FIELDS.homeValue]) > 0) return "OWNER";
+  if (asNumber(values[HOME_FIELDS.housingRentAnnual]) > 0) return "RENTER";
+  return null;
+}
+
 export function isOutOfRangeLiquidationRank(fieldId: FieldId, nextValue: unknown): boolean {
   if (!PROPERTY_LIQUIDATION_FIELDS.has(fieldId)) return false;
   if (nextValue === null || nextValue === undefined || String(nextValue).trim() === "") return false;
@@ -460,12 +469,15 @@ export function fieldVisible(
   fieldId: FieldId,
   visibility: RuntimeVisibilityState
 ): boolean {
+  const housingStatus = resolveHousingStatus(values);
+  if (fieldId === HOME_FIELDS.housingStatus) return true;
+  if (fieldId === HOME_FIELDS.homeValue) return housingStatus === "OWNER";
   if (fieldId === HOME_FIELDS.mortgageBalance) return asNumber(values[HOME_FIELDS.homeValue]) > 0;
   if (fieldId === HOME_FIELDS.mortgageInterestRateAnnual || fieldId === HOME_FIELDS.mortgageMonthlyRepayment) {
     return asNumber(values[HOME_FIELDS.homeValue]) > 0 && !isBlank(values[HOME_FIELDS.mortgageBalance]);
   }
   if (fieldId === HOME_FIELDS.housingRentAnnual) {
-    return isBlank(values[HOME_FIELDS.homeValue]) || asNumber(values[HOME_FIELDS.homeValue]) === 0;
+    return housingStatus === "RENTER";
   }
   if (fieldId === DOWNSIZING_FIELDS.newHomeMode) {
     return isDownsizingYearInProjectionWindow(values[DOWNSIZING_FIELDS.year], values[RUNTIME_FIELDS.currentAge], values[RUNTIME_FIELDS.lifeExpectancyAge])

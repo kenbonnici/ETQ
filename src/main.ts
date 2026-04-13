@@ -233,6 +233,7 @@ const STEP_DECIMALS = FIELD_STEPPER_DECIMALS;
 const LIVING_EXPENSES_FIELD_ID = RUNTIME_FIELDS.annualLivingExpenses;
 const LIVING_EXPENSES_DEF = INPUT_DEFINITION_BY_FIELD_ID[LIVING_EXPENSES_FIELD_ID];
 const DOWNSIZING_MODE_OPTIONS = ["Buy", "Rent"] as const;
+const HOUSING_STATUS_OPTIONS = ["Owner", "Renter"] as const;
 const DEFAULT_SPENDING_ADJUSTMENT_AGE_1 = 65;
 const DEFAULT_SPENDING_ADJUSTMENT_AGE_2 = 75;
 const SPENDING_ADJUSTMENT_PERCENT_FIELD_IDS = new Set<FieldId>([
@@ -2990,6 +2991,15 @@ function getDownsizingModeValue(value: RawInputValue): typeof DOWNSIZING_MODE_OP
   return null;
 }
 
+function getHousingStatusValue(fields: FieldState = fieldState): typeof HOUSING_STATUS_OPTIONS[number] | null {
+  const explicit = String(fields[HOME_FIELDS.housingStatus] ?? "").trim().toUpperCase();
+  if (explicit === "OWNER") return "Owner";
+  if (explicit === "RENTER") return "Renter";
+  if (asNumber(fields[HOME_FIELDS.homeValue]) > 0) return "Owner";
+  if (asNumber(fields[HOME_FIELDS.housingRentAnnual]) > 0) return "Renter";
+  return null;
+}
+
 function hasValidDownsizingYearForUi(): boolean {
   return isDownsizingYearInProjectionWindow(
     fieldState[DOWNSIZING_FIELDS.year],
@@ -3143,7 +3153,36 @@ function renderDownsizingModeField(def: InputDefinition, label: string): string 
   `;
 }
 
+function renderHousingStatusField(def: InputDefinition, label: string): string {
+  const selectedStatus = getHousingStatusValue();
+
+  return `
+    <div class="field field-choice-field" data-field-id="${def.fieldId}">
+      <div class="field-choice-row">
+        <span class="field-choice-label">${label}</span>
+        <div class="field-choice-toggle" role="group" aria-label="${escapeHtml(label)}">
+          ${HOUSING_STATUS_OPTIONS.map((option) => `
+            <button
+              type="button"
+              class="field-choice-btn${selectedStatus === option ? " is-active" : ""}"
+              data-field-id="${def.fieldId}"
+              data-toggle-field-id="${def.fieldId}"
+              data-toggle-option="${option}"
+              aria-pressed="${selectedStatus === option ? "true" : "false"}"
+            >
+              ${option}
+            </button>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderStandardFieldControl(def: InputDefinition, label: string): string {
+  if (def.fieldId === HOME_FIELDS.housingStatus) {
+    return renderHousingStatusField(def, label);
+  }
   if (def.fieldId === DOWNSIZING_FIELDS.newHomeMode) {
     return renderDownsizingModeField(def, label);
   }
@@ -4360,10 +4399,18 @@ function renderInputs(): void {
     btn.addEventListener("click", () => {
       const fieldId = btn.dataset.toggleFieldId as FieldId | undefined;
       const nextValue = btn.dataset.toggleOption;
-      if (!fieldId || !DOWNSIZING_MODE_OPTIONS.includes(nextValue as typeof DOWNSIZING_MODE_OPTIONS[number])) return;
+      if (!fieldId || !nextValue) return;
+
+      const allowedOptions: readonly string[] | null = fieldId === DOWNSIZING_FIELDS.newHomeMode
+        ? DOWNSIZING_MODE_OPTIONS
+        : (fieldId === HOME_FIELDS.housingStatus ? HOUSING_STATUS_OPTIONS : null);
+      if (!allowedOptions || !allowedOptions.includes(nextValue)) return;
 
       markFieldTouched(fieldId);
-      if (getDownsizingModeValue(fieldState[fieldId]) === nextValue) {
+      const currentValue = fieldId === DOWNSIZING_FIELDS.newHomeMode
+        ? getDownsizingModeValue(fieldState[fieldId])
+        : getHousingStatusValue();
+      if (currentValue === nextValue) {
         focusRenderedField(fieldId);
         return;
       }

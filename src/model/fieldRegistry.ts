@@ -4,6 +4,7 @@ export const ALL_FIELD_IDS = [
   "assets.cash.totalBalance",
   "assets.equities.marketValue",
   "assets.equities.monthlyContribution",
+  "housing.status",
   "housing.01Residence.marketValue",
   "housing.01Residence.mortgage.balance",
   "housing.01Residence.mortgage.interestRateAnnual",

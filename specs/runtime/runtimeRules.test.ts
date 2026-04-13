@@ -220,8 +220,18 @@ test("visibility rules stay semantic for dependents, properties, and loans", () 
   fields[STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].yearField] = new Date().getFullYear() + 1;
   assert.equal(fieldVisible(fields, STOCK_MARKET_CRASH_RUNTIME_GROUPS[0].dropField, DEFAULT_VISIBILITY), true);
 
+  assert.equal(fieldVisible(fields, HOME_FIELDS.housingStatus, DEFAULT_VISIBILITY), true);
+  assert.equal(fieldVisible(fields, HOME_FIELDS.homeValue, DEFAULT_VISIBILITY), false);
+  assert.equal(fieldVisible(fields, HOME_FIELDS.housingRentAnnual, DEFAULT_VISIBILITY), false);
+  fields[HOME_FIELDS.housingStatus] = "Renter";
   assert.equal(fieldVisible(fields, HOME_FIELDS.housingRentAnnual, DEFAULT_VISIBILITY), true);
+  assert.equal(fieldVisible(fields, HOME_FIELDS.homeValue, DEFAULT_VISIBILITY), false);
+  fields[HOME_FIELDS.housingStatus] = "Owner";
+  assert.equal(fieldVisible(fields, HOME_FIELDS.homeValue, DEFAULT_VISIBILITY), true);
+  assert.equal(fieldVisible(fields, HOME_FIELDS.housingRentAnnual, DEFAULT_VISIBILITY), false);
+  fields[HOME_FIELDS.housingStatus] = null;
   fields[HOME_FIELDS.homeValue] = 500_000;
+  assert.equal(fieldVisible(fields, HOME_FIELDS.homeValue, DEFAULT_VISIBILITY), true);
   assert.equal(fieldVisible(fields, HOME_FIELDS.housingRentAnnual, DEFAULT_VISIBILITY), false);
 
   assert.equal(fieldVisible(fields, DOWNSIZING_FIELDS.newHomeMode, DEFAULT_VISIBILITY), false);

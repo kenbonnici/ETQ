@@ -70,6 +70,7 @@ type StockMarketCrashGroup = {
 };
 
 type HomeLoanGroup = {
+  statusField: FieldId;
   homeValueField: FieldId;
   rentField: FieldId;
   balanceField: FieldId;
@@ -594,6 +595,7 @@ export const STOCK_MARKET_CRASH_GROUPS = [
 ] as Array<StockMarketCrashGroup>;
 
 export const HOME_LOAN_GROUP = {
+  statusField: "housing.status",
   homeValueField: "housing.01Residence.marketValue",
   rentField: "housing.rentAnnual",
   balanceField: "housing.01Residence.mortgage.balance",

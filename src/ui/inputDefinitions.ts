@@ -78,10 +78,19 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
+    row: 12,
+    fieldId: "housing.status",
+    label: "Do you own or rent your home?",
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "",
+    type: "text"
+  },
+  {
     row: 13,
     fieldId: "housing.01Residence.marketValue",
     label: "Home value",
-    tooltip: "Current market value or leave blank if not a home owner",
+    tooltip: "Current market value of your home",
     uiNote: "",
     sampleValue: "600000",
     type: "number"
@@ -135,8 +144,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 24,
     fieldId: "housing.rentAnnual",
     label: "Home monthly rent",
-    tooltip: "Monthly rent if not a home owner",
-    uiNote: "Show only when no home value is entered",
+    tooltip: "Current monthly rent",
+    uiNote: "",
     sampleValue: "",
     type: "number"
   },
@@ -1607,7 +1616,7 @@ const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
 
 const TOOLTIP_OVERRIDES: Partial<Record<FieldId, string>> = {
   "income.employment.netAnnual": "Annual net of tax income from employment or self-employment.",
-  "housing.01Residence.marketValue": "Current market value or leave blank if not a home owner",
+  "housing.01Residence.marketValue": "Current market value of your home",
   "income.otherWork.netAnnual": "Net annual income from consulting, freelance, or other part-time work. Leave blank if none.",
   "retirement.statePension.netAnnualAtStart": "Net annual pension entitlement",
   "retirement.earlyPensionReductionPerYear": "Reduction in annual pension for each year retired early",
@@ -1651,7 +1660,8 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
   }
 
   if (
-    fieldId === "housing.01Residence.marketValue"
+    fieldId === "housing.status"
+    || fieldId === "housing.01Residence.marketValue"
     || fieldId === "housing.rentAnnual"
   ) {
     return { section: "Housing", groupTail: [] };

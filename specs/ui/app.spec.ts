@@ -23,6 +23,8 @@ const selectors = {
   livingExpensesGroceries: 'input[data-living-expense-category="groceries"]',
   livingExpensesUtilities: 'input[data-living-expense-category="utilities"]',
   livingExpensesMiscellaneous: 'input[data-living-expense-category="miscellaneous"]',
+  housingStatusOwner: 'button[data-toggle-field-id="housing.status"][data-toggle-option="Owner"]',
+  housingStatusRenter: 'button[data-toggle-field-id="housing.status"][data-toggle-option="Renter"]',
   homeValue: 'input[data-field-id="housing.01Residence.marketValue"]',
   housingRent: 'input[data-field-id="housing.rentAnnual"]',
   mortgageBalance: 'input[data-field-id="housing.01Residence.mortgage.balance"]',
@@ -148,9 +150,15 @@ test("activates dependent fields and home-owner visibility rules in the rendered
   await fillAndBlur(page, selectors.dependentName, "Chris");
   await expect(page.locator(selectors.dependentAnnualCost)).toBeVisible();
 
-  await expect(page.locator(selectors.housingRent)).toBeVisible();
-  await fillAndBlur(page, selectors.homeValue, "600000");
+  await expect(page.locator(selectors.homeValue)).toHaveCount(0);
   await expect(page.locator(selectors.housingRent)).toHaveCount(0);
+  await page.locator(selectors.housingStatusRenter).click();
+  await expect(page.locator(selectors.housingRent)).toBeVisible();
+  await expect(page.locator(selectors.homeValue)).toHaveCount(0);
+  await page.locator(selectors.housingStatusOwner).click();
+  await expect(page.locator(selectors.housingRent)).toHaveCount(0);
+  await expect(page.locator(selectors.homeValue)).toBeVisible();
+  await fillAndBlur(page, selectors.homeValue, "600000");
   await expect(page.locator(selectors.mortgageBalance)).toBeVisible();
 });
 
@@ -426,6 +434,7 @@ test("tab order stays in visible dependent field order as groups appear", async 
 test("tab order skips hidden housing rent and reveals mortgage fields in sequence", async ({ page }) => {
   await page.goto("/");
 
+  await page.locator(selectors.housingStatusOwner).click();
   const homeValue = page.locator(selectors.homeValue);
   await homeValue.fill("600000");
   await homeValue.press("Tab");
@@ -463,6 +472,7 @@ test("downsizing cheaper-home warning clears once the replacement cost is reduce
   await page.goto("/");
 
   await fillAndBlur(page, selectors.currentAge, "48");
+  await page.locator(selectors.housingStatusOwner).click();
   await fillAndBlur(page, selectors.homeValue, "500000");
   await fillAndBlur(page, selectors.mortgageBalance, "320000");
   await fillAndBlur(page, selectors.mortgageInterest, "4");
@@ -484,6 +494,7 @@ test("downsizing cash released returns after switching from rent back to buy", a
   await page.goto("/");
 
   await fillAndBlur(page, selectors.currentAge, "48");
+  await page.locator(selectors.housingStatusOwner).click();
   await fillAndBlur(page, selectors.homeValue, "500000");
   await fillAndBlur(page, selectors.mortgageBalance, "120000");
   await fillAndBlur(page, selectors.mortgageInterest, "4");

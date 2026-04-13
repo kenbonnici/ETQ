@@ -55,6 +55,7 @@ export const DOWNSIZING_FIELDS = {
 } as const satisfies Record<string, FieldId>;
 
 export const HOME_FIELDS = {
+  housingStatus: HOME_LOAN_GROUP.statusField,
   homeValue: HOME_LOAN_GROUP.homeValueField,
   housingRentAnnual: HOME_LOAN_GROUP.rentField,
   mortgageBalance: HOME_LOAN_GROUP.balanceField,

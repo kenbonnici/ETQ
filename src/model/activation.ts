@@ -31,20 +31,37 @@ function asNumber(value: unknown): number {
   return Number.isFinite(num) ? num : 0;
 }
 
+function resolveHousingStatus(target: FieldState): "OWNER" | "RENTER" | null {
+  const explicit = String(target[HOME_LOAN_GROUP.statusField] ?? "").trim().toUpperCase();
+  if (explicit === "OWNER") return "OWNER";
+  if (explicit === "RENTER") return "RENTER";
+  if (asNumber(target[HOME_LOAN_GROUP.homeValueField]) > 0) return "OWNER";
+  if (asNumber(target[HOME_LOAN_GROUP.rentField]) > 0) return "RENTER";
+  return null;
+}
+
 function clearFields(target: FieldState, fields: readonly FieldId[]): void {
   for (const fieldId of fields) target[fieldId] = null;
 }
 
 function applyDependencyPruning(target: FieldState): void {
-  const hasHome = asNumber(target[HOME_LOAN_GROUP.homeValueField]) > 0;
+  const housingStatus = resolveHousingStatus(target);
+  const hasHome = housingStatus === "OWNER" && asNumber(target[HOME_LOAN_GROUP.homeValueField]) > 0;
   const hasDownsizingYear = isDownsizingYearInProjectionWindow(
     target[DOWNSIZING_GROUP.yearField],
     target["profile.currentAge"],
     target["planning.lifeExpectancyAge"]
   );
   const downsizingMode = String(target[DOWNSIZING_GROUP.modeField] ?? "").trim().toUpperCase();
-  if (hasHome) {
+  if (housingStatus === "OWNER") {
     target[HOME_LOAN_GROUP.rentField] = null;
+  } else if (housingStatus === "RENTER") {
+    clearFields(target, [
+      HOME_LOAN_GROUP.homeValueField,
+      HOME_LOAN_GROUP.balanceField,
+      HOME_LOAN_GROUP.rateField,
+      HOME_LOAN_GROUP.repaymentField
+    ]);
   } else {
     clearFields(target, [HOME_LOAN_GROUP.balanceField, HOME_LOAN_GROUP.rateField, HOME_LOAN_GROUP.repaymentField]);
   }
