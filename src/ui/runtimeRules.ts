@@ -370,7 +370,9 @@ export function getPropertyName(
 export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, nextValue: unknown): boolean {
   if (fieldId === RUNTIME_FIELDS.stockMarketInvestments) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === HOME_FIELDS.homeValue) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
-  if (fieldId === DOWNSIZING_FIELDS.year) return isBlank(prevValue) !== isBlank(nextValue);
+  if (fieldId === DOWNSIZING_FIELDS.year) {
+    return asNumber(prevValue) !== asNumber(nextValue) || isBlank(prevValue) !== isBlank(nextValue);
+  }
   if (fieldId === DOWNSIZING_FIELDS.newHomeMode) return String(prevValue ?? "") !== String(nextValue ?? "");
   if (fieldId === OTHER_WORK_FIELDS.income) return isNonZeroNumber(prevValue) !== isNonZeroNumber(nextValue);
   if (fieldId === POST_RETIREMENT_INCOME_FIELDS.amount) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
