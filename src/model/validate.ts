@@ -305,6 +305,7 @@ export function validateFieldState(
   for (const [index, asset] of ASSET_OF_VALUE_GROUPS.entries()) {
     const hasAny = !isBlank(fields[asset.nameField])
       || !isBlank(fields[asset.valueField])
+      || !isBlank(fields[asset.annualCostsField])
       || !isBlank(fields[asset.appreciationRateField])
       || !isBlank(fields[asset.loanBalanceField])
       || !isBlank(fields[asset.loanRateField])

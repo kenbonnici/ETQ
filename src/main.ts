@@ -2211,6 +2211,9 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
   const propertyCostChildren = cashFlow.propertyCosts.map((series) =>
     projectionLeaf(series.key, series.label, series.values, 2, "default", false, `${series.label} annual costs`)
   );
+  const otherAssetCostChildren = cashFlow.otherAssetCosts.map((series) =>
+    projectionLeaf(series.key, series.label, series.values, 2, "default", false, `${series.label} annual costs`)
+  );
   const expenseEventChildren = cashFlow.expenseEvents.map((series) =>
     projectionLeaf(series.key, series.label, series.values, 2, "default", false, `${series.label} expense event`)
   );
@@ -2241,7 +2244,8 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
       projectionGroup("outflows-dependents", "Dependents cost", sumProjectionSeries(cashFlow.dependentsCost.map((row) => row.values), yearCount), 1, dependentChildren),
       projectionLeaf("housing-rent", "Housing rent", cashFlow.housingRent, 1),
       projectionLeaf("downsizing-home-purchase", "Purchase of home (downsizing)", cashFlow.downsizingHomePurchase, 1),
-      projectionGroup("outflows-property-costs", "Other property costs", sumProjectionSeries(cashFlow.propertyCosts.map((row) => row.values), yearCount), 1, propertyCostChildren),
+      projectionGroup("outflows-property-costs", "Property costs", sumProjectionSeries(cashFlow.propertyCosts.map((row) => row.values), yearCount), 1, propertyCostChildren),
+      projectionGroup("outflows-other-asset-costs", "Other asset costs", sumProjectionSeries(cashFlow.otherAssetCosts.map((row) => row.values), yearCount), 1, otherAssetCostChildren),
       projectionLeaf("stock-investment-contributions", "Stock investment contributions", cashFlow.stockInvestmentContributions, 1),
       projectionLeaf("living-expenses", "Living expenses", cashFlow.livingExpenses, 1),
       projectionGroup("outflows-expense-events", "One-off expense events", sumProjectionSeries(cashFlow.expenseEvents.map((row) => row.values), yearCount), 1, expenseEventChildren),
@@ -4173,7 +4177,7 @@ function renderInputs(): void {
         html += renderPlannedSellYearField(plannedSalePropertyGroup.plannedSellYearField);
       }
 
-      const plannedSaleAssetGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.appreciationRateField === def.fieldId);
+      const plannedSaleAssetGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.annualCostsField === def.fieldId);
       if (plannedSaleAssetGroup) {
         html += renderPlannedSellYearField(plannedSaleAssetGroup.plannedSellYearField);
       }
@@ -4196,7 +4200,7 @@ function renderInputs(): void {
       ) {
         html += `<button type="button" class="add-slot-btn" data-next-property="${propertyGroup.idx + 2}">Add another property</button>`;
       }
-      const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.appreciationRateField === def.fieldId);
+      const assetOfValueGroup = ASSET_OF_VALUE_RUNTIME_GROUPS.find((group) => group.annualCostsField === def.fieldId);
       if (
         assetOfValueGroup
         && assetOfValueGroup.idx < ASSET_OF_VALUE_RUNTIME_GROUPS.length - 1

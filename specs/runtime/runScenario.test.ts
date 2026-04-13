@@ -41,6 +41,7 @@ function buildInputs(): EffectiveInputs {
       {
         name: "Classic Car",
         value: 100_000,
+        annualCosts: 0,
         appreciationRate: 0,
         loanBalance: 20_000,
         loanRate: 0,
@@ -291,6 +292,7 @@ test("planned and forced other-asset sales use the same cash posting when the sa
   plannedInputs.assetsOfValue[0] = {
     name: "Parity Boat",
     value: 100_000,
+    annualCosts: 0,
     appreciationRate: 0,
     loanBalance: 20_000,
     loanRate: 0.04,
@@ -375,6 +377,7 @@ test("planned and forced other-asset sales use the opening-of-sale-year asset va
   plannedInputs.assetsOfValue[0] = {
     name: "Conservative Asset",
     value: 100_000,
+    annualCosts: 0,
     appreciationRate: 0.1,
     loanBalance: 0,
     loanRate: 0,

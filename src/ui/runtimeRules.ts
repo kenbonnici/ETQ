@@ -63,16 +63,17 @@ export interface AssetOfValueRuntimeConfig {
   assetKind: "assetOfValue";
   nameField: FieldId;
   valueField: FieldId;
+  annualCostsField: FieldId;
   appreciationRateField: FieldId;
   loanBalanceField: FieldId;
   loanRateField: FieldId;
   loanRepaymentField: FieldId;
   liquidationRankField: FieldId;
   plannedSellYearField: PlannedSellYearFieldId;
-  coreFields: readonly [FieldId, FieldId, FieldId];
-  visibilityFields: readonly [FieldId, FieldId, FieldId, FieldId];
+  coreFields: readonly [FieldId, FieldId, FieldId, FieldId];
+  visibilityFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId];
   loanFields: readonly [FieldId, FieldId, FieldId];
-  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
+  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
 }
 
 export type LiquidationAssetRuntimeConfig = (typeof LIQUIDATION_ASSET_RUNTIME_GROUPS)[number];
@@ -154,6 +155,7 @@ for (const group of PROPERTY_RUNTIME_GROUPS) {
 
 for (const group of ASSET_OF_VALUE_RUNTIME_GROUPS) {
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.valueField] = 1000;
+  (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.annualCostsField] = 100;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.appreciationRateField] = 0.001;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanBalanceField] = 100;
   (FIELD_STEPPER_STEPS as Partial<Record<FieldId, number>>)[group.loanRateField] = 0.001;
@@ -238,6 +240,7 @@ for (const group of PROPERTY_RUNTIME_GROUPS) {
 
 for (const group of ASSET_OF_VALUE_RUNTIME_GROUPS) {
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.valueField] = 0;
+  (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.annualCostsField] = 0;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.appreciationRateField] = 3;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanBalanceField] = 0;
   (FIELD_STEPPER_DECIMALS as Partial<Record<FieldId, number>>)[group.loanRateField] = 3;
@@ -520,7 +523,7 @@ export function fieldVisible(
     if (fieldId === group.nameField && group.idx > 0) {
       return assetOfValueSlotVisible(values, group, visibility.visibleAssetsOfValue);
     }
-    if (fieldId === group.valueField || fieldId === group.appreciationRateField) {
+    if (fieldId === group.valueField || fieldId === group.annualCostsField || fieldId === group.appreciationRateField) {
       return assetOfValueSlotVisible(values, group, visibility.visibleAssetsOfValue) && !isBlank(values[group.nameField]);
     }
     if (fieldId === group.loanBalanceField) {

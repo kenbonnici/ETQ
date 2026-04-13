@@ -101,6 +101,7 @@ function applyDependencyPruning(target: FieldState): void {
     if (isBlank(target[asset.nameField])) {
       clearFields(target, [
         asset.valueField,
+        asset.annualCostsField,
         asset.appreciationRateField,
         asset.loanBalanceField,
         asset.loanRateField,

@@ -49,6 +49,7 @@ type PropertyGroup = {
 type AssetOfValueGroup = {
   nameField: FieldId;
   valueField: FieldId;
+  annualCostsField: FieldId;
   appreciationRateField: FieldId;
   loanBalanceField: FieldId;
   loanRateField: FieldId;
@@ -479,6 +480,7 @@ export const ASSET_OF_VALUE_GROUPS = [
   {
     nameField: "assetsOfValue.01.displayName",
     valueField: "assetsOfValue.01.marketValue",
+    annualCostsField: "assetsOfValue.01.annualCosts",
     appreciationRateField: "assetsOfValue.01.appreciationRateAnnual",
     loanBalanceField: "assetsOfValue.01.loan.balance",
     loanRateField: "assetsOfValue.01.loan.interestRateAnnual",
@@ -488,6 +490,7 @@ export const ASSET_OF_VALUE_GROUPS = [
   {
     nameField: "assetsOfValue.02.displayName",
     valueField: "assetsOfValue.02.marketValue",
+    annualCostsField: "assetsOfValue.02.annualCosts",
     appreciationRateField: "assetsOfValue.02.appreciationRateAnnual",
     loanBalanceField: "assetsOfValue.02.loan.balance",
     loanRateField: "assetsOfValue.02.loan.interestRateAnnual",
@@ -497,6 +500,7 @@ export const ASSET_OF_VALUE_GROUPS = [
   {
     nameField: "assetsOfValue.03.displayName",
     valueField: "assetsOfValue.03.marketValue",
+    annualCostsField: "assetsOfValue.03.annualCosts",
     appreciationRateField: "assetsOfValue.03.appreciationRateAnnual",
     loanBalanceField: "assetsOfValue.03.loan.balance",
     loanRateField: "assetsOfValue.03.loan.interestRateAnnual",
@@ -506,6 +510,7 @@ export const ASSET_OF_VALUE_GROUPS = [
   {
     nameField: "assetsOfValue.04.displayName",
     valueField: "assetsOfValue.04.marketValue",
+    annualCostsField: "assetsOfValue.04.annualCosts",
     appreciationRateField: "assetsOfValue.04.appreciationRateAnnual",
     loanBalanceField: "assetsOfValue.04.loan.balance",
     loanRateField: "assetsOfValue.04.loan.interestRateAnnual",
@@ -515,6 +520,7 @@ export const ASSET_OF_VALUE_GROUPS = [
   {
     nameField: "assetsOfValue.05.displayName",
     valueField: "assetsOfValue.05.marketValue",
+    annualCostsField: "assetsOfValue.05.annualCosts",
     appreciationRateField: "assetsOfValue.05.appreciationRateAnnual",
     loanBalanceField: "assetsOfValue.05.loan.balance",
     loanRateField: "assetsOfValue.05.loan.interestRateAnnual",

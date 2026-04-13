@@ -147,18 +147,20 @@ export const ASSET_OF_VALUE_RUNTIME_GROUPS = ASSET_OF_VALUE_GROUPS.map((group, i
   assetKind: "assetOfValue" as const,
   nameField: group.nameField,
   valueField: group.valueField,
+  annualCostsField: group.annualCostsField,
   appreciationRateField: group.appreciationRateField,
   loanBalanceField: group.loanBalanceField,
   loanRateField: group.loanRateField,
   loanRepaymentField: group.loanRepaymentField,
   liquidationRankField: group.liquidationRankField,
   plannedSellYearField: ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS[idx],
-  coreFields: [group.nameField, group.valueField, group.appreciationRateField] as const,
-  visibilityFields: [group.nameField, group.valueField, group.appreciationRateField, ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS[idx] as FieldId] as const,
+  coreFields: [group.nameField, group.valueField, group.annualCostsField, group.appreciationRateField] as const,
+  visibilityFields: [group.nameField, group.valueField, group.annualCostsField, group.appreciationRateField, ASSET_OF_VALUE_PLANNED_SELL_YEAR_FIELDS[idx] as FieldId] as const,
   loanFields: [group.loanBalanceField, group.loanRateField, group.loanRepaymentField] as const,
   allFields: [
     group.nameField,
     group.valueField,
+    group.annualCostsField,
     group.appreciationRateField,
     group.loanBalanceField,
     group.loanRateField,
@@ -172,16 +174,17 @@ export const ASSET_OF_VALUE_RUNTIME_GROUPS = ASSET_OF_VALUE_GROUPS.map((group, i
   assetKind: "assetOfValue";
   nameField: FieldId;
   valueField: FieldId;
+  annualCostsField: FieldId;
   appreciationRateField: FieldId;
   loanBalanceField: FieldId;
   loanRateField: FieldId;
   loanRepaymentField: FieldId;
   liquidationRankField: FieldId;
   plannedSellYearField: PlannedSellYearFieldId;
-  coreFields: readonly [FieldId, FieldId, FieldId];
-  visibilityFields: readonly [FieldId, FieldId, FieldId, FieldId];
+  coreFields: readonly [FieldId, FieldId, FieldId, FieldId];
+  visibilityFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId];
   loanFields: readonly [FieldId, FieldId, FieldId];
-  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
+  allFields: readonly [FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId, FieldId];
 }>;
 
 export const LIQUIDATION_ASSET_RUNTIME_GROUPS = [

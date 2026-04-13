@@ -705,6 +705,7 @@ test("normalization and output reporting include assets of value in the combined
   assert.deepEqual(normalized.assetsOfValue[3], {
     name: "Boat",
     value: 180_000,
+    annualCosts: 0,
     appreciationRate: -0.05,
     loanBalance: 0,
     loanRate: 0,
@@ -714,6 +715,7 @@ test("normalization and output reporting include assets of value in the combined
   assert.deepEqual(normalized.assetsOfValue[4], {
     name: "Antiques",
     value: 82_000,
+    annualCosts: 0,
     appreciationRate: 0.02,
     loanBalance: 0,
     loanRate: 0,

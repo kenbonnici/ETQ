@@ -50,6 +50,7 @@ export interface EffectiveInputs {
   assetsOfValue: Array<{
     name: string;
     value: number;
+    annualCosts: number;
     appreciationRate: number;
     loanBalance: number;
     loanRate: number;
@@ -136,6 +137,7 @@ export interface ScenarioCashFlowRows {
   housingRent: number[];
   downsizingHomePurchase: number[];
   propertyCosts: NamedProjectionSeries[];
+  otherAssetCosts: NamedProjectionSeries[];
   stockInvestmentContributions: number[];
   livingExpenses: number[];
   expenseEvents: NamedProjectionSeries[];

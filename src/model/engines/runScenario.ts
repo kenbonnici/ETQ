@@ -328,6 +328,7 @@ export function runScenario(
   const propertyRentalSeries = inputs.properties.map(() => zeroSeries(n)); // Rows 8..10
   const propertyAnnualCostSeries = inputs.properties.map(() => zeroSeries(n)); // Rows 34..36
   const assetOfValueValueSeries = inputs.assetsOfValue.map(() => zeroSeries(n));
+  const assetOfValueAnnualCostSeries = inputs.assetsOfValue.map(() => zeroSeries(n));
   const assetOfValueLoanSeries = inputs.assetsOfValue.map(() => zeroSeries(n));
   const salarySeries = zeroSeries(n);
   const otherWorkSeries = zeroSeries(n);
@@ -444,6 +445,11 @@ export function runScenario(
     for (let p = 0; p < inputs.properties.length; p += 1) {
       const c = inputs.properties[p].annualCosts * infFactor * proRate;
       propertyAnnualCostSeries[p][idx] = c;
+      outflows += c;
+    }
+    for (let a = 0; a < inputs.assetsOfValue.length; a += 1) {
+      const c = inputs.assetsOfValue[a].annualCosts * infFactor * proRate;
+      assetOfValueAnnualCostSeries[a][idx] = c;
       outflows += c;
     }
 
@@ -617,6 +623,7 @@ export function runScenario(
         housingRentSeries[i] +
         downsizingHomePurchaseSeries[i] +
         sumAt(propertyAnnualCostSeries, i) +
+        sumAt(assetOfValueAnnualCostSeries, i) +
         stockContributionSeries[i] +
         livingExpensesSeries[i] +
         sumAt(expenseEventSeries, i);
@@ -663,7 +670,7 @@ export function runScenario(
       fallbackLabel: `Asset ${idx + 1}`,
       valueSeries: assetOfValueValueSeries[idx],
       rentalSeries: zeroSeries(n),
-      annualCostSeries: zeroSeries(n),
+      annualCostSeries: assetOfValueAnnualCostSeries[idx],
       loanSeries: assetOfValueLoanSeries[idx],
       loanRepaymentSeries: assetOfValueLoanRepaymentSeries[idx],
       appreciationRate: asset.appreciationRate,
@@ -707,19 +714,19 @@ export function runScenario(
     netProceeds[saleIdx] = liquidationSeries[saleIdx] - payoff;
 
     for (let i = saleIdx + 1; i < n; i += 1) {
+      const annualCostValue = asset.annualCostSeries[i];
       if (asset.kind === "property") {
         const rentalValue = propertyRentalSeries[asset.idx][i];
-        const annualCostValue = propertyAnnualCostSeries[asset.idx][i];
         if (Math.abs(rentalValue) > EPS) {
           rentalForegone[i] = -rentalValue;
           propertyRentalSeries[asset.idx][i] = 0;
         }
-        if (Math.abs(annualCostValue) > EPS) {
-          annualCostSaved[i] = annualCostValue;
-          propertyAnnualCostSeries[asset.idx][i] = 0;
-        }
-        netProceeds[i] += rentalForegone[i] + annualCostSaved[i];
       }
+      if (Math.abs(annualCostValue) > EPS) {
+        annualCostSaved[i] = annualCostValue;
+        asset.annualCostSeries[i] = 0;
+      }
+      netProceeds[i] += rentalForegone[i] + annualCostSaved[i];
 
       const scheduledRepayment = loanRepaymentSeries[i];
       if (Math.abs(scheduledRepayment) > EPS) {
@@ -961,6 +968,11 @@ export function runScenario(
     label: property.name.trim() || `Property ${idx + 1}`,
     values: [...propertyAnnualCostSeries[idx]]
   }));
+  const displayOtherAssetCostsByAsset = inputs.assetsOfValue.map<NamedProjectionSeries>((asset, idx) => ({
+    key: `asset-of-value-cost-${idx}`,
+    label: asset.name.trim() || `Asset ${idx + 1}`,
+    values: [...assetOfValueAnnualCostSeries[idx]]
+  }));
 
   const displayLiquidationsByProperty = [
     ...inputs.properties.map<NamedProjectionSeries>((property, idx) => ({
@@ -1045,6 +1057,7 @@ export function runScenario(
       housingRent: housingRentSeries,
       downsizingHomePurchase: downsizingHomePurchaseSeries,
       propertyCosts: displayPropertyCostsByProperty,
+      otherAssetCosts: displayOtherAssetCostsByAsset,
       stockInvestmentContributions: stockContributionSeries,
       livingExpenses: livingExpensesSeries,
       expenseEvents: inputs.expenseEvents.map((event, idx) => ({

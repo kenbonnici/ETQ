@@ -447,6 +447,15 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
+    row: 91,
+    fieldId: "assetsOfValue.01.annualCosts",
+    label: "Annual Costs",
+    tooltip: "Annual costs specifically related to this asset",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "1000",
+    type: "number"
+  },
+  {
     row: 93,
     fieldId: "assetsOfValue.02.displayName",
     label: "Name",
@@ -472,6 +481,15 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     uiNote: "Hide until user enters asset name",
     sampleValue: "-0.05",
     type: "percent"
+  },
+  {
+    row: 96,
+    fieldId: "assetsOfValue.02.annualCosts",
+    label: "Annual Costs",
+    tooltip: "Annual costs specifically related to this asset",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "3000",
+    type: "number"
   },
   {
     row: 98,
@@ -501,6 +519,15 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
+    row: 101,
+    fieldId: "assetsOfValue.03.annualCosts",
+    label: "Annual Costs",
+    tooltip: "Annual costs specifically related to this asset",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "500",
+    type: "number"
+  },
+  {
     row: 103,
     fieldId: "assetsOfValue.04.displayName",
     label: "Name",
@@ -528,6 +555,15 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "percent"
   },
   {
+    row: 106,
+    fieldId: "assetsOfValue.04.annualCosts",
+    label: "Annual Costs",
+    tooltip: "Annual costs specifically related to this asset",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "4000",
+    type: "number"
+  },
+  {
     row: 108,
     fieldId: "assetsOfValue.05.displayName",
     label: "Name",
@@ -553,6 +589,15 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     uiNote: "Hide until user enters asset name",
     sampleValue: "0.02",
     type: "percent"
+  },
+  {
+    row: 111,
+    fieldId: "assetsOfValue.05.annualCosts",
+    label: "Annual Costs",
+    tooltip: "Annual costs specifically related to this asset",
+    uiNote: "Hide until user enters asset name",
+    sampleValue: "1200",
+    type: "number"
   },
   {
     row: 114,

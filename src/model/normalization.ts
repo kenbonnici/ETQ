@@ -168,6 +168,7 @@ export function normalizeInputs(fields: FieldState, options: LiquidationPriority
     assetsOfValue: ASSET_OF_VALUE_GROUPS.map((group, idx) => ({
       name: toTrimmedString(fields[group.nameField]),
       value: toNumber(fields[group.valueField]),
+      annualCosts: toNumber(fields[group.annualCostsField]),
       appreciationRate: toNumber(fields[group.appreciationRateField]),
       loanBalance: toNumber(fields[group.loanBalanceField]),
       loanRate: toNumber(fields[group.loanRateField]),
