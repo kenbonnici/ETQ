@@ -553,6 +553,10 @@ export function fieldVisible(
     return asNumber(values[RUNTIME_FIELDS.stockMarketInvestments]) > 0;
   }
 
+  if (fieldId === RUNTIME_FIELDS.stockContributionMonthly) {
+    return asNumber(values[RUNTIME_FIELDS.stockMarketInvestments]) > 0;
+  }
+
   if (fieldId === RUNTIME_FIELDS.otherAssetDisposalCostRate) {
     return ASSET_OF_VALUE_RUNTIME_GROUPS.some((group) => anyValue(values, group.coreFields));
   }
