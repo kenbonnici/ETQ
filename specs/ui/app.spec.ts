@@ -7,7 +7,7 @@ import {
 const SAMPLE_DATA_FIELDS = createSampleDataFieldState();
 const EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA = SAMPLE_DATA_EARLY_RETIREMENT_AGE;
 const SAMPLE_DATA_CURRENT_AGE = Number(SAMPLE_DATA_FIELDS["profile.currentAge"]);
-const SAMPLE_DATA_RETIREMENT_HINT = `Earliest viable retirement: You can retire now at ${SAMPLE_DATA_CURRENT_AGE}!`;
+const SAMPLE_DATA_RETIREMENT_HINT = `You can retire now at ${SAMPLE_DATA_CURRENT_AGE}!`;
 const STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA = Number(SAMPLE_DATA_FIELDS["retirement.statutoryAge"]);
 const FIXED_SAMPLE_DATA_TEST_DATE_ISO = "2026-01-01T00:00:00Z";
 
@@ -926,7 +926,7 @@ test("earliest-retirement indicator follows projection-blocking validation", asy
   await expect(retirementIndicator).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
 
   await fillAndBlur(page, selectors.currentAge, "");
-  await expect(retirementIndicator).toContainText("Earliest viable retirement: —");
+  await expect(retirementIndicator).toContainText("Awaiting minimum inputs");
   await expect(page.locator(".timeline-empty")).toHaveText("");
 
   await fillAndBlur(page, selectors.currentAge, "48");

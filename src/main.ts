@@ -543,7 +543,7 @@ const RETIREMENT_INDICATOR_PREFIX = "Earliest viable retirement:";
 
 function renderRetirementIndicatorContent(message: string | null): { showPrefix: boolean; html: string } {
   if (message === null) {
-    return { showPrefix: true, html: "—" };
+    return { showPrefix: false, html: "Awaiting minimum inputs" };
   }
   const trimmed = message.startsWith(RETIREMENT_INDICATOR_PREFIX)
     ? message.slice(RETIREMENT_INDICATOR_PREFIX.length).trim()
@@ -555,22 +555,14 @@ function renderRetirementIndicatorContent(message: string | null): { showPrefix:
       html: `You can retire now at <span class="retire-check-result-age-token">${escapeHtml(retireNowMatch[1])}!</span>`
     };
   }
-  const nowMatch = /^now(?:\s+\((\d+)\)|\s+at\s+(\d+))$/i.exec(trimmed);
-  if (nowMatch) {
-    const age = nowMatch[1] ?? nowMatch[2];
-    return {
-      showPrefix: true,
-      html: `now at <span class="retire-check-result-age-token">${escapeHtml(age)}</span>`
-    };
-  }
   const ageMatch = /^(\d+)$/i.exec(trimmed);
   if (ageMatch) {
     return {
-      showPrefix: true,
-      html: `<span class="retire-check-result-age-token">${escapeHtml(ageMatch[1])}</span>`
+      showPrefix: false,
+      html: `You can retire at <span class="retire-check-result-age-token">${escapeHtml(ageMatch[1])}</span>!`
     };
   }
-  return { showPrefix: true, html: escapeHtml(trimmed) };
+  return { showPrefix: false, html: escapeHtml(trimmed) };
 }
 
 interface ChartHoverData {
@@ -2727,12 +2719,12 @@ function createRetirementIndicatorState(
     return { message: null, tone: "neutral" };
   }
   if (earliestAge === null) {
-    return { message: "Earliest viable retirement: not yet viable", tone: "warning" };
+    return { message: "Early retirement not yet viable", tone: "warning" };
   }
   if (currentAge !== null && earliestAge === currentAge) {
-    return { message: `Earliest viable retirement: You can retire now at ${earliestAge}!`, tone: "positive" };
+    return { message: `You can retire now at ${earliestAge}!`, tone: "positive" };
   }
-  return { message: `Earliest viable retirement: ${earliestAge}`, tone: "promising" };
+  return { message: `${earliestAge}`, tone: "promising" };
 }
 
 function composeDisplayedRunModelResult(
