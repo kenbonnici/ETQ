@@ -4780,6 +4780,17 @@ function renderInputs(): void {
     });
   });
 
+  inputsPanel.querySelectorAll<HTMLElement>(".liquidation-item").forEach((row) => {
+    row.addEventListener("click", (event) => {
+      if ((event.target as HTMLElement).closest("button")) return;
+      const downBtn = row.querySelector<HTMLButtonElement>('.liquidation-move-btn[data-liquidation-move="down"]:not(:disabled)');
+      const fallback = downBtn
+        ?? row.querySelector<HTMLButtonElement>('.liquidation-move-btn:not(:disabled)')
+        ?? row.querySelector<HTMLButtonElement>('.liquidation-toggle');
+      if (fallback) fallback.focus();
+    });
+  });
+
   activePanelEditState = null;
   restorePanelCursorState(cursorState);
   restorePendingLiquidationControl();
