@@ -101,6 +101,28 @@ const fieldState = createEmptyFieldState();
 type RuntimeFieldId = FieldId | PlannedSellYearFieldId;
 const runtimeFieldState = fieldState as Partial<Record<RuntimeFieldId, RawInputValue>>;
 
+function showConfirm(message: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-overlay";
+    overlay.innerHTML = `<div class="confirm-dialog">
+      <p>${message}</p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" type="button">Cancel</button>
+        <button class="confirm-ok" type="button">OK</button>
+      </div>
+    </div>`;
+    const cancel = overlay.querySelector<HTMLButtonElement>(".confirm-cancel")!;
+    const ok = overlay.querySelector<HTMLButtonElement>(".confirm-ok")!;
+    const close = (result: boolean) => { overlay.remove(); resolve(result); };
+    cancel.addEventListener("click", () => close(false));
+    ok.addEventListener("click", () => close(true));
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(false); });
+    document.body.appendChild(overlay);
+    ok.focus();
+  });
+}
+
 let uiState: ModelUiState = {
   majorFutureEventsOpen: false,
   advancedAssumptionsOpen: false,
@@ -1480,9 +1502,9 @@ function renderScenarioManager(): string {
   `;
 }
 
-function confirmAndLoadSampleData(): void {
+async function confirmAndLoadSampleData(): Promise<void> {
   if (snapshotHasSavableData(collectPersistedScenarioSnapshot())) {
-    const shouldLoad = window.confirm("Load sample data and overwrite current inputs?");
+    const shouldLoad = await showConfirm("Load sample data and overwrite current inputs?");
     if (!shouldLoad) return;
   }
   void loadSampleDataScenario();
@@ -1496,7 +1518,7 @@ function restoreDraftScenarioIfAvailable(): boolean {
   return true;
 }
 
-function saveCurrentScenario(): void {
+async function saveCurrentScenario(): Promise<void> {
   if (!scenarioStorageAvailable) {
     setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
     renderInputs();
@@ -1517,7 +1539,7 @@ function saveCurrentScenario(): void {
     : null;
   const duplicate = existingScenarios.find((scenario) => scenario.name.toLowerCase() === normalizedName.toLowerCase());
   if (duplicate && duplicate.id !== targetScenarioId) {
-    const shouldReplace = window.confirm(`Replace the saved scenario "${duplicate.name}"?`);
+    const shouldReplace = await showConfirm(`Replace the saved scenario "${duplicate.name}"?`);
     if (!shouldReplace) return;
   }
 
@@ -4172,8 +4194,8 @@ function renderInputs(): void {
 
   const clearInputsBtn = inputsPanel.querySelector<HTMLButtonElement>("#clear-inputs-btn");
   if (clearInputsBtn) {
-    clearInputsBtn.addEventListener("click", () => {
-      const shouldClear = window.confirm("Clear all current inputs?");
+    clearInputsBtn.addEventListener("click", async () => {
+      const shouldClear = await showConfirm("Clear all current inputs?");
       if (!shouldClear) return;
       clearAllInputs();
     });
@@ -4232,13 +4254,13 @@ function renderInputs(): void {
 
   const deleteSavedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#delete-saved-scenario-btn");
   if (deleteSavedScenarioBtn) {
-    deleteSavedScenarioBtn.addEventListener("click", () => {
+    deleteSavedScenarioBtn.addEventListener("click", async () => {
       const selectedId = savedScenarioSelect?.value ?? selectedSavedScenarioId;
       if (!selectedId) return;
       const scenarios = readNamedScenarios();
       const scenario = scenarios.find((entry) => entry.id === selectedId);
       if (!scenario) return;
-      const confirmed = window.confirm(`Delete the saved scenario "${scenario.name}"?`);
+      const confirmed = await showConfirm(`Delete the saved scenario "${scenario.name}"?`);
       if (!confirmed) return;
 
       writeNamedScenarios(scenarios.filter((entry) => entry.id !== selectedId));
