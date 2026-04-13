@@ -324,6 +324,10 @@ body {
   text-align: center;
 }
 
+.retirement-stepper input {
+  color: #d97706;
+}
+
 .retirement-control input[type="number"] {
   -moz-appearance: textfield;
   appearance: textfield;
