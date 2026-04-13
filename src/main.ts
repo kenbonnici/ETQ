@@ -3703,10 +3703,10 @@ function focusAdjacentLiquidationControl(
   direction: "up" | "down"
 ): void {
   const row = button.closest<HTMLElement>(".liquidation-item");
-  const list = row?.closest<HTMLElement>(".liquidation-list");
-  if (!row || !list) return;
+  const container = row?.closest<HTMLElement>(".liquidation-reorder");
+  if (!row || !container) return;
 
-  const rows = Array.from(list.querySelectorAll<HTMLElement>(".liquidation-item"));
+  const rows = Array.from(container.querySelectorAll<HTMLElement>(".liquidation-item"));
   const currentIndex = rows.indexOf(row);
   if (currentIndex < 0) return;
   const nextRow = rows[currentIndex + (direction === "up" ? -1 : 1)];
