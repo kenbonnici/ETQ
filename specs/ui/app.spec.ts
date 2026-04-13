@@ -578,6 +578,7 @@ test("load sample data restores the active stock market crash scenario from the 
 
 test("editing a loaded scenario shows unsaved changes in My Data", async ({ page }) => {
   await loadSampleData(page);
+  await expect(page.locator(selectors.scenarioDraftStatus)).toBeHidden();
 
   await fillAndBlur(page, selectors.scenarioNameInput, "Regression Scenario");
   await page.locator(selectors.saveNamedScenarioButton).click();

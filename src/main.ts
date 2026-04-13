@@ -261,6 +261,7 @@ const DOWNSIZING_PREVIEW_INPUT_FIELDS = new Set<FieldId>([
 
 let scenarioStorageAvailable = true;
 let activeSavedScenarioId: string | null = null;
+let activeScenarioStatusSnapshot: PersistedScenarioSnapshotV2 | null = null;
 let selectedSavedScenarioId: string | null = null;
 let scenarioDraftName = "";
 let scenarioManagerNotice: ScenarioManagerNotice | null = null;
@@ -1330,6 +1331,9 @@ function snapshotsMatchForScenarioStatus(a: PersistedScenarioSnapshotV2, b: Pers
 function getScenarioDraftStatus(scenarios: NamedScenarioRecordV1[]): "not-saved" | "unsaved-changes" | null {
   const currentSnapshot = collectPersistedScenarioSnapshot();
   if (!snapshotHasSavableData(currentSnapshot)) return null;
+  if (activeScenarioStatusSnapshot) {
+    return snapshotsMatchForScenarioStatus(currentSnapshot, activeScenarioStatusSnapshot) ? null : "unsaved-changes";
+  }
   if (!activeSavedScenarioId) return "not-saved";
   const activeScenario = scenarios.find((scenario) => scenario.id === activeSavedScenarioId);
   if (!activeScenario) return "not-saved";
@@ -1613,6 +1617,7 @@ async function saveCurrentScenario(): Promise<void> {
   const remaining = existingScenarios.filter((scenario) => !replacedScenarioIds.has(scenario.id));
   writeNamedScenarios([nextEntry, ...remaining]);
   activeSavedScenarioId = scenarioId;
+  activeScenarioStatusSnapshot = nextEntry.snapshot;
   selectedSavedScenarioId = null;
   scenarioDraftName = normalizedName;
   setScenarioManagerNotice(`${targetScenarioId ? "Updated" : "Saved"} scenario "${normalizedName}"`, "success");
@@ -3874,6 +3879,8 @@ async function loadSampleDataScenario(): Promise<void> {
       ? Math.round(SAMPLE_DATA_EARLY_RETIREMENT_AGE)
       : (statutory ?? uiState.earlyRetirementAge);
     uiState.projectionMonthOverride = null;
+    activeSavedScenarioId = SAMPLE_DATA_SCENARIO_ID;
+    activeScenarioStatusSnapshot = collectPersistedScenarioSnapshot();
     setRetireCheckMessage(null);
     syncEarlyRetirementControl(true);
     renderInputs();
@@ -3893,6 +3900,7 @@ function clearAllInputs(): void {
   }
   clearPlannedSellYearFields();
   activeSavedScenarioId = null;
+  activeScenarioStatusSnapshot = null;
   selectedSavedScenarioId = null;
   scenarioDraftName = "";
   resetLivingExpensesHelperState();
@@ -4293,6 +4301,7 @@ function renderInputs(): void {
       if (!selectedId) return;
       if (selectedId === SAMPLE_DATA_SCENARIO_ID) {
         activeSavedScenarioId = null;
+        activeScenarioStatusSnapshot = null;
         selectedSavedScenarioId = null;
         scenarioDraftName = "";
         confirmAndLoadSampleData();
@@ -4305,6 +4314,7 @@ function renderInputs(): void {
         if (!shouldLoad) return;
       }
       activeSavedScenarioId = scenario.id;
+      activeScenarioStatusSnapshot = scenario.snapshot;
       selectedSavedScenarioId = null;
       scenarioDraftName = scenario.name;
       applyPersistedScenarioSnapshot(scenario.snapshot, { message: `Loaded scenario "${scenario.name}"`, tone: "success" });
@@ -4323,7 +4333,10 @@ function renderInputs(): void {
       if (!confirmed) return;
 
       writeNamedScenarios(scenarios.filter((entry) => entry.id !== selectedId));
-      if (activeSavedScenarioId === selectedId) activeSavedScenarioId = null;
+      if (activeSavedScenarioId === selectedId) {
+        activeSavedScenarioId = null;
+        activeScenarioStatusSnapshot = null;
+      }
       if (selectedSavedScenarioId === selectedId) selectedSavedScenarioId = null;
       setScenarioManagerNotice(`Deleted scenario "${scenario.name}"`, "warning");
       renderInputs();
