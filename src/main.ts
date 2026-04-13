@@ -1802,34 +1802,8 @@ function hasProjectionBlockingValidation(messages: ValidationMessage[]): boolean
   return messages.some((message) => message.severity === "error" && message.blocksProjection);
 }
 
-function formatBlockingFieldLabel(fieldId: FieldId): string {
-  if (fieldId === RUNTIME_FIELDS.lifeExpectancyAge) return "end age";
-  const label = INPUT_DEFINITION_BY_FIELD_ID[fieldId].label.trim();
-  return label.length > 0 ? `${label.charAt(0).toLowerCase()}${label.slice(1)}` : fieldId;
-}
-
-function joinHumanLabels(labels: string[]): string {
-  if (labels.length === 0) return "";
-  if (labels.length === 1) return labels[0];
-  if (labels.length === 2) return `${labels[0]} and ${labels[1]}`;
-  return `${labels.slice(0, -1).join(", ")} and ${labels[labels.length - 1]}`;
-}
-
 function getProjectionBlockingLines(messages: ValidationMessage[]): string[] {
-  const blockingErrors = messages.filter((message) => message.severity === "error" && message.blocksProjection);
-  if (blockingErrors.length === 0) {
-    return [PROJECTION_EMPTY_GUIDANCE];
-  }
-  const missingFields = Array.from(new Set(
-    blockingErrors
-      .filter((message) => isBlank(fieldState[message.fieldId]))
-      .map((message) => message.fieldId)
-  ));
-  if (missingFields.length > 0 && missingFields.length === new Set(blockingErrors.map((message) => message.fieldId)).size) {
-    const labels = missingFields.map((fieldId) => formatBlockingFieldLabel(fieldId));
-    return [`Enter ${joinHumanLabels(labels)} to see projections.`];
-  }
-  return ["Fix highlighted inputs to see projections."];
+  return [PROJECTION_EMPTY_GUIDANCE];
 }
 
 function renderValidationState(messages: ValidationMessage[]): void {

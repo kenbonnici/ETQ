@@ -927,7 +927,7 @@ test("earliest-retirement indicator follows projection-blocking validation", asy
 
   await fillAndBlur(page, selectors.currentAge, "");
   await expect(retirementIndicator).toContainText("Earliest viable retirement: —");
-  await expect(page.locator(".timeline-empty")).toContainText("Enter your age to see projections.");
+  await expect(page.locator(".timeline-empty")).toHaveText("");
 
   await fillAndBlur(page, selectors.currentAge, "48");
   await expect(retirementIndicator).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
