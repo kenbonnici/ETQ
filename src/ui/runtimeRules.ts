@@ -807,7 +807,8 @@ export function collectSpecificLabelsByYear(
   values: RuntimeValues,
   result: RunModelResult,
   statutoryAge: number | null,
-  milestoneEventMinAbsAmount: number
+  milestoneEventMinAbsAmount: number,
+  scenario: "early" | "norm" = "early"
 ): Map<number, TimelineYearEvent[]> {
   const labelsByYear = new Map<number, TimelineYearEvent[]>();
   const pushLabel = (year: number, label: string, amount: number | null = null): void => {
@@ -886,7 +887,8 @@ export function collectSpecificLabelsByYear(
     }
   }
 
-  for (const hint of result.outputs.scenarioEarly.milestoneHints) {
+  const activeScenario = scenario === "early" ? result.outputs.scenarioEarly : result.outputs.scenarioNorm;
+  for (const hint of activeScenario.milestoneHints) {
     pushLabel(hint.year, hint.label, hint.amount ?? null);
   }
 
@@ -955,12 +957,13 @@ export function buildTimelineMilestones(
   result: RunModelResult,
   statutoryAge: number | null,
   milestoneEventMinAbsAmount: number,
-  formatImpact: (amount: number | null) => string
+  formatImpact: (amount: number | null) => string,
+  scenario: "early" | "norm" = "early"
 ): TimelineMilestone[] {
   const ages = result.outputs.ages;
   const years = result.outputs.years;
   if (ages.length === 0 || years.length === 0) return [];
-  const labelsByYear = collectSpecificLabelsByYear(values, result, statutoryAge, milestoneEventMinAbsAmount);
+  const labelsByYear = collectSpecificLabelsByYear(values, result, statutoryAge, milestoneEventMinAbsAmount, scenario);
   const milestones: TimelineMilestone[] = [];
   for (let i = 0; i < ages.length; i += 1) {
     const year = years[i];

@@ -150,6 +150,7 @@ const touchedCells = new Set<FieldId>();
 const attemptedFieldMessages = new Map<FieldId, ValidationMessage>();
 let latestRunResult: RunModelResult | null = null;
 let cashflowScenario: "early" | "norm" = "early";
+let timelineScenario: "early" | "norm" = "early";
 let projectionSectionOpen = false;
 let projectionHasMounted = false;
 let projectionActiveTab: ProjectionSectionKey = "cashflow";
@@ -343,6 +344,10 @@ app.innerHTML = `
     <aside class="timeline-panel" id="timeline-panel">
       <header class="timeline-header">
         <h2>Events Timeline</h2>
+        <div class="timeline-scenario-toggle" role="tablist" aria-label="Timeline scenario">
+          <button id="timeline-scenario-early" class="timeline-scenario-btn" type="button">Early</button>
+          <button id="timeline-scenario-norm" class="timeline-scenario-btn" type="button">Statutory</button>
+        </div>
       </header>
       <div class="timeline-scroll" id="timeline-scroll">
         <div class="timeline-track" id="timeline-track"></div>
@@ -410,6 +415,8 @@ const dashboardAnchorEl = document.getElementById("dashboard-anchor") as HTMLEle
 const timelinePanel = document.getElementById("timeline-panel") as HTMLDivElement;
 const timelineScroll = document.getElementById("timeline-scroll") as HTMLDivElement;
 const timelineTrack = document.getElementById("timeline-track") as HTMLDivElement;
+const timelineScenarioEarlyButton = document.getElementById("timeline-scenario-early") as HTMLButtonElement;
+const timelineScenarioNormButton = document.getElementById("timeline-scenario-norm") as HTMLButtonElement;
 const cashflowAnchorEl = document.getElementById("cashflow-anchor") as HTMLElement;
 const projectionSectionEl = document.getElementById("projection-section") as HTMLElement;
 const projectionTabCashflowButton = document.getElementById("projection-tab-cashflow") as HTMLButtonElement;
@@ -2341,6 +2348,13 @@ function syncProjectionScenarioButtons(): void {
   }
 }
 
+function syncTimelineScenarioButtons(): void {
+  timelineScenarioEarlyButton.classList.toggle("is-active", timelineScenario === "early");
+  timelineScenarioEarlyButton.setAttribute("aria-selected", timelineScenario === "early" ? "true" : "false");
+  timelineScenarioNormButton.classList.toggle("is-active", timelineScenario === "norm");
+  timelineScenarioNormButton.setAttribute("aria-selected", timelineScenario === "norm" ? "true" : "false");
+}
+
 function scrollAnchorIntoView(anchorEl: HTMLElement | null): void {
   if (!anchorEl) return;
   anchorEl.scrollIntoView({
@@ -2523,12 +2537,14 @@ function renderMilestoneTimeline(result: RunModelResult): void {
     : ages[ages.length - 1];
   const startLabelAge = Math.round(enteredAge);
   const span = Math.max(1, endAge - startAge);
+  syncTimelineScenarioButtons();
   const milestones = buildTimelineMilestones(
     fieldState,
     result,
     getStatutoryAge(),
     MILESTONE_EVENT_MIN_ABS_AMOUNT,
-    formatImpact
+    formatImpact,
+    timelineScenario
   );
   const topPad = TIMELINE_EDGE_PADDING + TIMELINE_ENDCAP_CLEARANCE;
   const bottomPad = TIMELINE_EDGE_PADDING + TIMELINE_ENDCAP_CLEARANCE;
@@ -5218,10 +5234,10 @@ function recalc(): void {
     drawEmptyChart(cashCanvas, chartLines);
     drawEmptyChart(nwCanvas, chartLines);
     clearTimeline(timelineMessage);
-    for (const button of [projectionScenarioEarlyButton]) {
+    for (const button of [projectionScenarioEarlyButton, timelineScenarioEarlyButton]) {
       button.textContent = blockedPrimaryLabel;
     }
-    for (const button of [projectionScenarioNormButton]) {
+    for (const button of [projectionScenarioNormButton, timelineScenarioNormButton]) {
       button.textContent = blockedCompareLabel;
     }
     if (projectionHasMounted) {
@@ -5263,10 +5279,10 @@ function recalc(): void {
   cashLegendB.textContent = comparisonLabel;
   nwLegendA.textContent = primaryLabel;
   nwLegendB.textContent = comparisonLabel;
-  for (const button of [projectionScenarioEarlyButton]) {
+  for (const button of [projectionScenarioEarlyButton, timelineScenarioEarlyButton]) {
     button.textContent = primaryLabel;
   }
-  for (const button of [projectionScenarioNormButton]) {
+  for (const button of [projectionScenarioNormButton, timelineScenarioNormButton]) {
     button.textContent = comparisonLabel;
   }
   drawChart(
@@ -5438,6 +5454,20 @@ projectionScenarioEarlyButton.addEventListener("click", () => {
 projectionScenarioNormButton.addEventListener("click", () => {
   setProjectionScenario("norm");
 });
+
+timelineScenarioEarlyButton.addEventListener("click", () => {
+  setTimelineScenario("early");
+});
+
+timelineScenarioNormButton.addEventListener("click", () => {
+  setTimelineScenario("norm");
+});
+
+function setTimelineScenario(nextScenario: "early" | "norm"): void {
+  if (timelineScenario === nextScenario) return;
+  timelineScenario = nextScenario;
+  if (latestRunResult) renderMilestoneTimeline(latestRunResult);
+}
 
 function updateActiveProjectionExpansion(mode: "expanded" | "collapsed"): void {
   if (projectionActiveTab === "cashflow") {
