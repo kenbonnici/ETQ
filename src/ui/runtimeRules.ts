@@ -549,6 +549,10 @@ export function fieldVisible(
     return asNumber(values[HOME_FIELDS.homeValue]) > 0 || PROPERTY_RUNTIME_GROUPS.some((group) => anyValue(values, group.coreFields));
   }
 
+  if (fieldId === RUNTIME_FIELDS.stockSellingCostRate) {
+    return asNumber(values[RUNTIME_FIELDS.stockMarketInvestments]) > 0;
+  }
+
   if (fieldId === RUNTIME_FIELDS.otherAssetDisposalCostRate) {
     return ASSET_OF_VALUE_RUNTIME_GROUPS.some((group) => anyValue(values, group.coreFields));
   }
