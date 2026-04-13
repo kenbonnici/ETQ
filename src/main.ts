@@ -1094,7 +1094,7 @@ function writeScenarioStorageJson(key: string, value: unknown): boolean {
     return true;
   } catch {
     scenarioStorageAvailable = false;
-    setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
+    setScenarioManagerNotice("Local save is unavailable in this browser", "warning", 5000);
     return false;
   }
 }
@@ -1105,7 +1105,7 @@ function removeScenarioStorageKey(key: string): void {
     window.localStorage.removeItem(key);
   } catch {
     scenarioStorageAvailable = false;
-    setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
+    setScenarioManagerNotice("Local save is unavailable in this browser", "warning", 5000);
   }
 }
 
@@ -1557,14 +1557,14 @@ function restoreDraftScenarioIfAvailable(): boolean {
 
 async function saveCurrentScenario(): Promise<void> {
   if (!scenarioStorageAvailable) {
-    setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
+    setScenarioManagerNotice("Local save is unavailable in this browser", "warning", 5000);
     renderInputs();
     return;
   }
 
   const normalizedName = normalizeScenarioName(scenarioDraftName);
   if (normalizedName.length === 0) {
-    setScenarioManagerNotice("Enter a scenario name before saving.", "warning");
+    setScenarioManagerNotice("Enter a scenario name before saving", "warning");
     renderInputs();
     return;
   }
@@ -1597,7 +1597,7 @@ async function saveCurrentScenario(): Promise<void> {
   activeSavedScenarioId = scenarioId;
   selectedSavedScenarioId = null;
   scenarioDraftName = normalizedName;
-  setScenarioManagerNotice(`${targetScenarioId ? "Updated" : "Saved"} scenario "${normalizedName}".`, "success");
+  setScenarioManagerNotice(`${targetScenarioId ? "Updated" : "Saved"} scenario "${normalizedName}"`, "success");
   renderInputs();
 }
 
@@ -4289,7 +4289,7 @@ function renderInputs(): void {
       activeSavedScenarioId = scenario.id;
       selectedSavedScenarioId = null;
       scenarioDraftName = scenario.name;
-      applyPersistedScenarioSnapshot(scenario.snapshot, { message: `Loaded scenario "${scenario.name}".`, tone: "success" });
+      applyPersistedScenarioSnapshot(scenario.snapshot, { message: `Loaded scenario "${scenario.name}"`, tone: "success" });
     });
   }
 
@@ -4307,7 +4307,7 @@ function renderInputs(): void {
       writeNamedScenarios(scenarios.filter((entry) => entry.id !== selectedId));
       if (activeSavedScenarioId === selectedId) activeSavedScenarioId = null;
       if (selectedSavedScenarioId === selectedId) selectedSavedScenarioId = null;
-      setScenarioManagerNotice(`Deleted scenario "${scenario.name}".`, "warning");
+      setScenarioManagerNotice(`Deleted scenario "${scenario.name}"`, "warning");
       renderInputs();
     });
   }
@@ -5605,7 +5605,7 @@ if (typeof ResizeObserver !== "undefined") {
 
 scenarioStorageAvailable = canUseScenarioStorage();
 if (!scenarioStorageAvailable) {
-  setScenarioManagerNotice("Local save is unavailable in this browser.", "warning", 5000);
+  setScenarioManagerNotice("Local save is unavailable in this browser", "warning", 5000);
 }
 
 resetCashflowExpandedGroups("collapsed");
