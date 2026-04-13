@@ -72,7 +72,7 @@ body {
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
-  padding: 10px 12px;
+  padding: 9px 12px;
   border-radius: 10px;
   background: #f1f6f3;
   border: 1px solid #dbe6e0;
@@ -96,9 +96,9 @@ body {
   border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  line-height: 22px;
+  line-height: 24px;
   color: #5c746d;
   white-space: nowrap;
   cursor: pointer;

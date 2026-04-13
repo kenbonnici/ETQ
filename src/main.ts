@@ -5327,6 +5327,7 @@ function recalc(): void {
     contextByYear
   });
   renderMilestoneTimeline(displayResult);
+  syncProjectionScenarioButtons();
   if (projectionHasMounted) {
     renderCashflowPage(displayResult);
     renderNetworthPage(displayResult);
@@ -5432,10 +5433,11 @@ function setProjectionTab(nextTab: ProjectionSectionKey): void {
 }
 
 function setProjectionScenario(nextScenario: "early" | "norm"): void {
-  if (cashflowScenario === nextScenario) return;
+  if (cashflowScenario === nextScenario && timelineScenario === nextScenario) return;
   pendingCashflowScrollAnchor = captureProjectionScrollContext("cashflow");
   pendingNetworthScrollAnchor = captureProjectionScrollContext("networth");
   cashflowScenario = nextScenario;
+  timelineScenario = nextScenario;
   recalc();
 }
 
@@ -5464,9 +5466,12 @@ timelineScenarioNormButton.addEventListener("click", () => {
 });
 
 function setTimelineScenario(nextScenario: "early" | "norm"): void {
-  if (timelineScenario === nextScenario) return;
+  if (cashflowScenario === nextScenario && timelineScenario === nextScenario) return;
+  pendingCashflowScrollAnchor = captureProjectionScrollContext("cashflow");
+  pendingNetworthScrollAnchor = captureProjectionScrollContext("networth");
+  cashflowScenario = nextScenario;
   timelineScenario = nextScenario;
-  if (latestRunResult) renderMilestoneTimeline(latestRunResult);
+  recalc();
 }
 
 function updateActiveProjectionExpansion(mode: "expanded" | "collapsed"): void {
