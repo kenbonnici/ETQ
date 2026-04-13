@@ -3031,7 +3031,6 @@ function renderDownsizingPreview(): string {
   const downsizingYear = Number(fieldState[DOWNSIZING_FIELDS.year]);
   const hasHome = asNumber(fieldState[HOME_FIELDS.homeValue]) > 0;
   const mode = normalizeDownsizingMode(fieldState[DOWNSIZING_FIELDS.newHomeMode]);
-  const newRentMonthly = asNumber(fieldState[DOWNSIZING_FIELDS.newRentAnnual]);
   const previewRows: Array<{ label: string; value: string; sign: "plus" | "minus" }> = [];
   const notes: string[] = [];
   let summaryLabel = "";
@@ -3073,9 +3072,6 @@ function renderDownsizingPreview(): string {
       summaryValue = formatCurrencyPrecise(estimate.netEquityReleased);
       summaryTone = estimate.netEquityReleased <= 0 ? "warning" : "default";
     }
-  } else if (newRentMonthly > 0) {
-    summaryLabel = `Rent from ${downsizingYear}`;
-    summaryValue = `${formatCurrencyPrecise(newRentMonthly)}/mo`;
   }
 
   if (!summaryValue && previewRows.length === 0 && notes.length === 0) return "";
