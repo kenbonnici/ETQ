@@ -101,10 +101,11 @@ const fieldState = createEmptyFieldState();
 type RuntimeFieldId = FieldId | PlannedSellYearFieldId;
 const runtimeFieldState = fieldState as Partial<Record<RuntimeFieldId, RawInputValue>>;
 
-function showConfirm(message: string): Promise<boolean> {
+function showConfirm(message: string, options: { placement?: "center" | "scenario" } = {}): Promise<boolean> {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
-    overlay.className = "confirm-overlay";
+    const placement = options.placement ?? "center";
+    overlay.className = placement === "scenario" ? "confirm-overlay confirm-overlay--scenario" : "confirm-overlay";
     overlay.innerHTML = `<div class="confirm-dialog">
       <p>${message}</p>
       <div class="confirm-actions">
@@ -119,6 +120,22 @@ function showConfirm(message: string): Promise<boolean> {
     ok.addEventListener("click", () => close(true));
     overlay.addEventListener("click", (e) => { if (e.target === overlay) close(false); });
     document.body.appendChild(overlay);
+    if (placement === "scenario") {
+      const dialog = overlay.querySelector<HTMLDivElement>(".confirm-dialog");
+      const scenarioSection = document.querySelector<HTMLElement>(".section-scenarios");
+      if (dialog && scenarioSection) {
+        const rect = scenarioSection.getBoundingClientRect();
+        const dialogWidth = Math.min(360, window.innerWidth - 32);
+        const preferredLeft = rect.right + 20;
+        const fitsRight = preferredLeft + dialogWidth <= window.innerWidth - 16;
+        const left = fitsRight
+          ? preferredLeft
+          : Math.max(16, Math.min(rect.left, window.innerWidth - dialogWidth - 16));
+        const top = Math.max(16, Math.min(rect.top + 12, window.innerHeight - dialog.offsetHeight - 16));
+        dialog.style.left = `${left}px`;
+        dialog.style.top = `${top}px`;
+      }
+    }
     ok.focus();
   });
 }
@@ -1541,7 +1558,7 @@ function renderScenarioManager(): string {
 
 async function confirmAndLoadSampleData(): Promise<void> {
   if (snapshotHasSavableData(collectPersistedScenarioSnapshot())) {
-    const shouldLoad = await showConfirm("Load sample data and overwrite current inputs?");
+    const shouldLoad = await showConfirm("Load sample data and overwrite current inputs?", { placement: "scenario" });
     if (!shouldLoad) return;
   }
   void loadSampleDataScenario();
@@ -1576,7 +1593,7 @@ async function saveCurrentScenario(): Promise<void> {
     : null;
   const duplicate = existingScenarios.find((scenario) => scenario.name.toLowerCase() === normalizedName.toLowerCase());
   if (duplicate && duplicate.id !== targetScenarioId) {
-    const shouldReplace = await showConfirm(`Replace the saved scenario "${duplicate.name}"?`);
+    const shouldReplace = await showConfirm(`Replace the saved scenario "${duplicate.name}"?`, { placement: "scenario" });
     if (!shouldReplace) return;
   }
 
@@ -4232,7 +4249,7 @@ function renderInputs(): void {
   const clearInputsBtn = inputsPanel.querySelector<HTMLButtonElement>("#clear-inputs-btn");
   if (clearInputsBtn) {
     clearInputsBtn.addEventListener("click", async () => {
-      const shouldClear = await showConfirm("Clear all current inputs?");
+      const shouldClear = await showConfirm("Clear all current inputs?", { placement: "scenario" });
       if (!shouldClear) return;
       clearAllInputs();
     });
@@ -4283,7 +4300,7 @@ function renderInputs(): void {
       const scenario = readNamedScenarios().find((entry) => entry.id === selectedId);
       if (!scenario) return;
       if (snapshotHasSavableData(collectPersistedScenarioSnapshot())) {
-        const shouldLoad = await showConfirm(`Load "${scenario.name}" and overwrite current inputs?`);
+        const shouldLoad = await showConfirm(`Load "${scenario.name}" and overwrite current inputs?`, { placement: "scenario" });
         if (!shouldLoad) return;
       }
       activeSavedScenarioId = scenario.id;
@@ -4301,7 +4318,7 @@ function renderInputs(): void {
       const scenarios = readNamedScenarios();
       const scenario = scenarios.find((entry) => entry.id === selectedId);
       if (!scenario) return;
-      const confirmed = await showConfirm(`Delete the saved scenario "${scenario.name}"?`);
+      const confirmed = await showConfirm(`Delete the saved scenario "${scenario.name}"?`, { placement: "scenario" });
       if (!confirmed) return;
 
       writeNamedScenarios(scenarios.filter((entry) => entry.id !== selectedId));
