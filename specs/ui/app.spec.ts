@@ -452,6 +452,36 @@ test("tab order skips hidden housing rent and reveals mortgage fields in sequenc
   await expectActiveElement(page, selectors.mortgageInterest);
 });
 
+test("switching housing status keeps the input panel scroll position stable", async ({ page }) => {
+  await page.goto("/");
+
+  await fillAndBlur(page, selectors.currentAge, "48");
+  await fillAndBlur(page, selectors.lifeExpectancy, "95");
+  await fillAndBlur(page, selectors.minimumCashBuffer, "70000");
+
+  const beforeOwner = await page.locator("#inputs-panel").evaluate((el, ownerSelector) => {
+    const ownerButton = el.querySelector(ownerSelector) as HTMLElement | null;
+    if (!ownerButton) return el.scrollTop;
+    el.scrollTop = Math.max(0, ownerButton.offsetTop - 40);
+    return el.scrollTop;
+  }, selectors.housingStatusOwner);
+
+  await page.locator(selectors.housingStatusOwner).click();
+  const afterOwner = await page.locator("#inputs-panel").evaluate((el) => el.scrollTop);
+  expect(Math.abs(afterOwner - beforeOwner)).toBeLessThanOrEqual(2);
+
+  const beforeRenter = await page.locator("#inputs-panel").evaluate((el, renterSelector) => {
+    const renterButton = el.querySelector(renterSelector) as HTMLElement | null;
+    if (!renterButton) return el.scrollTop;
+    el.scrollTop = Math.max(0, renterButton.offsetTop - 40);
+    return el.scrollTop;
+  }, selectors.housingStatusRenter);
+
+  await page.locator(selectors.housingStatusRenter).click();
+  const afterRenter = await page.locator("#inputs-panel").evaluate((el) => el.scrollTop);
+  expect(Math.abs(afterRenter - beforeRenter)).toBeLessThanOrEqual(2);
+});
+
 test("tab order follows displayed fields through planned sell year in investment properties", async ({ page }) => {
   await loadSampleData(page);
 

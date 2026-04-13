@@ -4396,6 +4396,10 @@ function renderInputs(): void {
   });
 
   inputsPanel.querySelectorAll<HTMLButtonElement>("button[data-toggle-field-id]").forEach((btn) => {
+    btn.addEventListener("mousedown", (event) => {
+      event.preventDefault();
+    });
+
     btn.addEventListener("click", () => {
       const fieldId = btn.dataset.toggleFieldId as FieldId | undefined;
       const nextValue = btn.dataset.toggleOption;
@@ -4420,10 +4424,15 @@ function renderInputs(): void {
       for (const key of Object.keys(pruned) as Array<FieldId>) {
         fieldState[key] = pruned[key];
       }
+      const panelScrollTop = inputsPanel.scrollTop;
       setRetireCheckMessage(null);
       queueRecalc();
       renderInputs();
-      focusRenderedField(fieldId);
+      window.requestAnimationFrame(() => {
+        inputsPanel.scrollTop = panelScrollTop;
+        focusRenderedField(fieldId);
+        inputsPanel.scrollTop = panelScrollTop;
+      });
     });
   });
 
