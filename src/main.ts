@@ -3768,7 +3768,7 @@ function renderPropertyLiquidationOrderControl(): string {
   const dividerHtml = nonLiquidatingRows ? `<div class="liquidation-divider" aria-hidden="true"></div>` : "";
   return `
     <div class="liquidation-reorder" data-liquidation-reorder="true">
-      <div class="liquidation-title">If Money Runs Short, Sell Assets In This Order</div>
+      <div class="liquidation-title">If money runs short, sell assets in this order</div>
       <small class="liquidation-help">Use arows to reorder or turn Liqiudate off to never sell</small>
       <div class="liquidation-section" data-liquidation-zone="sellable">
         ${sellableRows ? `<ul class="liquidation-list">${sellableContent}</ul>` : sellableContent}
