@@ -441,24 +441,14 @@ body {
   line-height: 1;
 }
 
-.retire-check-result.is-positive {
+.retire-check-result.is-positive,
+.retire-check-result.is-promising {
   color: #1e4f82;
   background: linear-gradient(180deg, #f7fbff 0%, #edf5ff 100%);
   border-color: #b7cfea;
   box-shadow:
     inset 0 1px 0 rgb(255 255 255 / 0.92),
     0 1px 2px rgb(30 79 130 / 0.08);
-}
-
-.retire-check-result.is-promising {
-  font-size: 14px;
-  font-weight: 750;
-  color: #145b97;
-  background: linear-gradient(180deg, #f4f9ff 0%, #e6f0fb 100%);
-  border-color: #a8c4e6;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.88),
-    0 0 0 1px rgb(84 139 204 / 0.08);
 }
 
 .retire-check-result.is-warning {
@@ -478,11 +468,10 @@ body {
   border-color: #cbd5e1;
 }
 
-.retire-check-result.is-positive .retire-check-result-value {
+.retire-check-result.is-positive .retire-check-result-value,
+.retire-check-result.is-promising .retire-check-result-value {
   font-weight: 650;
 }
-
-.retire-check-result.is-promising .retire-check-result-value,
 .retire-check-result.is-warning .retire-check-result-value {
   font-weight: 750;
 }

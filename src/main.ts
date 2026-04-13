@@ -559,7 +559,7 @@ function renderRetirementIndicatorContent(message: string | null): { showPrefix:
   if (ageMatch) {
     return {
       showPrefix: false,
-      html: `You can retire at <span class="retire-check-result-age-token">${escapeHtml(ageMatch[1])}</span>!`
+      html: `You can retire at <span class="retire-check-result-age-token">${escapeHtml(ageMatch[1])}</span>`
     };
   }
   return { showPrefix: false, html: escapeHtml(trimmed) };
