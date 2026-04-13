@@ -1414,10 +1414,6 @@ body {
 }
 
 .scenario-notice {
-  position: absolute;
-  top: 8px;
-  right: 16px;
-  z-index: 40;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -1432,6 +1428,25 @@ body {
   font-size: 10.5px;
   font-weight: 600;
   line-height: 1.3;
+}
+
+.scenario-notice--inline {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  backdrop-filter: none;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .scenario-notice span {
@@ -1469,6 +1484,34 @@ body {
   cursor: pointer;
 }
 
+.scenario-notice--inline.scenario-notice--success,
+.scenario-notice--inline.scenario-notice--warning,
+.scenario-notice--inline.scenario-notice--info {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: #245f50;
+}
+
+.scenario-notice--inline span {
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.scenario-notice--inline .scenario-notice-dismiss {
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+.scenario-notice--inline .scenario-notice-dismiss:hover {
+  opacity: 1;
+}
+
 .scenario-manager-layout {
   display: grid;
   gap: 10px;
@@ -1487,11 +1530,21 @@ body {
 }
 
 .scenario-manager-kicker-row {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.scenario-manager-kicker-slot {
+  position: relative;
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 5px;
+  min-height: 14px;
+}
+
+.scenario-manager-kicker-slot[data-notice-active="true"] > .scenario-manager-kicker,
+.scenario-manager-kicker-slot[data-notice-active="true"] > .scenario-manager-status {
+  visibility: hidden;
 }
 
 .scenario-manager-kicker {
@@ -1509,6 +1562,18 @@ body {
   font-size: 11px;
   font-weight: 700;
   line-height: 1;
+  white-space: nowrap;
+}
+
+.scenario-manager-kicker-slot .scenario-notice {
+  align-items: center;
+  gap: 6px;
+}
+
+.scenario-manager-kicker-slot .scenario-notice span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 

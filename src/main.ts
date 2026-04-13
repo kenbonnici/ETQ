@@ -1486,26 +1486,27 @@ function renderScenarioManager(): string {
   const selectedIsSampleData = selectedScenarioId === SAMPLE_DATA_SCENARIO_ID;
   const noticeHtml = scenarioManagerNotice
     ? `
-      <div class="scenario-notice scenario-notice--${scenarioManagerNotice.tone}" role="status" aria-live="polite">
+      <div class="scenario-notice scenario-notice--inline scenario-notice--${scenarioManagerNotice.tone}" role="status" aria-live="polite">
         <span>${escapeHtml(scenarioManagerNotice.message)}</span>
-        <button type="button" class="scenario-notice-dismiss" id="dismiss-scenario-notice-btn" aria-label="Dismiss scenario message">×</button>
       </div>
     `
     : "";
 
   return `
     <div class="scenario-manager">
-      ${noticeHtml}
       <div class="scenario-manager-layout">
         <div class="scenario-manager-row">
           <div class="scenario-row-main">
             <div class="scenario-manager-kicker-row">
-              <div class="scenario-manager-kicker">Current inputs</div>
-              <span
-                id="scenario-draft-status"
-                class="scenario-manager-status scenario-manager-status--warning"
-                ${draftStatus ? "" : "hidden"}
-              >${draftStatus === "not-saved" ? "Not saved" : draftStatus === "unsaved-changes" ? "Unsaved changes" : ""}</span>
+              <div class="scenario-manager-kicker-slot" ${scenarioManagerNotice ? "data-notice-active=\"true\"" : ""}>
+                <div class="scenario-manager-kicker">Current inputs</div>
+                <span
+                  id="scenario-draft-status"
+                  class="scenario-manager-status scenario-manager-status--warning"
+                  ${draftStatus && !scenarioManagerNotice ? "" : "hidden"}
+                >${draftStatus === "not-saved" ? "Not saved" : draftStatus === "unsaved-changes" ? "Unsaved changes" : ""}</span>
+                ${noticeHtml}
+              </div>
             </div>
             <div class="scenario-field-shell">
               <input
