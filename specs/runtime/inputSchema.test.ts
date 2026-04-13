@@ -67,7 +67,7 @@ test("default field state and validation metadata stay semantic", () => {
 
   assert.equal(blank["spending.adjustments.firstBracket.endAge"], 65);
   assert.equal(blank["spending.adjustments.secondBracket.endAge"], 75);
-  assert.equal(blank["spending.adjustments.firstBracket.deltaRate"], 0);
+  assert.equal(blank["spending.adjustments.firstBracket.deltaRate"], 0.05);
   assert.equal(blank["spending.adjustments.secondBracket.deltaRate"], -0.1);
   assert.equal(blank["spending.adjustments.finalBracket.deltaRate"], -0.2);
 

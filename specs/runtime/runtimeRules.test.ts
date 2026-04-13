@@ -81,7 +81,7 @@ test("blank legacy normalizes to zero and sample data keeps the expected liquida
 
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentAge1], 65);
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentAge2], 75);
-  assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentFirstBracket], 0);
+  assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentFirstBracket], 0.05);
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentSecondBracket], -0.1);
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentFinalBracket], -0.2);
   assert.equal(normalizeInputs(blankFields).legacyAmount, 0);
@@ -103,6 +103,7 @@ test("spending adjustment boundaries switch at the next age after each edited en
   fields[RUNTIME_FIELDS.spendingAdjustmentFirstBracket] = 0;
   fields[RUNTIME_FIELDS.spendingAdjustmentSecondBracket] = -0.1;
   fields[RUNTIME_FIELDS.spendingAdjustmentFinalBracket] = -0.2;
+  fields["assumptions.generalInflationRateAnnual"] = 0;
 
   const normalized = normalizeInputs(fields);
   assert.equal(normalized.spendingAdjustmentAge1, 55);

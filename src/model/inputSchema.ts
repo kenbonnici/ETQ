@@ -111,9 +111,19 @@ export function getFieldLabel(fieldId: FieldId): string {
 export function getDefaultFieldValue(fieldId: FieldId): RawInputValue {
   if (fieldId === "spending.adjustments.firstBracket.endAge") return 65;
   if (fieldId === "spending.adjustments.secondBracket.endAge") return 75;
-  if (fieldId === "spending.adjustments.firstBracket.deltaRate") return 0;
+  if (fieldId === "spending.adjustments.firstBracket.deltaRate") return 0.05;
   if (fieldId === "spending.adjustments.secondBracket.deltaRate") return -0.1;
   if (fieldId === "spending.adjustments.finalBracket.deltaRate") return -0.2;
+  if (fieldId === "assumptions.generalInflationRateAnnual") return 0.02;
+  if (fieldId === "assumptions.propertyAppreciationRateAnnual") return 0.03;
+  if (fieldId === "assumptions.cashYieldRateAnnual") return 0.02;
+  if (fieldId === "assumptions.equityReturnRateAnnual") return 0.08;
+  if (fieldId === "assumptions.salaryGrowthRateAnnual") return 0.03;
+  if (fieldId === "assumptions.rentalIncomeGrowthRateAnnual") return 0.02;
+  if (fieldId === "retirement.earlyPensionReductionPerYear") return 500;
+  if (fieldId === "liquidation.stockSellingCostRate") return 0.05;
+  if (fieldId === "liquidation.propertyDisposalCostRate") return 0.15;
+  if (fieldId === "liquidation.otherAssetDisposalCostRate") return 0.05;
   return null;
 }
 

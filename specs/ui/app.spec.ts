@@ -153,7 +153,7 @@ test("spending-by-age fields keep fixed defaults and allow inline age editing wi
 
   await expect(page.locator(selectors.spendingAdjustmentAge1)).toHaveValue("65");
   await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("75");
-  await expect(page.locator(selectors.spendingAdjustmentFirstBracket)).toHaveValue("0%");
+  await expect(page.locator(selectors.spendingAdjustmentFirstBracket)).toHaveValue("5%");
   await expect(page.locator(selectors.spendingAdjustmentSecondBracket)).toHaveValue("-10%");
   await expect(page.locator(selectors.spendingAdjustmentFinalBracket)).toHaveValue("-20%");
 
@@ -200,7 +200,7 @@ test("spending-by-age percent steppers apply to all three rows from their fixed 
   await page.locator(stepperSelectors.spendingAdjustmentSecondBracketUp).click();
   await page.locator(stepperSelectors.spendingAdjustmentFinalBracketUp).click();
 
-  await expect(page.locator(selectors.spendingAdjustmentFirstBracket)).toHaveValue("1%");
+  await expect(page.locator(selectors.spendingAdjustmentFirstBracket)).toHaveValue("6%");
   await expect(page.locator(selectors.spendingAdjustmentSecondBracket)).toHaveValue("-9%");
   await expect(page.locator(selectors.spendingAdjustmentFinalBracket)).toHaveValue("-19%");
 });

@@ -10,6 +10,7 @@ import { validateFieldState } from "./model/validate";
 import type { RunModelResult } from "./model/index";
 import {
   createEmptyFieldState,
+  getDefaultFieldValue,
   INPUT_DEFINITION_BY_FIELD_ID,
   ALLOW_NEGATIVE_FIELDS,
   COERCED_NUMERIC_BOUNDS,
@@ -3811,7 +3812,7 @@ async function loadSampleDataScenario(): Promise<void> {
 
 function clearAllInputs(): void {
   for (const def of INPUT_DEFINITIONS) {
-    fieldState[def.fieldId] = null;
+    fieldState[def.fieldId] = getDefaultFieldValue(def.fieldId);
   }
   clearPlannedSellYearFields();
   activeSavedScenarioId = null;
