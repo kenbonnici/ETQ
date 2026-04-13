@@ -4233,7 +4233,7 @@ function renderInputs(): void {
 
   const loadSavedScenarioBtn = inputsPanel.querySelector<HTMLButtonElement>("#load-saved-scenario-btn");
   if (loadSavedScenarioBtn) {
-    loadSavedScenarioBtn.addEventListener("click", () => {
+    loadSavedScenarioBtn.addEventListener("click", async () => {
       const selectedId = savedScenarioSelect?.value ?? selectedSavedScenarioId;
       if (!selectedId) return;
       if (selectedId === SAMPLE_DATA_SCENARIO_ID) {
@@ -4245,6 +4245,10 @@ function renderInputs(): void {
       }
       const scenario = readNamedScenarios().find((entry) => entry.id === selectedId);
       if (!scenario) return;
+      if (snapshotHasSavableData(collectPersistedScenarioSnapshot())) {
+        const shouldLoad = await showConfirm(`Load "${scenario.name}" and overwrite current inputs?`);
+        if (!shouldLoad) return;
+      }
       activeSavedScenarioId = scenario.id;
       selectedSavedScenarioId = null;
       scenarioDraftName = scenario.name;
