@@ -473,7 +473,7 @@ body {
 }
 
 .retire-check-result.is-warning {
-  color: #77511f;
+  color: #7c6745;
 }
 
 .retire-check-result.is-neutral {
@@ -486,7 +486,7 @@ body {
 }
 
 .retire-check-result.is-warning::before {
-  background: #d8b983;
+  background: #e2cda7;
 }
 
 .retire-check-result.is-positive .retire-check-result-value,
@@ -494,7 +494,13 @@ body {
   color: #1f4d40;
 }
 .retire-check-result.is-warning .retire-check-result-value {
-  color: #6f542a;
+  color: #7c6745;
+}
+
+.retire-check-result.is-warning .retire-check-result-status {
+  font-size: 17px;
+  font-weight: 600;
+  color: #7c6745;
 }
 
 .retire-check-result.is-neutral .retire-check-result-status {
