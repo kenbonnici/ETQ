@@ -895,6 +895,7 @@ test("income and expenses section places living expenses after side income and a
   await expect(incomeSection.getByRole("heading", { name: "Income & Expenses" })).toBeVisible();
   await expect(incomeSection.getByRole("heading", { name: "Income", exact: true })).toBeVisible();
   await expect(incomeSection.getByRole("heading", { name: "Living expenses", exact: true })).toBeVisible();
+  await expect(incomeSection.getByRole("heading", { name: "Side income", exact: true })).toHaveCount(0);
 
   await fillAndBlur(page, selectors.otherWorkIncome, "2000");
   await expect(page.locator(selectors.otherWorkEndAge)).toBeVisible();

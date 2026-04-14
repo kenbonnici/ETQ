@@ -1598,7 +1598,7 @@ const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
   "housing.01Residence.marketValue": "Home value",
   "housing.rentAnnual": "Monthly rent",
   "spending.livingExpenses.annual": "Annual living expenses",
-  "income.otherWork.netAnnual": "Annual amount",
+  "income.otherWork.netAnnual": "Side income",
   "income.otherWork.endAge": "Ends at age",
   "housing.downsize.newHomeMode": "Buy or rent after downsizing?",
   "income.postRetirementSupplement.annual": "Annual amount",
@@ -1618,6 +1618,7 @@ const TOOLTIP_OVERRIDES: Partial<Record<FieldId, string>> = {
   "income.employment.netAnnual": "Annual net of tax income from employment or self-employment.",
   "housing.01Residence.marketValue": "Current market value of your home",
   "income.otherWork.netAnnual": "Net annual income from consulting, freelance, or other part-time work. Leave blank if none.",
+  "income.otherWork.endAge": "Leave blank if this income continues until retirement.",
   "retirement.statePension.netAnnualAtStart": "Net annual pension entitlement",
   "retirement.earlyPensionReductionPerYear": "Reduction in annual pension for each year retired early",
   "debts.creditCards.balance": "Combined balance on all cards. Assumed cleared in Year 1. Leave blank if none."
@@ -1647,7 +1648,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     return { section: "Income & Expenses", groupTail: ["Income"] };
   }
   if (fieldId.startsWith("income.otherWork.")) {
-    return { section: "Income & Expenses", groupTail: ["Income", "Side income"] };
+    return { section: "Income & Expenses", groupTail: ["Income"] };
   }
 
   if (fieldId.startsWith("properties.") && fieldId.includes(".loan.")) {
