@@ -17,7 +17,11 @@ export interface ModelUiState {
 
 export interface EffectiveInputs {
   ageNow: number;
+  partnerIncluded: boolean;
+  partnerRetiresEarly: boolean;
+  partnerAgeNow: number | null;
   netIncomeAnnual: number;
+  partnerEmploymentIncomeAnnual: number;
   cashBalance: number;
   stocksBalance: number;
   stocksContributionMonthly: number;
@@ -27,6 +31,7 @@ export interface EffectiveInputs {
   homeLoanRepaymentMonthly: number;
   statutoryRetirementAge: number;
   pensionAnnual: number;
+  partnerPensionAnnual: number;
   housingRentAnnual: number;
   downsizingYear: number;
   downsizingNewHomeMode: string;
@@ -87,6 +92,7 @@ export interface EffectiveInputs {
   rentalIncomeGrowth: number;
 
   pensionReductionPerYearEarly: number;
+  partnerPensionReductionPerYearEarly: number | null;
   cashBuffer: number;
   legacyAmount: number;
   stockSellingCosts: number;
@@ -120,9 +126,11 @@ export interface NamedProjectionSeries {
 export interface ScenarioCashFlowRows {
   openingCash: number[];
   employmentIncome: number[];
+  partnerEmploymentIncome: number[];
   otherWorkIncome: number[];
   rentalIncomeByProperty: NamedProjectionSeries[];
   statutoryPension: number[];
+  partnerStatutoryPension: number[];
   otherPostRetirementIncome: number[];
   incomeEvents: NamedProjectionSeries[];
   liquidationsStocks: number[];

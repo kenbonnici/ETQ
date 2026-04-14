@@ -15,6 +15,7 @@ import {
   LIQUIDATION_ASSET_RUNTIME_GROUPS,
   OTHER_LOAN_FIELDS,
   OTHER_WORK_FIELDS,
+  PARTNER_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
   PROPERTY_RUNTIME_GROUPS,
   RUNTIME_FIELDS,
@@ -95,7 +96,9 @@ export interface TimelineMilestone {
 
 export const FIELD_STEPPER_STEPS: Readonly<Partial<Record<FieldId, number>>> = {
   [RUNTIME_FIELDS.currentAge]: 1,
+  [PARTNER_FIELDS.age]: 1,
   [RUNTIME_FIELDS.currentNetIncomeAnnual]: 100,
+  [PARTNER_FIELDS.employmentIncomeAnnual]: 100,
   [RUNTIME_FIELDS.cashBalance]: 100,
   [RUNTIME_FIELDS.stockMarketInvestments]: 100,
   [HOME_FIELDS.homeValue]: 1000,
@@ -106,6 +109,7 @@ export const FIELD_STEPPER_STEPS: Readonly<Partial<Record<FieldId, number>>> = {
   [DOWNSIZING_FIELDS.newRentAnnual]: 100,
   [RUNTIME_FIELDS.statutoryRetirementAge]: 1,
   [RUNTIME_FIELDS.annualPensionAtRetirement]: 100,
+  [PARTNER_FIELDS.pensionAnnual]: 100,
   [HOME_FIELDS.housingRentAnnual]: 100,
   [RUNTIME_FIELDS.annualLivingExpenses]: 100,
   [OTHER_WORK_FIELDS.income]: 100,
@@ -129,6 +133,7 @@ export const FIELD_STEPPER_STEPS: Readonly<Partial<Record<FieldId, number>>> = {
   [RUNTIME_FIELDS.salaryAnnualGrowthRate]: 0.001,
   [RUNTIME_FIELDS.rentalIncomeAnnualIncrease]: 0.001,
   [RUNTIME_FIELDS.pensionReductionPerYearEarly]: 10,
+  [PARTNER_FIELDS.pensionReductionPerYearEarly]: 10,
   [RUNTIME_FIELDS.minimumCashBuffer]: 1000,
   [RUNTIME_FIELDS.legacyAmount]: 1000,
   [RUNTIME_FIELDS.stockSellingCostRate]: 0.001,
@@ -181,7 +186,9 @@ for (const group of STOCK_MARKET_CRASH_RUNTIME_GROUPS) {
 
 export const FIELD_STEPPER_DECIMALS: Readonly<Partial<Record<FieldId, number>>> = {
   [RUNTIME_FIELDS.currentAge]: 0,
+  [PARTNER_FIELDS.age]: 0,
   [RUNTIME_FIELDS.currentNetIncomeAnnual]: 0,
+  [PARTNER_FIELDS.employmentIncomeAnnual]: 0,
   [RUNTIME_FIELDS.cashBalance]: 0,
   [RUNTIME_FIELDS.stockMarketInvestments]: 0,
   [HOME_FIELDS.homeValue]: 0,
@@ -192,6 +199,7 @@ export const FIELD_STEPPER_DECIMALS: Readonly<Partial<Record<FieldId, number>>> 
   [DOWNSIZING_FIELDS.newRentAnnual]: 0,
   [RUNTIME_FIELDS.statutoryRetirementAge]: 0,
   [RUNTIME_FIELDS.annualPensionAtRetirement]: 0,
+  [PARTNER_FIELDS.pensionAnnual]: 0,
   [HOME_FIELDS.housingRentAnnual]: 0,
   [RUNTIME_FIELDS.annualLivingExpenses]: 0,
   [OTHER_WORK_FIELDS.income]: 0,
@@ -214,6 +222,7 @@ export const FIELD_STEPPER_DECIMALS: Readonly<Partial<Record<FieldId, number>>> 
   [RUNTIME_FIELDS.salaryAnnualGrowthRate]: 3,
   [RUNTIME_FIELDS.rentalIncomeAnnualIncrease]: 3,
   [RUNTIME_FIELDS.pensionReductionPerYearEarly]: 0,
+  [PARTNER_FIELDS.pensionReductionPerYearEarly]: 0,
   [RUNTIME_FIELDS.minimumCashBuffer]: 0,
   [RUNTIME_FIELDS.legacyAmount]: 0,
   [RUNTIME_FIELDS.stockSellingCostRate]: 3,
@@ -266,7 +275,11 @@ for (const group of STOCK_MARKET_CRASH_RUNTIME_GROUPS) {
 
 export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, number>>> = {
   [RUNTIME_FIELDS.statutoryRetirementAge]: 3.9,
+  [PARTNER_FIELDS.age]: 27.1,
   [RUNTIME_FIELDS.lifeExpectancyAge]: 4.1,
+  [PARTNER_FIELDS.employmentIncomeAnnual]: 6.1,
+  [PARTNER_FIELDS.pensionAnnual]: 22.1,
+  [PARTNER_FIELDS.pensionReductionPerYearEarly]: 278.1,
   [RUNTIME_FIELDS.annualLivingExpenses]: 121.1,
   ["debts.creditCards.balance" as FieldId]: 124.5,
   ...Object.fromEntries(
@@ -282,6 +295,8 @@ export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, numb
 
 export const STRUCTURAL_RERENDER_FIELDS = new Set<FieldId>([
   RUNTIME_FIELDS.currentAge,
+  PARTNER_FIELDS.include,
+  PARTNER_FIELDS.retiresEarly,
   RUNTIME_FIELDS.stockMarketInvestments,
   RUNTIME_FIELDS.spendingAdjustmentAge1,
   RUNTIME_FIELDS.spendingAdjustmentAge2,
@@ -369,6 +384,9 @@ export function getPropertyName(
 }
 
 export function shouldRerenderOnInput(fieldId: FieldId, prevValue: unknown, nextValue: unknown): boolean {
+  if (fieldId === PARTNER_FIELDS.age) {
+    return asNumber(prevValue) !== asNumber(nextValue) || isBlank(prevValue) !== isBlank(nextValue);
+  }
   if (fieldId === RUNTIME_FIELDS.stockMarketInvestments) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === HOME_FIELDS.homeValue) return isPositiveNumber(prevValue) !== isPositiveNumber(nextValue);
   if (fieldId === DOWNSIZING_FIELDS.year) {
@@ -438,6 +456,14 @@ function resolveHousingStatus(values: RuntimeValues): "OWNER" | "RENTER" | null 
   return null;
 }
 
+function isPartnerIncluded(values: RuntimeValues): boolean {
+  return String(values[PARTNER_FIELDS.include] ?? "").trim().toUpperCase() === "YES";
+}
+
+function isPartnerRetiringEarly(values: RuntimeValues): boolean {
+  return isPartnerIncluded(values) && String(values[PARTNER_FIELDS.retiresEarly] ?? "").trim().toUpperCase() === "YES";
+}
+
 export function isOutOfRangeLiquidationRank(fieldId: FieldId, nextValue: unknown): boolean {
   if (!PROPERTY_LIQUIDATION_FIELDS.has(fieldId)) return false;
   if (nextValue === null || nextValue === undefined || String(nextValue).trim() === "") return false;
@@ -473,6 +499,18 @@ export function fieldVisible(
   visibility: RuntimeVisibilityState
 ): boolean {
   const housingStatus = resolveHousingStatus(values);
+  const partnerIncluded = isPartnerIncluded(values);
+  const partnerRetiresEarly = isPartnerRetiringEarly(values);
+  if (fieldId === PARTNER_FIELDS.include) return true;
+  if (
+    fieldId === PARTNER_FIELDS.age
+    || fieldId === PARTNER_FIELDS.employmentIncomeAnnual
+    || fieldId === PARTNER_FIELDS.pensionAnnual
+    || fieldId === PARTNER_FIELDS.retiresEarly
+  ) {
+    return partnerIncluded;
+  }
+  if (fieldId === PARTNER_FIELDS.pensionReductionPerYearEarly) return partnerIncluded && partnerRetiresEarly;
   if (fieldId === HOME_FIELDS.housingStatus) return true;
   if (fieldId === HOME_FIELDS.homeValue) return housingStatus === "OWNER";
   if (fieldId === HOME_FIELDS.mortgageBalance) return asNumber(values[HOME_FIELDS.homeValue]) > 0;

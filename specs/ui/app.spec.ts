@@ -25,6 +25,12 @@ const selectors = {
   livingExpensesMiscellaneous: 'input[data-living-expense-category="miscellaneous"]',
   otherWorkIncome: 'input[data-field-id="income.otherWork.netAnnual"]',
   otherWorkEndAge: 'input[data-field-id="income.otherWork.endAge"]',
+  partnerIncludeYes: 'button[data-toggle-field-id="partner.include"][data-toggle-option="Yes"]',
+  partnerRetiresEarlyYes: 'button[data-toggle-field-id="partner.retirement.alsoRetiresEarly"][data-toggle-option="Yes"]',
+  partnerAge: 'input[data-field-id="partner.profile.currentAge"]',
+  partnerIncome: 'input[data-field-id="partner.income.employment.netAnnual"]',
+  partnerPension: 'input[data-field-id="partner.retirement.statePension.netAnnualAtStart"]',
+  partnerReduction: 'input[data-field-id="partner.retirement.earlyPensionReductionPerYear"]',
   housingStatusOwner: 'button[data-toggle-field-id="housing.status"][data-toggle-option="Owner"]',
   housingStatusRenter: 'button[data-toggle-field-id="housing.status"][data-toggle-option="Renter"]',
   homeValue: 'input[data-field-id="housing.01Residence.marketValue"]',
@@ -162,6 +168,57 @@ test("activates dependent fields and home-owner visibility rules in the rendered
   await expect(page.locator(selectors.homeValue)).toBeVisible();
   await fillAndBlur(page, selectors.homeValue, "600000");
   await expect(page.locator(selectors.mortgageBalance)).toBeVisible();
+});
+
+test("partner fields stay hidden until enabled and show the shared-retirement helper note", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page.locator(selectors.partnerAge)).toHaveCount(0);
+  await expect(page.locator(selectors.partnerIncome)).toHaveCount(0);
+  await expect(page.locator(selectors.partnerReduction)).toHaveCount(0);
+
+  await page.locator(selectors.partnerIncludeYes).click();
+  await expect(page.locator(selectors.partnerAge)).toBeVisible();
+  await expect.poll(async () => page.evaluate(() => {
+    const include = document.querySelector('[data-field-id="partner.include"]');
+    const partnerAge = document.querySelector('[data-field-id="partner.profile.currentAge"]');
+    const partnerRetiresEarly = document.querySelector('[data-field-id="partner.retirement.alsoRetiresEarly"]');
+    if (!(include instanceof HTMLElement) || !(partnerAge instanceof HTMLElement) || !(partnerRetiresEarly instanceof HTMLElement)) {
+      return false;
+    }
+    const includeBeforeAge = Boolean(include.compareDocumentPosition(partnerAge) & Node.DOCUMENT_POSITION_FOLLOWING);
+    const ageBeforeRetiresEarly = Boolean(partnerAge.compareDocumentPosition(partnerRetiresEarly) & Node.DOCUMENT_POSITION_FOLLOWING);
+    return includeBeforeAge && ageBeforeRetiresEarly;
+  })).toBe(true);
+  await expect(page.locator(selectors.partnerIncome)).toBeVisible();
+  await expect(page.locator(selectors.partnerPension)).toBeVisible();
+  await expect(page.locator(selectors.partnerReduction)).toHaveCount(0);
+  await expect(
+    page.locator('[data-field-id="partner.retirement.alsoRetiresEarly"] .field-helper-note')
+  ).toHaveText("Partner income supports your early retirement");
+
+  await page.locator(selectors.partnerRetiresEarlyYes).click();
+  await expect(page.locator(selectors.partnerReduction)).toBeVisible();
+  await expect(
+    page.locator('[data-field-id="partner.retirement.alsoRetiresEarly"] .field-helper-note')
+  ).toHaveText("Partner income supports both retiring together");
+});
+
+test("shared partner retirement switches the comparison control to year mode with both ages shown", async ({ page }) => {
+  await loadSampleData(page);
+
+  await page.locator(selectors.partnerIncludeYes).click();
+  await fillAndBlur(page, selectors.partnerAge, "46");
+  await fillAndBlur(page, selectors.partnerIncome, "42000");
+  await fillAndBlur(page, selectors.partnerPension, "14000");
+  await page.locator(selectors.partnerRetiresEarlyYes).click();
+  await fillAndBlur(page, selectors.partnerReduction, "300");
+
+  await expect(page.locator("#retirement-stepper-label")).toHaveText("Compare with retiring in");
+  await expect(page.locator("#retirement-stepper-meta")).toContainText("You");
+  await expect(page.locator("#retirement-stepper-meta")).toContainText("Partner");
+  await expect(page.locator(".retire-check-result-year-token")).toBeVisible();
+  await expect(page.locator(".retire-check-result-age-stack")).toContainText("Partner");
 });
 
 test("spending-by-age fields keep fixed defaults and allow inline age editing without rerender corruption", async ({ page }) => {

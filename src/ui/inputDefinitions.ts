@@ -42,12 +42,30 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "integer"
   },
   {
+    row: 5,
+    fieldId: "partner.profile.currentAge",
+    label: "Partner age",
+    tooltip: "",
+    uiNote: "Show only if partner is included",
+    sampleValue: "46",
+    type: "integer"
+  },
+  {
     row: 6,
     fieldId: "income.employment.netAnnual",
     label: "Main income",
     tooltip: "Annual net of tax income from employment or self-employment.",
     uiNote: "",
     sampleValue: "80000",
+    type: "number"
+  },
+  {
+    row: 7,
+    fieldId: "partner.income.employment.netAnnual",
+    label: "Partner income",
+    tooltip: "",
+    uiNote: "Show only if partner is included",
+    sampleValue: "45000",
     type: "number"
   },
   {
@@ -141,6 +159,15 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
+    row: 23,
+    fieldId: "partner.retirement.statePension.netAnnualAtStart",
+    label: "Partner pension",
+    tooltip: "",
+    uiNote: "Show only if partner is included",
+    sampleValue: "14000",
+    type: "number"
+  },
+  {
     row: 24,
     fieldId: "housing.rentAnnual",
     label: "Home monthly rent",
@@ -157,6 +184,24 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     uiNote: "",
     sampleValue: "50000",
     type: "number"
+  },
+  {
+    row: 27,
+    fieldId: "partner.include",
+    label: "Include partner",
+    tooltip: "",
+    uiNote: "",
+    sampleValue: "",
+    type: "text"
+  },
+  {
+    row: 28,
+    fieldId: "partner.retirement.alsoRetiresEarly",
+    label: "Partner retires early",
+    tooltip: "",
+    uiNote: "Show only if partner is included",
+    sampleValue: "",
+    type: "text"
   },
   {
     row: 34,
@@ -1455,6 +1500,15 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     type: "number"
   },
   {
+    row: 279,
+    fieldId: "partner.retirement.earlyPensionReductionPerYear",
+    label: "Partner reduction",
+    tooltip: "",
+    uiNote: "Show only if partner retires early",
+    sampleValue: "300",
+    type: "number"
+  },
+  {
     row: 280,
     fieldId: "liquidity.minimumCashBuffer",
     label: "Cash buffer at any time",
@@ -1634,8 +1688,18 @@ function numberedLabel(segment: string | undefined, singular: string): string {
 }
 
 function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section" | "groupTail"> {
-  if (fieldId === "profile.currentAge" || fieldId === "planning.lifeExpectancyAge") {
+  if (
+    fieldId === "profile.currentAge"
+    || fieldId === "planning.lifeExpectancyAge"
+  ) {
     return { section: "Basics", groupTail: [] };
+  }
+  if (
+    fieldId === "partner.include"
+    || fieldId === "partner.profile.currentAge"
+    || fieldId === "partner.retirement.alsoRetiresEarly"
+  ) {
+    return { section: "Basics", groupTail: ["Partner"] };
   }
   if (fieldId === "spending.livingExpenses.annual") {
     return { section: "Income & Expenses", groupTail: ["Living expenses"] };
@@ -1644,7 +1708,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     return { section: "Basics", groupTail: ["Goals"] };
   }
 
-  if (fieldId === "income.employment.netAnnual") {
+  if (fieldId === "income.employment.netAnnual" || fieldId === "partner.income.employment.netAnnual") {
     return { section: "Income & Expenses", groupTail: ["Income"] };
   }
   if (fieldId.startsWith("income.otherWork.")) {
@@ -1677,6 +1741,7 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
   if (
     fieldId === "retirement.statutoryAge"
     || fieldId === "retirement.statePension.netAnnualAtStart"
+    || fieldId === "partner.retirement.statePension.netAnnualAtStart"
   ) {
     return { section: "Retirement Income", groupTail: ["Pension"] };
   }
@@ -1749,7 +1814,10 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
   ) {
     return { section: "Advanced Assumptions", groupTail: ["Growth & inflation assumptions"] };
   }
-  if (fieldId === "retirement.earlyPensionReductionPerYear") {
+  if (
+    fieldId === "retirement.earlyPensionReductionPerYear"
+    || fieldId === "partner.retirement.earlyPensionReductionPerYear"
+  ) {
     return { section: "Advanced Assumptions", groupTail: [] };
   }
   if (

@@ -11,6 +11,7 @@ import {
   LIQUIDATION_RANK_FIELDS,
   OTHER_LOAN_GROUP,
   OTHER_WORK_GROUP,
+  PARTNER_GROUP,
   PROJECTION_GATE_FIELDS,
   POST_RETIREMENT_INCOME_GROUP,
   PROPERTY_GROUPS,
@@ -46,6 +47,10 @@ function asNumber(value: unknown): number | null {
   if (isBlank(value)) return null;
   const num = Number(value);
   return Number.isFinite(num) ? num : null;
+}
+
+function isYes(value: unknown): boolean {
+  return String(value ?? "").trim().toUpperCase() === "YES";
 }
 
 function pushMessage(
@@ -123,13 +128,25 @@ export function validateFieldState(
   const ageNow = asNumber(fields["profile.currentAge"]);
   const lifeExpectancy = asNumber(fields["planning.lifeExpectancyAge"]);
   const statutoryAge = asNumber(fields["retirement.statutoryAge"]);
+  const includePartner = isYes(fields[PARTNER_GROUP.includeField]);
+  const partnerAgeNow = asNumber(fields[PARTNER_GROUP.ageField]);
   if (ageNow !== null && statutoryAge !== null && ageNow >= statutoryAge) {
     pushMessage(messages, "profile.currentAge", "error", "Your age must be less than statutory retirement age.", true);
     pushMessage(messages, "retirement.statutoryAge", "error", "Statutory retirement age must be greater than your current age.", true);
   }
 
+  if (includePartner && isBlank(fields[PARTNER_GROUP.ageField])) {
+    pushMessage(messages, PARTNER_GROUP.ageField, "error", "Partner age is required when partner is included.", true);
+  }
+  if (includePartner && partnerAgeNow !== null && statutoryAge !== null && partnerAgeNow >= statutoryAge) {
+    pushMessage(messages, PARTNER_GROUP.ageField, "error", "Partner age must be less than statutory retirement age.", true);
+  }
+
   if (ageNow !== null && lifeExpectancy !== null && lifeExpectancy < ageNow) {
     pushMessage(messages, "planning.lifeExpectancyAge", "error", "Plan to live until age must be current age or later.", true);
+  }
+  if (includePartner && partnerAgeNow !== null && lifeExpectancy !== null && lifeExpectancy < partnerAgeNow) {
+    pushMessage(messages, PARTNER_GROUP.ageField, "error", "Partner age must be within the projection horizon.", true);
   }
 
   if (statutoryAge !== null && lifeExpectancy !== null && statutoryAge > lifeExpectancy) {

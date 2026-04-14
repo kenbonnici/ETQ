@@ -39,6 +39,7 @@ import {
   LIQUIDATION_ASSET_RUNTIME_GROUPS,
   OTHER_LOAN_FIELDS,
   OTHER_WORK_FIELDS,
+  PARTNER_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
   PROPERTY_RUNTIME_GROUPS,
   RUNTIME_FIELDS,
@@ -78,13 +79,17 @@ test("currency number fields do not fall back to a 1-unit stepper increment", ()
 
 test("blank legacy normalizes to zero and sample data keeps the expected liquidation ordering", () => {
   const blankFields = createEmptyFieldState();
+  const normalizedBlank = normalizeInputs(blankFields);
 
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentAge1], 65);
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentAge2], 75);
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentFirstBracket], 0.05);
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentSecondBracket], -0.1);
   assert.equal(blankFields[RUNTIME_FIELDS.spendingAdjustmentFinalBracket], -0.2);
-  assert.equal(normalizeInputs(blankFields).legacyAmount, 0);
+  assert.equal(normalizedBlank.partnerIncluded, false);
+  assert.equal(normalizedBlank.partnerRetiresEarly, false);
+  assert.equal(normalizedBlank.partnerAgeNow, null);
+  assert.equal(normalizedBlank.legacyAmount, 0);
   assert.equal(SAMPLE_FIELDS[RUNTIME_FIELDS.legacyAmount], 1_000_000);
   assert.equal(SAMPLE_FIELDS[PROPERTY_RUNTIME_GROUPS[0].liquidationRankField], 10);
   assert.equal(SAMPLE_FIELDS[PROPERTY_RUNTIME_GROUPS[4].liquidationRankField], 6);
@@ -184,6 +189,17 @@ test("validation and retire-check gating still key off semantic core fields", ()
 
 test("visibility rules stay semantic for dependents, properties, and loans", () => {
   const fields = createEmptyFieldState();
+
+  assert.equal(fieldVisible(fields, PARTNER_FIELDS.include, DEFAULT_VISIBILITY), true);
+  assert.equal(fieldVisible(fields, PARTNER_FIELDS.retiresEarly, DEFAULT_VISIBILITY), false);
+  assert.equal(fieldVisible(fields, PARTNER_FIELDS.age, DEFAULT_VISIBILITY), false);
+  assert.equal(fieldVisible(fields, PARTNER_FIELDS.pensionReductionPerYearEarly, DEFAULT_VISIBILITY), false);
+  fields[PARTNER_FIELDS.include] = "Yes";
+  assert.equal(fieldVisible(fields, PARTNER_FIELDS.retiresEarly, DEFAULT_VISIBILITY), true);
+  assert.equal(fieldVisible(fields, PARTNER_FIELDS.age, DEFAULT_VISIBILITY), true);
+  assert.equal(fieldVisible(fields, PARTNER_FIELDS.pensionReductionPerYearEarly, DEFAULT_VISIBILITY), false);
+  fields[PARTNER_FIELDS.retiresEarly] = "Yes";
+  assert.equal(fieldVisible(fields, PARTNER_FIELDS.pensionReductionPerYearEarly, DEFAULT_VISIBILITY), true);
 
   assert.equal(fieldVisible(fields, DEPENDENT_RUNTIME_GROUPS[0].annualCostField, DEFAULT_VISIBILITY), false);
   fields[DEPENDENT_RUNTIME_GROUPS[0].nameField] = "Chris";

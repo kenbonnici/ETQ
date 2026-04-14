@@ -9,7 +9,11 @@ import { EffectiveInputs } from "../../src/model/types";
 function buildInputs(): EffectiveInputs {
   return {
     ageNow: 40,
+    partnerIncluded: false,
+    partnerRetiresEarly: false,
+    partnerAgeNow: null,
     netIncomeAnnual: 0,
+    partnerEmploymentIncomeAnnual: 0,
     cashBalance: 0,
     stocksBalance: 0,
     stocksContributionMonthly: 0,
@@ -19,6 +23,7 @@ function buildInputs(): EffectiveInputs {
     homeLoanRepaymentMonthly: 0,
     statutoryRetirementAge: 67,
     pensionAnnual: 0,
+    partnerPensionAnnual: 0,
     housingRentAnnual: 0,
     downsizingYear: 0,
     downsizingNewHomeMode: "",
@@ -75,6 +80,7 @@ function buildInputs(): EffectiveInputs {
     salaryGrowth: 0,
     rentalIncomeGrowth: 0,
     pensionReductionPerYearEarly: 0,
+    partnerPensionReductionPerYearEarly: null,
     cashBuffer: 0,
     legacyAmount: 0,
     stockSellingCosts: 0,
@@ -187,6 +193,64 @@ test("blank other-work end age runs side income until the active scenario retire
   assert.equal(normalScenario.cashFlow.otherWorkIncome[normalAge67], 0);
   assert.equal(earlyScenario.cashFlow.otherWorkIncome[earlyAge59], 12_000);
   assert.equal(earlyScenario.cashFlow.otherWorkIncome[earlyAge60], 0);
+});
+
+test("partner income support stays separate and continues after the main user retires when partner is not retiring early", () => {
+  const inputs = buildInputs();
+  inputs.liveUntilAge = 70;
+  inputs.partnerIncluded = true;
+  inputs.partnerAgeNow = 39;
+  inputs.partnerEmploymentIncomeAnnual = 12_000;
+  inputs.partnerPensionAnnual = 15_000;
+
+  const timing = resolveProjectionTiming(new Date("2026-01-01T00:00:00Z"), 1);
+  const earlyScenario = runScenarioEarly(inputs, 60, timing);
+
+  const age59 = earlyScenario.points.findIndex((point) => point.age === 59);
+  const age60 = earlyScenario.points.findIndex((point) => point.age === 60);
+  const age67 = earlyScenario.points.findIndex((point) => point.age === 67);
+  const age68 = earlyScenario.points.findIndex((point) => point.age === 68);
+
+  assert.notEqual(age59, -1);
+  assert.notEqual(age60, -1);
+  assert.notEqual(age67, -1);
+  assert.notEqual(age68, -1);
+
+  assert.equal(earlyScenario.cashFlow.partnerEmploymentIncome[age59], 12_000);
+  assert.equal(earlyScenario.cashFlow.partnerEmploymentIncome[age60], 12_000);
+  assert.equal(earlyScenario.cashFlow.partnerEmploymentIncome[age67], 12_000);
+  assert.equal(earlyScenario.cashFlow.partnerEmploymentIncome[age68], 0);
+  assert.equal(earlyScenario.cashFlow.partnerStatutoryPension[age67], 0);
+  assert.equal(earlyScenario.cashFlow.partnerStatutoryPension[age68], 15_000);
+});
+
+test("partner shared retirement uses the same calendar year and applies the partner pension reduction separately", () => {
+  const inputs = buildInputs();
+  inputs.liveUntilAge = 70;
+  inputs.partnerIncluded = true;
+  inputs.partnerRetiresEarly = true;
+  inputs.partnerAgeNow = 38;
+  inputs.partnerEmploymentIncomeAnnual = 9_000;
+  inputs.partnerPensionAnnual = 12_000;
+  inputs.partnerPensionReductionPerYearEarly = 200;
+
+  const timing = resolveProjectionTiming(new Date("2026-01-01T00:00:00Z"), 1);
+  const earlyScenario = runScenarioEarly(inputs, 60, timing);
+
+  const age59 = earlyScenario.points.findIndex((point) => point.age === 59);
+  const age60 = earlyScenario.points.findIndex((point) => point.age === 60);
+  const age68 = earlyScenario.points.findIndex((point) => point.age === 68);
+  const age69 = earlyScenario.points.findIndex((point) => point.age === 69);
+
+  assert.notEqual(age59, -1);
+  assert.notEqual(age60, -1);
+  assert.notEqual(age68, -1);
+  assert.notEqual(age69, -1);
+
+  assert.equal(earlyScenario.cashFlow.partnerEmploymentIncome[age59], 9_000);
+  assert.equal(earlyScenario.cashFlow.partnerEmploymentIncome[age60], 0);
+  assert.equal(earlyScenario.cashFlow.partnerStatutoryPension[age68], 0);
+  assert.equal(earlyScenario.cashFlow.partnerStatutoryPension[age69], 10_200);
 });
 
 test("forced property sales show gross proceeds, settle the loan in the sale year, and stop future repayments", () => {

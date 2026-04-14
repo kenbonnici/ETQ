@@ -8,6 +8,7 @@ import {
   INCOME_EVENT_GROUPS,
   OTHER_LOAN_GROUP,
   OTHER_WORK_GROUP,
+  PARTNER_GROUP,
   POST_RETIREMENT_INCOME_GROUP,
   PROPERTY_GROUPS,
   STOCK_MARKET_CRASH_GROUPS
@@ -61,6 +62,15 @@ export const HOME_FIELDS = {
   mortgageBalance: HOME_LOAN_GROUP.balanceField,
   mortgageInterestRateAnnual: HOME_LOAN_GROUP.rateField,
   mortgageMonthlyRepayment: HOME_LOAN_GROUP.repaymentField
+} as const satisfies Record<string, FieldId>;
+
+export const PARTNER_FIELDS = {
+  include: PARTNER_GROUP.includeField,
+  retiresEarly: PARTNER_GROUP.retiresEarlyField,
+  age: PARTNER_GROUP.ageField,
+  employmentIncomeAnnual: PARTNER_GROUP.incomeField,
+  pensionAnnual: PARTNER_GROUP.pensionField,
+  pensionReductionPerYearEarly: PARTNER_GROUP.pensionReductionField
 } as const satisfies Record<string, FieldId>;
 
 export const OTHER_WORK_FIELDS = {

@@ -41,6 +41,7 @@ import {
   INCOME_EVENT_RUNTIME_GROUPS,
   OTHER_LOAN_FIELDS,
   OTHER_WORK_FIELDS,
+  PARTNER_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
   PROPERTY_RUNTIME_GROUPS,
   RUNTIME_FIELDS,
@@ -183,6 +184,7 @@ let selectedCurrency = DEFAULT_CURRENCY;
 let stepperHoldTimeout: number | null = null;
 let stepperHoldInterval: number | null = null;
 let stepperHoldListenersBound = false;
+let retirementStepperShowsYear = false;
 let sampleDataLoadBusy = false;
 let latestValidationMessages: ValidationMessage[] = [];
 let validationRevealAll = false;
@@ -234,6 +236,7 @@ const LIVING_EXPENSES_FIELD_ID = RUNTIME_FIELDS.annualLivingExpenses;
 const LIVING_EXPENSES_DEF = INPUT_DEFINITION_BY_FIELD_ID[LIVING_EXPENSES_FIELD_ID];
 const DOWNSIZING_MODE_OPTIONS = ["Buy", "Rent"] as const;
 const HOUSING_STATUS_OPTIONS = ["Owner", "Renter"] as const;
+const YES_NO_OPTIONS = ["Yes", "No"] as const;
 const DEFAULT_SPENDING_ADJUSTMENT_AGE_1 = 65;
 const DEFAULT_SPENDING_ADJUSTMENT_AGE_2 = 75;
 const SPENDING_ADJUSTMENT_PERCENT_FIELD_IDS = new Set<FieldId>([
@@ -337,9 +340,10 @@ app.innerHTML = `
           <p id="retire-check-result" class="retire-check-result"><span class="retire-check-result-label">Earliest viable retirement:</span> <span class="retire-check-result-value">—</span></p>
         </div>
         <div class="retirement-stepper">
-          <span class="retirement-stepper-label">Compare with retiring at</span>
+          <span id="retirement-stepper-label" class="retirement-stepper-label">Compare with retiring at</span>
           <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease comparison retirement age">-</button>
           <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Comparison retirement age" />
+          <span id="retirement-stepper-meta" class="retirement-stepper-meta" hidden aria-live="polite"></span>
           <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase comparison retirement age">+</button>
         </div>
       </header>
@@ -438,6 +442,8 @@ const inputsPanel = document.getElementById("inputs-panel") as HTMLDivElement;
 const spinner = document.getElementById("early-ret-age") as HTMLInputElement;
 const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonElement;
 const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
+const retirementStepperLabel = document.getElementById("retirement-stepper-label") as HTMLSpanElement;
+const retirementStepperMeta = document.getElementById("retirement-stepper-meta") as HTMLSpanElement;
 const retireCheckResult = document.getElementById("retire-check-result") as HTMLParagraphElement;
 const retireCheckResultLabel = retireCheckResult.querySelector(".retire-check-result-label") as HTMLSpanElement;
 const retireCheckResultValue = retireCheckResult.querySelector(".retire-check-result-value") as HTMLSpanElement;
@@ -541,9 +547,38 @@ interface TimelineYearEvent {
 
 const RETIREMENT_INDICATOR_PREFIX = "Earliest viable retirement:";
 
-function renderRetirementIndicatorContent(message: string | null): { showPrefix: boolean; html: string } {
+interface SharedRetirementDisplay {
+  year: number;
+  yourAge: number;
+  partnerAge: number;
+}
+
+function renderAgeStackHtml(yourAge: number, partnerAge: number, className: string): string {
+  return `
+    <span class="${className}">
+      <span class="${className}-line">You ${escapeHtml(String(yourAge))}</span>
+      <span class="${className}-line">Partner ${escapeHtml(String(partnerAge))}</span>
+    </span>
+  `;
+}
+
+function renderRetirementIndicatorContent(
+  message: string | null,
+  sharedDisplay: SharedRetirementDisplay | null
+): { showPrefix: boolean; html: string } {
   if (message === null) {
     return { showPrefix: true, html: '<span class="retire-check-result-status">Awaiting minimum inputs</span>' };
+  }
+  if (sharedDisplay) {
+    return {
+      showPrefix: true,
+      html: `
+        <span class="retire-check-result-shared">
+          <span class="retire-check-result-year-token">${escapeHtml(String(sharedDisplay.year))}</span>
+          ${renderAgeStackHtml(sharedDisplay.yourAge, sharedDisplay.partnerAge, "retire-check-result-age-stack")}
+        </span>
+      `
+    };
   }
   const trimmed = message.startsWith(RETIREMENT_INDICATOR_PREFIX)
     ? message.slice(RETIREMENT_INDICATOR_PREFIX.length).trim()
@@ -1729,6 +1764,7 @@ function handleEnterAdvance(event: KeyboardEvent): void {
 
 function getRenderedFieldToggleButton(fieldId: FieldId): HTMLButtonElement | null {
   return inputsPanel.querySelector<HTMLButtonElement>(`button[data-toggle-field-id="${fieldId}"][aria-pressed="true"]`)
+    ?? inputsPanel.querySelector<HTMLButtonElement>(`button[data-toggle-field-id="${fieldId}"][aria-checked="true"]`)
     ?? inputsPanel.querySelector<HTMLButtonElement>(`button[data-toggle-field-id="${fieldId}"]`);
 }
 
@@ -2191,9 +2227,11 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
   return [
     projectionGroup("inflows", "Inflows", displayInflowsTotal, 0, [
       projectionLeaf("employment-income", "Main income", cashFlow.employmentIncome, 1),
+      projectionLeaf("partner-employment-income", "Partner income", cashFlow.partnerEmploymentIncome, 1),
       projectionLeaf("other-work-income", "Other work income", cashFlow.otherWorkIncome, 1),
       projectionGroup("inflows-rental", "Rental income", sumProjectionSeries(cashFlow.rentalIncomeByProperty.map((row) => row.values), yearCount), 1, rentalChildren),
       projectionLeaf("statutory-pension", "Statutory pension", cashFlow.statutoryPension, 1),
+      projectionLeaf("partner-statutory-pension", "Partner pension", cashFlow.partnerStatutoryPension, 1),
       projectionLeaf("other-post-retirement-income", "Other post-retirement income", cashFlow.otherPostRetirementIncome, 1),
       projectionGroup("inflows-income-events", "One-off income events", sumProjectionSeries(cashFlow.incomeEvents.map((row) => row.values), yearCount), 1, incomeEventChildren),
       projectionLeaf("downsizing-home-sale", "Sale of home (downsizing)", cashFlow.downsizingHomeSale, 1),
@@ -2684,20 +2722,61 @@ function updateEarlyRetirementButtons(statutory: number | null): void {
   if (statutory === null) {
     spinnerDown.disabled = true;
     spinnerUp.disabled = true;
+    retirementStepperLabel.textContent = "Compare with retiring at";
+    retirementStepperMeta.hidden = true;
+    spinner.setAttribute("aria-label", "Comparison retirement age");
     return;
   }
 
   const minRetirementAge = getMinEarlyRetirementAge();
   const raw = spinner.value.trim();
-  const entered = Math.round(Number(raw));
+  const entered = parseRetirementStepperValue(raw);
   const current = Number.isFinite(entered) ? entered : uiState.earlyRetirementAge;
   const clamped = Math.max(minRetirementAge, Math.min(statutory, current));
   spinnerDown.disabled = clamped <= minRetirementAge;
   spinnerUp.disabled = clamped >= statutory;
+  updateRetirementStepperPresentation(clamped);
 }
 
-function setRetireCheckMessage(message: string | null, tone: "positive" | "promising" | "warning" | "neutral" = "neutral"): void {
-  const content = renderRetirementIndicatorContent(message);
+function parseRetirementStepperValue(raw: string): number {
+  const entered = Math.round(Number(raw));
+  if (!Number.isFinite(entered)) return Number.NaN;
+  if (!isSharedPartnerRetirementMode()) return entered;
+  const currentAge = getCurrentAge();
+  if (currentAge === null) return Number.NaN;
+  return currentAge + (entered - new Date().getFullYear());
+}
+
+function formatRetirementStepperValue(age: number | null): string {
+  const roundedAge = age === null ? null : Math.round(age);
+  if (roundedAge === null) return "";
+  const year = getRetirementYearForAge(roundedAge);
+  return isSharedPartnerRetirementMode() && year !== null ? String(year) : String(roundedAge);
+}
+
+function updateRetirementStepperPresentation(age: number | null): void {
+  const sharedDisplay = getSharedRetirementDisplay(age);
+  retirementStepperLabel.textContent = sharedDisplay ? "Compare with retiring in" : "Compare with retiring at";
+  spinner.setAttribute("aria-label", sharedDisplay ? "Comparison retirement year" : "Comparison retirement age");
+  if (!sharedDisplay) {
+    retirementStepperMeta.hidden = true;
+    retirementStepperMeta.innerHTML = "";
+    return;
+  }
+  retirementStepperMeta.hidden = false;
+  retirementStepperMeta.innerHTML = renderAgeStackHtml(
+    sharedDisplay.yourAge,
+    sharedDisplay.partnerAge,
+    "retirement-stepper-age-stack"
+  );
+}
+
+function setRetireCheckMessage(
+  message: string | null,
+  tone: "positive" | "promising" | "warning" | "neutral" = "neutral",
+  sharedDisplay: SharedRetirementDisplay | null = null
+): void {
+  const content = renderRetirementIndicatorContent(message, sharedDisplay);
   retireCheckResultLabel.textContent = RETIREMENT_INDICATOR_PREFIX;
   retireCheckResultLabel.hidden = !content.showPrefix;
   retireCheckResultValue.innerHTML = content.html;
@@ -2708,7 +2787,40 @@ function setRetireCheckMessage(message: string | null, tone: "positive" | "promi
   retireCheckResult.hidden = false;
 }
 
+function isSharedPartnerRetirementMode(fields: FieldState = fieldState): boolean {
+  return isPartnerIncluded(fields) && isPartnerRetiringEarly(fields);
+}
+
+function getRetirementYearForAge(age: number | null, fields: FieldState = fieldState): number | null {
+  const currentAge = getCurrentAge();
+  if (age === null || currentAge === null) return null;
+  return new Date().getFullYear() + (age - currentAge);
+}
+
+function getPartnerAgeForRetirementAge(age: number | null, fields: FieldState = fieldState): number | null {
+  const currentAge = getCurrentAge();
+  const partnerAgeRaw = fields[PARTNER_FIELDS.age];
+  if (age === null || currentAge === null || isBlank(partnerAgeRaw)) return null;
+  const partnerAge = Number(partnerAgeRaw);
+  if (!Number.isFinite(partnerAge)) return null;
+  return Math.round(partnerAge) + (age - currentAge);
+}
+
+function getSharedRetirementDisplay(age: number | null, fields: FieldState = fieldState): SharedRetirementDisplay | null {
+  if (!isSharedPartnerRetirementMode(fields)) return null;
+  const year = getRetirementYearForAge(age, fields);
+  const yourAge = age === null ? null : Math.round(age);
+  const partnerAge = getPartnerAgeForRetirementAge(age, fields);
+  if (year === null || yourAge === null || partnerAge === null) return null;
+  return { year, yourAge, partnerAge };
+}
+
 function formatRetirementAgeLabel(prefix: string, age: number | null): string {
+  const sharedDisplay = getSharedRetirementDisplay(age);
+  if (sharedDisplay) {
+    const yearPrefix = prefix.endsWith("at") ? `${prefix.slice(0, -2)}in` : prefix;
+    return `${yearPrefix} ${sharedDisplay.year}`;
+  }
   return age === null ? prefix : `${prefix} ${age}`;
 }
 
@@ -2717,17 +2829,25 @@ function createRetirementIndicatorState(
   currentAge: number | null,
   hasEssentialErrors: boolean,
   statutory: number | null
-): { message: string | null; tone: "positive" | "promising" | "warning" | "neutral" } {
+): { message: string | null; tone: "positive" | "promising" | "warning" | "neutral"; sharedDisplay: SharedRetirementDisplay | null } {
   if (hasEssentialErrors || statutory === null || statutory <= getMinEarlyRetirementAge()) {
-    return { message: null, tone: "neutral" };
+    return { message: null, tone: "neutral", sharedDisplay: null };
   }
   if (earliestAge === null) {
-    return { message: "Early retirement not yet viable", tone: "warning" };
+    return { message: "Early retirement not yet viable", tone: "warning", sharedDisplay: null };
+  }
+  const sharedDisplay = getSharedRetirementDisplay(earliestAge);
+  if (sharedDisplay) {
+    return {
+      message: `${sharedDisplay.year}`,
+      tone: currentAge !== null && earliestAge === currentAge ? "positive" : "promising",
+      sharedDisplay
+    };
   }
   if (currentAge !== null && earliestAge === currentAge) {
-    return { message: `You can retire now at ${earliestAge}!`, tone: "positive" };
+    return { message: `You can retire now at ${earliestAge}!`, tone: "positive", sharedDisplay: null };
   }
-  return { message: `${earliestAge}`, tone: "promising" };
+  return { message: `${earliestAge}`, tone: "promising", sharedDisplay: null };
 }
 
 function composeDisplayedRunModelResult(
@@ -2783,23 +2903,36 @@ function getMinEarlyRetirementAge(): number {
 function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
   const statutory = getStatutoryAge();
   const minRetirementAge = getMinEarlyRetirementAge();
-  spinner.min = String(minRetirementAge);
+  const showsYear = isSharedPartnerRetirementMode();
   if (statutory === null) {
+    spinner.min = "18";
     spinner.max = "100";
     spinner.disabled = true;
     spinner.value = "";
+    retirementStepperShowsYear = showsYear;
     updateEarlyRetirementButtons(null);
     setRetireCheckMessage(null);
     return;
   }
 
   spinner.disabled = false;
-  spinner.max = String(statutory);
+  const minValue = formatRetirementStepperValue(minRetirementAge);
+  const maxValue = formatRetirementStepperValue(statutory);
+  spinner.min = minValue || "18";
+  spinner.max = maxValue || "100";
+  if (retirementStepperShowsYear !== showsYear) {
+    retirementStepperShowsYear = showsYear;
+    const seeded = Number.isFinite(uiState.earlyRetirementAge) ? uiState.earlyRetirementAge : statutory;
+    uiState.earlyRetirementAge = Math.max(minRetirementAge, Math.min(statutory, seeded));
+    spinner.value = formatRetirementStepperValue(uiState.earlyRetirementAge);
+    updateEarlyRetirementButtons(statutory);
+    return;
+  }
   const raw = spinner.value.trim();
   if (defaultIfEmpty && raw === "") {
     const seeded = Number.isFinite(uiState.earlyRetirementAge) ? uiState.earlyRetirementAge : statutory;
     uiState.earlyRetirementAge = Math.max(minRetirementAge, Math.min(statutory, seeded));
-    spinner.value = String(uiState.earlyRetirementAge);
+    spinner.value = formatRetirementStepperValue(uiState.earlyRetirementAge);
     updateEarlyRetirementButtons(statutory);
     return;
   }
@@ -2808,14 +2941,14 @@ function syncEarlyRetirementControl(defaultIfEmpty: boolean): void {
     return;
   }
 
-  const v = Math.round(Number(raw));
+  const v = parseRetirementStepperValue(raw);
   if (!Number.isFinite(v)) {
-    spinner.value = String(uiState.earlyRetirementAge);
+    spinner.value = formatRetirementStepperValue(uiState.earlyRetirementAge);
     updateEarlyRetirementButtons(statutory);
     return;
   }
   uiState.earlyRetirementAge = Math.max(minRetirementAge, Math.min(statutory, v));
-  spinner.value = String(uiState.earlyRetirementAge);
+  spinner.value = formatRetirementStepperValue(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
 }
 
@@ -2825,10 +2958,10 @@ function adjustEarlyRetirementAge(delta: number): void {
   const minRetirementAge = getMinEarlyRetirementAge();
 
   const raw = spinner.value.trim();
-  const entered = Math.round(Number(raw));
+  const entered = parseRetirementStepperValue(raw);
   const current = Number.isFinite(entered) ? entered : uiState.earlyRetirementAge;
   uiState.earlyRetirementAge = Math.max(minRetirementAge, Math.min(statutory, current + delta));
-  spinner.value = String(uiState.earlyRetirementAge);
+  spinner.value = formatRetirementStepperValue(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
   queueRecalc();
 }
@@ -2966,6 +3099,24 @@ function getHousingStatusValue(fields: FieldState = fieldState): typeof HOUSING_
   if (asNumber(fields[HOME_FIELDS.homeValue]) > 0) return "Owner";
   if (asNumber(fields[HOME_FIELDS.housingRentAnnual]) > 0) return "Renter";
   return null;
+}
+
+function getYesNoToggleValue(fieldId: FieldId, fields: FieldState = fieldState): typeof YES_NO_OPTIONS[number] {
+  return String(fields[fieldId] ?? "").trim().toUpperCase() === "YES" ? "Yes" : "No";
+}
+
+function isPartnerIncluded(fields: FieldState = fieldState): boolean {
+  return getYesNoToggleValue(PARTNER_FIELDS.include, fields) === "Yes";
+}
+
+function isPartnerRetiringEarly(fields: FieldState = fieldState): boolean {
+  return isPartnerIncluded(fields) && getYesNoToggleValue(PARTNER_FIELDS.retiresEarly, fields) === "Yes";
+}
+
+function getPartnerRetirementHelperNote(fields: FieldState = fieldState): string {
+  return isPartnerRetiringEarly(fields)
+    ? "Partner income supports both retiring together"
+    : "Partner income supports your early retirement";
 }
 
 function hasValidDownsizingYearForUi(): boolean {
@@ -3143,12 +3294,80 @@ function renderHousingStatusField(def: InputDefinition, label: string): string {
   `;
 }
 
+function renderYesNoField(
+  def: InputDefinition,
+  label: string,
+  selectedValue: typeof YES_NO_OPTIONS[number],
+  helperNote = ""
+): string {
+  return `
+    <div class="field field-choice-field" data-field-id="${def.fieldId}">
+      <div class="field-choice-row">
+        <span class="field-choice-label">${label}</span>
+        <div class="field-choice-toggle" role="group" aria-label="${escapeHtml(label)}">
+          ${YES_NO_OPTIONS.map((option) => `
+            <button
+              type="button"
+              class="field-choice-btn${selectedValue === option ? " is-active" : ""}"
+              data-field-id="${def.fieldId}"
+              data-toggle-field-id="${def.fieldId}"
+              data-toggle-option="${option}"
+              aria-pressed="${selectedValue === option ? "true" : "false"}"
+            >
+              ${option}
+            </button>
+          `).join("")}
+        </div>
+      </div>
+      ${helperNote ? `<small class="field-helper-note">${escapeHtml(helperNote)}</small>` : ""}
+    </div>
+  `;
+}
+
+function renderYesNoSwitchField(
+  def: InputDefinition,
+  label: string,
+  selectedValue: typeof YES_NO_OPTIONS[number],
+  helperNote = ""
+): string {
+  const isOn = selectedValue === "Yes";
+  const nextValue = isOn ? "No" : "Yes";
+  return `
+    <div class="field field-choice-field field-switch-field" data-field-id="${def.fieldId}">
+      <div class="field-choice-row">
+        <span class="field-choice-label">${label}</span>
+        <button
+          type="button"
+          class="field-binary-switch ${isOn ? "is-on" : "is-off"}"
+          role="switch"
+          aria-label="${escapeHtml(label)}"
+          aria-checked="${isOn ? "true" : "false"}"
+          data-field-id="${def.fieldId}"
+          data-toggle-field-id="${def.fieldId}"
+          data-toggle-option="${nextValue}"
+        >
+          <span class="field-binary-switch-track" aria-hidden="true">
+            <span class="field-binary-switch-thumb"></span>
+          </span>
+        </button>
+      </div>
+      ${helperNote ? `<small class="field-helper-note">${escapeHtml(helperNote)}</small>` : ""}
+    </div>
+  `;
+}
+
 function renderStandardFieldControl(def: InputDefinition, label: string): string {
   if (def.fieldId === HOME_FIELDS.housingStatus) {
     return renderHousingStatusField(def, label);
   }
   if (def.fieldId === DOWNSIZING_FIELDS.newHomeMode) {
     return renderDownsizingModeField(def, label);
+  }
+  if (def.fieldId === PARTNER_FIELDS.include) {
+    return renderYesNoSwitchField(def, label, getYesNoToggleValue(def.fieldId));
+  }
+  if (def.fieldId === PARTNER_FIELDS.retiresEarly) {
+    return renderYesNoSwitchField(def, label, getYesNoToggleValue(def.fieldId), getPartnerRetirementHelperNote());
   }
   const value = fieldState[def.fieldId];
   const valStr = getRenderedFieldValue(def, value);
@@ -3575,7 +3794,7 @@ function applyStepperDelta(fieldId: FieldId, dir: number): void {
     const statutory = getStatutoryAge();
     if (statutory !== null) {
       uiState.earlyRetirementAge = statutory;
-      spinner.value = String(statutory);
+      spinner.value = formatRetirementStepperValue(statutory);
     }
     syncEarlyRetirementControl(true);
   }
@@ -4368,13 +4587,15 @@ function renderInputs(): void {
 
       const allowedOptions: readonly string[] | null = fieldId === DOWNSIZING_FIELDS.newHomeMode
         ? DOWNSIZING_MODE_OPTIONS
-        : (fieldId === HOME_FIELDS.housingStatus ? HOUSING_STATUS_OPTIONS : null);
+        : (fieldId === HOME_FIELDS.housingStatus
+          ? HOUSING_STATUS_OPTIONS
+          : (fieldId === PARTNER_FIELDS.include || fieldId === PARTNER_FIELDS.retiresEarly ? YES_NO_OPTIONS : null));
       if (!allowedOptions || !allowedOptions.includes(nextValue)) return;
 
       markFieldTouched(fieldId);
       const currentValue = fieldId === DOWNSIZING_FIELDS.newHomeMode
         ? getDownsizingModeValue(fieldState[fieldId])
-        : getHousingStatusValue();
+        : (fieldId === HOME_FIELDS.housingStatus ? getHousingStatusValue() : getYesNoToggleValue(fieldId));
       if (currentValue === nextValue) {
         focusRenderedField(fieldId);
         return;
@@ -4567,7 +4788,7 @@ function renderInputs(): void {
         const statutory = getStatutoryAge();
         if (statutory !== null) {
           uiState.earlyRetirementAge = statutory;
-          spinner.value = String(statutory);
+          spinner.value = formatRetirementStepperValue(statutory);
         }
         syncEarlyRetirementControl(true);
       }
@@ -5320,7 +5541,7 @@ function recalc(): void {
     ? findEarliestViableRetirementAge(statutory)
     : null;
   const indicator = createRetirementIndicatorState(earliestAge, getCurrentAge(), hasEssentialErrors, statutory);
-  setRetireCheckMessage(indicator.message, indicator.tone);
+  setRetireCheckMessage(indicator.message, indicator.tone, indicator.sharedDisplay);
   if (hasBlockingErrors) {
     latestRunResult = null;
     setChartLegendsVisible(false);
@@ -5455,14 +5676,14 @@ function queueRecalc(): void {
 spinner.addEventListener("input", () => {
   const statutory = getStatutoryAge();
   if (statutory === null) return;
-  spinner.max = String(statutory);
-  spinner.min = String(getMinEarlyRetirementAge());
+  spinner.max = formatRetirementStepperValue(statutory) || "100";
+  spinner.min = formatRetirementStepperValue(getMinEarlyRetirementAge()) || "18";
   const raw = spinner.value.trim();
   if (raw === "") {
     updateEarlyRetirementButtons(statutory);
     return;
   }
-  const v = Math.round(Number(raw));
+  const v = parseRetirementStepperValue(raw);
   if (!Number.isFinite(v)) {
     updateEarlyRetirementButtons(statutory);
     return;
@@ -5482,18 +5703,18 @@ spinner.addEventListener("blur", () => {
   }
   const raw = spinner.value.trim();
   if (raw === "") {
-    spinner.value = String(uiState.earlyRetirementAge);
+    spinner.value = formatRetirementStepperValue(uiState.earlyRetirementAge);
     updateEarlyRetirementButtons(statutory);
     return;
   }
-  const v = Math.round(Number(raw));
+  const v = parseRetirementStepperValue(raw);
   if (!Number.isFinite(v)) {
-    spinner.value = String(uiState.earlyRetirementAge);
+    spinner.value = formatRetirementStepperValue(uiState.earlyRetirementAge);
     updateEarlyRetirementButtons(statutory);
     return;
   }
   uiState.earlyRetirementAge = Math.max(getMinEarlyRetirementAge(), Math.min(statutory, v));
-  spinner.value = String(uiState.earlyRetirementAge);
+  spinner.value = formatRetirementStepperValue(uiState.earlyRetirementAge);
   updateEarlyRetirementButtons(statutory);
   queueRecalc();
 });

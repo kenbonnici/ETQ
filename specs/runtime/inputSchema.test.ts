@@ -17,6 +17,7 @@ import {
   LIQUIDATION_RANK_FIELDS,
   OTHER_LOAN_GROUP,
   OTHER_WORK_GROUP,
+  PARTNER_GROUP,
   POST_RETIREMENT_INCOME_GROUP,
   PROJECTION_GATE_FIELDS,
   PROPERTY_GROUPS,
@@ -59,6 +60,8 @@ test("semantic schema exports preserve counts, ordering, and shared invariants",
   assert.equal(HOME_LOAN_GROUP.homeValueField, "housing.01Residence.marketValue");
   assert.equal(OTHER_WORK_GROUP.incomeField, "income.otherWork.netAnnual");
   assert.equal(OTHER_LOAN_GROUP.balanceField, "debts.other.balance");
+  assert.equal(PARTNER_GROUP.includeField, "partner.include");
+  assert.equal(PARTNER_GROUP.pensionField, "partner.retirement.statePension.netAnnualAtStart");
   assert.equal(POST_RETIREMENT_INCOME_GROUP.amountField, "income.postRetirementSupplement.annual");
 });
 

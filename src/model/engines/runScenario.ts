@@ -72,9 +72,12 @@ function assetGrowthExponent(timing: ProjectionTiming, idx: number): number {
   return idx + timing.proRate;
 }
 
+function computeYearsEarly(statutoryRetirementAge: number, retirementAge: number): number {
+  return Math.max(0, statutoryRetirementAge - retirementAge);
+}
+
 function computePensionReduction(inputs: EffectiveInputs, earlyRetirementAge: number): number {
-  const yearsEarly = Math.max(0, inputs.statutoryRetirementAge - earlyRetirementAge);
-  return yearsEarly * inputs.pensionReductionPerYearEarly;
+  return computeYearsEarly(inputs.statutoryRetirementAge, earlyRetirementAge) * inputs.pensionReductionPerYearEarly;
 }
 
 function stockGrowthRateForYear(inputs: EffectiveInputs, year: number): number {
@@ -299,6 +302,16 @@ export function runScenario(
   const n = timeline.ages.length;
 
   const pensionReduction = computePensionReduction(inputs, config.retirementAge);
+  const retirementYearOffset = config.retirementAge - inputs.ageNow;
+  const partnerRetirementAge = inputs.partnerIncluded && inputs.partnerAgeNow !== null
+    ? (inputs.partnerRetiresEarly ? inputs.partnerAgeNow + retirementYearOffset : inputs.statutoryRetirementAge)
+    : null;
+  const partnerPensionReduction =
+    inputs.partnerIncluded
+    && inputs.partnerRetiresEarly
+    && partnerRetirementAge !== null
+      ? computeYearsEarly(inputs.statutoryRetirementAge, partnerRetirementAge) * (inputs.partnerPensionReductionPerYearEarly ?? 0)
+      : 0;
 
   // Repayment schedules are based on fixed initial NPER horizons.
   const homeMonthsTotal = nperMonths(
@@ -331,8 +344,10 @@ export function runScenario(
   const assetOfValueAnnualCostSeries = inputs.assetsOfValue.map(() => zeroSeries(n));
   const assetOfValueLoanSeries = inputs.assetsOfValue.map(() => zeroSeries(n));
   const salarySeries = zeroSeries(n);
+  const partnerEmploymentSeries = zeroSeries(n);
   const otherWorkSeries = zeroSeries(n);
   const statutoryPensionSeries = zeroSeries(n);
+  const partnerStatutoryPensionSeries = zeroSeries(n);
   const postRetIncomeSeries = zeroSeries(n);
   const livingExpensesSeries = zeroSeries(n);
   const housingRentSeries = zeroSeries(n);
@@ -370,6 +385,16 @@ export function runScenario(
         : 0;
     salarySeries[idx] = salary;
 
+    const partnerAge = inputs.partnerAgeNow === null ? null : inputs.partnerAgeNow + (age - inputs.ageNow);
+    const partnerEmploymentRetirementAge = inputs.partnerRetiresEarly ? partnerRetirementAge : inputs.statutoryRetirementAge;
+    const partnerEmployment =
+      inputs.partnerIncluded
+      && partnerAge !== null
+      && partnerAge < (partnerEmploymentRetirementAge ?? inputs.statutoryRetirementAge)
+        ? inputs.partnerEmploymentIncomeAnnual * safePow(1 + inputs.salaryGrowth, idx) * proRate
+        : 0;
+    partnerEmploymentSeries[idx] = partnerEmployment;
+
     const otherWorkActive =
       inputs.otherWorkUntilAge > 0
         ? age <= inputs.otherWorkUntilAge
@@ -387,6 +412,12 @@ export function runScenario(
     const basePension = age >= inputs.statutoryRetirementAge ? inputs.pensionAnnual * infFactor * proRate : 0;
     const adjustedPension = Math.max(0, basePension - pensionReduction * infFactor * proRate);
     statutoryPensionSeries[idx] = adjustedPension;
+
+    const partnerBasePension =
+      inputs.partnerIncluded && partnerAge !== null && partnerAge >= inputs.statutoryRetirementAge
+        ? inputs.partnerPensionAnnual * infFactor * proRate
+        : 0;
+    partnerStatutoryPensionSeries[idx] = Math.max(0, partnerBasePension - partnerPensionReduction * infFactor * proRate);
 
     const postRetIncome =
       age >= inputs.postRetIncomeFromAge && age <= inputs.postRetIncomeToAge
@@ -413,7 +444,16 @@ export function runScenario(
         : 0;
     downsizingHomeSaleSeries[idx] = downsizingHomeSale;
 
-    const inflowsBeforeInterest = salary + otherWork + rental + adjustedPension + postRetIncome + incomeEvents + downsizingHomeSale;
+    const inflowsBeforeInterest =
+      salary +
+      partnerEmployment +
+      otherWork +
+      rental +
+      adjustedPension +
+      partnerStatutoryPensionSeries[idx] +
+      postRetIncome +
+      incomeEvents +
+      downsizingHomeSale;
 
     const livingExpenseBase = inputs.livingExpensesAnnual * infFactor * proRate;
     let livingExpense = livingExpenseBase;
@@ -608,9 +648,11 @@ export function runScenario(
       const opening = i === 0 ? inputs.cashBalance : closingCash[i - 1];
       const inflowsBeforeInterest =
         salarySeries[i] +
+        partnerEmploymentSeries[i] +
         otherWorkSeries[i] +
         sumAt(propertyRentalSeries, i) +
         statutoryPensionSeries[i] +
+        partnerStatutoryPensionSeries[i] +
         postRetIncomeSeries[i] +
         sumAt(incomeEventSeries, i) +
         downsizingHomeSaleSeries[i] +
@@ -1025,9 +1067,11 @@ export function runScenario(
     cashFlow: {
       openingCash: openingCashSeries,
       employmentIncome: salarySeries,
+      partnerEmploymentIncome: partnerEmploymentSeries,
       otherWorkIncome: otherWorkSeries,
       rentalIncomeByProperty: displayRentalIncomeByProperty,
       statutoryPension: statutoryPensionSeries,
+      partnerStatutoryPension: partnerStatutoryPensionSeries,
       otherPostRetirementIncome: postRetIncomeSeries,
       incomeEvents: inputs.incomeEvents.map((event, idx) => ({
         key: `income-event-${idx}`,

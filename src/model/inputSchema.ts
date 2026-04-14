@@ -78,6 +78,15 @@ type HomeLoanGroup = {
   repaymentField: FieldId;
 };
 
+type PartnerGroup = {
+  includeField: FieldId;
+  retiresEarlyField: FieldId;
+  ageField: FieldId;
+  incomeField: FieldId;
+  pensionField: FieldId;
+  pensionReductionField: FieldId;
+};
+
 type DownsizingGroup = {
   yearField: FieldId;
   modeField: FieldId;
@@ -151,7 +160,9 @@ export const ADVANCED_ASSUMPTIONS_FIELDS: FieldId[] = INPUT_DEFINITIONS
 
 export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule>> = {
   "profile.currentAge": { required: true, integer: true, nonNegative: true, clampBounds: { min: 18, max: 100 } },
+  "partner.profile.currentAge": { integer: true, nonNegative: true, clampBounds: { min: 18, max: 100 } },
   "income.employment.netAnnual": { nonNegative: true },
+  "partner.income.employment.netAnnual": { nonNegative: true },
   "assets.cash.totalBalance": { nonNegative: true },
   "assets.equities.marketValue": { nonNegative: true },
   "assets.equities.monthlyContribution": { nonNegative: true },
@@ -161,6 +172,7 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "housing.01Residence.mortgage.monthlyRepayment": { nonNegative: true },
   "retirement.statutoryAge": { required: true, integer: true, nonNegative: true, clampBounds: { min: 50, max: 70 } },
   "retirement.statePension.netAnnualAtStart": { nonNegative: true },
+  "partner.retirement.statePension.netAnnualAtStart": { nonNegative: true },
   "housing.rentAnnual": { nonNegative: true },
   "housing.downsize.year": { integer: true, nonNegative: true },
   "housing.downsize.newHomePurchaseCost": { nonNegative: true },
@@ -280,6 +292,7 @@ export const FIELD_VALIDATION_RULES: Partial<Record<FieldId, FieldValidationRule
   "assumptions.salaryGrowthRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.08 } },
   "assumptions.rentalIncomeGrowthRateAnnual": { allowNegative: true, warningBounds: { min: 0, max: 0.08 } },
   "retirement.earlyPensionReductionPerYear": { nonNegative: true },
+  "partner.retirement.earlyPensionReductionPerYear": { nonNegative: true },
   "liquidity.minimumCashBuffer": { nonNegative: true },
   "planning.legacyAmount": { nonNegative: true },
   "liquidation.stockSellingCostRate": { nonNegative: true, warningBounds: { max: 0.25 } },
@@ -604,6 +617,15 @@ export const HOME_LOAN_GROUP = {
   rateField: "housing.01Residence.mortgage.interestRateAnnual",
   repaymentField: "housing.01Residence.mortgage.monthlyRepayment"
 } as const satisfies HomeLoanGroup;
+
+export const PARTNER_GROUP = {
+  includeField: "partner.include",
+  retiresEarlyField: "partner.retirement.alsoRetiresEarly",
+  ageField: "partner.profile.currentAge",
+  incomeField: "partner.income.employment.netAnnual",
+  pensionField: "partner.retirement.statePension.netAnnualAtStart",
+  pensionReductionField: "partner.retirement.earlyPensionReductionPerYear"
+} as const satisfies PartnerGroup;
 
 export const DOWNSIZING_GROUP = {
   yearField: "housing.downsize.year",

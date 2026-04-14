@@ -1,6 +1,7 @@
 import {
   ASSET_OF_VALUE_GROUPS,
   DEPENDENT_GROUPS,
+  PARTNER_GROUP,
   PROPERTY_GROUPS,
   STOCK_MARKET_CRASH_GROUPS
 } from "./inputSchema";
@@ -51,6 +52,10 @@ function toBoundedNumber(v: RawInputValue, min: number, max: number): number {
   const n = toNumber(v);
   if (n === 0) return 0;
   return Math.min(max, Math.max(min, n));
+}
+
+function isYes(v: RawInputValue): boolean {
+  return String(v ?? "").trim().toUpperCase() === "YES";
 }
 
 function resolveSpendingAdjustmentAges(
@@ -119,6 +124,9 @@ export function materializeLiquidationPriorityInputs(
 
 export function normalizeInputs(fields: FieldState, options: LiquidationPriorityOptions = {}): EffectiveInputs {
   const ageNow = toNumber(fields["profile.currentAge"]);
+  const partnerIncluded = isYes(fields[PARTNER_GROUP.includeField]);
+  const partnerRetiresEarly = partnerIncluded && isYes(fields[PARTNER_GROUP.retiresEarlyField]);
+  const partnerAgeRaw = toNullableNumber(fields[PARTNER_GROUP.ageField]);
   const statutoryRetirementAge = toBoundedNumber(fields["retirement.statutoryAge"], 50, 70);
   const liveUntilMinimum = ageNow > 0 ? ageNow : 19;
   const liveUntilAge = toBoundedNumber(fields["planning.lifeExpectancyAge"], liveUntilMinimum, 120);
@@ -131,7 +139,11 @@ export function normalizeInputs(fields: FieldState, options: LiquidationPriority
 
   return {
     ageNow,
+    partnerIncluded,
+    partnerRetiresEarly,
+    partnerAgeNow: partnerIncluded ? Math.round(partnerAgeRaw ?? ageNow) : null,
     netIncomeAnnual: toNumber(fields["income.employment.netAnnual"]),
+    partnerEmploymentIncomeAnnual: partnerIncluded ? toNumber(fields[PARTNER_GROUP.incomeField]) : 0,
     cashBalance: toNumber(fields["assets.cash.totalBalance"]),
     stocksBalance: toNumber(fields["assets.equities.marketValue"]),
     stocksContributionMonthly: toNumber(fields["assets.equities.monthlyContribution"]),
@@ -141,6 +153,7 @@ export function normalizeInputs(fields: FieldState, options: LiquidationPriority
     homeLoanRepaymentMonthly: toNumber(fields["housing.01Residence.mortgage.monthlyRepayment"]),
     statutoryRetirementAge,
     pensionAnnual: toNumber(fields["retirement.statePension.netAnnualAtStart"]),
+    partnerPensionAnnual: partnerIncluded ? toNumber(fields[PARTNER_GROUP.pensionField]) : 0,
     housingRentAnnual: toNumber(fields["housing.rentAnnual"]) * 12,
     downsizingYear: toNumber(fields["housing.downsize.year"]),
     downsizingNewHomeMode: toTrimmedString(fields["housing.downsize.newHomeMode"]),
@@ -217,6 +230,9 @@ export function normalizeInputs(fields: FieldState, options: LiquidationPriority
     rentalIncomeGrowth: toNumber(fields["assumptions.rentalIncomeGrowthRateAnnual"]),
 
     pensionReductionPerYearEarly: toNumber(fields["retirement.earlyPensionReductionPerYear"]),
+    partnerPensionReductionPerYearEarly: partnerRetiresEarly
+      ? toNullableNumber(fields[PARTNER_GROUP.pensionReductionField]) ?? 0
+      : null,
     cashBuffer: toNumber(fields["liquidity.minimumCashBuffer"]),
     legacyAmount: toNumber(fields["planning.legacyAmount"]),
     stockSellingCosts: toNumber(fields["liquidation.stockSellingCostRate"]),

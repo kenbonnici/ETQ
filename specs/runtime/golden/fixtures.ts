@@ -5,6 +5,7 @@ import {
   DOWNSIZING_FIELDS,
   HOME_FIELDS,
   OTHER_WORK_FIELDS,
+  PARTNER_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
   PROPERTY_RUNTIME_GROUPS,
   RUNTIME_FIELDS,
@@ -184,6 +185,40 @@ function buildAggressiveEarlyRetiree(): GoldenPersona {
   };
 }
 
+function buildPartnerEarlyRetirementCouple(): GoldenPersona {
+  const fields = baseFields();
+  fields[RUNTIME_FIELDS.currentAge] = 47;
+  fields[RUNTIME_FIELDS.currentNetIncomeAnnual] = 86_000;
+  fields[RUNTIME_FIELDS.cashBalance] = 95_000;
+  fields[RUNTIME_FIELDS.stockMarketInvestments] = 240_000;
+  fields[RUNTIME_FIELDS.stockContributionMonthly] = 900;
+  fields[HOME_FIELDS.homeValue] = 520_000;
+  fields[HOME_FIELDS.mortgageBalance] = 110_000;
+  fields[HOME_FIELDS.mortgageInterestRateAnnual] = 0.032;
+  fields[HOME_FIELDS.mortgageMonthlyRepayment] = 980;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 66;
+  fields[RUNTIME_FIELDS.annualPensionAtRetirement] = 20_000;
+  fields[RUNTIME_FIELDS.annualLivingExpenses] = 52_000;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 90;
+  fields[RUNTIME_FIELDS.minimumCashBuffer] = 18_000;
+  fields[RUNTIME_FIELDS.legacyAmount] = 220_000;
+  fields[RUNTIME_FIELDS.pensionReductionPerYearEarly] = 700;
+
+  fields[PARTNER_FIELDS.include] = "Yes";
+  fields[PARTNER_FIELDS.retiresEarly] = "Yes";
+  fields[PARTNER_FIELDS.age] = 44;
+  fields[PARTNER_FIELDS.employmentIncomeAnnual] = 38_000;
+  fields[PARTNER_FIELDS.pensionAnnual] = 14_000;
+  fields[PARTNER_FIELDS.pensionReductionPerYearEarly] = 350;
+
+  return {
+    name: "partnerEarlyRetirementCouple",
+    description: "Couple retiring together in the same calendar year with different ages, separate partner income streams, and separate early-pension reductions.",
+    fields,
+    uiState: baseUiState(55)
+  };
+}
+
 function buildDownsizerBuy(): GoldenPersona {
   const fields = baseFields();
   fields[RUNTIME_FIELDS.currentAge] = 57;
@@ -253,6 +288,7 @@ export const GOLDEN_PERSONAS: GoldenPersona[] = [
   buildMidCareerHomeowner(),
   buildNearRetireeRentalsPlannedSales(),
   buildAggressiveEarlyRetiree(),
+  buildPartnerEarlyRetirementCouple(),
   buildDownsizerBuy(),
   buildDownsizerRentCrash()
 ];

@@ -9,6 +9,7 @@ import {
   EXPENSE_EVENT_RUNTIME_GROUPS,
   HOME_FIELDS,
   OTHER_WORK_FIELDS,
+  PARTNER_FIELDS,
   POST_RETIREMENT_INCOME_FIELDS,
   PROPERTY_RUNTIME_GROUPS,
   RUNTIME_FIELDS,
@@ -145,6 +146,45 @@ test("validation allows blank other-work end age when income is entered", () => 
   assert.equal(
     messages.some((message) => message.fieldId === OTHER_WORK_FIELDS.untilAge && message.severity === "error"),
     false
+  );
+});
+
+test("validation requires partner age when partner mode is enabled", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[PARTNER_FIELDS.include] = "Yes";
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === PARTNER_FIELDS.age && message.severity === "error" && message.blocksProjection),
+    true
+  );
+});
+
+test("validation keeps partner age within statutory age and life expectancy", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[PARTNER_FIELDS.include] = "Yes";
+  fields[PARTNER_FIELDS.age] = 86;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === PARTNER_FIELDS.age && message.message.includes("projection horizon")),
+    true
+  );
+
+  fields[PARTNER_FIELDS.age] = 65;
+  const statutoryMessages = messagesFor(fields);
+
+  assert.equal(
+    statutoryMessages.some((message) => message.fieldId === PARTNER_FIELDS.age && message.message.includes("less than statutory retirement age")),
+    true
   );
 });
 
