@@ -155,7 +155,7 @@ The shared engine lives in `src/model/engines/runScenario.ts`.
 Thin wrappers parameterize it for the statutory and early-retirement comparisons.
 
 Current engine behavior includes:
-- employment income until retirement
+- main income until retirement
 - other work income until its configured end age
 - state pension from statutory retirement age, reduced for early retirement by `pensionReductionPerYearEarly`
 - optional post-retirement supplementary income across a configured age range

@@ -2190,7 +2190,7 @@ function buildCashflowNodes(scenario: ScenarioOutputs): ProjectionNode[] {
 
   return [
     projectionGroup("inflows", "Inflows", displayInflowsTotal, 0, [
-      projectionLeaf("employment-income", "Employment income", cashFlow.employmentIncome, 1),
+      projectionLeaf("employment-income", "Main income", cashFlow.employmentIncome, 1),
       projectionLeaf("other-work-income", "Other work income", cashFlow.otherWorkIncome, 1),
       projectionGroup("inflows-rental", "Rental income", sumProjectionSeries(cashFlow.rentalIncomeByProperty.map((row) => row.values), yearCount), 1, rentalChildren),
       projectionLeaf("statutory-pension", "Statutory pension", cashFlow.statutoryPension, 1),
