@@ -111,6 +111,8 @@ export function getFieldLabel(fieldId: FieldId): string {
 }
 
 export function getDefaultFieldValue(fieldId: FieldId): RawInputValue {
+  if (fieldId === "retirement.statutoryAge") return 65;
+  if (fieldId === "planning.lifeExpectancyAge") return 90;
   if (fieldId === "spending.adjustments.firstBracket.endAge") return 65;
   if (fieldId === "spending.adjustments.secondBracket.endAge") return 75;
   if (fieldId === "spending.adjustments.firstBracket.deltaRate") return 0.05;
