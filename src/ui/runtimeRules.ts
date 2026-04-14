@@ -267,6 +267,7 @@ for (const group of STOCK_MARKET_CRASH_RUNTIME_GROUPS) {
 export const FIELD_DISPLAY_ORDER_OVERRIDE: Readonly<Partial<Record<FieldId, number>>> = {
   [RUNTIME_FIELDS.statutoryRetirementAge]: 3.9,
   [RUNTIME_FIELDS.lifeExpectancyAge]: 4.1,
+  [RUNTIME_FIELDS.annualLivingExpenses]: 121.1,
   ["debts.creditCards.balance" as FieldId]: 124.5,
   ...Object.fromEntries(
     PROPERTY_RUNTIME_GROUPS.map((group) => [group.rentalIncomeField, Number(group.idx) * 5 + 62.1])

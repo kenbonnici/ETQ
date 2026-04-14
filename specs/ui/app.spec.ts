@@ -23,6 +23,8 @@ const selectors = {
   livingExpensesGroceries: 'input[data-living-expense-category="groceries"]',
   livingExpensesUtilities: 'input[data-living-expense-category="utilities"]',
   livingExpensesMiscellaneous: 'input[data-living-expense-category="miscellaneous"]',
+  otherWorkIncome: 'input[data-field-id="income.otherWork.netAnnual"]',
+  otherWorkEndAge: 'input[data-field-id="income.otherWork.endAge"]',
   housingStatusOwner: 'button[data-toggle-field-id="housing.status"][data-toggle-option="Owner"]',
   housingStatusRenter: 'button[data-toggle-field-id="housing.status"][data-toggle-option="Renter"]',
   homeValue: 'input[data-field-id="housing.01Residence.marketValue"]',
@@ -884,6 +886,35 @@ test("properties, assets, and debts are split into clearer intent-based sections
   expect(position("income.otherWork.netAnnual")).toBeLessThan(position("properties.01.rentalIncomeNetAnnual"));
   expect(position("properties.01.rentalIncomeNetAnnual")).toBeLessThan(position("properties.01.loan.balance"));
   expect(position("debts.creditCards.balance")).toBeLessThan(position("debts.other.balance"));
+});
+
+test("income and expenses section places living expenses after side income and advances focus accordingly", async ({ page }) => {
+  await page.goto("/");
+
+  const incomeSection = page.locator(".section-income");
+  await expect(incomeSection.getByRole("heading", { name: "Income & Expenses" })).toBeVisible();
+  await expect(incomeSection.getByRole("heading", { name: "Income", exact: true })).toBeVisible();
+  await expect(incomeSection.getByRole("heading", { name: "Living expenses", exact: true })).toBeVisible();
+
+  await fillAndBlur(page, selectors.otherWorkIncome, "2000");
+  await expect(page.locator(selectors.otherWorkEndAge)).toBeVisible();
+  await expect(incomeSection.locator(".living-expenses-field")).toBeVisible();
+
+  const visibleFieldIds = await page.locator(".field[data-field-id]").evaluateAll((fields) => (
+    fields.map((field) => field.getAttribute("data-field-id") ?? "").filter((fieldId) => fieldId.length > 0)
+  ));
+  const position = (fieldId: string): number => visibleFieldIds.indexOf(fieldId);
+
+  expect(position("income.otherWork.endAge")).toBeGreaterThan(-1);
+  expect(position("spending.livingExpenses.annual")).toBe(position("income.otherWork.endAge") + 1);
+
+  await page.locator(selectors.otherWorkEndAge).focus();
+  await page.keyboard.press("Enter");
+  await expectActiveElement(page, selectors.livingExpenses);
+
+  await page.locator(selectors.otherWorkEndAge).focus();
+  await page.keyboard.press("Tab");
+  await expectActiveElement(page, selectors.livingExpenses);
 });
 
 test("equivalent living-expense totals keep downstream projections unchanged across entry modes", async ({ page }) => {

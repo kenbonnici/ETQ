@@ -19,7 +19,7 @@ type AuthoredInputDefinition = Omit<InputDefinition, "section" | "groupPath" | "
 
 export const INPUT_SECTION_ORDER = [
   "Basics",
-  "Income",
+  "Income & Expenses",
   "Housing",
   "Retirement Income",
   "Savings & Investments",
@@ -1637,17 +1637,17 @@ function deriveIntentGrouping(fieldId: FieldId): Pick<InputDefinition, "section"
     return { section: "Basics", groupTail: [] };
   }
   if (fieldId === "spending.livingExpenses.annual") {
-    return { section: "Basics", groupTail: [] };
+    return { section: "Income & Expenses", groupTail: ["Living expenses"] };
   }
   if (fieldId === "liquidity.minimumCashBuffer" || fieldId === "planning.legacyAmount") {
     return { section: "Basics", groupTail: ["Goals"] };
   }
 
   if (fieldId === "income.employment.netAnnual") {
-    return { section: "Income", groupTail: [] };
+    return { section: "Income & Expenses", groupTail: ["Income"] };
   }
   if (fieldId.startsWith("income.otherWork.")) {
-    return { section: "Income", groupTail: ["Side income"] };
+    return { section: "Income & Expenses", groupTail: ["Income", "Side income"] };
   }
 
   if (fieldId.startsWith("properties.") && fieldId.includes(".loan.")) {

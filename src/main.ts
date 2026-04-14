@@ -1709,7 +1709,7 @@ function queueSequentialFocusFromElement(element: HTMLElement, reverse: boolean)
 }
 
 function handleEnterAdvance(event: KeyboardEvent): void {
-  if (event.key !== "Enter" || event.defaultPrevented || event.isComposing) return;
+  if ((event.key !== "Enter" && event.key !== "Tab") || event.defaultPrevented || event.isComposing) return;
   if (event.altKey || event.ctrlKey || event.metaKey) return;
   const target = event.target;
   if (!(target instanceof HTMLInputElement || target instanceof HTMLSelectElement)) return;
@@ -3949,7 +3949,7 @@ function renderInputs(): void {
   ) as Record<(typeof INPUT_SECTION_ORDER)[number], InputDefinition[]>;
   const sectionConfigs = [
     { title: "Basics", className: "section-basics", open: true, canToggle: false },
-    { title: "Income", className: "section-income", open: true, canToggle: false },
+    { title: "Income & Expenses", className: "section-income", open: true, canToggle: false },
     { title: "Housing", className: "section-housing", open: true, canToggle: false },
     { title: "Retirement Income", className: "section-retirement-income", open: true, canToggle: false },
     { title: "Savings & Investments", className: "section-savings-investments", open: true, canToggle: false },
