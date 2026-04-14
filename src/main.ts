@@ -543,7 +543,7 @@ const RETIREMENT_INDICATOR_PREFIX = "Earliest viable retirement:";
 
 function renderRetirementIndicatorContent(message: string | null): { showPrefix: boolean; html: string } {
   if (message === null) {
-    return { showPrefix: false, html: "Awaiting minimum inputs" };
+    return { showPrefix: true, html: '<span class="retire-check-result-status">Awaiting minimum inputs</span>' };
   }
   const trimmed = message.startsWith(RETIREMENT_INDICATOR_PREFIX)
     ? message.slice(RETIREMENT_INDICATOR_PREFIX.length).trim()
@@ -551,18 +551,22 @@ function renderRetirementIndicatorContent(message: string | null): { showPrefix:
   const retireNowMatch = /^you can retire now at (\d+)!$/i.exec(trimmed);
   if (retireNowMatch) {
     return {
-      showPrefix: false,
-      html: `You can retire now at <span class="retire-check-result-age-token">${escapeHtml(retireNowMatch[1])}!</span>`
+      showPrefix: true,
+      html: '<span class="retire-check-result-status">Now</span>'
     };
   }
   const ageMatch = /^(\d+)$/i.exec(trimmed);
   if (ageMatch) {
     return {
-      showPrefix: false,
-      html: `You can retire at <span class="retire-check-result-age-token">${escapeHtml(ageMatch[1])}</span>`
+      showPrefix: true,
+      html: `<span class="retire-check-result-age-token">${escapeHtml(ageMatch[1])}</span>`
     };
   }
-  return { showPrefix: false, html: escapeHtml(trimmed) };
+  const notYetViableMatch = /^early retirement not yet viable$/i.exec(trimmed);
+  if (notYetViableMatch) {
+    return { showPrefix: true, html: '<span class="retire-check-result-status">Not yet viable</span>' };
+  }
+  return { showPrefix: true, html: `<span class="retire-check-result-status">${escapeHtml(trimmed)}</span>` };
 }
 
 interface ChartHoverData {

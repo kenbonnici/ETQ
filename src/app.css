@@ -330,7 +330,7 @@ body {
   justify-content: flex-start;
   flex-wrap: wrap;
   gap: 12px;
-  padding: 8px 12px;
+  padding: 10px 12px;
   background: #f8faf9;
   border: 1px solid var(--line-soft);
   border-radius: 8px;
@@ -351,10 +351,10 @@ body {
 }
 
 .retirement-stepper-label {
-  font-size: 14px;
-  font-weight: 800;
+  font-size: 13px;
+  font-weight: 700;
   letter-spacing: 0.02em;
-  color: #2b405f;
+  color: #466157;
   margin-right: 2px;
   white-space: nowrap;
 }
@@ -404,76 +404,104 @@ body {
   margin: 0;
   font-size: 14px;
   font-weight: 600;
-  color: #334155;
+  color: #1f3b34;
   display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  flex-wrap: wrap;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-  border: 1px solid #cbd5e1;
-  border-radius: 8px;
-  padding: 7px 10px;
-  line-height: 1.25;
-  white-space: normal;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 2px 0 2px 14px;
+  line-height: 1.1;
+  white-space: nowrap;
   max-width: min(520px, 100%);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.75);
-  transition:
-    color 160ms ease,
-    background 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease,
-    transform 160ms ease;
+  box-shadow: none;
+  transition: color 160ms ease;
+}
+
+.retire-check-result::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 24px;
+  border-radius: 999px;
+  background: #d7dfdb;
+  transform: translateY(-50%);
+  transition: background-color 160ms ease;
 }
 
 .retire-check-result-label {
-  font-size: 14px;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6f837c;
+  line-height: 1;
 }
 
 .retire-check-result-value {
-  font-size: 14px;
-  font-weight: 650;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  font-size: 20px;
+  font-weight: 675;
+  color: #25453d;
+  line-height: 1;
 }
 
-.retire-check-result-age-token {
-  font-size: 18px;
-  font-weight: 700;
+.retire-check-result-age-token,
+.retire-check-result-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  font-size: 20px;
+  font-weight: 675;
   line-height: 1;
+  letter-spacing: 0;
 }
 
 .retire-check-result.is-positive,
 .retire-check-result.is-promising {
-  color: #1e4f82;
-  background: linear-gradient(180deg, #f7fbff 0%, #edf5ff 100%);
-  border-color: #b7cfea;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.92),
-    0 1px 2px rgb(30 79 130 / 0.08);
+  color: #175043;
 }
 
 .retire-check-result.is-warning {
-  font-size: 14px;
-  font-weight: 750;
-  color: #7a4b12;
-  background: linear-gradient(180deg, #fff8eb 0%, #fdecc8 100%);
-  border-color: #e7c37a;
-  box-shadow:
-    inset 0 1px 0 rgb(255 255 255 / 0.9),
-    0 0 0 1px rgb(231 195 122 / 0.14);
+  color: #77511f;
 }
 
 .retire-check-result.is-neutral {
-  color: #334155;
-  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
-  border-color: #cbd5e1;
+  color: #49625a;
+}
+
+.retire-check-result.is-positive::before,
+.retire-check-result.is-promising::before {
+  background: #7eb8a8;
+}
+
+.retire-check-result.is-warning::before {
+  background: #d8b983;
 }
 
 .retire-check-result.is-positive .retire-check-result-value,
 .retire-check-result.is-promising .retire-check-result-value {
-  font-weight: 650;
+  color: #1f4d40;
 }
 .retire-check-result.is-warning .retire-check-result-value {
-  font-weight: 750;
+  color: #6f542a;
+}
+
+.retire-check-result.is-neutral .retire-check-result-status {
+  font-size: 13px;
+  font-weight: 500;
+  min-height: 20px;
+  color: #70857d;
 }
 
 .cashflow-nav-btn,
