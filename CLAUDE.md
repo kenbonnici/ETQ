@@ -27,6 +27,7 @@ Scope discipline
 Work only within the required layer:
 - UI rendering and interaction
 - UI state and persistence
+- Planned-sale / liquidation scheduling rules
 - Activation / visibility rules
 - Validation
 - Normalization
@@ -52,10 +53,11 @@ CORE INVARIANTS
 Must always preserve:
 - Deterministic model outputs for a given input set
 - Pipeline ordering:
-  activation -> validate -> normalize -> timing -> engine
+  activation -> planned-sale/materialized-order prep -> validate -> normalize -> timing -> engine
 - Pruning of inactive fields before downstream calculation
 - Timing logic, including first-year prorating and month offsets
 - Projection axis behavior as implemented in the webapp
+- Planned sell years remaining constrained to the active projection window
 - Default liquidation order:
   sell cheapest eligible assets first unless the user overrides
 - Liquidation rank `0` means excluded from staged liquidation
@@ -72,10 +74,12 @@ HIGH-RISK AREAS
 Changes here require extra caution:
 - `src/model/index.ts`
 - `src/model/activation.ts`
+- `src/model/plannedSales.ts`
 - `src/model/validate.ts`
 - `src/model/normalization.ts`
 - `src/model/projectionTiming.ts`
 - liquidation logic
+- planned-sale logic
 - timing logic
 - dependency / activation rules
 
