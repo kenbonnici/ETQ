@@ -370,7 +370,11 @@ export function runScenario(
         : 0;
     salarySeries[idx] = salary;
 
-    const otherWork = age <= inputs.otherWorkUntilAge ? inputs.otherWorkIncomeAnnual * infFactor * proRate : 0;
+    const otherWorkActive =
+      inputs.otherWorkUntilAge > 0
+        ? age <= inputs.otherWorkUntilAge
+        : age < config.retirementAge;
+    const otherWork = otherWorkActive ? inputs.otherWorkIncomeAnnual * infFactor * proRate : 0;
     otherWorkSeries[idx] = otherWork;
 
     let rental = 0;

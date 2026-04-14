@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 
 import { resolveProjectionTiming } from "../../src/model/projectionTiming";
+import { runScenarioEarly } from "../../src/model/engines/runScenarioEarly";
 import { runScenarioNorm } from "../../src/model/engines/runScenarioNorm";
 import { EffectiveInputs } from "../../src/model/types";
 
@@ -161,6 +162,31 @@ test("planned sales keep gross liquidation inflows separate from property and ot
   assert.equal(scenario.cashFlow.totalInflows[0], 275_000);
   assert.equal(scenario.cashFlow.totalOutflows[0], 70_000);
   assert.equal(scenario.cashFlow.netCashFlow[0], 205_000);
+});
+
+test("blank other-work end age runs side income until the active scenario retirement age", () => {
+  const inputs = buildInputs();
+  inputs.otherWorkIncomeAnnual = 12_000;
+  inputs.liveUntilAge = 70;
+
+  const timing = resolveProjectionTiming(new Date("2026-01-01T00:00:00Z"), 1);
+  const normalScenario = runScenarioNorm(inputs, timing);
+  const earlyScenario = runScenarioEarly(inputs, 60, timing);
+
+  const normalAge66 = normalScenario.points.findIndex((point) => point.age === 66);
+  const normalAge67 = normalScenario.points.findIndex((point) => point.age === 67);
+  const earlyAge59 = earlyScenario.points.findIndex((point) => point.age === 59);
+  const earlyAge60 = earlyScenario.points.findIndex((point) => point.age === 60);
+
+  assert.notEqual(normalAge66, -1);
+  assert.notEqual(normalAge67, -1);
+  assert.notEqual(earlyAge59, -1);
+  assert.notEqual(earlyAge60, -1);
+
+  assert.equal(normalScenario.cashFlow.otherWorkIncome[normalAge66], 12_000);
+  assert.equal(normalScenario.cashFlow.otherWorkIncome[normalAge67], 0);
+  assert.equal(earlyScenario.cashFlow.otherWorkIncome[earlyAge59], 12_000);
+  assert.equal(earlyScenario.cashFlow.otherWorkIncome[earlyAge60], 0);
 });
 
 test("forced property sales show gross proceeds, settle the loan in the sale year, and stop future repayments", () => {

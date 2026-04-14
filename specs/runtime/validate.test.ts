@@ -133,6 +133,21 @@ test("validation enforces post-retirement and other-work age bounds", () => {
   );
 });
 
+test("validation allows blank other-work end age when income is entered", () => {
+  const fields = createEmptyFieldState();
+  fields[RUNTIME_FIELDS.currentAge] = 48;
+  fields[RUNTIME_FIELDS.statutoryRetirementAge] = 65;
+  fields[RUNTIME_FIELDS.lifeExpectancyAge] = 85;
+  fields[OTHER_WORK_FIELDS.income] = 10_000;
+
+  const messages = messagesFor(fields);
+
+  assert.equal(
+    messages.some((message) => message.fieldId === OTHER_WORK_FIELDS.untilAge && message.severity === "error"),
+    false
+  );
+});
+
 test("validation clamps open-ended age fields to realistic planning ages", () => {
   const fields = createEmptyFieldState();
   fields[RUNTIME_FIELDS.currentAge] = 48;

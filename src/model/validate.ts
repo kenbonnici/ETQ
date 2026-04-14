@@ -344,9 +344,9 @@ export function validateFieldState(
 
   if ((asNumber(fields[OTHER_WORK_GROUP.incomeField]) ?? 0) > 0) {
     const untilAge = asNumber(fields[OTHER_WORK_GROUP.untilAgeField]);
-    if (untilAge === null || !Number.isInteger(untilAge)) {
-      pushMessage(messages, OTHER_WORK_GROUP.untilAgeField, "error", "Continue other work until age is required when other work income is entered.");
-    } else {
+    if (untilAge !== null && !Number.isInteger(untilAge)) {
+      pushMessage(messages, OTHER_WORK_GROUP.untilAgeField, "error", "Other work end age must be a whole number.");
+    } else if (untilAge !== null) {
       if (ageNow !== null && untilAge < ageNow) {
         pushMessage(messages, OTHER_WORK_GROUP.untilAgeField, "error", "Other work end age must be current age or later.");
       }
