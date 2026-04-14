@@ -1617,8 +1617,8 @@ const LABEL_OVERRIDES: Partial<Record<FieldId, string>> = {
 const TOOLTIP_OVERRIDES: Partial<Record<FieldId, string>> = {
   "income.employment.netAnnual": "Annual net of tax income from employment or self-employment.",
   "housing.01Residence.marketValue": "Current market value of your home",
-  "income.otherWork.netAnnual": "Net annual income from consulting, freelance, or other part-time work. Leave blank if none.",
-  "income.otherWork.endAge": "Leave blank if this income continues until retirement.",
+  "income.otherWork.netAnnual": "Net annual income from consulting, freelance, or other part-time work.",
+  "income.otherWork.endAge": "Age which side income stops. Leave blank if it continues until retirement.",
   "retirement.statePension.netAnnualAtStart": "Net annual pension entitlement",
   "retirement.earlyPensionReductionPerYear": "Reduction in annual pension for each year retired early",
   "debts.creditCards.balance": "Combined balance on all cards. Assumed cleared in Year 1. Leave blank if none."
