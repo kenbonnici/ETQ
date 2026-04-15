@@ -339,15 +339,17 @@ body {
 .retirement-control-actions {
   display: inline-flex;
   align-items: center;
-  flex: 1 1 260px;
+  flex: 1 1 200px;
   min-width: 0;
 }
 
 .retirement-stepper {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-left: auto;
+  padding-left: 12px;
+  border-left: 1px solid #e3ebe5;
 }
 
 .retirement-stepper-label {
@@ -369,6 +371,69 @@ body {
 
 .retirement-stepper input {
   color: #d97706;
+}
+
+.retirement-stepper-field {
+  display: inline-flex;
+  align-items: stretch;
+  height: 30px;
+  border: 1px solid #b8c8bb;
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.retirement-stepper-field:focus-within {
+  border-color: #7eb8a8;
+  box-shadow: 0 0 0 2px rgba(126, 184, 168, 0.25);
+}
+
+.retirement-stepper-field #early-ret-age {
+  width: 76px;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  padding: 0 8px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #d97706;
+  text-align: center;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.retirement-stepper-arrows {
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid #d7dfdb;
+  flex: 0 0 auto;
+}
+
+.retirement-stepper-arrows .step-btn {
+  width: 22px;
+  height: 15px;
+  border: 0;
+  border-radius: 0;
+  background: #fafbf8;
+  color: #6f837c;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.retirement-stepper-arrows .step-btn + .step-btn {
+  border-top: 1px solid #d7dfdb;
+}
+
+.retirement-stepper-arrows .step-btn:hover:not(:disabled) {
+  background: #eef3ef;
+  color: #1f3b34;
 }
 
 .retirement-control input[type="number"] {

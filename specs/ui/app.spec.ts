@@ -7,7 +7,7 @@ import {
 const SAMPLE_DATA_FIELDS = createSampleDataFieldState();
 const EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA = SAMPLE_DATA_EARLY_RETIREMENT_AGE;
 const SAMPLE_DATA_CURRENT_AGE = Number(SAMPLE_DATA_FIELDS["profile.currentAge"]);
-const SAMPLE_DATA_RETIREMENT_HINT = "Earliest viable retirement: Now";
+const SAMPLE_DATA_RETIREMENT_HINT = "Earliest retirement: Now";
 const STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA = Number(SAMPLE_DATA_FIELDS["retirement.statutoryAge"]);
 const FIXED_SAMPLE_DATA_TEST_DATE_ISO = "2026-01-01T00:00:00Z";
 

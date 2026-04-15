@@ -337,14 +337,18 @@ app.innerHTML = `
     <section class="right">
       <header class="retirement-control">
         <div class="retirement-control-actions">
-          <p id="retire-check-result" class="retire-check-result"><span class="retire-check-result-label">Earliest viable retirement:</span> <span class="retire-check-result-value">—</span></p>
+          <p id="retire-check-result" class="retire-check-result"><span class="retire-check-result-label">Earliest retirement:</span> <span class="retire-check-result-value">—</span></p>
         </div>
         <div class="retirement-stepper">
           <span id="retirement-stepper-label" class="retirement-stepper-label">Compare with retiring at</span>
-          <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease comparison retirement age">-</button>
-          <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Comparison retirement age" />
+          <div class="retirement-stepper-field">
+            <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Comparison retirement age" />
+            <div class="retirement-stepper-arrows">
+              <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase comparison retirement age">&#9650;</button>
+              <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease comparison retirement age">&#9660;</button>
+            </div>
+          </div>
           <span id="retirement-stepper-meta" class="retirement-stepper-meta" hidden aria-live="polite"></span>
-          <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase comparison retirement age">+</button>
         </div>
       </header>
       <article class="chart-card" id="cash-chart-card">
@@ -545,7 +549,7 @@ interface TimelineYearEvent {
   amount: number | null;
 }
 
-const RETIREMENT_INDICATOR_PREFIX = "Earliest viable retirement:";
+const RETIREMENT_INDICATOR_PREFIX = "Earliest retirement:";
 
 interface SharedRetirementDisplay {
   year: number;
