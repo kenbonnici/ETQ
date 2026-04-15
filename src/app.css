@@ -432,8 +432,58 @@ body {
 }
 
 .retirement-stepper-arrows .step-btn:hover:not(:disabled) {
+  background: #fff4e6;
+  color: #d97706;
+}
+
+.retirement-stepper-arrows .step-btn:active:not(:disabled) {
+  background: #ffe4c2;
+}
+
+.retirement-stepper-arrows .step-btn:focus-visible {
+  outline: 2px solid rgba(217, 119, 6, 0.45);
+  outline-offset: -2px;
+}
+
+.retirement-stepper-field:has(.step-btn:disabled:first-child):has(.step-btn:disabled:last-child) {
+  border-color: #d7dfdb;
+  background: #f7f8f6;
+}
+
+.retirement-stepper-field:has(.step-btn:disabled:first-child):has(.step-btn:disabled:last-child) #early-ret-age {
+  color: #b6a07a;
+}
+
+.retirement-stepper-delta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 58px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: #f1f4f1;
+  color: #6f837c;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.retirement-stepper-delta.is-earlier {
+  background: #fdf1e0;
+  color: #b56708;
+}
+
+.retirement-stepper-delta.is-later {
+  background: #eaf2ec;
+  color: #3f6a59;
+}
+
+.retirement-stepper-delta.is-same {
   background: #eef3ef;
-  color: #1f3b34;
+  color: #6f837c;
 }
 
 .retirement-control input[type="number"] {
@@ -519,6 +569,7 @@ body {
   font-weight: 675;
   color: #25453d;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .retire-check-result-age-token,
@@ -545,6 +596,7 @@ body {
   font-size: 20px;
   font-weight: 700;
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 
 .retire-check-result-age-stack,

@@ -214,7 +214,7 @@ test("shared partner retirement switches the comparison control to year mode wit
   await page.locator(selectors.partnerRetiresEarlyYes).click();
   await fillAndBlur(page, selectors.partnerReduction, "300");
 
-  await expect(page.locator("#retirement-stepper-label")).toHaveText("Compare with retiring in");
+  await expect(page.locator("#retirement-stepper-label")).toHaveText("Compare retiring in");
   await expect(page.locator("#retirement-stepper-meta")).toContainText("You");
   await expect(page.locator("#retirement-stepper-meta")).toContainText("Partner");
   await expect(page.locator(".retire-check-result-year-token")).toBeVisible();

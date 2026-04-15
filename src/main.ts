@@ -340,7 +340,7 @@ app.innerHTML = `
           <p id="retire-check-result" class="retire-check-result"><span class="retire-check-result-label">Earliest retirement:</span> <span class="retire-check-result-value">—</span></p>
         </div>
         <div class="retirement-stepper">
-          <span id="retirement-stepper-label" class="retirement-stepper-label">Compare with retiring at</span>
+          <span id="retirement-stepper-label" class="retirement-stepper-label">Compare retiring at</span>
           <div class="retirement-stepper-field">
             <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Comparison retirement age" />
             <div class="retirement-stepper-arrows">
@@ -348,6 +348,7 @@ app.innerHTML = `
               <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease comparison retirement age">&#9660;</button>
             </div>
           </div>
+          <span id="retirement-stepper-delta" class="retirement-stepper-delta" hidden aria-live="polite"></span>
           <span id="retirement-stepper-meta" class="retirement-stepper-meta" hidden aria-live="polite"></span>
         </div>
       </header>
@@ -448,6 +449,7 @@ const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonEleme
 const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
 const retirementStepperLabel = document.getElementById("retirement-stepper-label") as HTMLSpanElement;
 const retirementStepperMeta = document.getElementById("retirement-stepper-meta") as HTMLSpanElement;
+const retirementStepperDelta = document.getElementById("retirement-stepper-delta") as HTMLSpanElement;
 const retireCheckResult = document.getElementById("retire-check-result") as HTMLParagraphElement;
 const retireCheckResultLabel = retireCheckResult.querySelector(".retire-check-result-label") as HTMLSpanElement;
 const retireCheckResultValue = retireCheckResult.querySelector(".retire-check-result-value") as HTMLSpanElement;
@@ -2726,8 +2728,11 @@ function updateEarlyRetirementButtons(statutory: number | null): void {
   if (statutory === null) {
     spinnerDown.disabled = true;
     spinnerUp.disabled = true;
-    retirementStepperLabel.textContent = "Compare with retiring at";
+    retirementStepperLabel.textContent = "Compare retiring at";
     retirementStepperMeta.hidden = true;
+    retirementStepperDelta.hidden = true;
+    retirementStepperDelta.textContent = "";
+    retirementStepperDelta.classList.remove("is-earlier", "is-later", "is-same");
     spinner.setAttribute("aria-label", "Comparison retirement age");
     return;
   }
@@ -2758,9 +2763,32 @@ function formatRetirementStepperValue(age: number | null): string {
   return isSharedPartnerRetirementMode() && year !== null ? String(year) : String(roundedAge);
 }
 
+function updateRetirementStepperDelta(earliestAge: number | null, compareAge: number | null): void {
+  if (earliestAge === null || compareAge === null || !Number.isFinite(earliestAge) || !Number.isFinite(compareAge)) {
+    retirementStepperDelta.hidden = true;
+    retirementStepperDelta.textContent = "";
+    retirementStepperDelta.classList.remove("is-earlier", "is-later", "is-same");
+    return;
+  }
+  const diff = Math.round(compareAge) - Math.round(earliestAge);
+  retirementStepperDelta.hidden = false;
+  if (diff === 0) {
+    retirementStepperDelta.textContent = "same";
+    retirementStepperDelta.classList.remove("is-earlier", "is-later");
+    retirementStepperDelta.classList.add("is-same");
+    return;
+  }
+  const abs = Math.abs(diff);
+  const unit = abs === 1 ? "yr" : "yrs";
+  retirementStepperDelta.textContent = `${diff < 0 ? "−" : "+"}${abs} ${unit}`;
+  retirementStepperDelta.classList.remove("is-same");
+  retirementStepperDelta.classList.toggle("is-earlier", diff < 0);
+  retirementStepperDelta.classList.toggle("is-later", diff > 0);
+}
+
 function updateRetirementStepperPresentation(age: number | null): void {
   const sharedDisplay = getSharedRetirementDisplay(age);
-  retirementStepperLabel.textContent = sharedDisplay ? "Compare with retiring in" : "Compare with retiring at";
+  retirementStepperLabel.textContent = sharedDisplay ? "Compare retiring in" : "Compare retiring at";
   spinner.setAttribute("aria-label", sharedDisplay ? "Comparison retirement year" : "Comparison retirement age");
   if (!sharedDisplay) {
     retirementStepperMeta.hidden = true;
@@ -5546,6 +5574,7 @@ function recalc(): void {
     : null;
   const indicator = createRetirementIndicatorState(earliestAge, getCurrentAge(), hasEssentialErrors, statutory);
   setRetireCheckMessage(indicator.message, indicator.tone, indicator.sharedDisplay);
+  updateRetirementStepperDelta(earliestAge, compareAge);
   if (hasBlockingErrors) {
     latestRunResult = null;
     setChartLegendsVisible(false);
