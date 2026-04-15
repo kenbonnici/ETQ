@@ -333,7 +333,8 @@ export const RETIRE_CHECK_REQUIRED_FIELDS = new Set<FieldId>([
   RUNTIME_FIELDS.currentAge,
   RUNTIME_FIELDS.statutoryRetirementAge,
   RUNTIME_FIELDS.annualLivingExpenses,
-  RUNTIME_FIELDS.lifeExpectancyAge
+  RUNTIME_FIELDS.lifeExpectancyAge,
+  PARTNER_FIELDS.age
 ]);
 
 export function isBlank(value: unknown): boolean {
