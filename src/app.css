@@ -2560,8 +2560,8 @@ body {
 }
 
 .liquidation-toggle.is-on .liquidation-toggle-track {
-  background: #b7cec3;
-  box-shadow: inset 0 0 0 1px #9fb8ac;
+  background: #7fcfbe;
+  box-shadow: inset 0 0 0 1px #5eb5a2;
 }
 
 .liquidation-toggle.is-on .liquidation-toggle-thumb {
@@ -2852,7 +2852,7 @@ body {
 }
 
 .living-expenses-mode-btn.is-active .living-expenses-switch-track {
-  background: #88aea0;
+  background: #7fcfbe;
 }
 
 .living-expenses-mode-btn.is-active .living-expenses-switch-thumb {
@@ -2996,8 +2996,8 @@ body {
 }
 
 .field-binary-switch.is-on .field-binary-switch-track {
-  background: #b7cec3;
-  box-shadow: inset 0 0 0 1px #9fb8ac;
+  background: #7fcfbe;
+  box-shadow: inset 0 0 0 1px #5eb5a2;
 }
 
 .field-binary-switch.is-on .field-binary-switch-thumb {
