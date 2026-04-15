@@ -496,7 +496,25 @@ body {
 
 .retire-check-result-age-stack-line,
 .retirement-stepper-age-stack-line {
-  display: block;
+  display: grid;
+  grid-template-columns: max-content max-content;
+  column-gap: 3px;
+  align-items: baseline;
+}
+
+.retire-check-result-age-stack-age,
+.retirement-stepper-age-stack-age {
+  display: inline-block;
+  min-width: 42px;
+  font-weight: 600;
+  color: #36584f;
+}
+
+.retire-check-result-age-stack-label,
+.retirement-stepper-age-stack-label {
+  display: inline-block;
+  font-weight: 700;
+  color: #6a7f78;
 }
 
 .retirement-stepper-meta {
