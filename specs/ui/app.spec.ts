@@ -7,7 +7,7 @@ import {
 const SAMPLE_DATA_FIELDS = createSampleDataFieldState();
 const EARLIEST_RETIREMENT_AGE_FOR_SAMPLE_DATA = SAMPLE_DATA_EARLY_RETIREMENT_AGE;
 const SAMPLE_DATA_CURRENT_AGE = Number(SAMPLE_DATA_FIELDS["profile.currentAge"]);
-const SAMPLE_DATA_RETIREMENT_HINT = "Earliest retirement: Now";
+const SAMPLE_DATA_RETIREMENT_HINT = "Earliest retirement Now";
 const STATUTORY_RETIREMENT_AGE_FOR_SAMPLE_DATA = Number(SAMPLE_DATA_FIELDS["retirement.statutoryAge"]);
 const FIXED_SAMPLE_DATA_TEST_DATE_ISO = "2026-01-01T00:00:00Z";
 
@@ -215,10 +215,10 @@ test("shared partner retirement switches the comparison control to year mode wit
   await fillAndBlur(page, selectors.partnerReduction, "300");
 
   await expect(page.locator("#retirement-stepper-label")).toHaveText("Compare retiring in");
-  await expect(page.locator("#retirement-stepper-meta")).toContainText("You");
-  await expect(page.locator("#retirement-stepper-meta")).toContainText("Partner");
+  await expect(page.locator("#retirement-stepper-meta")).toContainText("you");
+  await expect(page.locator("#retirement-stepper-meta")).toContainText("partner");
   await expect(page.locator(".retire-check-result-year-token")).toBeVisible();
-  await expect(page.locator(".retire-check-result-age-stack")).toContainText("Partner");
+  await expect(page.locator(".retire-check-result-age-stack")).toContainText("partner");
 });
 
 test("spending-by-age fields keep fixed defaults and allow inline age editing without rerender corruption", async ({ page }) => {
@@ -979,7 +979,7 @@ test("equivalent living-expense totals keep downstream projections unchanged acr
   await loadSampleData(page);
   await fillAndBlur(page, selectors.livingExpenses, "60000");
 
-  await page.getByRole("button", { name: "Open cash flow" }).click();
+  await page.locator("#view-tab-projections").click();
   await page.locator("#projection-expand-all").click();
   const singleModeRow = await page.locator('tr[data-row-id="living-expenses"]').textContent();
 
@@ -1074,8 +1074,8 @@ test("timeline cap shows the entered life expectancy age", async ({ page }) => {
 test("cash-flow controls preserve structure and scroll position across scenario switches", async ({ page }) => {
   await loadSampleData(page);
 
-  await page.getByRole("button", { name: "Open cash flow" }).click();
-  await expect(page.locator("#projection-section")).toHaveAttribute("aria-hidden", "false");
+  await page.locator("#view-tab-projections").click();
+  await expect(page.locator("#projections-view")).toHaveAttribute("aria-hidden", "false");
   await expect(page.locator("#projection-tab-cashflow")).toHaveAttribute("aria-selected", "true");
 
   await page.locator("#projection-expand-all").click();
@@ -1124,8 +1124,9 @@ test("cash-flow controls preserve structure and scroll position across scenario 
 test("net-worth section opens independently and keeps scenario selection in sync", async ({ page }) => {
   await loadSampleData(page);
 
-  await page.locator("#open-networth-btn").click();
-  await expect(page.locator("#projection-section")).toHaveAttribute("aria-hidden", "false");
+  await page.locator("#view-tab-projections").click();
+  await page.locator("#projection-tab-networth").click();
+  await expect(page.locator("#projections-view")).toHaveAttribute("aria-hidden", "false");
   await expect(page.locator("#projection-tab-networth")).toHaveAttribute("aria-selected", "true");
   await expect(page.locator(selectors.networthScroll)).toBeVisible();
   await expect(page.locator("#cashflow-table-panel")).toBeHidden();
@@ -1151,7 +1152,7 @@ test.fixme("cash chart zero-line emphasis follows the active cash scenario only"
   await loadSampleData(page);
 
   await fillAndBlur(page, selectors.earlyRetAge, "48");
-  await page.getByRole("button", { name: "Open cash flow" }).click();
+  await page.locator("#view-tab-projections").click();
 
   await expect(page.locator(selectors.cashChart)).toHaveAttribute("data-zero-line-alert", "false");
   await expect(page.locator(selectors.networthChart)).not.toHaveAttribute("data-zero-line-alert", "true");
@@ -1204,25 +1205,24 @@ test("longer currency prefixes expand y-axis gutter without jitter or clipping",
   expect(chfPad).toBeGreaterThanOrEqual(eurPad);
   await expect.poll(() => measurePad(selectors.networthChart)).toBe(chfPad);
 
-  await page.getByRole("button", { name: "Open cash flow" }).click();
+  await page.locator("#view-tab-projections").click();
   await page.locator("#projection-scenario-norm").click();
   const chfPadAfterToggle = await measurePad(selectors.cashChart);
   expect(chfPadAfterToggle).toBeGreaterThanOrEqual(chfPad);
   await expect.poll(() => measurePad(selectors.networthChart)).toBe(chfPadAfterToggle);
 });
 
-test("net-worth collapse chevron returns to the top of the dashboard canvas", async ({ page }) => {
+test("Charts tab returns from Projections view and restores chart visibility", async ({ page }) => {
   await loadSampleData(page);
 
-  await page.locator("#open-networth-btn").click();
-  await expect(page.locator("#projection-section")).toHaveAttribute("aria-hidden", "false");
+  await page.locator("#view-tab-projections").click();
+  await page.locator("#projection-tab-networth").click();
+  await expect(page.locator("#projections-view")).toHaveAttribute("aria-hidden", "false");
   await expect(page.locator("#projection-tab-networth")).toHaveAttribute("aria-selected", "true");
 
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-  expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(300);
+  await page.locator("#view-tab-charts").click();
 
-  await page.locator("#projection-section-collapse").click();
-
-  await expect.poll(async () => page.evaluate(() => window.scrollY)).toBeLessThan(20);
-  await expect(page.locator("#projection-section")).toHaveAttribute("aria-hidden", "true");
+  await expect(page.locator("#projections-view")).toHaveAttribute("aria-hidden", "true");
+  await expect(page.locator("#charts-view")).toBeVisible();
+  await expect(page.locator("#timeline-panel")).toBeVisible();
 });

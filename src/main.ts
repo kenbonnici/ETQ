@@ -193,7 +193,9 @@ const attemptedFieldMessages = new Map<FieldId, ValidationMessage>();
 let latestRunResult: RunModelResult | null = null;
 let cashflowScenario: "early" | "norm" = "early";
 let timelineScenario: "early" | "norm" = "early";
-let projectionSectionOpen = false;
+type DashboardView = "charts" | "projections";
+const VIEW_STORAGE_KEY = "etq:view";
+let activeView: DashboardView = "charts";
 let projectionHasMounted = false;
 let projectionActiveTab: ProjectionSectionKey = "cashflow";
 let previousActivePropertyIndices = new Set<number>();
@@ -331,33 +333,32 @@ function enforceLiveUntilAgeConstraint(syncVisibleInput: boolean): boolean {
 }
 
 app.innerHTML = `
-  <div id="dashboard-anchor" class="scroll-anchor" aria-hidden="true"></div>
   <main class="layout" id="dashboard-view">
     <section class="left" id="inputs-panel"></section>
-    <section class="right">
-      <header class="retirement-control">
-        <div class="retirement-control-actions">
-          <p id="retire-check-result" class="retire-check-result"><span class="retire-check-result-label">Earliest retirement:</span> <span class="retire-check-result-value">—</span></p>
-        </div>
-        <div class="retirement-stepper">
-          <span id="retirement-stepper-label" class="retirement-stepper-label">Compare retiring at</span>
-          <div class="retirement-stepper-field">
-            <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Comparison retirement age" />
-            <div class="retirement-stepper-arrows">
-              <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase comparison retirement age">&#9650;</button>
-              <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease comparison retirement age">&#9660;</button>
-            </div>
+    <header class="dashboard-header" id="dashboard-header">
+      <p id="retire-check-result" class="retire-check-result"><span class="retire-check-result-label">Earliest retirement</span> <span class="retire-check-result-value">—</span></p>
+      <div class="retirement-stepper">
+        <span id="retirement-stepper-label" class="retirement-stepper-label">Compare retiring at</span>
+        <div class="retirement-stepper-field">
+          <input id="early-ret-age" type="number" min="18" max="100" step="1" value="" inputmode="numeric" pattern="[0-9]*" aria-label="Comparison retirement age" />
+          <div class="retirement-stepper-arrows">
+            <button id="early-ret-up" class="step-btn" type="button" aria-label="Increase comparison retirement age">&#9650;</button>
+            <button id="early-ret-down" class="step-btn" type="button" aria-label="Decrease comparison retirement age">&#9660;</button>
           </div>
-          <span id="retirement-stepper-delta" class="retirement-stepper-delta" hidden aria-live="polite"></span>
-          <span id="retirement-stepper-meta" class="retirement-stepper-meta" hidden aria-live="polite"></span>
         </div>
-      </header>
+        <span id="retirement-stepper-delta" class="retirement-stepper-delta" hidden aria-live="polite"></span>
+        <span id="retirement-stepper-meta" class="retirement-stepper-meta" hidden aria-live="polite"></span>
+      </div>
+      <div class="view-tabs" role="tablist" aria-label="Dashboard view">
+        <button id="view-tab-charts" class="view-tab-btn is-active" type="button" role="tab" aria-selected="true" aria-controls="charts-view">Charts</button>
+        <button id="view-tab-projections" class="view-tab-btn" type="button" role="tab" aria-selected="false" aria-controls="projections-view">Projections</button>
+      </div>
+    </header>
+    <section class="right" id="charts-view" role="tabpanel" aria-labelledby="view-tab-charts">
       <article class="chart-card" id="cash-chart-card">
-        <div id="charts-anchor" class="scroll-anchor" aria-hidden="true"></div>
         <div class="chart-header">
           <h2>Cash</h2>
           <div class="chart-actions" id="cash-chart-actions">
-            <button id="open-cashflow-btn" class="cashflow-nav-btn" type="button">Open cash flow</button>
             <div class="chart-legend" id="cash-legend" aria-hidden="true">
               <span class="chart-legend-item">
                 <span class="chart-legend-line"></span>
@@ -376,7 +377,6 @@ app.innerHTML = `
         <div class="chart-header">
           <h2>Net Worth</h2>
           <div class="chart-actions" id="nw-chart-actions">
-            <button id="open-networth-btn" class="cashflow-nav-btn" type="button">Open net worth</button>
             <div class="chart-legend" id="nw-legend" aria-hidden="true">
               <span class="chart-legend-item">
                 <span class="chart-legend-line"></span>
@@ -404,27 +404,13 @@ app.innerHTML = `
         <div class="timeline-track" id="timeline-track"></div>
       </div>
     </aside>
-  </main>
-  <div id="cashflow-anchor" class="scroll-anchor" aria-hidden="true"></div>
-  <section class="cashflow-section" id="projection-section" hidden aria-hidden="true">
-    <div class="cashflow-section-shell">
-      <header class="cashflow-section-header">
-        <div class="projection-toolbar-main">
-          <div class="projection-tabs" role="tablist" aria-label="Projection table">
-            <button id="projection-tab-cashflow" class="projection-tab-btn" type="button">Cash Flow</button>
-            <button id="projection-tab-networth" class="projection-tab-btn" type="button">Net Worth</button>
-          </div>
-          <button
-            id="projection-section-collapse"
-            class="cashflow-section-toggle-btn"
-            type="button"
-            aria-label="Collapse projection section"
-            title="Collapse projection section"
-          >
-            <span aria-hidden="true">⌃</span>
-          </button>
+    <section class="projection-view" id="projections-view" role="tabpanel" aria-labelledby="view-tab-projections" hidden>
+      <header class="projection-toolbar">
+        <div class="projection-tabs" role="tablist" aria-label="Projection table">
+          <button id="projection-tab-cashflow" class="projection-tab-btn" type="button">Cash Flow</button>
+          <button id="projection-tab-networth" class="projection-tab-btn" type="button">Net Worth</button>
         </div>
-        <div class="cashflow-section-controls projection-toolbar-controls">
+        <div class="projection-toolbar-controls">
           <div class="cashflow-scenario-toggle" role="tablist" aria-label="Projection scenario">
             <button id="projection-scenario-early" class="cashflow-scenario-btn" type="button">Early</button>
             <button id="projection-scenario-norm" class="cashflow-scenario-btn" type="button">Statutory</button>
@@ -435,12 +421,12 @@ app.innerHTML = `
           </div>
         </div>
       </header>
-      <section class="projection-content-panel">
+      <div class="projection-content-panel">
         <section class="cashflow-table-panel projection-tab-panel" id="cashflow-table-panel"></section>
         <section class="cashflow-table-panel projection-tab-panel" id="networth-table-panel" hidden></section>
-      </section>
-    </div>
-  </section>
+      </div>
+    </section>
+  </main>
 `;
 
 const inputsPanel = document.getElementById("inputs-panel") as HTMLDivElement;
@@ -454,8 +440,6 @@ const retirementStepperDelta = document.getElementById("retirement-stepper-delta
 const retireCheckResult = document.getElementById("retire-check-result") as HTMLParagraphElement;
 const retireCheckResultLabel = retireCheckResult.querySelector(".retire-check-result-label") as HTMLSpanElement;
 const retireCheckResultValue = retireCheckResult.querySelector(".retire-check-result-value") as HTMLSpanElement;
-const openCashflowButton = document.getElementById("open-cashflow-btn") as HTMLButtonElement;
-const openNetworthButton = document.getElementById("open-networth-btn") as HTMLButtonElement;
 const cashCanvas = document.getElementById("cash-chart") as HTMLCanvasElement;
 const nwCanvas = document.getElementById("nw-chart") as HTMLCanvasElement;
 const cashChartActions = document.getElementById("cash-chart-actions") as HTMLDivElement;
@@ -466,21 +450,22 @@ const cashLegendB = document.getElementById("cash-legend-b") as HTMLSpanElement;
 const nwLegend = document.getElementById("nw-legend") as HTMLDivElement;
 const nwLegendA = document.getElementById("nw-legend-a") as HTMLSpanElement;
 const nwLegendB = document.getElementById("nw-legend-b") as HTMLSpanElement;
-const dashboardAnchorEl = document.getElementById("dashboard-anchor") as HTMLElement;
+const layoutEl = document.getElementById("dashboard-view") as HTMLElement;
+const chartsViewEl = document.getElementById("charts-view") as HTMLElement;
+const projectionViewEl = document.getElementById("projections-view") as HTMLElement;
+const viewTabChartsButton = document.getElementById("view-tab-charts") as HTMLButtonElement;
+const viewTabProjectionsButton = document.getElementById("view-tab-projections") as HTMLButtonElement;
 const timelinePanel = document.getElementById("timeline-panel") as HTMLDivElement;
 const timelineScroll = document.getElementById("timeline-scroll") as HTMLDivElement;
 const timelineTrack = document.getElementById("timeline-track") as HTMLDivElement;
 const timelineScenarioEarlyButton = document.getElementById("timeline-scenario-early") as HTMLButtonElement;
 const timelineScenarioNormButton = document.getElementById("timeline-scenario-norm") as HTMLButtonElement;
-const cashflowAnchorEl = document.getElementById("cashflow-anchor") as HTMLElement;
-const projectionSectionEl = document.getElementById("projection-section") as HTMLElement;
 const projectionTabCashflowButton = document.getElementById("projection-tab-cashflow") as HTMLButtonElement;
 const projectionTabNetworthButton = document.getElementById("projection-tab-networth") as HTMLButtonElement;
 const projectionScenarioEarlyButton = document.getElementById("projection-scenario-early") as HTMLButtonElement;
 const projectionScenarioNormButton = document.getElementById("projection-scenario-norm") as HTMLButtonElement;
 const projectionExpandAllButton = document.getElementById("projection-expand-all") as HTMLButtonElement;
 const projectionCollapseAllButton = document.getElementById("projection-collapse-all") as HTMLButtonElement;
-const projectionSectionCollapseButton = document.getElementById("projection-section-collapse") as HTMLButtonElement;
 const cashflowTablePanel = document.getElementById("cashflow-table-panel") as HTMLDivElement;
 const networthTablePanel = document.getElementById("networth-table-panel") as HTMLDivElement;
 
@@ -531,9 +516,7 @@ type ProjectionSectionKey = "cashflow" | "networth";
 
 interface ProjectionSectionConfig {
   key: ProjectionSectionKey;
-  anchorEl: HTMLElement;
   tablePanel: HTMLDivElement;
-  openButton: HTMLButtonElement;
   isOpen(): boolean;
 }
 
@@ -552,7 +535,7 @@ interface TimelineYearEvent {
   amount: number | null;
 }
 
-const RETIREMENT_INDICATOR_PREFIX = "Earliest retirement:";
+const RETIREMENT_INDICATOR_PREFIX = "Earliest retirement";
 
 interface SharedRetirementDisplay {
   year: number;
@@ -563,11 +546,10 @@ interface SharedRetirementDisplay {
 function renderAgeStackHtml(yourAge: number, partnerAge: number, className: string): string {
   return `
     <span class="${className}">
-      <span class="${className}-prefix" aria-hidden="true">age</span>
-      <span class="${className}-rows">
-        <span class="${className}-line"><span class="${className}-age">${escapeHtml(String(yourAge))}</span><span class="${className}-label">You</span></span>
-        <span class="${className}-line"><span class="${className}-age">${escapeHtml(String(partnerAge))}</span><span class="${className}-label">Partner</span></span>
-      </span>
+      <span class="${className}-sep" aria-hidden="true">·</span>
+      <span class="${className}-line"><span class="${className}-age">${escapeHtml(String(yourAge))}</span><span class="${className}-label">you</span></span>
+      <span class="${className}-slash" aria-hidden="true">/</span>
+      <span class="${className}-line"><span class="${className}-age">${escapeHtml(String(partnerAge))}</span><span class="${className}-label">partner</span></span>
     </span>
   `;
 }
@@ -819,17 +801,13 @@ function getProjectionSectionConfig(key: ProjectionSectionKey): ProjectionSectio
   return key === "cashflow"
     ? {
         key,
-        anchorEl: cashflowAnchorEl,
         tablePanel: cashflowTablePanel,
-        openButton: openCashflowButton,
-        isOpen: () => projectionSectionOpen && projectionActiveTab === "cashflow"
+        isOpen: () => activeView === "projections" && projectionActiveTab === "cashflow"
       }
     : {
         key,
-        anchorEl: cashflowAnchorEl,
         tablePanel: networthTablePanel,
-        openButton: openNetworthButton,
-        isOpen: () => projectionSectionOpen && projectionActiveTab === "networth"
+        isOpen: () => activeView === "projections" && projectionActiveTab === "networth"
       };
 }
 
@@ -2426,18 +2404,74 @@ function renderProjectionRows(
 }
 
 function syncProjectionSectionVisibility(): void {
-  projectionSectionEl.hidden = !projectionSectionOpen;
-  projectionSectionEl.setAttribute("aria-hidden", projectionSectionOpen ? "false" : "true");
-  projectionSectionEl.classList.toggle("is-open", projectionSectionOpen);
-  cashflowTablePanel.hidden = !projectionSectionOpen || projectionActiveTab !== "cashflow";
-  networthTablePanel.hidden = !projectionSectionOpen || projectionActiveTab !== "networth";
-  openCashflowButton.classList.remove("is-active");
-  openNetworthButton.classList.remove("is-active");
+  const projectionsActive = activeView === "projections";
+  projectionViewEl.hidden = !projectionsActive;
+  projectionViewEl.setAttribute("aria-hidden", projectionsActive ? "false" : "true");
+  cashflowTablePanel.hidden = !projectionsActive || projectionActiveTab !== "cashflow";
+  networthTablePanel.hidden = !projectionsActive || projectionActiveTab !== "networth";
   projectionTabCashflowButton.classList.toggle("is-active", projectionActiveTab === "cashflow");
   projectionTabNetworthButton.classList.toggle("is-active", projectionActiveTab === "networth");
   projectionTabCashflowButton.setAttribute("aria-selected", projectionActiveTab === "cashflow" ? "true" : "false");
   projectionTabNetworthButton.setAttribute("aria-selected", projectionActiveTab === "networth" ? "true" : "false");
-  document.body.classList.toggle("cashflow-open", projectionSectionOpen);
+}
+
+function syncDashboardViewVisibility(): void {
+  const projectionsActive = activeView === "projections";
+  chartsViewEl.hidden = projectionsActive;
+  timelinePanel.hidden = projectionsActive;
+  layoutEl.classList.toggle("is-projections-view", projectionsActive);
+  viewTabChartsButton.classList.toggle("is-active", !projectionsActive);
+  viewTabProjectionsButton.classList.toggle("is-active", projectionsActive);
+  viewTabChartsButton.setAttribute("aria-selected", projectionsActive ? "false" : "true");
+  viewTabProjectionsButton.setAttribute("aria-selected", projectionsActive ? "true" : "false");
+  viewTabChartsButton.tabIndex = projectionsActive ? -1 : 0;
+  viewTabProjectionsButton.tabIndex = projectionsActive ? 0 : -1;
+  syncProjectionSectionVisibility();
+}
+
+function persistActiveView(): void {
+  try {
+    window.localStorage.setItem(VIEW_STORAGE_KEY, activeView);
+  } catch {
+    /* ignore */
+  }
+  const targetHash = `#view=${activeView}`;
+  if (window.location.hash !== targetHash) {
+    try {
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}${targetHash}`);
+    } catch {
+      window.location.hash = targetHash;
+    }
+  }
+}
+
+function readPersistedActiveView(): DashboardView {
+  const hashMatch = window.location.hash.match(/view=(charts|projections)/);
+  if (hashMatch) return hashMatch[1] as DashboardView;
+  try {
+    const stored = window.localStorage.getItem(VIEW_STORAGE_KEY);
+    if (stored === "charts" || stored === "projections") return stored;
+  } catch {
+    /* ignore */
+  }
+  return "charts";
+}
+
+function setActiveView(nextView: DashboardView, options: { persist?: boolean } = {}): void {
+  const persist = options.persist !== false;
+  if (activeView === nextView) {
+    if (persist) persistActiveView();
+    return;
+  }
+  activeView = nextView;
+  if (activeView === "projections") {
+    const blockingLines = latestRunResult
+      ? []
+      : getProjectionBlockingLines(getVisibleValidationMessages(latestValidationMessages));
+    ensureProjectionMounted(latestRunResult, blockingLines);
+  }
+  syncDashboardViewVisibility();
+  if (persist) persistActiveView();
 }
 
 function syncProjectionScenarioButtons(): void {
@@ -2460,62 +2494,11 @@ function syncTimelineScenarioButtons(): void {
   timelineScenarioNormButton.setAttribute("aria-selected", timelineScenario === "norm" ? "true" : "false");
 }
 
-function scrollAnchorIntoView(anchorEl: HTMLElement | null): void {
-  if (!anchorEl) return;
-  anchorEl.scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-  });
-}
-
 function ensureProjectionMounted(result: RunModelResult | null, blockingLines: string[] = []): void {
   if (projectionHasMounted) return;
   projectionHasMounted = true;
   renderCashflowPage(result, blockingLines);
   renderNetworthPage(result, blockingLines);
-}
-
-function openCashflowSection(): void {
-  if (projectionSectionOpen) {
-    setProjectionTab("cashflow");
-    scrollAnchorIntoView(cashflowAnchorEl);
-    return;
-  }
-  const blockingLines = latestRunResult
-    ? []
-    : getProjectionBlockingLines(getVisibleValidationMessages(latestValidationMessages));
-  projectionActiveTab = "cashflow";
-  ensureProjectionMounted(latestRunResult, blockingLines);
-  projectionSectionOpen = true;
-  syncProjectionSectionVisibility();
-  void projectionSectionEl.offsetHeight;
-  scrollAnchorIntoView(cashflowAnchorEl);
-}
-
-function openNetworthSection(): void {
-  if (projectionSectionOpen) {
-    setProjectionTab("networth");
-    scrollAnchorIntoView(cashflowAnchorEl);
-    return;
-  }
-  const blockingLines = latestRunResult
-    ? []
-    : getProjectionBlockingLines(getVisibleValidationMessages(latestValidationMessages));
-  projectionActiveTab = "networth";
-  ensureProjectionMounted(latestRunResult, blockingLines);
-  projectionSectionOpen = true;
-  syncProjectionSectionVisibility();
-  void projectionSectionEl.offsetHeight;
-  scrollAnchorIntoView(cashflowAnchorEl);
-}
-
-function closeProjectionSection(): void {
-  if (!projectionSectionOpen) return;
-  scrollAnchorIntoView(dashboardAnchorEl);
-  window.setTimeout(() => {
-    projectionSectionOpen = false;
-    syncProjectionSectionVisibility();
-  }, 220);
 }
 
 function setChartLegendsVisible(visible: boolean): void {
@@ -2620,7 +2603,7 @@ function buildChartContextByYear(result: RunModelResult): Map<number, TimelineYe
 function renderMilestoneTimeline(result: RunModelResult): void {
   const enteredAge = Number(fieldState[RUNTIME_FIELDS.currentAge]);
   const hasValidEnteredAge = !isBlank(fieldState[RUNTIME_FIELDS.currentAge]) && Number.isFinite(enteredAge) && enteredAge >= 18 && enteredAge <= 100;
-  timelinePanel.hidden = !hasValidEnteredAge;
+  timelinePanel.hidden = activeView === "projections" || !hasValidEnteredAge;
   if (!hasValidEnteredAge) {
     timelineTrack.style.height = "";
     timelineScroll.style.overflowY = "hidden";
@@ -5772,27 +5755,9 @@ app.addEventListener("keydown", handleEnterAdvance);
 spinnerDown.addEventListener("click", () => adjustEarlyRetirementAge(-1));
 spinnerUp.addEventListener("click", () => adjustEarlyRetirementAge(1));
 
-openCashflowButton.addEventListener("mousedown", (event) => {
-  event.preventDefault();
-});
-
-openNetworthButton.addEventListener("mousedown", (event) => {
-  event.preventDefault();
-});
-
-openCashflowButton.addEventListener("click", () => {
-  openCashflowButton.blur();
-  openCashflowSection();
-});
-
-openNetworthButton.addEventListener("click", () => {
-  openNetworthButton.blur();
-  openNetworthSection();
-});
-
 function setProjectionTab(nextTab: ProjectionSectionKey): void {
   if (projectionActiveTab === nextTab) return;
-  if (projectionSectionOpen) {
+  if (activeView === "projections") {
     if (projectionActiveTab === "cashflow") {
       pendingCashflowScrollAnchor = captureProjectionScrollContext("cashflow");
     } else {
@@ -5806,6 +5771,53 @@ function setProjectionTab(nextTab: ProjectionSectionKey): void {
     nextTab === "cashflow" ? pendingCashflowScrollAnchor : pendingNetworthScrollAnchor
   );
 }
+
+viewTabChartsButton.addEventListener("click", () => {
+  viewTabChartsButton.blur();
+  setActiveView("charts");
+});
+
+viewTabProjectionsButton.addEventListener("click", () => {
+  viewTabProjectionsButton.blur();
+  setActiveView("projections");
+});
+
+function handleViewTabKeydown(event: KeyboardEvent): void {
+  const tabs: [HTMLButtonElement, HTMLButtonElement] = [viewTabChartsButton, viewTabProjectionsButton];
+  const views: DashboardView[] = ["charts", "projections"];
+  const currentIdx = tabs.indexOf(event.currentTarget as HTMLButtonElement);
+  if (currentIdx < 0) return;
+  let nextIdx = currentIdx;
+  switch (event.key) {
+    case "ArrowLeft":
+    case "ArrowUp":
+      nextIdx = (currentIdx - 1 + tabs.length) % tabs.length;
+      break;
+    case "ArrowRight":
+    case "ArrowDown":
+      nextIdx = (currentIdx + 1) % tabs.length;
+      break;
+    case "Home":
+      nextIdx = 0;
+      break;
+    case "End":
+      nextIdx = tabs.length - 1;
+      break;
+    default:
+      return;
+  }
+  event.preventDefault();
+  setActiveView(views[nextIdx]);
+  tabs[nextIdx].focus();
+}
+
+viewTabChartsButton.addEventListener("keydown", handleViewTabKeydown);
+viewTabProjectionsButton.addEventListener("keydown", handleViewTabKeydown);
+
+window.addEventListener("hashchange", () => {
+  const next = readPersistedActiveView();
+  if (next !== activeView) setActiveView(next, { persist: false });
+});
 
 function setProjectionScenario(nextScenario: "early" | "norm"): void {
   if (cashflowScenario === nextScenario && timelineScenario === nextScenario) return;
@@ -5868,10 +5880,6 @@ projectionCollapseAllButton.addEventListener("click", () => {
   updateActiveProjectionExpansion("collapsed");
 });
 
-projectionSectionCollapseButton.addEventListener("click", () => {
-  closeProjectionSection();
-});
-
 function handleProjectionToggleClick(
   event: Event,
   sectionKey: ProjectionSectionKey,
@@ -5921,7 +5929,12 @@ if (!scenarioStorageAvailable) {
 
 resetCashflowExpandedGroups("collapsed");
 resetNetworthExpandedGroups("collapsed");
-syncProjectionSectionVisibility();
+activeView = readPersistedActiveView();
+if (activeView === "projections") {
+  ensureProjectionMounted(latestRunResult);
+}
+syncDashboardViewVisibility();
+persistActiveView();
 if (!restoreDraftScenarioIfAvailable()) {
   renderInputs();
   recalc();
