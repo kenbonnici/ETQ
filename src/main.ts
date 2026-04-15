@@ -447,6 +447,7 @@ const inputsPanel = document.getElementById("inputs-panel") as HTMLDivElement;
 const spinner = document.getElementById("early-ret-age") as HTMLInputElement;
 const spinnerDown = document.getElementById("early-ret-down") as HTMLButtonElement;
 const spinnerUp = document.getElementById("early-ret-up") as HTMLButtonElement;
+const retirementStepper = document.querySelector(".retirement-stepper") as HTMLDivElement;
 const retirementStepperLabel = document.getElementById("retirement-stepper-label") as HTMLSpanElement;
 const retirementStepperMeta = document.getElementById("retirement-stepper-meta") as HTMLSpanElement;
 const retirementStepperDelta = document.getElementById("retirement-stepper-delta") as HTMLSpanElement;
@@ -2727,10 +2728,12 @@ function getStatutoryAge(): number | null {
   return Math.round(capped);
 }
 
-function updateEarlyRetirementButtons(statutory: number | null): void {
+function updateEarlyRetirementButtons(statutory: number | null, isInteractive = true): void {
   if (statutory === null) {
+    spinner.disabled = true;
     spinnerDown.disabled = true;
     spinnerUp.disabled = true;
+    retirementStepper.classList.add("is-disabled");
     retirementStepperLabel.textContent = "Compare retiring at";
     retirementStepperMeta.hidden = true;
     retirementStepperDelta.hidden = true;
@@ -2745,6 +2748,14 @@ function updateEarlyRetirementButtons(statutory: number | null): void {
   const entered = parseRetirementStepperValue(raw);
   const current = Number.isFinite(entered) ? entered : uiState.earlyRetirementAge;
   const clamped = Math.max(minRetirementAge, Math.min(statutory, current));
+  spinner.disabled = !isInteractive;
+  retirementStepper.classList.toggle("is-disabled", !isInteractive);
+  if (!isInteractive) {
+    spinnerDown.disabled = true;
+    spinnerUp.disabled = true;
+    updateRetirementStepperPresentation(clamped);
+    return;
+  }
   spinnerDown.disabled = clamped <= minRetirementAge;
   spinnerUp.disabled = clamped >= statutory;
   updateRetirementStepperPresentation(clamped);
@@ -5577,6 +5588,7 @@ function recalc(): void {
     : null;
   const indicator = createRetirementIndicatorState(earliestAge, getCurrentAge(), hasEssentialErrors, statutory);
   setRetireCheckMessage(indicator.message, indicator.tone, indicator.sharedDisplay);
+  updateEarlyRetirementButtons(statutory, indicator.message !== null);
   updateRetirementStepperDelta(earliestAge, compareAge);
   if (hasBlockingErrors) {
     latestRunResult = null;

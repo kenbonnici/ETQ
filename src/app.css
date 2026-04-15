@@ -352,6 +352,10 @@ body {
   border-left: 1px solid #e3ebe5;
 }
 
+.retirement-stepper.is-disabled {
+  opacity: 0.65;
+}
+
 .retirement-stepper-label {
   font-size: 13px;
   font-weight: 700;
@@ -401,6 +405,11 @@ body {
   text-align: center;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+}
+
+.retirement-stepper-field #early-ret-age:disabled {
+  color: #b6a07a;
+  cursor: not-allowed;
 }
 
 .retirement-stepper-arrows {

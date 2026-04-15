@@ -1012,14 +1012,22 @@ test("earliest-retirement indicator follows projection-blocking validation", asy
   await loadSampleData(page);
 
   const retirementIndicator = page.locator("#retire-check-result");
+  const retirementStepper = page.locator(".retirement-stepper");
   await expect(retirementIndicator).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
+  await expect(page.locator(selectors.earlyRetAge)).toBeEnabled();
 
   await fillAndBlur(page, selectors.currentAge, "");
   await expect(retirementIndicator).toContainText("Awaiting minimum inputs");
+  await expect(page.locator(selectors.earlyRetAge)).toBeDisabled();
+  await expect(page.locator("#early-ret-up")).toBeDisabled();
+  await expect(page.locator("#early-ret-down")).toBeDisabled();
+  await expect(retirementStepper).toHaveClass(/is-disabled/);
   await expect(page.locator(".timeline-empty")).toHaveText("");
 
   await fillAndBlur(page, selectors.currentAge, "48");
   await expect(retirementIndicator).toContainText(SAMPLE_DATA_RETIREMENT_HINT);
+  await expect(page.locator(selectors.earlyRetAge)).toBeEnabled();
+  await expect(retirementStepper).not.toHaveClass(/is-disabled/);
   await expect(page.locator(".timeline-milestone").first()).toBeVisible();
 });
 
