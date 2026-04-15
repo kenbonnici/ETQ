@@ -562,8 +562,11 @@ interface SharedRetirementDisplay {
 function renderAgeStackHtml(yourAge: number, partnerAge: number, className: string): string {
   return `
     <span class="${className}">
-      <span class="${className}-line"><span class="${className}-age">age ${escapeHtml(String(yourAge))}</span><span class="${className}-label">You</span></span>
-      <span class="${className}-line"><span class="${className}-age">age ${escapeHtml(String(partnerAge))}</span><span class="${className}-label">Partner</span></span>
+      <span class="${className}-prefix" aria-hidden="true">age</span>
+      <span class="${className}-rows">
+        <span class="${className}-line"><span class="${className}-age">${escapeHtml(String(yourAge))}</span><span class="${className}-label">You</span></span>
+        <span class="${className}-line"><span class="${className}-age">${escapeHtml(String(partnerAge))}</span><span class="${className}-label">Partner</span></span>
+      </span>
     </span>
   `;
 }

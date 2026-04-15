@@ -602,29 +602,49 @@ body {
 .retire-check-result-age-stack,
 .retirement-stepper-age-stack {
   display: inline-flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
   font-size: 11px;
   font-weight: 700;
   line-height: 1.05;
   color: #5f756d;
 }
 
+.retire-check-result-age-stack-prefix,
+.retirement-stepper-age-stack-prefix {
+  display: inline-flex;
+  align-items: center;
+  font-size: 8px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9aaca5;
+}
+
+.retire-check-result-age-stack-rows,
+.retirement-stepper-age-stack-rows {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
 .retire-check-result-age-stack-line,
 .retirement-stepper-age-stack-line {
   display: grid;
   grid-template-columns: max-content max-content;
-  column-gap: 3px;
+  column-gap: 4px;
   align-items: baseline;
 }
 
 .retire-check-result-age-stack-age,
 .retirement-stepper-age-stack-age {
   display: inline-block;
-  min-width: 42px;
+  min-width: 14px;
   font-weight: 600;
   color: #36584f;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
 .retire-check-result-age-stack-label,
