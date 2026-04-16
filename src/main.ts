@@ -2496,6 +2496,20 @@ function syncTimelineScenarioButtons(): void {
   timelineScenarioNormButton.setAttribute("aria-selected", timelineScenario === "norm" ? "true" : "false");
 }
 
+function setDashboardControlsDisabled(disabled: boolean): void {
+  const controls = [
+    viewTabChartsButton,
+    viewTabProjectionsButton,
+    projectionTabCashflowButton,
+    projectionTabNetworthButton,
+    projectionScenarioEarlyButton,
+    projectionScenarioNormButton,
+    timelineScenarioEarlyButton,
+    timelineScenarioNormButton
+  ];
+  for (const btn of controls) btn.disabled = disabled;
+}
+
 function ensureProjectionMounted(result: RunModelResult | null, blockingLines: string[] = []): void {
   if (projectionHasMounted) return;
   projectionHasMounted = true;
@@ -5578,6 +5592,7 @@ function recalc(): void {
   if (hasBlockingErrors) {
     latestRunResult = null;
     setChartLegendsVisible(false);
+    setDashboardControlsDisabled(true);
     const blockedPrimaryLabel = statutory === null ? "Retire at" : formatRetirementAgeLabel("Retire at", statutory);
     const blockedCompareLabel = compareAge === null ? "Retire at" : formatRetirementAgeLabel("Retire at", compareAge);
     cashLegendA.textContent = blockedPrimaryLabel;
@@ -5618,6 +5633,7 @@ function recalc(): void {
     : compareResult.outputs.scenarioEarly;
   const displayResult = composeDisplayedRunModelResult(compareResult, primaryScenario, compareResult.outputs.scenarioEarly);
   latestRunResult = displayResult;
+  setDashboardControlsDisabled(false);
   const contextByYear = buildChartContextByYear(displayResult);
   const primaryLabel = earliestAge !== null
     ? formatRetirementAgeLabel("Retire at", earliestAge)

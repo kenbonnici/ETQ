@@ -140,6 +140,11 @@ body {
   background: #d97706;
 }
 
+.timeline-scenario-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .timeline-header h2 {
   margin: 0;
   font-size: 13px;
@@ -401,6 +406,11 @@ body {
 .view-tab-btn:focus-visible {
   outline: 2px solid rgba(126, 184, 168, 0.55);
   outline-offset: 2px;
+}
+
+.view-tab-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .retirement-stepper {
@@ -815,6 +825,11 @@ body {
   outline-offset: 2px;
 }
 
+.projection-tab-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .cashflow-table-panel {
   background: #fff;
   border: 1px solid var(--line);
@@ -882,6 +897,11 @@ body {
 #projection-scenario-norm.is-active {
   border-color: #b45309;
   background: #d97706;
+}
+
+.cashflow-scenario-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .projection-expand-toggle {
