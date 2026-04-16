@@ -2508,6 +2508,7 @@ function setDashboardControlsDisabled(disabled: boolean): void {
     timelineScenarioNormButton
   ];
   for (const btn of controls) btn.disabled = disabled;
+  layoutEl.classList.toggle("is-awaiting", disabled);
 }
 
 function ensureProjectionMounted(result: RunModelResult | null, blockingLines: string[] = []): void {

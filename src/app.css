@@ -1329,6 +1329,12 @@ body {
   color: #153730;
 }
 
+.is-awaiting .chart-card h2,
+.is-awaiting .timeline-header h2 {
+  color: var(--muted);
+  opacity: 0.55;
+}
+
 .chart-header {
   display: flex;
   align-items: center;
