@@ -345,7 +345,7 @@ body {
 
 .dashboard-header {
   display: grid;
-  grid-template-columns: auto auto 1fr auto;
+  grid-template-columns: auto auto auto 1fr auto;
   align-items: center;
   column-gap: 20px;
   padding: 8px 14px;
@@ -356,8 +356,48 @@ body {
 }
 
 .dashboard-header > .view-tabs {
-  grid-column: 4;
+  grid-column: 3;
+  margin-left: 12px;
+}
+
+.brand-link {
+  grid-column: 5;
   justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 4px;
+  text-decoration: none;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+
+.brand-link:hover {
+  opacity: 1;
+}
+
+.brand-logo {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.01em;
+  color: var(--muted);
+}
+
+.brand-highlight {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.brand-tld {
+  font-size: 11px;
+  color: var(--muted);
+  opacity: 0.6;
 }
 
 .view-tabs {
@@ -3574,6 +3614,10 @@ small {
     grid-column: 2;
     grid-row: 2;
     justify-self: end;
+  }
+
+  .brand-link {
+    display: none;
   }
 
   .scenario-manager-row {

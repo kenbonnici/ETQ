@@ -353,6 +353,7 @@ app.innerHTML = `
         <button id="view-tab-charts" class="view-tab-btn is-active" type="button" role="tab" aria-selected="true" aria-controls="charts-view">Charts</button>
         <button id="view-tab-projections" class="view-tab-btn" type="button" role="tab" aria-selected="false" aria-controls="projections-view">Projections</button>
       </div>
+      <a class="brand-link" href="https://enoughtoquit.com" target="_blank" rel="noopener"><svg class="brand-logo" viewBox="0 0 20 20" aria-hidden="true"><rect x="2" y="14" width="4" height="4" rx="1" fill="#0f766e" opacity="0.4"/><rect x="8" y="9" width="4" height="9" rx="1" fill="#0f766e" opacity="0.65"/><rect x="14" y="3" width="4" height="15" rx="1" fill="#0f766e"/><path d="M13.5 6.5 15.5 8.5 19 4" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg><span class="brand-text"><span class="brand-highlight">Enough</span>To<span class="brand-highlight">Quit</span><span class="brand-tld">.com</span></span></a>
     </header>
     <section class="right" id="charts-view" role="tabpanel" aria-labelledby="view-tab-charts">
       <div class="chart-legend" id="charts-legend" hidden aria-hidden="true">
