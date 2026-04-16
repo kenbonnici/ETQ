@@ -1051,5 +1051,15 @@ export function buildTimelineMilestones(
     });
   }
   milestones.sort((a, b) => a.age - b.age);
-  return milestones;
+  // Merge milestones that share the same rounded age so "48" doesn't repeat
+  const merged: TimelineMilestone[] = [];
+  for (const m of milestones) {
+    const prev = merged[merged.length - 1];
+    if (prev && Math.round(prev.age) === Math.round(m.age)) {
+      prev.label = prev.label + ", " + m.label;
+    } else {
+      merged.push({ ...m });
+    }
+  }
+  return merged;
 }

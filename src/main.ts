@@ -2680,13 +2680,17 @@ function renderMilestoneTimeline(result: RunModelResult): void {
     })
     .join("");
 
+  const roundedEndAge = Math.round(endAge);
+  const milestonesAges = new Set(milestones.map((m) => Math.round(m.age)));
+  const showTopCap = !milestonesAges.has(roundedEndAge);
+  const showBottomCap = !milestonesAges.has(startLabelAge);
   timelineTrack.innerHTML = `
     <div class="timeline-axis"></div>
     <div class="timeline-endcap timeline-endcap-top">
-      <span class="timeline-end-year">${Math.round(endAge)}</span>
+      <span class="timeline-end-year">${showTopCap ? roundedEndAge : ""}</span>
     </div>
     <div class="timeline-endcap timeline-endcap-bottom">
-      <span class="timeline-end-year">${startLabelAge}</span>
+      <span class="timeline-end-year">${showBottomCap ? startLabelAge : ""}</span>
     </div>
     ${milestonesHtml}
   `;
