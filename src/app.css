@@ -990,8 +990,8 @@ body {
   position: sticky;
   left: 0;
   z-index: 13;
-  min-width: 320px;
-  max-width: 320px;
+  min-width: 260px;
+  max-width: 260px;
   text-align: left;
   background: #fcfefd;
 }
@@ -1042,15 +1042,15 @@ body {
 
 .cashflow-year-label {
   font-size: 15px;
-  font-weight: 800;
-  color: #18332f;
+  font-weight: 700;
+  color: #2d574d;
   line-height: 1.1;
 }
 
 .cashflow-age-label {
   font-size: 10px;
-  font-weight: 500;
-  color: #94aaa3;
+  font-weight: 600;
+  color: #6b857e;
   line-height: 1.1;
 }
 
@@ -1115,17 +1115,17 @@ body {
 }
 
 .cashflow-row.is-major-group .cashflow-row-toggle-text {
-  font-weight: 800;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 15px;
   letter-spacing: -0.01em;
-  color: #143630;
+  color: #2d574d;
 }
 
 .cashflow-row.is-major-line-item .cashflow-row-label-copy {
-  font-weight: 800;
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 15px;
   letter-spacing: -0.01em;
-  color: #143630;
+  color: #2d574d;
 }
 
 .cashflow-row.is-subgroup .cashflow-row-toggle-text {
@@ -1176,7 +1176,7 @@ body {
   text-align: right;
   font-size: 13px;
   font-variant-numeric: tabular-nums;
-  color: #1f2937;
+  color: #2d3f3a;
   background: #fff;
   white-space: nowrap;
 }
@@ -3620,7 +3620,7 @@ small {
 
   .cashflow-corner-cell,
   .cashflow-label-cell {
-    min-width: 250px;
-    max-width: 250px;
+    min-width: 210px;
+    max-width: 210px;
   }
 }
