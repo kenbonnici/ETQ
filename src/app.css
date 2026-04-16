@@ -593,14 +593,15 @@ body {
   position: relative;
   background: transparent;
   border: 0;
+  border-left: 3px solid #b8c8bb;
   border-right: 1px solid var(--line-soft);
   border-radius: 0;
-  padding: 2px 20px 2px 0;
+  padding: 2px 20px 2px 14px;
   line-height: 1.1;
   white-space: nowrap;
   max-width: min(640px, 100%);
   box-shadow: none;
-  transition: color 160ms ease;
+  transition: color 160ms ease, border-color 160ms ease;
 }
 
 .retire-check-result-label {
@@ -708,14 +709,17 @@ body {
 .retire-check-result.is-positive,
 .retire-check-result.is-promising {
   color: #175043;
+  border-left-color: var(--accent);
 }
 
 .retire-check-result.is-warning {
   color: #7c6745;
+  border-left-color: #d97706;
 }
 
 .retire-check-result.is-neutral {
   color: #49625a;
+  border-left-color: #b8c8bb;
 }
 
 .retire-check-result.is-positive .retire-check-result-value,
