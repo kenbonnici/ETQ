@@ -81,10 +81,6 @@ body {
   display: grid;
   grid-template-rows: auto 1fr;
   overflow: hidden;
-  border-color: #d6e1db;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #f9fcfa 0%, #ffffff 85%);
-  box-shadow: 0 3px 10px rgb(15 23 42 / 0.03);
 }
 
 .timeline-header {
@@ -92,10 +88,10 @@ body {
   align-items: center;
   gap: 8px;
   margin-bottom: 12px;
-  padding: 9px 12px;
-  border-radius: 10px;
-  background: #f1f6f3;
-  border: 1px solid #dbe6e0;
+  padding: 6px 10px;
+  border-radius: 14px;
+  background: #fff;
+  border: 1px solid var(--line);
 }
 
 .timeline-scenario-toggle {
@@ -147,11 +143,9 @@ body {
 
 .timeline-header h2 {
   margin: 0;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
-  color: #24453d;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: #153730;
 }
 
 .timeline-scroll {
