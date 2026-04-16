@@ -748,9 +748,7 @@ body {
   color: #4d665d;
 }
 
-.cashflow-back-btn,
-.cashflow-control-btn,
-.cashflow-scenario-btn {
+.cashflow-back-btn {
   height: 38px;
   border-radius: 10px;
   border: 1px solid #cfdad2;
@@ -758,18 +756,8 @@ body {
   color: #15342f;
   font-size: 14px;
   font-weight: 700;
-  cursor: pointer;
-}
-
-.cashflow-back-btn,
-.cashflow-control-btn {
   padding: 0 14px;
-}
-
-.cashflow-scenario-btn.is-active {
-  border-color: #0f766e;
-  background: #e8f5f1;
-  color: #0f5d57;
+  cursor: pointer;
 }
 
 .projection-view {
@@ -788,39 +776,43 @@ body {
 .projection-tabs {
   display: inline-flex;
   align-items: center;
-  gap: 24px;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #d6dfda;
+  border-radius: 999px;
+  background: #f3f7f4;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.7);
 }
 
 .projection-tab-btn {
-  position: relative;
-  border: 0;
-  padding: 0 0 8px;
-  background: transparent;
-  color: #6f807a;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  cursor: pointer;
-}
-
-.projection-tab-btn::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 2px;
+  min-width: 0;
+  padding: 0 12px;
+  border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
-  transition: background-color 150ms ease;
+  color: #4f6d65;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.projection-tab-btn:hover:not(.is-active) {
+  color: #1f3b34;
 }
 
 .projection-tab-btn.is-active {
-  color: #182320;
+  background: #ffffff;
+  color: #15342f;
+  border-color: #cfdcd4;
+  box-shadow: 0 1px 2px rgb(21 52 47 / 0.08);
 }
 
-.projection-tab-btn.is-active::after {
-  background: #7ec2b6;
+.projection-tab-btn:focus-visible {
+  outline: 2px solid rgba(126, 184, 168, 0.55);
+  outline-offset: 2px;
 }
 
 .cashflow-table-panel {
@@ -833,8 +825,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
-  padding: 10px 14px;
+  gap: 16px;
+  padding: 6px 10px;
   background: #fff;
   border: 1px solid var(--line);
   border-radius: 14px;
@@ -855,7 +847,7 @@ body {
   display: inline-flex;
   align-items: center;
   gap: 2px;
-  padding: 3px;
+  padding: 2px;
   border: 1px solid #d6dfda;
   border-radius: 999px;
   background: #f8fbf9;
@@ -863,16 +855,17 @@ body {
 }
 
 .cashflow-scenario-btn {
-  min-width: 110px;
-  height: 30px;
-  padding: 0 16px;
-  border-color: transparent;
+  min-width: 0;
+  padding: 0 10px;
+  border: 1px solid transparent;
   border-radius: 999px;
   background: transparent;
   color: #5c746d;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.01em;
+  line-height: 24px;
+  white-space: nowrap;
+  cursor: pointer;
   transition: background-color 150ms ease, color 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 }
 
@@ -891,26 +884,50 @@ body {
   background: #d97706;
 }
 
-.cashflow-page-actions {
+.projection-expand-toggle {
   display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #5c746d;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 150ms ease;
 }
 
-.cashflow-control-btn {
-  border-color: #8fbfaf;
+.projection-expand-toggle:hover {
+  color: #1f3b34;
+}
+
+.projection-expand-toggle-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid #d8e2dc;
   border-radius: 999px;
-  background: #ffffff;
-  color: #2f7a69;
-  box-shadow: none;
-  transition: border-color 150ms ease, color 150ms ease, background-color 150ms ease;
+  background: #fbfdfc;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
+  color: inherit;
 }
 
-.cashflow-control-btn:hover {
-  border-color: #5fa18d;
-  background: #ffffff;
-  color: #275f52;
+.projection-expand-toggle:hover .projection-expand-toggle-icon {
+  border-color: #b0c4bc;
+}
+
+.projection-expand-toggle-label {
+  white-space: nowrap;
+}
+
+.projection-expand-toggle:focus-visible {
+  outline: 2px solid rgba(126, 184, 168, 0.55);
+  outline-offset: 2px;
 }
 
 .cashflow-table-panel {

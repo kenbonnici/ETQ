@@ -415,10 +415,6 @@ app.innerHTML = `
             <button id="projection-scenario-early" class="cashflow-scenario-btn" type="button">Early</button>
             <button id="projection-scenario-norm" class="cashflow-scenario-btn" type="button">Statutory</button>
           </div>
-          <div class="cashflow-page-actions" aria-label="Projection table controls">
-            <button id="projection-expand-all" class="cashflow-control-btn" type="button">Expand all</button>
-            <button id="projection-collapse-all" class="cashflow-control-btn" type="button">Collapse all</button>
-          </div>
         </div>
       </header>
       <div class="projection-content-panel">
@@ -464,8 +460,6 @@ const projectionTabCashflowButton = document.getElementById("projection-tab-cash
 const projectionTabNetworthButton = document.getElementById("projection-tab-networth") as HTMLButtonElement;
 const projectionScenarioEarlyButton = document.getElementById("projection-scenario-early") as HTMLButtonElement;
 const projectionScenarioNormButton = document.getElementById("projection-scenario-norm") as HTMLButtonElement;
-const projectionExpandAllButton = document.getElementById("projection-expand-all") as HTMLButtonElement;
-const projectionCollapseAllButton = document.getElementById("projection-collapse-all") as HTMLButtonElement;
 const cashflowTablePanel = document.getElementById("cashflow-table-panel") as HTMLDivElement;
 const networthTablePanel = document.getElementById("networth-table-panel") as HTMLDivElement;
 
@@ -2386,12 +2380,20 @@ function renderProjectionRows(
       </div>
     </th>
   `).join("");
+  const hasExpanded = expandedGroups.size > 0;
+  const expandToggleIcon = hasExpanded ? "−" : "+";
+  const expandToggleLabel = hasExpanded ? "Collapse all" : "Expand all";
   return `
     <div class="cashflow-table-scroll">
       <table class="cashflow-table">
         <thead>
           <tr>
-            <th class="cashflow-corner-cell" scope="col"></th>
+            <th class="cashflow-corner-cell" scope="col">
+              <button class="projection-expand-toggle" type="button" data-expand-action="${hasExpanded ? "collapsed" : "expanded"}" aria-label="${expandToggleLabel}">
+                <span class="projection-expand-toggle-icon">${expandToggleIcon}</span>
+                <span class="projection-expand-toggle-label">${expandToggleLabel}</span>
+              </button>
+            </th>
             ${headerCells}
           </tr>
         </thead>
@@ -5872,13 +5874,6 @@ function updateActiveProjectionExpansion(mode: "expanded" | "collapsed"): void {
   recalc();
 }
 
-projectionExpandAllButton.addEventListener("click", () => {
-  updateActiveProjectionExpansion("expanded");
-});
-
-projectionCollapseAllButton.addEventListener("click", () => {
-  updateActiveProjectionExpansion("collapsed");
-});
 
 function handleProjectionToggleClick(
   event: Event,
@@ -5887,6 +5882,12 @@ function handleProjectionToggleClick(
 ): void {
   const target = event.target as HTMLElement | null;
   if (!target) return;
+  const expandToggle = target.closest<HTMLElement>("[data-expand-action]");
+  if (expandToggle) {
+    const mode = expandToggle.dataset.expandAction as "expanded" | "collapsed";
+    updateActiveProjectionExpansion(mode);
+    return;
+  }
   const toggle = target.closest<HTMLElement>("[data-projection-toggle]");
   if (!toggle) return;
   const groupId = toggle.dataset.projectionToggle;

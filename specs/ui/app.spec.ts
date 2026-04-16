@@ -980,7 +980,7 @@ test("equivalent living-expense totals keep downstream projections unchanged acr
   await fillAndBlur(page, selectors.livingExpenses, "60000");
 
   await page.locator("#view-tab-projections").click();
-  await page.locator("#projection-expand-all").click();
+  await page.locator("#cashflow-table-panel .projection-expand-toggle").click();
   const singleModeRow = await page.locator('tr[data-row-id="living-expenses"]').textContent();
 
   await page.locator(selectors.livingExpensesExpandedMode).click();
@@ -1078,13 +1078,17 @@ test("cash-flow controls preserve structure and scroll position across scenario 
   await expect(page.locator("#projections-view")).toHaveAttribute("aria-hidden", "false");
   await expect(page.locator("#projection-tab-cashflow")).toHaveAttribute("aria-selected", "true");
 
-  await page.locator("#projection-expand-all").click();
+  const expandToggle = page.locator("#cashflow-table-panel .projection-expand-toggle");
+  await expect(expandToggle).toHaveAttribute("data-expand-action", "expanded");
+  await expandToggle.click();
   await expect(page.locator('tr[data-row-id="employment-income"]')).toBeVisible();
 
-  await page.locator("#projection-collapse-all").click();
+  await expect(expandToggle).toHaveAttribute("data-expand-action", "collapsed");
+  await expandToggle.click();
   await expect(page.locator('tr[data-row-id="employment-income"]')).toHaveCount(0);
 
-  await page.locator("#projection-expand-all").click();
+  await expect(expandToggle).toHaveAttribute("data-expand-action", "expanded");
+  await expandToggle.click();
   await expect(page.locator('tr[data-row-id="employment-income"]')).toBeVisible();
 
   const scrollMetrics = await page.locator(selectors.cashflowScroll).evaluate((node) => {
