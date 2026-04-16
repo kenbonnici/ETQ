@@ -1129,7 +1129,7 @@ body {
 .cashflow-label-inner {
   display: flex;
   align-items: center;
-  min-height: 48px;
+  min-height: 40px;
   padding: 10px 18px 10px calc(18px + (var(--cashflow-indent) * 16px));
 }
 
@@ -1139,7 +1139,7 @@ body {
   align-items: center;
   gap: 8px;
   width: 100%;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   color: #15342f;
 }
@@ -1155,22 +1155,22 @@ body {
 }
 
 .cashflow-row.is-major-group .cashflow-row-toggle-text {
-  font-weight: 700;
-  font-size: 15px;
+  font-weight: 650;
+  font-size: 13px;
   letter-spacing: -0.01em;
   color: #2d574d;
 }
 
 .cashflow-row.is-major-line-item .cashflow-row-label-copy {
-  font-weight: 700;
-  font-size: 15px;
+  font-weight: 650;
+  font-size: 13px;
   letter-spacing: -0.01em;
   color: #2d574d;
 }
 
 .cashflow-row.is-subgroup .cashflow-row-toggle-text {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   color: #244741;
 }
 
@@ -1270,11 +1270,11 @@ body {
 }
 
 .cashflow-row.is-major-group .cashflow-label-inner {
-  min-height: 58px;
+  min-height: 44px;
 }
 
 .cashflow-row.is-major-line-item .cashflow-label-inner {
-  min-height: 58px;
+  min-height: 44px;
 }
 
 .cashflow-row[data-row-id="cash"] .cashflow-label-cell,
