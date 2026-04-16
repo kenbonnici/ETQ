@@ -355,39 +355,25 @@ app.innerHTML = `
       </div>
     </header>
     <section class="right" id="charts-view" role="tabpanel" aria-labelledby="view-tab-charts">
+      <div class="chart-legend" id="charts-legend" hidden aria-hidden="true">
+        <span class="chart-legend-item">
+          <span class="chart-legend-line"></span>
+          <span id="charts-legend-a">Retire at early age</span>
+        </span>
+        <span class="chart-legend-item">
+          <span class="chart-legend-line is-dashed"></span>
+          <span id="charts-legend-b">Retire at statutory age</span>
+        </span>
+      </div>
       <article class="chart-card" id="cash-chart-card">
         <div class="chart-header">
           <h2>Cash</h2>
-          <div class="chart-actions" id="cash-chart-actions">
-            <div class="chart-legend" id="cash-legend" aria-hidden="true">
-              <span class="chart-legend-item">
-                <span class="chart-legend-line"></span>
-                <span id="cash-legend-a">Retire at early age</span>
-              </span>
-              <span class="chart-legend-item">
-                <span class="chart-legend-line is-dashed"></span>
-                <span id="cash-legend-b">Retire at statutory age</span>
-              </span>
-            </div>
-          </div>
         </div>
         <canvas id="cash-chart" width="920" height="300"></canvas>
       </article>
       <article class="chart-card">
         <div class="chart-header">
           <h2>Net Worth</h2>
-          <div class="chart-actions" id="nw-chart-actions">
-            <div class="chart-legend" id="nw-legend" aria-hidden="true">
-              <span class="chart-legend-item">
-                <span class="chart-legend-line"></span>
-                <span id="nw-legend-a">Retire at early age</span>
-              </span>
-              <span class="chart-legend-item">
-                <span class="chart-legend-line is-dashed"></span>
-                <span id="nw-legend-b">Retire at statutory age</span>
-              </span>
-            </div>
-          </div>
         </div>
         <canvas id="nw-chart" width="920" height="300"></canvas>
       </article>
@@ -438,14 +424,9 @@ const retireCheckResultLabel = retireCheckResult.querySelector(".retire-check-re
 const retireCheckResultValue = retireCheckResult.querySelector(".retire-check-result-value") as HTMLSpanElement;
 const cashCanvas = document.getElementById("cash-chart") as HTMLCanvasElement;
 const nwCanvas = document.getElementById("nw-chart") as HTMLCanvasElement;
-const cashChartActions = document.getElementById("cash-chart-actions") as HTMLDivElement;
-const nwChartActions = document.getElementById("nw-chart-actions") as HTMLDivElement;
-const cashLegend = document.getElementById("cash-legend") as HTMLDivElement;
-const cashLegendA = document.getElementById("cash-legend-a") as HTMLSpanElement;
-const cashLegendB = document.getElementById("cash-legend-b") as HTMLSpanElement;
-const nwLegend = document.getElementById("nw-legend") as HTMLDivElement;
-const nwLegendA = document.getElementById("nw-legend-a") as HTMLSpanElement;
-const nwLegendB = document.getElementById("nw-legend-b") as HTMLSpanElement;
+const chartsLegend = document.getElementById("charts-legend") as HTMLDivElement;
+const chartsLegendA = document.getElementById("charts-legend-a") as HTMLSpanElement;
+const chartsLegendB = document.getElementById("charts-legend-b") as HTMLSpanElement;
 const layoutEl = document.getElementById("dashboard-view") as HTMLElement;
 const chartsViewEl = document.getElementById("charts-view") as HTMLElement;
 const projectionViewEl = document.getElementById("projections-view") as HTMLElement;
@@ -2520,16 +2501,10 @@ function ensureProjectionMounted(result: RunModelResult | null, blockingLines: s
 
 function setChartLegendsVisible(visible: boolean): void {
   if (visible) {
-    cashChartActions.removeAttribute("hidden");
-    nwChartActions.removeAttribute("hidden");
-    cashLegend.removeAttribute("hidden");
-    nwLegend.removeAttribute("hidden");
+    chartsLegend.removeAttribute("hidden");
     return;
   }
-  cashChartActions.setAttribute("hidden", "");
-  nwChartActions.setAttribute("hidden", "");
-  cashLegend.setAttribute("hidden", "");
-  nwLegend.setAttribute("hidden", "");
+  chartsLegend.setAttribute("hidden", "");
 }
 
 function resetCashflowExpandedGroups(mode: "expanded" | "collapsed" | "top-level"): void {
@@ -5400,8 +5375,8 @@ function drawChart(
   const rawMaxY = Math.max(...allY);
   const axisHasMeaningfulRange = Math.abs(rawMaxY - rawMinY) > 1e-6 || Math.abs(rawMaxY) > 1e-6 || Math.abs(rawMinY) > 1e-6;
 
-  const axisLabelFont = '500 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
-  const axisPrefixFont = '500 12px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  const axisLabelFont = '600 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  const axisPrefixFont = '600 12px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
   const axisPrefixGap = 4;
   const axisLineGap = 8;
   const axisOuterMargin = 10;
@@ -5526,10 +5501,10 @@ function drawChart(
       const { prefix, amount } = formatAxisCurrencyParts(yv, axisUnit, axisDecimals);
       ctx.font = axisLabelFont;
       const amountWidth = ctx.measureText(amount).width;
-      ctx.fillStyle = "#1f2937";
+      ctx.fillStyle = "#3d5e56";
       ctx.fillText(amount, yAxisLabelX, yy);
       ctx.font = axisPrefixFont;
-      ctx.fillStyle = "#475569";
+      ctx.fillStyle = "#5e7d77";
       ctx.fillText(prefix, yAxisLabelX - amountWidth - axisPrefixGap, yy);
     }
   }
@@ -5550,7 +5525,7 @@ function drawChart(
       ctx.lineTo(tickX, alignToDevicePixel((h - pad.b) + (isMajorTick ? 5 : 3), dpr));
       ctx.stroke();
       if (!isMajorTick) continue;
-      ctx.fillStyle = "#1f2937";
+      ctx.fillStyle = "#3d5e56";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(String(age), alignTextCoordinate(xx, dpr), xAxisLabelY);
@@ -5596,10 +5571,8 @@ function recalc(): void {
     setDashboardControlsDisabled(true);
     const blockedPrimaryLabel = statutory === null ? "Retire at" : formatRetirementAgeLabel("Retire at", statutory);
     const blockedCompareLabel = compareAge === null ? "Retire at" : formatRetirementAgeLabel("Retire at", compareAge);
-    cashLegendA.textContent = blockedPrimaryLabel;
-    cashLegendB.textContent = blockedCompareLabel;
-    nwLegendA.textContent = blockedPrimaryLabel;
-    nwLegendB.textContent = blockedCompareLabel;
+    chartsLegendA.textContent = blockedPrimaryLabel;
+    chartsLegendB.textContent = blockedCompareLabel;
     cashCanvas.dataset.zeroLineAlert = "false";
     chartHoverData.delete(cashCanvas);
     chartHoverData.delete(nwCanvas);
@@ -5644,8 +5617,8 @@ function recalc(): void {
     ? displayResult.outputs.cashSeriesEarly
     : displayResult.outputs.cashSeriesNorm;
   const cashZeroLineAlert = activeCashSeries.some((value) => value < 0);
-  const axisLabelFont = '500 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
-  const axisPrefixFont = '500 12px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  const axisLabelFont = '600 13px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
+  const axisPrefixFont = '600 12px "Avenir Next", "Segoe UI", "Helvetica Neue", Arial, sans-serif';
   const axisPrefixGap = 4;
   const axisLineGap = 8;
   const axisOuterMargin = 10;
@@ -5654,10 +5627,8 @@ function recalc(): void {
     computeChartLeftPad(nwCanvas, displayResult.outputs.netWorthSeriesEarly, displayResult.outputs.netWorthSeriesNorm, axisLabelFont, axisPrefixFont, axisPrefixGap, axisLineGap, axisOuterMargin)
   );
   setChartLegendsVisible(true);
-  cashLegendA.textContent = primaryLabel;
-  cashLegendB.textContent = comparisonLabel;
-  nwLegendA.textContent = primaryLabel;
-  nwLegendB.textContent = comparisonLabel;
+  chartsLegendA.textContent = primaryLabel;
+  chartsLegendB.textContent = comparisonLabel;
   for (const button of [projectionScenarioEarlyButton, timelineScenarioEarlyButton]) {
     button.textContent = primaryLabel;
   }
