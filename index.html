@@ -287,6 +287,16 @@
   }
   .step-pro p { margin: 0; font-size: 15px; color: var(--ink-soft); }
   .step-pro strong { color: var(--forest-deep); font-weight: 600; }
+  .step-pro .btn-ghost {
+    white-space: nowrap; flex-shrink: 0;
+    border-bottom: none; padding: 0;
+    color: var(--forest-deep);
+  }
+  .step-pro .btn-ghost .arrow {
+    display: inline-block; transition: transform 200ms ease;
+  }
+  .step-pro .btn-ghost:hover { color: var(--amber); border-color: transparent; }
+  .step-pro .btn-ghost:hover .arrow { transform: translateX(4px); }
 
   /* Quote */
   .quote-section { padding: 140px 0; text-align: center; background: var(--forest-deep); }
@@ -488,7 +498,7 @@
 
     <div class="step-pro">
       <p><strong>Already a power user?</strong> Skip the onboarding and open the full model directly. Your numbers, your assumptions.</p>
-      <a href="calculator.html" class="btn btn-ghost">Open the full model →</a>
+      <a href="calculator.html" class="btn btn-ghost">Open the full model <span class="arrow">→</span></a>
     </div>
   </div>
 </section>
