@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ETQ — How many more years do you actually need to work?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f8f2e6;
+    --cream-soft: #fbf6ec;
+    --paper: #fffdf8;
+    --ink: #1a2327;
+    --ink-soft: #415058;
+    --muted: #7d8a90;
+    --forest: #1f3a35;
+    --forest-deep: #12231f;
+    --accent: #0f766e;
+    --amber: #b2742a;
+    --rule: #e3d9c4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  html {
+    scroll-snap-type: y proximity;
+    scroll-padding-top: 68px;
+  }
+  .hero, section { scroll-snap-align: start; }
+  body {
+    font-family: "Inter", "Aptos", "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--cream);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .display { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; }
+  a { color: var(--forest); }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 40px; }
+
+  /* Nav */
+  nav.top {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(248,242,230,0.92);
+    backdrop-filter: saturate(1.1) blur(6px);
+    border-bottom: 1px solid var(--rule);
+  }
+  nav.top .inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 40px;
+  }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 600; font-size: 20px; letter-spacing: 0.02em;
+    color: var(--forest);
+    text-decoration: none;
+  }
+  .wordmark svg { width: 28px; height: 14px; }
+  nav.top ul {
+    list-style: none; margin: 0; padding: 0;
+    display: flex; gap: 32px;
+    font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  nav.top a.link { color: var(--ink-soft); text-decoration: none; }
+  nav.top a.link:hover { color: var(--forest); }
+
+  /* Hero */
+  .hero {
+    padding: 120px 0 100px;
+    min-height: 100vh;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 60% 40% at 85% 20%, rgba(178,116,42,0.10), transparent 60%),
+      radial-gradient(ellipse 70% 50% at 10% 100%, rgba(31,58,53,0.08), transparent 60%);
+    pointer-events: none;
+  }
+  .hero .container { position: relative; display: grid; grid-template-columns: 1.15fr 1fr; gap: 64px; align-items: center; }
+  .eyebrow {
+    font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--amber); font-weight: 500; margin-bottom: 28px;
+  }
+  h1.hero-headline {
+    font-size: clamp(44px, 6vw, 76px);
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    margin: 0 0 28px;
+    color: var(--forest-deep);
+    font-weight: 500;
+  }
+  h1.hero-headline em { font-style: italic; color: var(--amber); }
+  .hero-sub {
+    font-size: 19px; line-height: 1.5; color: var(--ink-soft);
+    max-width: 42ch; margin: 0 0 40px;
+  }
+  .cta-row { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 15px 26px;
+    font-family: "Inter", sans-serif; font-size: 14px; font-weight: 500;
+    letter-spacing: 0.04em;
+    border-radius: 2px; text-decoration: none;
+    transition: all 200ms ease;
+    cursor: pointer; border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--forest); color: var(--cream-soft); }
+  .btn-primary:hover { background: var(--forest-deep); }
+  .btn-ghost { color: var(--forest); border-bottom: 1px solid var(--forest); border-radius: 0; padding: 4px 0; }
+  .btn-ghost:hover { color: var(--amber); border-color: var(--amber); }
+
+  .trust-row {
+    list-style: none; margin: 40px 0 0; padding: 0;
+    display: flex; flex-wrap: nowrap; align-items: center; white-space: nowrap;
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+  }
+  .trust-row li { display: inline-flex; align-items: center; }
+  .trust-row li:not(:last-child)::after {
+    content: ""; width: 3px; height: 3px; border-radius: 999px;
+    background: var(--amber); opacity: 0.85;
+    margin: 0 12px; display: inline-block;
+  }
+
+  .hero-visual {
+    aspect-ratio: 4/5;
+    position: relative;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    box-shadow: 0 30px 60px -30px rgba(31,58,53,0.25);
+  }
+  .hero-visual svg { width: 100%; height: 100%; display: block; }
+
+  /* Section shared */
+  section { padding: 96px 0; border-top: 1px solid var(--rule); }
+  .section-eyebrow {
+    font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase;
+    color: var(--amber); font-weight: 600; margin-bottom: 18px;
+    display: inline-block;
+  }
+  h2.section-title {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: clamp(32px, 3.4vw, 48px); line-height: 1.1;
+    color: var(--forest-deep);
+    font-weight: 500; letter-spacing: -0.01em;
+    margin: 0 0 20px;
+  }
+  .lede { font-size: 18px; color: var(--ink-soft); max-width: 62ch; margin: 0 0 48px; }
+
+  /* Calculator */
+  .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+  .calc-card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 36px 36px 32px;
+  }
+  .calc-card h3 {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 600; font-size: 24px; margin: 0 0 8px; color: var(--forest);
+  }
+  .calc-privacy {
+    margin: 0 0 26px;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-style: italic;
+    font-size: 15px; line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 44ch;
+  }
+  .field { margin-bottom: 18px; }
+  .field label {
+    display: block; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 6px; font-weight: 500;
+  }
+  .field input {
+    width: 100%; padding: 10px 0;
+    border: 0; border-bottom: 1px solid var(--rule);
+    background: transparent;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 22px; color: var(--forest-deep);
+    outline: none;
+    transition: border-color 150ms ease;
+  }
+  .field input:focus { border-color: var(--forest); }
+  .calc-result {
+    display: flex; flex-direction: column;
+    padding-top: 24px;
+  }
+  .calc-result-label { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
+  .calc-result-number {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: clamp(64px, 7vw, 104px); line-height: 1;
+    color: var(--forest-deep); font-weight: 500;
+  }
+  .calc-result-number em { font-style: italic; color: var(--amber); }
+  .calc-result-caption { margin-top: 16px; color: var(--ink-soft); font-size: 15px; max-width: 40ch; }
+  .calc-note { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: 12px; }
+  .calc-choice {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 18px; border: 1px solid var(--rule); border-radius: 2px;
+    color: var(--forest); text-decoration: none; font-size: 14px;
+    transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+  }
+  .calc-choice:hover { border-color: var(--forest); background: #fff; }
+  .calc-choice .arrow { color: var(--amber); margin-left: 16px; transition: transform 160ms ease; }
+  .calc-choice:hover .arrow { transform: translateX(3px); }
+
+  /* Credibility */
+  .cred { background: var(--cream-soft); }
+  .cred-grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 72px; align-items: center; }
+  .cred-portrait {
+    aspect-ratio: 3/4; border: 1px solid var(--rule); background:
+      linear-gradient(135deg, #e8d9b8 0%, #d3c09b 50%, #9aa898 100%);
+    position: relative; box-shadow: 0 20px 40px -20px rgba(31,58,53,0.2);
+  }
+  .cred-portrait::after {
+    content: ""; position: absolute; inset: 16px;
+    border: 1px solid rgba(255,255,255,0.35);
+  }
+  .cred-portrait-label {
+    position: absolute; bottom: 20px; left: 20px;
+    font-family: "Cormorant Garamond", serif; font-style: italic;
+    font-size: 14px; color: rgba(26,35,39,0.6);
+  }
+  .cred-body p { font-size: 17px; line-height: 1.65; color: var(--ink-soft); margin: 0 0 18px; }
+  .cred-body p strong { color: var(--forest-deep); font-weight: 600; }
+
+  /* Counter */
+  .counter-section { text-align: center; padding: 120px 0; }
+  .counter-number {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(80px, 11vw, 160px);
+    line-height: 1;
+    color: var(--forest-deep);
+    letter-spacing: -0.02em;
+    display: inline-block;
+    position: relative;
+  }
+  .counter-number::after {
+    content: "•"; color: var(--amber); font-size: 0.3em;
+    position: absolute; top: 10%; right: -24px;
+    animation: pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.35; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+  }
+  .counter-caption {
+    margin-top: 24px; font-size: 15px; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--muted); font-weight: 500;
+  }
+  .counter-lede {
+    margin: 18px auto 0; max-width: 52ch;
+    font-family: "Cormorant Garamond", serif; font-style: italic;
+    font-size: 22px; color: var(--ink-soft); line-height: 1.5;
+  }
+
+  /* How it works */
+  .how { background: var(--cream-soft); }
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; margin-top: 56px; }
+  .step { position: relative; padding-top: 28px; border-top: 2px solid var(--forest); }
+  .step-num {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 14px; letter-spacing: 0.22em; color: var(--amber);
+    margin-bottom: 14px;
+  }
+  .step h3 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 26px; margin: 0 0 14px; color: var(--forest-deep); font-weight: 600;
+  }
+  .step p { font-size: 15px; color: var(--ink-soft); margin: 0; line-height: 1.6; }
+  .step-pro {
+    margin-top: 60px; padding: 24px 28px;
+    border: 1px solid var(--rule); background: var(--paper);
+    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  }
+  .step-pro p { margin: 0; font-size: 15px; color: var(--ink-soft); }
+  .step-pro strong { color: var(--forest-deep); font-weight: 600; }
+
+  /* Quote */
+  .quote-section { padding: 140px 0; text-align: center; background: var(--forest-deep); }
+  .quote-section blockquote {
+    margin: 0 auto; max-width: 860px;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-style: italic; font-weight: 400;
+    font-size: clamp(30px, 4vw, 48px);
+    line-height: 1.25;
+    color: var(--cream-soft);
+    letter-spacing: -0.005em;
+  }
+  .quote-section blockquote::before {
+    content: "“";
+    display: block; font-size: 120px; line-height: 0.4; margin-bottom: 40px;
+    color: var(--amber); opacity: 0.7;
+  }
+
+  /* Final CTA */
+  .final { padding: 140px 0; text-align: center; }
+  .final h2 { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; font-size: clamp(40px, 5vw, 64px); color: var(--forest-deep); margin: 0 0 24px; line-height: 1.08; }
+  .final p { font-size: 18px; color: var(--ink-soft); max-width: 46ch; margin: 0 auto 40px; }
+
+  footer {
+    padding: 40px 0 60px; border-top: 1px solid var(--rule);
+    font-size: 13px; color: var(--muted);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  footer .container { display: flex; justify-content: space-between; align-items: center; }
+
+  @media (max-width: 820px) {
+    .container { padding: 0 24px; }
+    .hero .container, .calc-grid, .cred-grid { grid-template-columns: 1fr; gap: 40px; }
+    .steps { grid-template-columns: 1fr; }
+    nav.top ul { display: none; }
+    .hero { padding: 72px 0 60px; }
+    section { padding: 64px 0; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="top">
+  <div class="inner">
+    <a class="wordmark" href="#">
+      <svg viewBox="2 6 16 8" aria-hidden="true">
+        <path d="M 4 13 A 6 6 0 0 1 16 13" fill="#c98a3f"/>
+        <path d="M 6.5 13 A 3.5 3.5 0 0 1 13.5 13" fill="#e6a45a" opacity="0.6"/>
+        <line x1="2" y1="13" x2="18" y2="13" stroke="#1f3a35" stroke-width="1.1" stroke-linecap="round"/>
+      </svg>
+      Enough to Quit
+    </a>
+    <ul>
+      <li><a class="link" href="#calc">The question</a></li>
+      <li><a class="link" href="#cred">Who built it</a></li>
+      <li><a class="link" href="#how">How it works</a></li>
+      <li><a class="link" href="#final">Begin</a></li>
+    </ul>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div>
+      <div class="eyebrow">An honest calculation, long overdue</div>
+      <h1 class="hero-headline display">How many more years do you <em>actually</em> need to work?</h1>
+      <p class="hero-sub">Find out in thirty minutes, with a tool built by someone who actually retired — then spend the rest of the evening thinking about what to do with the years you just found.</p>
+      <div class="cta-row">
+        <a href="#calc" class="btn btn-primary">See if you can quit →</a>
+        <a href="#cred" class="btn btn-ghost">Why this is different</a>
+      </div>
+      <ul class="trust-row" aria-label="What to expect">
+        <li>Free</li>
+        <li>Private</li>
+        <li>No account</li>
+        <li>Data stays in your browser</li>
+      </ul>
+    </div>
+    <div class="hero-visual" aria-hidden="true">
+      <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#f8f2e6"/>
+            <stop offset="0.5" stop-color="#eddfc1"/>
+            <stop offset="1" stop-color="#d0b98a"/>
+          </linearGradient>
+          <linearGradient id="land" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#4a5d54"/>
+            <stop offset="1" stop-color="#1f3a35"/>
+          </linearGradient>
+        </defs>
+        <rect width="400" height="500" fill="url(#sky)"/>
+        <circle cx="300" cy="180" r="46" fill="#b2742a" opacity="0.55"/>
+        <path d="M0 340 L80 300 L150 330 L220 290 L290 320 L360 280 L400 310 L400 500 L0 500 Z" fill="url(#land)" opacity="0.9"/>
+        <path d="M0 380 L100 360 L180 380 L260 350 L340 380 L400 360 L400 500 L0 500 Z" fill="#12231f"/>
+        <line x1="40" y1="440" x2="360" y2="440" stroke="#f8f2e6" stroke-width="0.5" opacity="0.2"/>
+        <text x="200" y="470" text-anchor="middle" font-family="Cormorant Garamond, serif" font-style="italic" font-size="13" fill="#f8f2e6" opacity="0.9" textLength="320" lengthAdjust="spacingAndGlyphs">We build wealth for freedom, then forget to be free</text>
+      </svg>
+    </div>
+  </div>
+</header>
+
+<section id="calc">
+  <div class="container">
+    <span class="section-eyebrow">The thirty-minute answer</span>
+    <h2 class="section-title">A thirty-second estimate.</h2>
+    <p class="lede">Enter what you know. See the age at which work stops being necessary and starts being a choice. A fuller picture waits in the full model.</p>
+
+    <div class="calc-grid">
+      <div class="calc-card">
+        <h3>Your quick calculation</h3>
+        <p class="calc-privacy">Your inputs stay on your device. No account, no server.</p>
+        <div class="field">
+          <label for="c-age">Your age</label>
+          <input id="c-age" type="number" value="44" inputmode="numeric" />
+        </div>
+        <div class="field">
+          <label for="c-income">Annual household income (after tax)</label>
+          <input id="c-income" type="text" value="£185,000" />
+        </div>
+        <div class="field">
+          <label for="c-spend">Annual living expenses</label>
+          <input id="c-spend" type="text" value="£72,000" />
+        </div>
+        <div class="field">
+          <label for="c-savings">Cash and liquid savings</label>
+          <input id="c-savings" type="text" value="£95,000" />
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="c-invest">Investments, pensions and other assets</label>
+          <input id="c-invest" type="text" value="£840,000" />
+        </div>
+      </div>
+
+      <div class="calc-result">
+        <span class="calc-result-label">You could stop at</span>
+        <div class="calc-result-number"><span id="c-out">54</span></div>
+        <p class="calc-result-caption">A back-of-envelope estimate. The full model adds partner, property, investments, rentals, dependants, other income streams, debt, liquidations and more.</p>
+        <div class="calc-note">
+          <a href="#final" class="calc-choice"><span>Ease me in — one question at a time</span><span class="arrow">→</span></a>
+          <a href="#final" class="calc-choice"><span>Numbers are my thing — take me to the full model</span><span class="arrow">→</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="cred" class="cred">
+  <div class="container">
+    <div class="cred-grid">
+      <div class="cred-portrait" aria-hidden="true">
+        <div class="cred-portrait-label">— the builder, on a Tuesday afternoon</div>
+      </div>
+      <div class="cred-body">
+        <span class="section-eyebrow">Who built this, and why</span>
+        <h2 class="section-title">This is not another 4% rule blog.</h2>
+        <p>ETQ was built by <strong>a career financial professional who retired at 53</strong> and now lives a rich, unhurried life using a sophisticated Excel version of this very tool — the one he used on himself.</p>
+        <p>That distinction matters. Most of what is written about early retirement is produced by people still working, still selling, still needing an audience. This tool carries the perspective of someone on the other side of the question — who did the calculation honestly, trusted the number, and walked.</p>
+        <p>It is designed for professionals who are tired of being patronised with rules of thumb, who want a proper projection to end of life, and who would like to stop asking the question and simply know the answer.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="counter-section">
+  <div class="container">
+    <div class="counter-number" id="counter">247,583</div>
+    <div class="counter-caption">days of freedom unlocked · and counting</div>
+    <p class="counter-lede">Every number above represents a single day that someone chose not to spend in a meeting they did not need to be in.</p>
+  </div>
+</section>
+
+<section id="how" class="how">
+  <div class="container">
+    <span class="section-eyebrow">The progression</span>
+    <h2 class="section-title">Start light. Go deep when you are ready.</h2>
+    <p class="lede">There is no sign-up gauntlet and no pressure to commit. The tool scales with your curiosity.</p>
+
+    <div class="steps">
+      <article class="step">
+        <div class="step-num">I.</div>
+        <h3>The thirty-minute sketch</h3>
+        <p>Five fields. A single, clear number. Enough to tell you whether this is a conversation worth continuing.</p>
+      </article>
+      <article class="step">
+        <div class="step-num">II.</div>
+        <h3>Progressive onboarding</h3>
+        <p>A thoughtful, guided refinement: property, pensions, planned sales, phased drawdowns, tax. No jargon, no friction.</p>
+      </article>
+      <article class="step">
+        <div class="step-num">III.</div>
+        <h3>The full model</h3>
+        <p>The deterministic engine used by the builder himself — projections to end of life, scenario comparison, and the full cash-flow picture.</p>
+      </article>
+    </div>
+
+    <div class="step-pro">
+      <p><strong>Already a power user?</strong> Skip the onboarding and open the full model directly. Your numbers, your assumptions.</p>
+      <a href="#final" class="btn btn-ghost">Open the full model →</a>
+    </div>
+  </div>
+</section>
+
+<section class="quote-section">
+  <div class="container">
+    <blockquote>
+      We build wealth for freedom, and then we forget to be free.
+    </blockquote>
+  </div>
+</section>
+
+<section id="final" class="final">
+  <div class="container">
+    <h2 class="display">Thirty minutes is a small price for a real answer.</h2>
+    <p>Begin the calculation. Trust the number. Decide what to do with the years you just discovered you have.</p>
+    <a href="#calc" class="btn btn-primary">See if you can quit →</a>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <span>© ETQ · Enough to Quit</span>
+    <span>A deterministic retirement-planning tool · built honestly, used daily.</span>
+  </div>
+</footer>
+
+<script>
+  // Simple quick-start calc
+  const parseMoney = s => Number(String(s).replace(/[^0-9.]/g,'')) || 0;
+  const fmt = n => Math.round(n).toString();
+  const fields = ['c-age','c-income','c-spend','c-savings','c-invest'];
+  function recalc(){
+    const age = parseMoney(document.getElementById('c-age').value);
+    const income = parseMoney(document.getElementById('c-income').value);
+    const spend = parseMoney(document.getElementById('c-spend').value);
+    const savings = parseMoney(document.getElementById('c-savings').value);
+    const invest = parseMoney(document.getElementById('c-invest').value);
+    const surplus = Math.max(income - spend, 0);
+    let nw = savings + invest;
+    let a = age;
+    const target = spend * 25;
+    while (a < 95 && nw < target) { nw = nw*1.05 + surplus; a++; }
+    document.getElementById('c-out').textContent = a >= 95 ? '—' : a;
+  }
+  fields.forEach(id => document.getElementById(id).addEventListener('input', recalc));
+  recalc();
+
+  // Counter gentle tick
+  let count = 247583;
+  setInterval(() => {
+    count += Math.random() < 0.6 ? 1 : 0;
+    document.getElementById('counter').textContent = count.toLocaleString();
+  }, 3200);
+</script>
+
+</body>
+</html>

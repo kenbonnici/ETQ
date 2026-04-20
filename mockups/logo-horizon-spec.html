@@ -1,0 +1,692 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ETQ — Horizon mark · design spec</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,500&family=Fraunces:opsz,wght,SOFT@9..144,300..700,50..100&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f8f2e6;
+    --cream-soft: #fbf6ec;
+    --paper: #fffdf8;
+    --ink: #1a2327;
+    --ink-soft: #415058;
+    --muted: #7d8a90;
+    --forest: #1f3a35;
+    --forest-deep: #12231f;
+    --amber: #b2742a;
+    --amber-warm: #c98a3f;
+    --amber-glow: #e6a45a;
+    --rule: #e3d9c4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", "Aptos", "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--cream);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  .display { font-family: "Cormorant Garamond", Georgia, serif; font-weight: 500; }
+  code, pre, .mono { font-family: "JetBrains Mono", "SF Mono", Menlo, monospace; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 64px 40px 120px; }
+
+  header.page { max-width: 820px; margin: 0 0 72px; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: 0.26em; text-transform: uppercase;
+    color: var(--amber); font-weight: 600; margin-bottom: 22px;
+  }
+  header.page h1 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 56px; line-height: 1.04; color: var(--forest-deep);
+    font-weight: 500; margin: 0 0 18px; letter-spacing: -0.015em;
+  }
+  header.page .lede {
+    font-size: 18px; color: var(--ink-soft); margin: 0 0 10px;
+    max-width: 68ch;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-style: italic;
+  }
+  header.page p.sub { font-size: 15px; color: var(--muted); margin: 0; max-width: 72ch; }
+
+  section.block { margin-top: 72px; }
+  section.block h2 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 32px; color: var(--forest-deep); margin: 0 0 8px;
+    font-weight: 500; letter-spacing: -0.01em;
+  }
+  section.block h2 + .section-sub {
+    font-size: 14px; color: var(--muted); letter-spacing: 0.04em;
+    text-transform: uppercase; margin: 0 0 28px; font-weight: 500;
+  }
+
+  /* Hero mark card */
+  .hero-mark {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 0;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .hero-mark .mark-wrap {
+    background: var(--cream-soft);
+    display: flex; align-items: center; justify-content: center;
+    padding: 72px 40px;
+    border-right: 1px solid var(--rule);
+    position: relative;
+  }
+  .hero-mark .mark-wrap svg { width: 240px; height: 240px; display: block; }
+  .hero-mark .concept {
+    padding: 48px 44px;
+    display: flex; flex-direction: column; justify-content: center;
+  }
+  .hero-mark .concept h3 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 30px; color: var(--forest-deep); margin: 0 0 14px; font-weight: 500;
+  }
+  .hero-mark .concept p {
+    font-size: 15px; color: var(--ink-soft); margin: 0 0 12px;
+  }
+  .hero-mark .concept .meaning {
+    margin-top: 16px; padding-top: 18px; border-top: 1px solid var(--rule);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px 20px;
+  }
+  .hero-mark .concept .meaning div span {
+    display: block; font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--amber); font-weight: 600; margin-bottom: 4px;
+  }
+  .hero-mark .concept .meaning div p {
+    font-size: 13.5px; color: var(--ink-soft); margin: 0; line-height: 1.5;
+  }
+
+  /* Anatomy */
+  .anatomy {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 48px;
+    display: grid; grid-template-columns: 1.1fr 1fr; gap: 48px;
+    align-items: center;
+  }
+  .anatomy .diagram { position: relative; }
+  .anatomy svg.diagram-svg { width: 100%; height: auto; display: block; }
+  .anatomy .legend { display: flex; flex-direction: column; gap: 20px; }
+  .anatomy .legend .row { display: grid; grid-template-columns: 28px 1fr; gap: 14px; align-items: start; }
+  .anatomy .legend .swatch {
+    width: 22px; height: 22px; border-radius: 50%; border: 1px solid rgba(0,0,0,0.08);
+  }
+  .anatomy .legend h4 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 18px; color: var(--forest-deep); margin: 0 0 3px; font-weight: 600;
+  }
+  .anatomy .legend p { font-size: 13.5px; color: var(--ink-soft); margin: 0; line-height: 1.55; }
+
+  /* Scale grid */
+  .scale {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 48px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    align-items: end;
+    justify-items: center;
+  }
+  .scale .size-cell { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .scale .size-cell .tag {
+    font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600;
+  }
+
+  /* Palette */
+  .palette {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 0;
+    overflow: hidden;
+  }
+  .palette table { width: 100%; border-collapse: collapse; }
+  .palette th, .palette td {
+    text-align: left; padding: 18px 22px; border-bottom: 1px solid var(--rule);
+    font-size: 14px; color: var(--ink-soft);
+  }
+  .palette th {
+    font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); font-weight: 600; background: var(--cream-soft);
+  }
+  .palette tr:last-child td { border-bottom: none; }
+  .palette td.swatch-cell { width: 48px; padding-right: 0; }
+  .palette td.swatch-cell .sw {
+    display: block; width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .palette td.role {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 17px; color: var(--forest-deep); font-weight: 600;
+    letter-spacing: 0.01em;
+  }
+  .palette td.hex { font-family: "JetBrains Mono", monospace; font-size: 13px; color: var(--ink); }
+
+  /* Contexts */
+  .contexts { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .context-card {
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--paper);
+  }
+  .context-card .preview { padding: 40px 32px; display: flex; align-items: center; justify-content: center; }
+  .context-card .preview.cream { background: var(--cream-soft); }
+  .context-card .preview.paper { background: var(--paper); }
+  .context-card .preview.forest { background: var(--forest-deep); }
+  .context-card .preview.hero-bg {
+    background:
+      radial-gradient(ellipse at 30% 100%, rgba(255,224,178,0.22), transparent 60%),
+      radial-gradient(ellipse at 80% 0%, rgba(210,170,130,0.12), transparent 55%),
+      linear-gradient(180deg, #1a2730 0%, #2a3b38 60%, #3d4a3e 100%);
+    color: var(--cream);
+  }
+  .context-card .preview .lockup {
+    display: inline-flex; align-items: center; gap: 12px;
+  }
+  .context-card .preview .lockup svg { width: 36px; height: 18px; }
+  .context-card .preview .wordmark {
+    font-family: "Cormorant Garamond", serif;
+    font-weight: 500; font-size: 20px; letter-spacing: 0.02em;
+    color: var(--forest-deep);
+  }
+  .context-card .preview .wordmark .etq { font-weight: 600; }
+  .context-card .preview.forest .wordmark,
+  .context-card .preview.hero-bg .wordmark { color: var(--cream); }
+
+  .context-card .caption {
+    padding: 18px 24px;
+    border-top: 1px solid var(--rule);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 16px;
+  }
+  .context-card .caption h4 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 17px; color: var(--forest-deep); margin: 0; font-weight: 600;
+  }
+  .context-card .caption p { font-size: 12.5px; color: var(--muted); margin: 0; text-align: right; max-width: 60%; }
+
+  /* Favicon */
+  .favicon-row {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    padding: 36px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+    align-items: center;
+  }
+  .favicon-row .chrome {
+    background: linear-gradient(180deg, #e8e8eb 0%, #d7d7da 100%);
+    border-radius: 10px; padding: 14px 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .favicon-row .chrome .tab {
+    background: #fff; border-radius: 6px 6px 0 0;
+    padding: 8px 14px; display: inline-flex; align-items: center; gap: 8px;
+    box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+    font-size: 12.5px; color: var(--ink);
+  }
+  .favicon-row .chrome .tab svg { width: 14px; height: 14px; }
+  .favicon-row .notes h4 {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 20px; color: var(--forest-deep); margin: 0 0 10px; font-weight: 600;
+  }
+  .favicon-row .notes p { font-size: 14px; color: var(--ink-soft); margin: 0 0 8px; }
+
+  /* Do / Dont */
+  .rules { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .rule-card {
+    border: 1px solid var(--rule);
+    border-radius: 14px;
+    background: var(--paper);
+    overflow: hidden;
+  }
+  .rule-card .head {
+    padding: 14px 22px;
+    font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase; font-weight: 600;
+  }
+  .rule-card.do .head { background: rgba(31,58,53,0.08); color: var(--forest); }
+  .rule-card.dont .head { background: rgba(178,116,42,0.12); color: var(--amber); }
+  .rule-card ul { list-style: none; padding: 18px 22px 22px; margin: 0; }
+  .rule-card li {
+    padding: 6px 0 6px 18px; font-size: 14px; color: var(--ink-soft);
+    position: relative;
+  }
+  .rule-card li::before {
+    content: ""; position: absolute; left: 0; top: 13px;
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .rule-card.do li::before { background: var(--forest); }
+  .rule-card.dont li::before { background: var(--amber); }
+
+  /* Code block */
+  pre.code {
+    background: var(--forest-deep);
+    color: #e9e2cf;
+    padding: 22px 26px; margin: 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12.5px; line-height: 1.7;
+    border-radius: 12px;
+    overflow-x: auto;
+  }
+  pre.code .c-com { color: #8aa39b; }
+  pre.code .c-tag { color: #c98a3f; }
+  pre.code .c-att { color: #b2d0c4; }
+  pre.code .c-val { color: #f3d9a4; }
+
+  /* clear space */
+  .clearspace { background: var(--paper); border: 1px solid var(--rule); border-radius: 14px; padding: 48px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+  .clearspace .diag svg { width: 100%; height: auto; display: block; }
+  .clearspace .notes p { font-size: 14px; color: var(--ink-soft); margin: 0 0 10px; }
+
+  @media (max-width: 880px) {
+    .container { padding: 40px 20px 60px; }
+    header.page h1 { font-size: 40px; }
+    .hero-mark, .anatomy, .clearspace, .favicon-row { grid-template-columns: 1fr; }
+    .hero-mark .mark-wrap { border-right: none; border-bottom: 1px solid var(--rule); }
+    .scale { grid-template-columns: repeat(3, 1fr); }
+    .contexts, .rules { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+
+    <header class="page">
+      <div class="eyebrow">ETQ · mark · design spec</div>
+      <h1 class="display">Horizon.</h1>
+      <p class="lede">A rising sun meeting the line — the horizon you earned.</p>
+      <p class="sub">The Horizon mark is the primary identity for ETQ (Enough to Quit). This page documents its anatomy, palette, sizing, contexts, and rules of use, so that any future surface — landing page, app, favicon, print, social — renders the mark the same way.</p>
+    </header>
+
+    <!-- HERO MARK -->
+    <section class="block">
+      <h2>The mark</h2>
+      <p class="section-sub">primary · full-colour</p>
+      <div class="hero-mark">
+        <div class="mark-wrap">
+          <svg viewBox="0 0 40 40" aria-hidden="true">
+            <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+            <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#e6a45a" opacity="0.6"/>
+            <line x1="4" y1="26" x2="36" y2="26" stroke="#1f3a35" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div class="concept">
+          <h3>A horizon, not a chart.</h3>
+          <p>Two arcs — a warm amber half-sun over a softer inner glow — meeting a steady forest-green horizon line. The sun is just rising, not setting; the line is a threshold, not a limit.</p>
+          <div class="meaning">
+            <div>
+              <span>What it says</span>
+              <p>Freedom. A beginning. Light arriving, not fading.</p>
+            </div>
+            <div>
+              <span>What it is not</span>
+              <p>A bar chart, a ticker, a badge, or a checkmark of completion.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ANATOMY -->
+    <section class="block">
+      <h2>Anatomy</h2>
+      <p class="section-sub">construction · 40 × 40 grid</p>
+      <div class="anatomy">
+        <div class="diagram">
+          <svg class="diagram-svg" viewBox="0 0 260 260" aria-hidden="true">
+            <!-- faint grid -->
+            <g stroke="#e3d9c4" stroke-width="0.6">
+              <line x1="0" y1="0" x2="260" y2="0"/>
+              <line x1="0" y1="260" x2="260" y2="260"/>
+              <line x1="0" y1="0" x2="0" y2="260"/>
+              <line x1="260" y1="0" x2="260" y2="260"/>
+              <line x1="0" y1="130" x2="260" y2="130" stroke-dasharray="4 5"/>
+              <line x1="130" y1="0" x2="130" y2="260" stroke-dasharray="4 5"/>
+            </g>
+
+            <!-- scaled mark: original 40x40 → 260x260 (scale 6.5), draw same geometry -->
+            <g transform="translate(0 0)">
+              <!-- outer sun arc: M 8 26 A 12 12 → scale 6.5 → M 52 169 A 78 78 -->
+              <path d="M 52 169 A 78 78 0 0 1 208 169" fill="#c98a3f"/>
+              <path d="M 84.5 169 A 45.5 45.5 0 0 1 175.5 169" fill="#e6a45a" opacity="0.55"/>
+              <line x1="26" y1="169" x2="234" y2="169" stroke="#1f3a35" stroke-width="6" stroke-linecap="round"/>
+            </g>
+
+            <!-- annotations -->
+            <g font-family="JetBrains Mono, monospace" font-size="10" fill="#7d8a90">
+              <!-- sun radius annotation -->
+              <line x1="130" y1="169" x2="130" y2="91" stroke="#b2742a" stroke-width="0.8" stroke-dasharray="3 3"/>
+              <circle cx="130" cy="91" r="2" fill="#b2742a"/>
+              <text x="136" y="130" fill="#b2742a">r = 12u</text>
+
+              <!-- inner glow -->
+              <line x1="130" y1="169" x2="88" y2="169" stroke="#c98a3f" stroke-width="0.8" stroke-dasharray="3 3"/>
+              <text x="50" y="160" fill="#c98a3f">r = 7u</text>
+
+              <!-- horizon extension -->
+              <text x="14" y="185" fill="#1f3a35">x: 4u</text>
+              <text x="204" y="185" fill="#1f3a35">36u</text>
+
+              <!-- viewbox caption -->
+              <text x="10" y="20">viewBox 0 0 40 40 · y-horizon = 26u</text>
+            </g>
+          </svg>
+        </div>
+        <div class="legend">
+          <div class="row">
+            <span class="swatch" style="background:#c98a3f"></span>
+            <div>
+              <h4>Outer sun · amber warm</h4>
+              <p>Half-disc, radius <span class="mono">12u</span>, centred on the horizon. The warmest body in the mark; carries emotional weight.</p>
+            </div>
+          </div>
+          <div class="row">
+            <span class="swatch" style="background:#e6a45a"></span>
+            <div>
+              <h4>Inner glow · amber highlight</h4>
+              <p>Concentric half-disc, radius <span class="mono">7u</span>, opacity <span class="mono">0.6</span>. Suggests depth and dawn light spilling from the core.</p>
+            </div>
+          </div>
+          <div class="row">
+            <span class="swatch" style="background:#1f3a35"></span>
+            <div>
+              <h4>Horizon line · forest</h4>
+              <p>Stroke <span class="mono">1.8u</span>, rounded caps, from <span class="mono">x=4</span> to <span class="mono">x=36</span>. The threshold. Never broken, never tilted.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCALE -->
+    <section class="block">
+      <h2>Scale</h2>
+      <p class="section-sub">minimum 16 px · no maximum</p>
+      <div class="scale">
+        <div class="size-cell">
+          <svg viewBox="0 0 40 40" width="16" height="16" aria-hidden="true">
+            <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+            <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#e6a45a" opacity="0.6"/>
+            <line x1="4" y1="26" x2="36" y2="26" stroke="#1f3a35" stroke-width="2.4" stroke-linecap="round"/>
+          </svg>
+          <span class="tag">16 px · favicon min</span>
+        </div>
+        <div class="size-cell">
+          <svg viewBox="0 0 40 40" width="24" height="24" aria-hidden="true">
+            <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+            <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#e6a45a" opacity="0.6"/>
+            <line x1="4" y1="26" x2="36" y2="26" stroke="#1f3a35" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="tag">24 px · nav</span>
+        </div>
+        <div class="size-cell">
+          <svg viewBox="0 0 40 40" width="40" height="40" aria-hidden="true">
+            <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+            <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#e6a45a" opacity="0.6"/>
+            <line x1="4" y1="26" x2="36" y2="26" stroke="#1f3a35" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span class="tag">40 px · body</span>
+        </div>
+        <div class="size-cell">
+          <svg viewBox="0 0 40 40" width="80" height="80" aria-hidden="true">
+            <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+            <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#e6a45a" opacity="0.6"/>
+            <line x1="4" y1="26" x2="36" y2="26" stroke="#1f3a35" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span class="tag">80 px · card</span>
+        </div>
+        <div class="size-cell">
+          <svg viewBox="0 0 40 40" width="160" height="160" aria-hidden="true">
+            <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+            <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#e6a45a" opacity="0.6"/>
+            <line x1="4" y1="26" x2="36" y2="26" stroke="#1f3a35" stroke-width="1.8" stroke-linecap="round"/>
+          </svg>
+          <span class="tag">160 px · marketing</span>
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--muted);margin-top:14px;max-width:72ch;">Below <span class="mono">16 px</span> the inner glow ceases to add information and the horizon line becomes visually noisy. Use the Full Stop variant (amber-filled forest ring) for favicons or touch icons at or below this size.</p>
+    </section>
+
+    <!-- CLEAR SPACE -->
+    <section class="block">
+      <h2>Clear space</h2>
+      <p class="section-sub">minimum breathing room · x = horizon extension</p>
+      <div class="clearspace">
+        <div class="diag">
+          <svg viewBox="0 0 240 180" aria-hidden="true">
+            <!-- clear space box -->
+            <rect x="40" y="40" width="160" height="100" fill="none" stroke="#b2742a" stroke-width="1" stroke-dasharray="4 4"/>
+            <!-- mark inside -->
+            <g transform="translate(80 60) scale(2)">
+              <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+              <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#e6a45a" opacity="0.6"/>
+              <line x1="4" y1="26" x2="36" y2="26" stroke="#1f3a35" stroke-width="1.8" stroke-linecap="round"/>
+            </g>
+            <!-- x dimension markers -->
+            <g font-family="JetBrains Mono, monospace" font-size="9" fill="#7d8a90">
+              <line x1="20" y1="90" x2="40" y2="90" stroke="#b2742a" stroke-width="0.8"/>
+              <text x="8" y="88">x</text>
+              <line x1="200" y1="90" x2="220" y2="90" stroke="#b2742a" stroke-width="0.8"/>
+              <text x="224" y="88">x</text>
+              <text x="120" y="32" text-anchor="middle">x</text>
+              <text x="120" y="160" text-anchor="middle">x</text>
+            </g>
+          </svg>
+        </div>
+        <div class="notes">
+          <p><strong style="color:var(--forest-deep)">Rule:</strong> maintain clear space equal to <span class="mono">x</span> — the distance from the end of the horizon line to the edge of the viewBox — on all four sides of the mark.</p>
+          <p>At <span class="mono">40 px</span> body size, that's roughly <span class="mono">4 px</span> of breathing room. Do not crop. Do not nest inside tight UI.</p>
+          <p>When locked up with the wordmark, the space between the mark and the "E" of "Enough" should be approximately <span class="mono">0.4x</span>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONTEXTS -->
+    <section class="block">
+      <h2>Contexts</h2>
+      <p class="section-sub">approved backgrounds</p>
+      <div class="contexts">
+        <div class="context-card">
+          <div class="preview cream">
+            <span class="lockup">
+              <svg viewBox="4 12 32 16" aria-hidden="true">
+                <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+                <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#e6a45a" opacity="0.6"/>
+                <line x1="4" y1="26" x2="36" y2="26" stroke="#1f3a35" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span class="wordmark"><span class="etq">Enough</span> to <span class="etq">Quit</span></span>
+            </span>
+          </div>
+          <div class="caption">
+            <h4>On cream</h4>
+            <p>Primary. Landing page nav, marketing, print.</p>
+          </div>
+        </div>
+        <div class="context-card">
+          <div class="preview paper">
+            <span class="lockup">
+              <svg viewBox="4 12 32 16" aria-hidden="true">
+                <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+                <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#e6a45a" opacity="0.6"/>
+                <line x1="4" y1="26" x2="36" y2="26" stroke="#1f3a35" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span class="wordmark"><span class="etq">Enough</span> to <span class="etq">Quit</span></span>
+            </span>
+          </div>
+          <div class="caption">
+            <h4>On paper / white</h4>
+            <p>Dashboard, panels, exported reports.</p>
+          </div>
+        </div>
+        <div class="context-card">
+          <div class="preview forest">
+            <span class="lockup">
+              <svg viewBox="4 12 32 16" aria-hidden="true">
+                <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+                <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#f3d9a4" opacity="0.6"/>
+                <line x1="4" y1="26" x2="36" y2="26" stroke="#f8f2e6" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span class="wordmark"><span class="etq">Enough</span> to <span class="etq">Quit</span></span>
+            </span>
+          </div>
+          <div class="caption">
+            <h4>On forest-deep</h4>
+            <p>Horizon line becomes cream; inner glow lightens.</p>
+          </div>
+        </div>
+        <div class="context-card">
+          <div class="preview hero-bg">
+            <span class="lockup">
+              <svg viewBox="4 12 32 16" aria-hidden="true">
+                <path d="M 8 26 A 12 12 0 0 1 32 26" fill="#c98a3f"/>
+                <path d="M 13 26 A 7 7 0 0 1 27 26" fill="#f3d9a4" opacity="0.6"/>
+                <line x1="4" y1="26" x2="36" y2="26" stroke="#f8f2e6" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+              <span class="wordmark"><span class="etq">Enough</span> to <span class="etq">Quit</span></span>
+            </span>
+          </div>
+          <div class="caption">
+            <h4>On hero atmosphere</h4>
+            <p>Dusk/dawn imagery. Use dark-bg variant.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PALETTE -->
+    <section class="block">
+      <h2>Palette</h2>
+      <p class="section-sub">hex values · aligned with app tokens</p>
+      <div class="palette">
+        <table>
+          <thead><tr><th></th><th>Role</th><th>Hex</th><th>Used for</th></tr></thead>
+          <tbody>
+            <tr>
+              <td class="swatch-cell"><span class="sw" style="background:#c98a3f"></span></td>
+              <td class="role">Amber warm</td>
+              <td class="hex">#c98a3f</td>
+              <td>Sun body. Outer half-disc.</td>
+            </tr>
+            <tr>
+              <td class="swatch-cell"><span class="sw" style="background:#e6a45a"></span></td>
+              <td class="role">Amber glow</td>
+              <td class="hex">#e6a45a</td>
+              <td>Inner highlight on light backgrounds (opacity 0.6).</td>
+            </tr>
+            <tr>
+              <td class="swatch-cell"><span class="sw" style="background:#f3d9a4"></span></td>
+              <td class="role">Amber glow · on dark</td>
+              <td class="hex">#f3d9a4</td>
+              <td>Inner highlight on forest or dusk backgrounds (opacity 0.6).</td>
+            </tr>
+            <tr>
+              <td class="swatch-cell"><span class="sw" style="background:#1f3a35"></span></td>
+              <td class="role">Forest</td>
+              <td class="hex">#1f3a35</td>
+              <td>Horizon line on cream / paper.</td>
+            </tr>
+            <tr>
+              <td class="swatch-cell"><span class="sw" style="background:#f8f2e6;border-color:#d9cbaa"></span></td>
+              <td class="role">Cream</td>
+              <td class="hex">#f8f2e6</td>
+              <td>Horizon line on forest / dark backgrounds.</td>
+            </tr>
+            <tr>
+              <td class="swatch-cell"><span class="sw" style="background:#b2742a"></span></td>
+              <td class="role">Amber accent</td>
+              <td class="hex">#b2742a</td>
+              <td>Reserved for rules, eyebrows, wordmark accents — not used in the mark itself.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FAVICON -->
+    <section class="block">
+      <h2>Favicon &amp; tiny sizes</h2>
+      <p class="section-sub">below 16 px — use the Full Stop variant</p>
+      <div class="favicon-row">
+        <div class="chrome">
+          <div class="tab">
+            <svg viewBox="0 0 40 40" aria-hidden="true">
+              <circle cx="20" cy="20" r="13" fill="none" stroke="#1f3a35" stroke-width="3.2"/>
+              <circle cx="20" cy="20" r="7.2" fill="#c98a3f"/>
+            </svg>
+            <span>Enough to Quit · how many more years?</span>
+          </div>
+          <div class="tab" style="opacity:0.6">
+            <svg viewBox="0 0 40 40" aria-hidden="true" style="filter:grayscale(0.4)"><circle cx="20" cy="20" r="8" fill="#bbb"/></svg>
+            <span>Another tab</span>
+          </div>
+        </div>
+        <div class="notes">
+          <h4>Why a different mark here.</h4>
+          <p>At 16 px the Horizon mark's inner glow washes out and the horizon line visually merges with browser chrome. The Full Stop — a forest ring around an amber core — reads cleanly at that size and acts as the system favicon and app icon.</p>
+          <p>Everywhere else (24 px and up), use the Horizon mark.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- DO / DONT -->
+    <section class="block">
+      <h2>Do &amp; don't</h2>
+      <p class="section-sub">rules of use</p>
+      <div class="rules">
+        <div class="rule-card do">
+          <div class="head">Do</div>
+          <ul>
+            <li>Keep the horizon line perfectly horizontal. The line is the steadiness of the promise.</li>
+            <li>Preserve clear space of <span class="mono">x</span> on all sides.</li>
+            <li>Use the Full Stop variant at or below 16 px.</li>
+            <li>Pair with Cormorant Garamond (display) or Inter (UI) wordmark — never another face.</li>
+            <li>Use the dark-bg variant on forest, dusk, or hero imagery where contrast demands it.</li>
+          </ul>
+        </div>
+        <div class="rule-card dont">
+          <div class="head">Don't</div>
+          <ul>
+            <li>Rotate, flip, or skew. A rising sun is not a setting one.</li>
+            <li>Re-colour the sun cool (blue, purple, grey). The warmth is the point.</li>
+            <li>Stretch non-uniformly or change the 40 × 40 proportions.</li>
+            <li>Place on low-contrast or busy photography without a scrim.</li>
+            <li>Add taglines, drop shadows, glows, or container boxes.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- CODE -->
+    <section class="block">
+      <h2>Reference SVG</h2>
+      <p class="section-sub">drop-in source · cream / paper background</p>
+      <pre class="code"><span class="c-tag">&lt;svg</span> <span class="c-att">viewBox</span>=<span class="c-val">"0 0 40 40"</span> <span class="c-att">aria-hidden</span>=<span class="c-val">"true"</span><span class="c-tag">&gt;</span>
+  <span class="c-com">&lt;!-- outer sun --&gt;</span>
+  <span class="c-tag">&lt;path</span> <span class="c-att">d</span>=<span class="c-val">"M 8 26 A 12 12 0 0 1 32 26"</span> <span class="c-att">fill</span>=<span class="c-val">"#c98a3f"</span><span class="c-tag">/&gt;</span>
+  <span class="c-com">&lt;!-- inner glow --&gt;</span>
+  <span class="c-tag">&lt;path</span> <span class="c-att">d</span>=<span class="c-val">"M 13 26 A 7 7 0 0 1 27 26"</span> <span class="c-att">fill</span>=<span class="c-val">"#e6a45a"</span> <span class="c-att">opacity</span>=<span class="c-val">"0.6"</span><span class="c-tag">/&gt;</span>
+  <span class="c-com">&lt;!-- horizon --&gt;</span>
+  <span class="c-tag">&lt;line</span> <span class="c-att">x1</span>=<span class="c-val">"4"</span> <span class="c-att">y1</span>=<span class="c-val">"26"</span> <span class="c-att">x2</span>=<span class="c-val">"36"</span> <span class="c-att">y2</span>=<span class="c-val">"26"</span>
+        <span class="c-att">stroke</span>=<span class="c-val">"#1f3a35"</span> <span class="c-att">stroke-width</span>=<span class="c-val">"1.8"</span> <span class="c-att">stroke-linecap</span>=<span class="c-val">"round"</span><span class="c-tag">/&gt;</span>
+<span class="c-tag">&lt;/svg&gt;</span></pre>
+      <p style="font-size:13px;color:var(--muted);margin-top:14px;max-width:72ch;">For dark backgrounds: change the inner glow to <span class="mono">#f3d9a4</span> and the horizon line to <span class="mono">#f8f2e6</span>. Leave the outer sun as <span class="mono">#c98a3f</span> — it holds its warmth against both light and dark fields.</p>
+      <p style="font-size:13px;color:var(--muted);margin-top:10px;max-width:72ch;"><strong style="color:var(--forest-deep)">Wordmark lockups:</strong> when the mark sits beside the wordmark, use the tight viewBox <span class="mono">"4 12 32 16"</span> (aspect 2:1) so the mark visually matches the cap-height of the text. The full square <span class="mono">"0 0 40 40"</span> viewBox is for standalone uses — app icon tiles, print plates, the spec itself.</p>
+    </section>
+
+  </div>
+</body>
+</html>
