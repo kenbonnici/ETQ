@@ -114,7 +114,7 @@ async function loadSampleData(page: Page): Promise<void> {
     Object.defineProperty(FixedDate, "UTC", { value: RealDate.UTC });
     window.Date = FixedDate as DateConstructor;
   }, FIXED_SAMPLE_DATA_TEST_DATE_ISO);
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
   await page.locator("#saved-scenario-select").selectOption("__sample_data__");
   await page.locator("#load-saved-scenario-btn").click();
   await expect(page.locator(selectors.currentAge)).toHaveValue(/\d+/);
@@ -152,7 +152,7 @@ async function expectActiveElement(page: Page, selector: string): Promise<void> 
 }
 
 test("activates dependent fields and home-owner visibility rules in the rendered UI", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await expect(page.locator(selectors.dependentAnnualCost)).toHaveCount(0);
   await fillAndBlur(page, selectors.dependentName, "Chris");
@@ -171,7 +171,7 @@ test("activates dependent fields and home-owner visibility rules in the rendered
 });
 
 test("partner fields stay hidden until enabled and show the shared-retirement helper note", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await expect(page.locator(selectors.partnerAge)).toHaveCount(0);
   await expect(page.locator(selectors.partnerIncome)).toHaveCount(0);
@@ -222,7 +222,7 @@ test("shared partner retirement switches the comparison control to year mode wit
 });
 
 test("spending-by-age fields keep fixed defaults and allow inline age editing without rerender corruption", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await expect(page.locator(selectors.spendingAdjustmentAge1)).toHaveValue("65");
   await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("75");
@@ -250,7 +250,7 @@ test("spending-by-age fields keep fixed defaults and allow inline age editing wi
 });
 
 test("spending-by-age row starts follow the edited end ages after commit", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await fillAndBlur(page, selectors.currentAge, "45");
   await fillAndBlur(page, selectors.lifeExpectancy, "90");
@@ -267,7 +267,7 @@ test("spending-by-age row starts follow the edited end ages after commit", async
 });
 
 test("spending-by-age percent steppers apply to all three rows from their fixed defaults", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await page.locator(stepperSelectors.spendingAdjustmentFirstBracketUp).click();
   await page.locator(stepperSelectors.spendingAdjustmentSecondBracketUp).click();
@@ -279,7 +279,7 @@ test("spending-by-age percent steppers apply to all three rows from their fixed 
 });
 
 test("spending-by-age age steppers move the bracket boundaries in single-year increments", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await fillAndBlur(page, selectors.currentAge, "45");
   await fillAndBlur(page, selectors.lifeExpectancy, "90");
@@ -296,7 +296,7 @@ test("spending-by-age age steppers move the bracket boundaries in single-year in
 });
 
 test("spending-by-age age steppers block invalid moves without showing inline errors", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await fillAndBlur(page, selectors.currentAge, "71");
   await fillAndBlur(page, selectors.statutoryRetirementAge, "75");
@@ -332,14 +332,14 @@ test("spending-by-age restores an invalid persisted second end age back to the d
     }));
   });
 
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await expect(page.locator(selectors.spendingAdjustmentAge1)).toHaveValue("65");
   await expect(page.locator(selectors.spendingAdjustmentAge2)).toHaveValue("75");
 });
 
 test("reveals dependent slots up to five through the existing add-dependent flow", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await expect(page.locator(selectors.dependent2Name)).toHaveCount(0);
   await expect(page.locator(selectors.dependent4Name)).toHaveCount(0);
@@ -363,7 +363,7 @@ test("reveals dependent slots up to five through the existing add-dependent flow
 });
 
 test("reveals property slots up to five through the existing add-property flow", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await expect(page.locator(selectors.property2Name)).toHaveCount(0);
   await expect(page.locator(selectors.property4Name)).toHaveCount(0);
@@ -388,7 +388,7 @@ test("reveals property slots up to five through the existing add-property flow",
 });
 
 test("reveals asset slots up to five through the existing add-asset flow", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await expect(page.locator(selectors.asset2Name)).toHaveCount(0);
   await expect(page.locator(selectors.asset4Name)).toHaveCount(0);
@@ -413,7 +413,7 @@ test("reveals asset slots up to five through the existing add-asset flow", async
 });
 
 test("reveals stock market crash slots progressively and only shows crash details after the year is entered", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await expect(page.locator(selectors.stockMarketCrash1Year)).toHaveCount(0);
   await expect(page.locator(selectors.stockMarketCrash1Drop)).toHaveCount(0);
@@ -457,7 +457,7 @@ test("value fields that rerender on each keystroke keep the raw edit text until 
 });
 
 test("crash year entry keeps all digits while revealing its dependent fields", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await fillAndBlur(page, selectors.stockMarketInvestments, "100000");
   await expect(page.locator(selectors.stockMarketCrash1Year)).toBeVisible();
@@ -470,7 +470,7 @@ test("crash year entry keeps all digits while revealing its dependent fields", a
 });
 
 test("tab order stays in visible dependent field order as groups appear", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   const dependentName = page.locator(selectors.dependentName);
   await dependentName.fill("Chris");
@@ -491,7 +491,7 @@ test("tab order stays in visible dependent field order as groups appear", async 
 });
 
 test("tab order skips hidden housing rent and reveals mortgage fields in sequence", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await page.locator(selectors.housingStatusOwner).click();
   const homeValue = page.locator(selectors.homeValue);
@@ -512,7 +512,7 @@ test("tab order skips hidden housing rent and reveals mortgage fields in sequenc
 });
 
 test("switching housing status keeps the input panel scroll position stable", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await fillAndBlur(page, selectors.currentAge, "48");
   await fillAndBlur(page, selectors.lifeExpectancy, "95");
@@ -558,7 +558,7 @@ test("tab order follows displayed fields through planned sell year in investment
 });
 
 test("downsizing cheaper-home warning clears once the replacement cost is reduced", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await fillAndBlur(page, selectors.currentAge, "48");
   await page.locator(selectors.housingStatusOwner).click();
@@ -580,7 +580,7 @@ test("downsizing cheaper-home warning clears once the replacement cost is reduce
 });
 
 test("downsizing cash released returns after switching from rent back to buy", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   await fillAndBlur(page, selectors.currentAge, "48");
   await page.locator(selectors.housingStatusOwner).click();
@@ -946,7 +946,7 @@ test("properties, assets, and debts are split into clearer intent-based sections
 });
 
 test("income and expenses section places living expenses after side income and advances focus accordingly", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/ETQ/calculator.html");
 
   const incomeSection = page.locator(".section-income");
   await expect(incomeSection.getByRole("heading", { name: "Income & Expenses" })).toBeVisible();
