@@ -365,10 +365,11 @@ body {
   justify-self: end;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   padding-right: 4px;
   text-decoration: none;
-  opacity: 0.75;
+  opacity: 0.85;
+  white-space: nowrap;
   transition: opacity 0.15s ease;
 }
 
@@ -377,27 +378,18 @@ body {
 }
 
 .brand-logo {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 13px;
   flex-shrink: 0;
 }
 
 .brand-text {
-  font-size: 13px;
-  font-weight: 400;
-  letter-spacing: 0.01em;
-  color: var(--muted);
-}
-
-.brand-highlight {
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 15px;
   font-weight: 600;
-  color: var(--ink);
-}
-
-.brand-tld {
-  font-size: 11px;
-  color: var(--muted);
-  opacity: 0.6;
+  letter-spacing: 0.02em;
+  color: #1f3a35;
+  line-height: 1;
 }
 
 .view-tabs {
