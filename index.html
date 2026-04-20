@@ -156,45 +156,45 @@
     font-weight: 500; letter-spacing: -0.01em;
     margin: 0 0 20px;
   }
-  .lede { font-size: 18px; color: var(--ink-soft); max-width: 62ch; margin: 0 0 48px; }
+  .lede { font-size: 18px; color: var(--ink-soft); max-width: 80ch; margin: 0 0 48px; text-wrap: balance; }
 
   /* Calculator */
-  .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; }
+  .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
   .calc-card {
     background: var(--paper);
     border: 1px solid var(--rule);
-    padding: 36px 36px 32px;
+    padding: 32px 32px 28px;
   }
   .calc-card h3 {
     font-family: "Cormorant Garamond", Georgia, serif;
     font-weight: 600; font-size: 24px; margin: 0 0 8px; color: var(--forest);
   }
   .calc-privacy {
-    margin: 0 0 26px;
+    margin: 0 0 20px;
     font-family: "Cormorant Garamond", Georgia, serif;
     font-style: italic;
     font-size: 15px; line-height: 1.5;
     color: var(--ink-soft);
     max-width: 44ch;
   }
-  .field { margin-bottom: 18px; }
+  .field { margin-bottom: 14px; }
   .field label {
     display: block; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
-    color: var(--muted); margin-bottom: 6px; font-weight: 500;
+    color: var(--muted); margin-bottom: 4px; font-weight: 500;
   }
   .field input {
-    width: 100%; padding: 10px 0;
+    width: 100%; padding: 8px 0;
     border: 0; border-bottom: 1px solid var(--rule);
     background: transparent;
     font-family: "Cormorant Garamond", Georgia, serif;
-    font-size: 22px; color: var(--forest-deep);
+    font-size: 20px; color: var(--forest-deep);
     outline: none;
     transition: border-color 150ms ease;
   }
   .field input:focus { border-color: var(--forest); }
   .calc-result {
     display: flex; flex-direction: column;
-    padding-top: 24px;
+    padding-top: 36px;
   }
   .calc-result-label { font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; }
   .calc-result-number {
@@ -203,8 +203,8 @@
     color: var(--forest-deep); font-weight: 500;
   }
   .calc-result-number em { font-style: italic; color: var(--amber); }
-  .calc-result-caption { margin-top: 16px; color: var(--ink-soft); font-size: 15px; max-width: 40ch; }
-  .calc-note { margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--rule); display: flex; flex-direction: column; gap: 12px; }
+  .calc-result-caption { margin-top: 28px; color: var(--ink-soft); font-size: 15px; max-width: 40ch; }
+  .calc-note { margin-top: 28px; max-width: 40ch; display: flex; flex-direction: column; gap: 12px; }
   .calc-choice {
     display: flex; align-items: center; justify-content: space-between;
     padding: 14px 18px; border: 1px solid var(--rule); border-radius: 2px;
@@ -340,7 +340,7 @@
       Enough to Quit
     </a>
     <ul>
-      <li><a class="link" href="#calc">The question</a></li>
+      <li><a class="link" href="#question">The question</a></li>
       <li><a class="link" href="#cred">Who built it</a></li>
       <li><a class="link" href="#how">How it works</a></li>
       <li><a class="link" href="#calc">Begin</a></li>
@@ -348,7 +348,7 @@
   </div>
 </nav>
 
-<header class="hero">
+<header class="hero" id="question">
   <div class="container">
     <div>
       <div class="eyebrow">An honest calculation, long overdue</div>
@@ -393,7 +393,7 @@
   <div class="container">
     <span class="section-eyebrow">Thirty-minute answer</span>
     <h2 class="section-title">Thirty-second estimate</h2>
-    <p class="lede">Enter what you know. See the age at which work stops being necessary and starts being a choice. A fuller picture waits in the full model.</p>
+    <p class="lede">The age at which work becomes a choice — a back-of-envelope estimate in six questions.</p>
 
     <div class="calc-grid">
       <div class="calc-card">
@@ -403,7 +403,7 @@
           <input id="c-age" type="number" value="44" inputmode="numeric" />
         </div>
         <div class="field">
-          <label for="c-income">Annual household income (after tax)</label>
+          <label for="c-income">Net annual household income</label>
           <input id="c-income" type="text" value="£185,000" />
         </div>
         <div class="field">
@@ -414,19 +414,23 @@
           <label for="c-savings">Savings and Investments</label>
           <input id="c-savings" type="text" value="£95,000" />
         </div>
-        <div class="field" style="margin-bottom:0">
+        <div class="field">
           <label for="c-invest">Other assets</label>
           <input id="c-invest" type="text" value="£840,000" />
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <label for="c-pension">Net annual retirement pension</label>
+          <input id="c-pension" type="text" value="£0" />
         </div>
       </div>
 
       <div class="calc-result">
         <span class="calc-result-label">You could stop at</span>
         <div class="calc-result-number"><span id="c-out">54</span></div>
-        <p class="calc-result-caption">A back-of-envelope estimate. The full model adds partner, property, investments, rentals, dependants, other income streams, debt, liquidations and more.</p>
+        <p class="calc-result-caption">The full model adds partner and dependants, home downsizing, investment properties with rental income, other assets of value, additional income streams and debt, reserve and legacy goals, stock-market crash scenarios and staged liquidations, and customisable assumptions throughout.</p>
         <div class="calc-note">
           <a href="calculator.html" class="calc-choice"><span>Ease me in — one question at a time</span><span class="arrow">→</span></a>
-          <a href="calculator.html" class="calc-choice"><span>Numbers are my thing — take me to the full model</span><span class="arrow">→</span></a>
+          <a href="calculator.html" class="calc-choice"><span>I love numbers — unleash the full calculator</span><span class="arrow">→</span></a>
         </div>
       </div>
     </div>
@@ -516,17 +520,18 @@
   // Simple quick-start calc
   const parseMoney = s => Number(String(s).replace(/[^0-9.]/g,'')) || 0;
   const fmt = n => Math.round(n).toString();
-  const fields = ['c-age','c-income','c-spend','c-savings','c-invest'];
+  const fields = ['c-age','c-income','c-spend','c-savings','c-invest','c-pension'];
   function recalc(){
     const age = parseMoney(document.getElementById('c-age').value);
     const income = parseMoney(document.getElementById('c-income').value);
     const spend = parseMoney(document.getElementById('c-spend').value);
     const savings = parseMoney(document.getElementById('c-savings').value);
     const invest = parseMoney(document.getElementById('c-invest').value);
+    const pension = parseMoney(document.getElementById('c-pension').value);
     const surplus = Math.max(income - spend, 0);
     let nw = savings + invest;
     let a = age;
-    const target = spend * 25;
+    const target = Math.max(spend - pension, 0) * 25;
     while (a < 95 && nw < target) { nw = nw*1.05 + surplus; a++; }
     document.getElementById('c-out').textContent = a >= 95 ? '—' : a;
   }
