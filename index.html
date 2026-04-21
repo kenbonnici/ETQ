@@ -279,24 +279,20 @@
     font-family: "Cormorant Garamond", serif;
     font-size: 26px; margin: 0 0 14px; color: var(--forest-deep); font-weight: 600;
   }
+  .step-link { color: inherit; text-decoration: none; transition: color 200ms ease; }
+  .step-link:hover { color: var(--amber); }
+  .step-link-arrow {
+    display: inline-block; margin-left: 10px;
+    font-family: "Inter", sans-serif; font-size: 18px; font-weight: 400;
+    color: var(--amber); transition: transform 200ms ease;
+  }
+  .step-link:hover .step-link-arrow { transform: translateX(4px); }
   .step p { font-size: 15px; color: var(--ink-soft); margin: 0; line-height: 1.6; }
-  .step-pro {
-    margin-top: 60px; padding: 24px 28px;
-    border: 1px solid var(--rule); background: var(--paper);
-    display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  .step-aside {
+    margin-top: 18px !important; padding-top: 14px;
+    border-top: 1px solid var(--rule); font-size: 14px !important;
   }
-  .step-pro p { margin: 0; font-size: 15px; color: var(--ink-soft); }
-  .step-pro strong { color: var(--forest-deep); font-weight: 600; }
-  .step-pro .btn-ghost {
-    white-space: nowrap; flex-shrink: 0;
-    border-bottom: none; padding: 0;
-    color: var(--forest-deep);
-  }
-  .step-pro .btn-ghost .arrow {
-    display: inline-block; transition: transform 200ms ease;
-  }
-  .step-pro .btn-ghost:hover { color: var(--amber); border-color: transparent; }
-  .step-pro .btn-ghost:hover .arrow { transform: translateX(4px); }
+  .step-aside strong { color: var(--forest-deep); font-weight: 600; }
 
   /* Quote */
   .quote-section { padding: 140px 0; text-align: center; background: var(--forest-deep); }
@@ -481,24 +477,20 @@
     <div class="steps">
       <article class="step">
         <div class="step-num">I.</div>
-        <h3>The thirty-minute sketch</h3>
-        <p>Five fields. A single, clear number. Enough to tell you whether this is a conversation worth continuing.</p>
+        <h3><a href="#calc" class="step-link">Thirty-second estimate<span class="step-link-arrow">→</span></a></h3>
+        <p>Six inputs. A single, clear number. Enough to tell you whether this is a conversation worth continuing.</p>
       </article>
       <article class="step">
         <div class="step-num">II.</div>
-        <h3>Progressive onboarding</h3>
+        <h3>Guided walkthrough</h3>
         <p>A thoughtful, guided refinement: property, pensions, planned sales, phased drawdowns, tax. No jargon, no friction.</p>
       </article>
       <article class="step">
         <div class="step-num">III.</div>
-        <h3>The full model</h3>
+        <h3><a href="calculator.html" class="step-link">Full model<span class="step-link-arrow">→</span></a></h3>
         <p>The deterministic engine used by the builder himself — projections to end of life, scenario comparison, and the full cash-flow picture.</p>
+        <p class="step-aside"><strong>Comfortable with the numbers?</strong> Go straight to the full model. Full control, zero walkthrough.</p>
       </article>
-    </div>
-
-    <div class="step-pro">
-      <p><strong>Already a power user?</strong> Skip the onboarding and open the full model directly. Your numbers, your assumptions.</p>
-      <a href="calculator.html" class="btn btn-ghost">Open the full model <span class="arrow">→</span></a>
     </div>
   </div>
 </section>
