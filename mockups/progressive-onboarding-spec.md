@@ -1,0 +1,398 @@
+# Progressive Onboarding — Hi-Fi Design Spec
+
+**Document status:** v1.0 — ready for hi-fi mockup
+**Last updated:** 2026-04-22
+**Scope:** design spec only. No implementation in this document.
+
+---
+
+## 1. Purpose & positioning
+
+A calm, single-page guided walkthrough that sits between the landing-page 30-second estimator and the full calculator. It takes the user through the calculator's real input sequence — but one question at a time, in conversational language — while a live projection panel on the right builds confidence as answers accumulate.
+
+**Outcome:** by the time the user lands on the full calculator, the numbers already look like *theirs*.
+
+**Voice:** a trusted advisor who asks one question, waits, then asks the next. Never a form. Warm but composed. No exclamation marks, no "Great!", no "Awesome!".
+
+---
+
+## 2. Entry points & handoff
+
+### 2.1 Where the page is reached from
+
+The landing page already has a three-card *progression* block in the "Start light. Go deep…" section (`index.html:484–497`). Two of those cards are already clickable. The middle card, **Guided walkthrough** (`index.html:490`), is currently text-only. Make it symmetrical with its siblings:
+
+```html
+<article class="step">
+  <h3><a href="onboarding.html" class="step-link">Guided walkthrough<span class="step-link-arrow">→</span></a></h3>
+  <p>A guided walkthrough — one question at a time…</p>
+</article>
+```
+
+And in the 30-second estimate section, change only the **first** of the two existing `.calc-choice` links (`index.html:436`) to point at `onboarding.html`. Leave the "I love numbers" link pointing at `calculator.html` unchanged.
+
+**Final entry map:**
+
+| Source on landing | Destination |
+|---|---|
+| `.calc-choice` "Ease me in…" | `onboarding.html` |
+| `.step` middle card "Guided walkthrough" | `onboarding.html` |
+| `.calc-choice` "I love numbers…" | `calculator.html` (unchanged) |
+| `.step` third card "Full model" | `calculator.html` (unchanged) |
+
+No new copy is needed on the landing page — the existing "Guided walkthrough" description ("one question at a time uncovering all income, expenses, assets, commitments, sales and scenarios… No jargon, no friction") already frames the page accurately.
+
+### 2.2 Handoff in from the 30-second estimate
+
+If the user completed the 30-second estimator on the landing page, pre-fill:
+
+- `profile.currentAge`
+- `income.employment.netAnnual`
+- `spending.livingExpenses.annual`
+- `assets.cash.totalBalance`
+- `assets.equities.marketValue`
+- `retirement.statePension.netAnnualAtStart`
+
+…from `sessionStorage`, and skip or soft-confirm those questions: *"You told us you earn €X — does that still feel right?"*
+
+### 2.3 Handoff out to the full calculator
+
+On completion, persist `FieldState` to `localStorage` under the same key the full calculator reads, then navigate to `calculator.html#from=onboarding`. The calculator detects that hash and shows a gentle one-session banner: *"Here's what you built. Edit anything, or keep exploring."*
+
+---
+
+## 3. Page composition
+
+```
+┌───────────────────────────────────────────────────────────────────────┐
+│  NAV (same as landing: ETQ wordmark left, link back to landing)       │
+├───────────────────────┬───────────────────────────────────────────────┤
+│                       │                                               │
+│   CONVERSATION        │   LIVE ESTIMATE PANEL (sticky)                │
+│   (left, ~52%)        │   (right, ~48%)                               │
+│                       │                                               │
+│   scrollable stack    │   does not scroll with questions              │
+│   of answered chips   │                                               │
+│   + the active card   │                                               │
+│                       │                                               │
+└───────────────────────┴───────────────────────────────────────────────┘
+```
+
+- Outer container: `max-width: 1280px`, `padding: 48px 40px 120px`.
+- Two-column CSS grid: `grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 72px`.
+- Below 960px viewport: single column, right panel becomes a compact sticky header (age + delta only, no chart).
+- Background: `--cream` (same as landing), with a faint `radial-gradient(at 85% 15%, rgba(178,116,42,0.08), transparent 60%)` for warmth — mirrors the hero gradient idiom.
+
+---
+
+## 4. Left column — the conversation
+
+### 4.1 Structure
+
+A vertical stack. Top-to-bottom, oldest to newest. Only **one card is "active"** (current question) at a time.
+
+Three states per question:
+
+1. **Upcoming** — not yet revealed. Not rendered.
+2. **Active** — full card, serif prompt, input, primary "Continue" button, optional "skip for now" ghost link. Slight elevation (`box-shadow: 0 24px 48px -32px rgba(31,58,53,0.18)`), 1px `--rule` border, `--cream-soft` fill.
+3. **Answered** — collapses into a compact *answer chip*: small sans-serif label + the user's answer in serif, with a faint "Edit" pencil on hover. Tapping expands it back to a full active card (and re-locks everything below it until re-confirmed — see §4.5).
+
+### 4.2 Active-card anatomy
+
+```
+┌───────────────────────────────────────────────────────┐
+│  [ small eyebrow, uppercase: "About you · 2 of 14" ]  │  ← progress, unassertive
+│                                                       │
+│  Cormorant 40–44 px, weight 500, --forest-deep        │
+│  "And roughly how much do you and your household      │
+│   spend in a typical year?"                           │
+│                                                       │
+│  Inter 15 px, --ink-soft, 1 line of reassurance:      │
+│  "An honest guess is better than a precise one."      │
+│                                                       │
+│  ┌─────────────────────────────────────────────┐      │
+│  │  €  [ 48,000 ]                              │      │  ← underline input, serif 22 px
+│  └─────────────────────────────────────────────┘      │
+│                                                       │
+│  [ Continue → ]    skip for now                       │
+└───────────────────────────────────────────────────────┘
+```
+
+- Padding: `36px 40px`, radius `4px` (slightly softer than landing's 2px buttons to feel more inviting).
+- Prompt copy: **always a question, always in second person, never a field label**. Examples in §6.
+- Helper line: optional. Used for reassurance, context, or a micro-definition. Never for instructions.
+- Input: reuse `.calc-input` styling (Cormorant Garamond, 20–22 px, underline only). Currency symbol is a muted prefix inside the input row, not a label.
+- Primary button: `.btn-primary` from landing (forest fill, cream text, 2px radius).
+- Keyboard: **Enter** submits.
+- "skip for now": ghost link only appears where the input is legitimately optional (see field list in §6).
+
+### 4.3 Answer chips
+
+```
+ ABOUT YOU · YOUR AGE
+ 48                                              ✎ edit
+ ───────────────────────────────────────────────────
+```
+
+- 12px uppercase eyebrow in `--muted`.
+- Answer in Cormorant 20px.
+- 1px bottom divider.
+- Compact, ~44px tall.
+- Stack them freely — the column can grow long; that's fine, it reads like a transcript.
+
+### 4.4 Reveal animation
+
+- New active card: `opacity 0 → 1, translateY(12px → 0)` over 320 ms ease-out.
+- Card collapse on answer: fade + height transition to chip over 240 ms.
+- Never animate the right panel's big number — see §5.3.
+
+### 4.5 Edit-in-place rule
+
+Editing any answered chip revives it as the active card and **invalidates all chips below it** (they grey to 50% opacity). User must Continue through each again — most will just be Enter-Enter-Enter since values are retained. This prevents stale dependent answers (e.g. changing "Owner" to "Renter" must drop the mortgage answers).
+
+---
+
+## 5. Right column — the live estimate
+
+### 5.1 Layout, top to bottom
+
+1. **Hero number** — "You could stop working at" (Inter 14px, uppercase, `--muted`) over a huge serif age: Cormorant 500, `clamp(96px, 10vw, 144px)`, `--forest-deep`. Tabular numerals.
+
+2. **Delta line** — "That's 9 years earlier than the statutory age of 66." Inter 16px, `--ink-soft`. Hidden until we know both early and statutory ages.
+
+3. **Confidence meter** — 3-dot row: `● ● ○` with a label like "Rough estimate · add 4 more answers to sharpen it." Dots fill as the model gains enough inputs to reduce the assumption cone.
+
+4. **Mini chart** — appears progressively (see §5.2).
+
+5. **Assumptions line** — tiny `--muted` 12px at the very bottom of the panel: "Assuming 5% real returns. You can fine-tune this later." Tappable; scrolls the conversation to the relevant in-chapter assumption question.
+
+### 5.2 Mini-chart staging (three phases)
+
+1. **Hidden** — before Chapter 5 (Savings & Investments). Right panel shows only the hero age, delta, and confidence dots. The space the chart will occupy is *not* reserved — when it appears, the panel grows downward rather than showing an empty rectangle.
+
+2. **Cash-only** — triggered the moment the user answers question 15 (`assets.cash.totalBalance`). Single teal line (`--accent`), soft area fill below, a single "€0" zero-line in `--rule`. X-axis: age ticks every 5 years from current age to 95. No Y-axis labels — hover tooltips give exact numbers. 360ms fade-in.
+
+3. **Cash + net worth** — net-worth line fades in the first time the model produces a non-trivial net-worth series distinct from cash (i.e. after any of: home value, property value, other-asset value, or non-zero equities). Net worth rendered in `--forest` as a lighter-weight 1.5px line *above* the cash area fill. Tiny legend appears: two dots + labels "cash" and "net worth". 360ms cross-fade; cash line does not jump position.
+
+If the user edits backward and removes all net-worth sources, the net-worth line fades out — chart returns to cash-only — but the legend stays, greyed, so the user sees what's no longer there.
+
+### 5.3 Empty / early state
+
+Before the first two numbers come in, the hero number reads "—" with a warm placeholder: *"The age will start to appear as you answer."* No chart. No delta. Just calm.
+
+### 5.4 Live update behavior
+
+- Call `runModel(fieldState, uiState)` (from `src/model/index.ts:36`) on every answer commit, debounced 150 ms.
+- **Animate the age change numerically**: tween from old → new integer over 600ms ease-out. Never flash, never jitter mid-typing.
+- If `validationMessages` contains blockers, show the age as "—" and a single Inter 14px line in `--amber`: *"One of the numbers needs a second look."* No scary red.
+- If the model says retirement is not achievable before 95, show the age as "—" with *"With today's numbers, it's tight. Keep going — the next few questions often move this."* Never show "95" as a depressing result.
+
+---
+
+## 6. Question sequence & dependency logic
+
+The onboarding uses the real calculator field sequence but groups it into **chapters**. Each chapter opens with its own small eyebrow ("About you", "Money coming in", etc.).
+
+**Assumptions are distributed into their natural chapters** — every assumption rides in on the same prompt that raised it, phrased as a soft confirmation with a pre-filled default. If the user accepts the default (single Enter), the question collapses into a compact *inline* chip rather than its own full chip, to keep the transcript from bloating. The advisor metaphor holds: we make the call, then check with you. We never leave a blank.
+
+### Chapter 1 — *About you*  (essential, ~30 seconds)
+
+| # | Prompt | Field | Type | Notes |
+|---|---|---|---|---|
+| 1 | "Let's start simple — how old are you?" | `profile.currentAge` | integer | No skip. |
+| 2 | "Is there a partner sharing this plan with you?" | `partner.include` | Yes/No | If No, skip 3–4. |
+| 3 | "And how old is your partner?" | `partner.profile.currentAge` | integer | Conditional. |
+| 4 | "Will they be retiring around the same time as you?" | `partner.retirement.alsoRetiresEarly` | Yes/No | Conditional. Phrased warmly, not technically. |
+
+### Chapter 2 — *Money coming in*
+
+| 5 | "Roughly, what does your household take home in a year — after tax?" | `income.employment.netAnnual` | currency | Helper: "After tax, after pension contributions." |
+| 6 | "And your partner's take-home?" | `partner.income.employment.netAnnual` | currency | Conditional on partner. |
+
+### Chapter 3 — *Money going out*
+
+| 7 | "And roughly how much do you spend in a typical year?" | `spending.livingExpenses.annual` | currency | Helper: "An honest guess is better than a precise one." Offer "I'd rather break it down" → expands into the calculator's categorized spending; otherwise a single number is fine. |
+| 7a | *(assumption, inline)* "Most people spend a bit less as they age — less commuting, less going out. Should we taper your spending gently, or hold it steady?" | spending-by-age bundle | taper / hold steady / let me set it | Default: taper gently. |
+
+### Chapter 4 — *Where you live*
+
+| 8 | "Do you own your home, or rent?" | `housing.status` | Owner / Renter | Two large chip buttons, not a dropdown. Dependency branch below. |
+
+**If Owner:**
+
+| 9  | "What's your home worth today, roughly?" | `housing.01Residence.marketValue` | currency | |
+| 9a | *(assumption, inline)* "And we'll let the home drift up with inflation — roughly 2% a year. Sound right?" | residence appreciation | Yes / set a specific rate | |
+| 10 | "Is there a mortgage still on it?" | *(derived)* | Yes/No | If No, skip 11–13. |
+| 11 | "How much is still owed?" | `housing.01Residence.mortgage.balance` | currency | |
+| 12 | "At what interest rate?" | `housing.01Residence.mortgage.interestRateAnnual` | percent | |
+| 13 | "And the monthly repayment?" | `housing.01Residence.mortgage.monthlyRepayment` | currency | |
+| 14 | "Any plans to downsize one day?" | triggers `housing.downsizingYear` etc. | Yes/No | Skippable. If Yes: year + buy/rent + cost. |
+
+**If Renter:**
+
+| 9 | "What's the monthly rent?" | `housing.rentAnnual` (÷12 converted on commit) | currency | |
+
+### Chapter 5 — *What you've set aside*
+
+| 15 | "How much do you have in cash — current accounts, savings, easy-access?" | `assets.cash.totalBalance` | currency | *** Chart appears here (cash-only). *** |
+| 16 | "And invested in the stock market — ETFs, funds, pensions?" | `assets.equities.marketValue` | currency | Helper: "Rough total across everything is fine." |
+| 16a | *(assumption, inline)* "We're assuming those grow around 5% a year above inflation. Change that, or leave it?" | equities real growth | accept / set a rate | Default 5%. |
+| 17 | "Are you adding to that each month?" | `assets.equities.monthlyContribution` | currency | Skippable; defaults to 0. |
+| 17a | *(assumption, inline, conditional on 17 > 0)* "Will you nudge that up each year with inflation, or hold the number flat?" | contribution inflation | hold / inflate | Default: hold. |
+
+### Chapter 6 — *Other things you own* (gated)
+
+| 18 | "Do you own any investment properties, or other valuables you'd count — art, a second car, a boat?" | *(gate)* | Yes/No | If No, skip chapter. |
+| 19 | "Let's add the first one. What should we call it?" | `properties.01.displayName` *or* `assetsOfValue.01.displayName` | text | Followed by value + optional mortgage + optional annual cost. |
+| 19a | *(assumption, inline, per property)* "Will the rent on {name} rise with inflation?" | rental growth | Yes / set a rate | Default yes. |
+| 19b | *(assumption, inline, per other-asset)* "Is this holding its value, growing, or slowly losing value?" | asset appreciation | 3 chip options → 0% / +inflation / −inflation, with "set a specific rate" as a fourth | |
+
+Offer "Add another" as a soft secondary after each — up to 5 properties, 3 other assets, matching the calculator's slots.
+
+### Chapter 7 — *People you support*
+
+| 20 | "Anyone you support financially — kids, parents, someone else?" | *(gate)* | Yes/No | |
+| 21 | "Who, and roughly what does it cost a year?" | `dependents.01.*` | text + currency + years | Up to 5 slots. |
+| 21a | *(assumption, inline, conditional on supportYearsRemaining > 5)* "Will the cost grow with inflation?" | dependent inflation | Yes/No | Default Yes. |
+
+### Chapter 8 — *The pension that kicks in later*
+
+| 22 | "When does your state or statutory pension start?" | `retirement.statutoryAge` | integer | Helper: "In most places this is somewhere between 65 and 68." |
+| 23 | "And roughly how much a year?" | `retirement.statePension.netAnnualAtStart` | currency | Skippable. |
+| 23a | *(assumption, inline)* "And we'll assume it rises with inflation. OK?" | pension growth | Yes / set a rate | Default Yes. |
+| 24 | "What about your partner's?" | `partner.retirement.statePension.netAnnualAtStart` | currency | Conditional + skippable. |
+
+### Chapter 9 — *Any debts we haven't mentioned?*
+
+Gated Yes/No. If Yes, one loan row at a time (balance, rate, monthly), with an "Add another" soft link after each.
+
+### Chapter 10 — *Handoff*
+
+Final card, different shape (wider, warmer). Copy:
+
+> **"That's the picture. You could stop working at 57."**
+>
+> "There's more you *can* explore in the full model — stock-market downturns, one-off future events like a downsize or an inheritance, the order we'd sell things in if you needed to. None of it is required."
+>
+> **[ Take me to the full calculator → ]**  &nbsp;&nbsp;  save and come back later
+
+Primary CTA writes `FieldState` to `localStorage` and navigates to `calculator.html#from=onboarding`.
+
+---
+
+## 7. Dependency-logic implementation note
+
+Reuse `applySectionActivation` from `src/model/activation.ts` to decide which questions are live. The onboarding's own linear sequence layers **on top** of activation — if activation says a field is inactive, the onboarding skips that question entirely rather than asking and discarding.
+
+Order of operations on each commit:
+
+1. Write value into `fieldState`.
+2. Run `applySectionActivation` to get the new active set.
+3. Advance pointer to the next question in the canonical sequence that is (a) active and (b) not yet answered.
+4. Call `runModel` for the right panel.
+
+This keeps the pipeline invariant from `CLAUDE.md` intact — activation → validate → normalize → timing → engine — and means the conversation *cannot* diverge from the real model's visibility rules.
+
+---
+
+## 8. Copy-tone rules
+
+- Always a **question**, never a label. "Your age" → "How old are you?"
+- **One** reassurance line maximum per card. Never two.
+- No jargon on the first pass. "Net annual household income" → "take-home in a year". The real field name can appear as a tiny tooltip on hover for the curious.
+- No exclamation marks. No "Great!". No "Awesome!". The advisor is warm but composed.
+- Numbers shown back to the user (in chips, in the estimate) are always formatted with locale separators and currency symbol.
+- Skip copy: "skip for now" (lowercase, understated). Never "I don't know" — that shames the user.
+- Every assumption question has a sensible default **loaded before the question is asked**, so pressing Enter through the whole onboarding still produces a valid, reasonable projection.
+
+---
+
+## 9. Visual tokens
+
+Reused verbatim from landing so the two pages feel like one product.
+
+### Color
+
+| Token | Hex | Role |
+|---|---|---|
+| `--cream` | `#f8f2e6` | page bg |
+| `--cream-soft` | `#fbf6ec` | active card bg |
+| `--paper` | `#fffdf8` | right panel bg (subtle contrast) |
+| `--ink` | `#1a2327` | body text |
+| `--ink-soft` | `#415058` | helper text |
+| `--muted` | `#7d8a90` | eyebrows, meta |
+| `--forest` | `#1f3a35` | primary buttons, retirement-age number |
+| `--forest-deep` | `#12231f` | headings |
+| `--accent` | `#0f766e` | links, the age token itself, cash line |
+| `--amber` | `#b2742a` | gentle warnings, hover underline |
+| `--rule` | `#e3d9c4` | dividers, input underlines |
+
+### Type
+
+| Role | Family | Size | Weight |
+|---|---|---|---|
+| Display / prompt | Cormorant Garamond | 40–44 px | 500 |
+| Big number | Cormorant Garamond | `clamp(96, 10vw, 144) px`, tabular-nums | 500 |
+| Body | Inter | 15–16 px, line-height 1.55 | 400 |
+| Eyebrow | Inter | 12 px, uppercase, letter-spacing 0.08em | 500 |
+| Input | Cormorant Garamond | 22 px, underline only | 500 |
+
+### Radii & spacing
+
+- Buttons: `2px`
+- Cards: `4px`
+- Chart area: `6px`
+- Spacing rhythm: `8 · 12 · 20 · 32 · 48 · 72 px`
+
+---
+
+## 10. State & persistence
+
+- **Single source of truth:** the same `FieldState` object the calculator uses. No shadow schema.
+- Persist on every commit to `localStorage` under a key the calculator also reads, so users can close the tab and resume — and arrive in the full calculator with their work intact.
+- UI-only state (which question is active, which chips are collapsed) lives in a separate `OnboardingUiState` object that is *not* persisted — refreshing returns the user to "first unanswered active question", which is deterministic from `FieldState` alone.
+
+---
+
+## 11. Edge cases
+
+- **Unreasonable answer** (age 300, negative income): block the Continue button, show the same tone of gentle validation message used in the calculator, never a red banner.
+- **Skipping a required field:** not possible — required fields have no "skip for now" link.
+- **Editing an early answer that invalidates later ones** (Owner → Renter): later chips animate to 50% opacity, then silently drop when the user reaches them again in the re-walk.
+- **Narrow viewport (<960px):** right panel collapses to a sticky top strip showing only the hero age + delta; chart hidden; resume in full layout above 960.
+- **Reduced-motion users:** all transitions swap to instant; the age number does not tween.
+
+---
+
+## 12. Accessibility
+
+- Each active card is a `<section aria-labelledby>` with the prompt as its `<h2>`; the conversation list is `<ol>` so screen readers announce position.
+- Focus management: on Continue, programmatically focus the next active card's input. On edit, focus the chip's input.
+- The big retirement-age number has `aria-live="polite"` with a compact verbal form ("Estimated earliest retirement age: 57") so screen readers don't read every tween frame.
+- Full keyboard flow: **Enter** submits, **Shift+Tab** returns to previous chip to edit, **Escape** collapses an edited chip back to its answered state.
+
+---
+
+## 13. Out of scope for v1
+
+Flag these explicitly — surface in the full calculator later if at all:
+
+- **Saving to an account.** There are no accounts yet; the landing page is explicit: "no account".
+- **Branching by country.** Statutory pension age is asked directly, not inferred.
+- **Multi-scenario comparison on the right.** The onboarding shows one projection only; comparison lives in the full calculator.
+- **Stock-market crash scenarios.** These live in the full calculator's *Major Future Events* panel. The handoff copy names them as a reason to continue.
+- **Liquidation priority editing.** Default (cheapest-first) is used throughout onboarding. User reorders in the full calculator.
+
+---
+
+## 14. Implementation notes (for downstream)
+
+- New file: `onboarding.html` — mirror structure of `calculator.html` (`<div id="app"></div>` + Vite module entry).
+- Detect page in `src/main.ts` via `window.location.pathname` and branch to an onboarding render path. Do not duplicate the engine.
+- Reuse `.btn-primary`, `.btn-ghost`, `.calc-input`, `.section-eyebrow` styles from landing's inline `<style>` — extract to a shared `landing.css` if preferred, or duplicate in `onboarding.html`'s own `<style>` block. Do not introduce a framework.
+- Chart rendering reuses `drawChart` primitives from `src/main.ts`. A thin wrapper produces the single-series (cash) and dual-series (cash + net worth) variants described in §5.2.
+- All interactions testable via Playwright using the same `data-*` selector conventions as the rest of the app.
+
+---
+
+*End of spec.*
