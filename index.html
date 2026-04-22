@@ -218,20 +218,27 @@
 
   /* Credibility */
   .cred { background: var(--cream-soft); }
-  .cred-grid { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 72px; align-items: center; }
+  .cred-eyebrow { display: block; margin-bottom: 24px; }
+  .cred-grid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 72px; align-items: start; }
+  .cred-portrait-figure { margin: 0; }
   .cred-portrait {
-    aspect-ratio: 3/4; border: 1px solid var(--rule); background:
-      linear-gradient(135deg, #e8d9b8 0%, #d3c09b 50%, #9aa898 100%);
-    position: relative; box-shadow: 0 20px 40px -20px rgba(31,58,53,0.2);
+    aspect-ratio: 3/4; border: 1px solid var(--rule);
+    background: linear-gradient(135deg, #e8d9b8 0%, #d3c09b 50%, #9aa898 100%);
+    position: relative; overflow: hidden;
+    box-shadow: 0 20px 40px -20px rgba(31,58,53,0.2);
+  }
+  .cred-portrait img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
   }
   .cred-portrait::after {
     content: ""; position: absolute; inset: 16px;
-    border: 1px solid rgba(255,255,255,0.35);
+    border: 1px solid rgba(255,255,255,0.35); pointer-events: none;
   }
   .cred-portrait-label {
-    position: absolute; bottom: 20px; left: 20px;
-    font-family: "Cormorant Garamond", serif; font-style: italic;
-    font-size: 14px; color: rgba(26,35,39,0.6);
+    margin: 14px 4px 0; font-family: "Cormorant Garamond", serif;
+    font-style: italic; font-size: 14px; color: var(--ink-soft);
+    letter-spacing: 0.01em;
   }
   .cred-body p { font-size: 17px; line-height: 1.65; color: var(--ink-soft); margin: 0 0 18px; text-wrap: pretty; }
   .cred-body p strong { color: var(--forest-deep); font-weight: 600; }
@@ -440,12 +447,20 @@
 
 <section id="cred" class="cred">
   <div class="container">
+    <span class="section-eyebrow cred-eyebrow">Who built this, and why</span>
     <div class="cred-grid">
-      <div class="cred-portrait" aria-hidden="true">
-        <div class="cred-portrait-label">— the builder, on a Tuesday afternoon</div>
-      </div>
+      <figure class="cred-portrait-figure">
+        <div class="cred-portrait">
+          <picture>
+            <source srcset="assets/builder-terrace.webp" type="image/webp">
+            <img src="assets/builder-terrace.jpg"
+                 alt="A sleeping dog on a sunlit Mediterranean terrace overlooking the sea, a closed laptop with a notebook, pen, coffee and folded glasses resting on a nearby side table — the builder just out of frame."
+                 loading="lazy" decoding="async">
+          </picture>
+        </div>
+        <figcaption class="cred-portrait-label">— the builder, on a Tuesday afternoon</figcaption>
+      </figure>
       <div class="cred-body">
-        <span class="section-eyebrow">Who built this, and why</span>
         <h2 class="section-title">Not another 4% rule blog</h2>
         <p>ETQ was built by <strong>a former corporate CFO, Chartered Global Management Accountant, and business advisor with deep financial modelling experience, who retired at 53 and has not gone back.</strong></p>
         <p>He wanted a model that reflects real life, not rules of thumb. He could not find one that met the standard, so he built a sophisticated Excel model himself, now the engine behind this tool.</p>
