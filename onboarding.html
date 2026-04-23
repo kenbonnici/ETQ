@@ -1,0 +1,363 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ETQ — Guided walkthrough</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #f8f2e6;
+    --cream-soft: #fbf6ec;
+    --paper: #fffdf8;
+    --ink: #1a2327;
+    --ink-soft: #415058;
+    --muted: #7d8a90;
+    --forest: #1f3a35;
+    --forest-deep: #12231f;
+    --accent: #0f766e;
+    --amber: #b2742a;
+    --rule: #e3d9c4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Inter", "Aptos", "Segoe UI", sans-serif;
+    color: var(--ink);
+    background: var(--cream);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  body::before {
+    content: ""; position: fixed; inset: 0;
+    background: radial-gradient(at 85% 15%, rgba(178,116,42,0.08), transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+  a { color: var(--forest); }
+
+  nav.top {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(248,242,230,0.92);
+    backdrop-filter: saturate(1.1) blur(6px);
+    border-bottom: 1px solid var(--rule);
+  }
+  nav.top .inner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 40px; max-width: 1280px; margin: 0 auto;
+  }
+  .wordmark {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 600; font-size: 20px; letter-spacing: 0.02em;
+    color: var(--forest);
+    text-decoration: none;
+  }
+  .nav-back {
+    font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--ink-soft); text-decoration: none;
+  }
+  .nav-back:hover { color: var(--forest); }
+
+  .ob-shell {
+    position: relative; z-index: 1;
+    max-width: 1280px; margin: 0 auto;
+    padding: 48px 40px 120px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 72px;
+  }
+
+  /* Left column */
+  .ob-conversation { display: flex; flex-direction: column; gap: 18px; }
+
+  .ob-card {
+    background: var(--cream-soft);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 36px 40px;
+    box-shadow: 0 24px 48px -32px rgba(31,58,53,0.18);
+    animation: ob-card-in 320ms ease-out both;
+  }
+  @keyframes ob-card-in {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .ob-card { animation: none; }
+  }
+
+  .ob-eyebrow {
+    font-family: "Inter", sans-serif;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+  .ob-prompt {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(30px, 3.2vw, 42px);
+    line-height: 1.12;
+    color: var(--forest-deep);
+    margin: 0 0 12px;
+  }
+  .ob-helper {
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin: 0 0 28px;
+    max-width: 52ch;
+  }
+
+  .ob-input-row {
+    display: flex; align-items: baseline; gap: 8px;
+    border-bottom: 1px solid var(--rule);
+    padding: 4px 0 8px;
+    margin-bottom: 28px;
+  }
+  .ob-input-prefix {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 22px; color: var(--muted);
+  }
+  .ob-input {
+    flex: 1;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 500;
+    font-size: 22px;
+    color: var(--forest-deep);
+    background: transparent;
+    border: none; outline: none;
+    padding: 4px 0;
+    min-width: 0;
+  }
+  .ob-input::placeholder { color: var(--muted); }
+
+  .ob-chips {
+    display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 28px;
+  }
+  .ob-chip-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: "Inter", sans-serif;
+    font-size: 15px; font-weight: 500;
+    padding: 14px 24px;
+    color: var(--forest);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+  }
+  .ob-chip-btn:hover {
+    border-color: var(--forest);
+    background: var(--cream);
+  }
+  .ob-chip-btn[aria-pressed="true"] {
+    background: var(--forest);
+    color: var(--cream-soft);
+    border-color: var(--forest);
+  }
+
+  .ob-actions {
+    display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 13px 24px;
+    font-family: "Inter", sans-serif; font-size: 14px; font-weight: 500;
+    letter-spacing: 0.04em;
+    border-radius: 2px; text-decoration: none;
+    transition: all 200ms ease;
+    cursor: pointer; border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--forest); color: var(--cream-soft); }
+  .btn-primary:hover:not(:disabled) { background: var(--forest-deep); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ob-skip {
+    font-size: 14px;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 2px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .ob-skip:hover { color: var(--ink-soft); }
+
+  .ob-error {
+    font-size: 14px;
+    color: var(--amber);
+    margin-top: 8px;
+    min-height: 1.3em;
+  }
+
+  .ob-chip {
+    display: flex; align-items: baseline; gap: 14px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--rule);
+    cursor: pointer;
+    transition: opacity 180ms ease;
+  }
+  .ob-chip[data-stale="true"] { opacity: 0.5; }
+  .ob-chip-label {
+    font-family: "Inter", sans-serif;
+    font-size: 12px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted);
+    flex: 0 0 auto;
+    min-width: 42%;
+  }
+  .ob-chip-value {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 20px;
+    color: var(--forest-deep);
+    flex: 1 1 auto;
+  }
+  .ob-chip-assumption {
+    display: block;
+    font-family: "Inter", sans-serif;
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+    letter-spacing: 0.03em;
+  }
+  .ob-chip-edit {
+    font-size: 12px;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+  .ob-chip:hover .ob-chip-edit { opacity: 1; }
+
+  .ob-chapter-divider {
+    font-family: "Inter", sans-serif;
+    font-size: 11px; font-weight: 500;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--amber);
+    margin: 12px 0 4px;
+  }
+
+  /* Right column */
+  .ob-estimate {
+    position: sticky; top: 96px;
+    align-self: start;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 40px 36px;
+    min-height: 220px;
+  }
+  .ob-estimate-label {
+    font-family: "Inter", sans-serif;
+    font-size: 14px; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+  .ob-estimate-age {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(96px, 10vw, 144px);
+    line-height: 1;
+    color: var(--forest-deep);
+    font-variant-numeric: tabular-nums;
+    margin: 0 0 12px;
+  }
+  .ob-estimate-delta {
+    font-size: 16px;
+    color: var(--ink-soft);
+    margin: 0 0 20px;
+    min-height: 1.4em;
+  }
+  .ob-estimate-placeholder {
+    font-size: 15px;
+    color: var(--ink-soft);
+    margin: 0 0 20px;
+    font-style: italic;
+  }
+  .ob-confidence {
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 0 20px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .ob-confidence-dots { display: inline-flex; gap: 5px; }
+  .ob-confidence-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--muted);
+  }
+  .ob-confidence-dot[data-filled="true"] {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .ob-chart-wrap { margin: 12px 0 20px; display: none; }
+  .ob-chart-wrap[data-visible="true"] { display: block; }
+  .ob-chart-canvas {
+    width: 100%;
+    height: 180px;
+    display: block;
+    border-radius: 6px;
+  }
+  .ob-chart-legend {
+    display: flex; gap: 16px; margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .ob-chart-legend-item { display: inline-flex; align-items: center; gap: 6px; }
+  .ob-chart-legend-dot {
+    width: 9px; height: 9px; border-radius: 50%;
+    background: var(--accent);
+  }
+  .ob-chart-legend-dot[data-series="networth"] { background: var(--forest); }
+  .ob-chart-legend-item[data-dimmed="true"] { opacity: 0.5; }
+  .ob-estimate-assumptions {
+    font-size: 12px;
+    color: var(--muted);
+    margin: 20px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--rule);
+  }
+  .ob-estimate-warning {
+    font-size: 14px;
+    color: var(--amber);
+    margin: 0 0 20px;
+  }
+
+  @media (max-width: 960px) {
+    .ob-shell {
+      grid-template-columns: 1fr;
+      gap: 28px;
+      padding: 28px 20px 80px;
+    }
+    .ob-estimate {
+      position: sticky; top: 0;
+      padding: 16px 20px;
+      min-height: 0;
+      z-index: 5;
+    }
+    .ob-estimate-age {
+      font-size: 48px;
+    }
+    .ob-chart-wrap, .ob-confidence, .ob-estimate-assumptions { display: none !important; }
+    .ob-card { padding: 24px 20px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+</head>
+<body>
+<nav class="top">
+  <div class="inner">
+    <a href="index.html" class="wordmark">ETQ</a>
+    <a href="index.html" class="nav-back">← Back to landing</a>
+  </div>
+</nav>
+<main id="app"></main>
+<script type="module" src="/src/onboarding/main.ts"></script>
+</body>
+</html>

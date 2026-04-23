@@ -1,7 +1,7 @@
 # Progressive Onboarding — Hi-Fi Design Spec
 
-**Document status:** v1.0 — ready for hi-fi mockup
-**Last updated:** 2026-04-22
+**Document status:** v1.1 — ready for hi-fi mockup
+**Last updated:** 2026-04-22 (revisions: Ch 1 Q4 phrasing, Ch 2 Q5 scope, property-growth consolidation, Ch 5 Q15 broadened, Ch 6 split + 5 slots each, removal of questions that misrepresent hardcoded inflation)
 **Scope:** design spec only. No implementation in this document.
 
 ---
@@ -193,7 +193,19 @@ Before the first two numbers come in, the hero number reads "—" with a warm pl
 
 The onboarding uses the real calculator field sequence but groups it into **chapters**. Each chapter opens with its own small eyebrow ("About you", "Money coming in", etc.).
 
-**Assumptions are distributed into their natural chapters** — every assumption rides in on the same prompt that raised it, phrased as a soft confirmation with a pre-filled default. If the user accepts the default (single Enter), the question collapses into a compact *inline* chip rather than its own full chip, to keep the transcript from bloating. The advisor metaphor holds: we make the call, then check with you. We never leave a blank.
+**Assumptions are distributed into their natural chapters** — every *configurable* assumption rides in on the same prompt that raised it, phrased as a soft confirmation with a pre-filled default. If the user accepts the default (single Enter), the question collapses into a compact *inline* chip rather than its own full chip, to keep the transcript from bloating. The advisor metaphor holds: we make the call, then check with you. We never leave a blank.
+
+**Only configurable assumptions are surfaced.** The calculator's model engine hard-codes inflation for some quantities — they track the global inflation rate automatically, with no per-item knob. These are **not** asked in the onboarding, because presenting them as optional would be dishonest. Specifically:
+
+| Quantity | Treatment |
+|---|---|
+| Dependent cost inflation | Hard-coded — always tracks inflation (`runScenario.ts:484`). |
+| State / statutory pension growth | Hard-coded — always tracks inflation (`runScenario.ts:412–420`). |
+| Monthly equities contribution | Applied as a flat dollar amount — no inflation adjustment exists in the model (`runScenario.ts:476`). Not surfaced as a choice. |
+
+The **global inflation rate itself** is set in the full calculator (under Advanced Assumptions). The onboarding uses the model's default. If the user wants to change it, the handoff copy in Chapter 10 nudges them toward the full calculator.
+
+**Global vs per-item assumptions.** Where the calculator stores a single shared rate (property growth, rental growth, equity returns), the onboarding asks **once**. Where it stores a rate per item (other-asset appreciation), the onboarding asks **per item**.
 
 ### Chapter 1 — *About you*  (essential, ~30 seconds)
 
@@ -202,12 +214,12 @@ The onboarding uses the real calculator field sequence but groups it into **chap
 | 1 | "Let's start simple — how old are you?" | `profile.currentAge` | integer | No skip. |
 | 2 | "Is there a partner sharing this plan with you?" | `partner.include` | Yes/No | If No, skip 3–4. |
 | 3 | "And how old is your partner?" | `partner.profile.currentAge` | integer | Conditional. |
-| 4 | "Will they be retiring around the same time as you?" | `partner.retirement.alsoRetiresEarly` | Yes/No | Conditional. Phrased warmly, not technically. |
+| 4 | "Would you and your partner like to retire early together?" | `partner.retirement.alsoRetiresEarly` | Yes/No | Conditional. Explicitly frames this as *early* retirement together, to avoid ambiguity with statutory retirement which is set separately later. |
 
 ### Chapter 2 — *Money coming in*
 
-| 5 | "Roughly, what does your household take home in a year — after tax?" | `income.employment.netAnnual` | currency | Helper: "After tax, after pension contributions." |
-| 6 | "And your partner's take-home?" | `partner.income.employment.netAnnual` | currency | Conditional on partner. |
+| 5 | "What's your annual take-home pay from your main job?" | `income.employment.netAnnual` | currency | Helper: "After tax, after pension contributions. Just you — we'll ask about your partner next." Phrasing is deliberately singular ("your") so the answer covers the user only; partner income is captured separately in Q6. |
+| 6 | "And your partner's take-home from their main job?" | `partner.income.employment.netAnnual` | currency | Conditional on partner. |
 
 ### Chapter 3 — *Money going out*
 
@@ -221,7 +233,7 @@ The onboarding uses the real calculator field sequence but groups it into **chap
 **If Owner:**
 
 | 9  | "What's your home worth today, roughly?" | `housing.01Residence.marketValue` | currency | |
-| 9a | *(assumption, inline)* "And we'll let the home drift up with inflation — roughly 2% a year. Sound right?" | residence appreciation | Yes / set a specific rate | |
+| 9a | *(assumption, inline, global)* "And we'll let property values drift up about 2% a year — that rate covers your home, and any investment properties you might add later. Sound right?" | `assumptions.propertyAppreciationRateAnnual` | accept / set a rate | Default 2%. Writes the single global property-growth assumption. Because this is global, it is **not** re-asked per investment property in Chapter 6. |
 | 10 | "Is there a mortgage still on it?" | *(derived)* | Yes/No | If No, skip 11–13. |
 | 11 | "How much is still owed?" | `housing.01Residence.mortgage.balance` | currency | |
 | 12 | "At what interest rate?" | `housing.01Residence.mortgage.interestRateAnnual` | percent | |
@@ -234,33 +246,56 @@ The onboarding uses the real calculator field sequence but groups it into **chap
 
 ### Chapter 5 — *What you've set aside*
 
-| 15 | "How much do you have in cash — current accounts, savings, easy-access?" | `assets.cash.totalBalance` | currency | *** Chart appears here (cash-only). *** |
+| 15 | "How much do you have in liquid savings — current accounts, savings, bonds, term deposits?" | `assets.cash.totalBalance` | currency | Helper: "Everything you could reach within a month or two. Stocks come next." Field tooltip in the calculator already reads "Current and savings accounts, bonds, and term deposits" — this prompt matches. *** Chart appears here (cash-only). *** |
 | 16 | "And invested in the stock market — ETFs, funds, pensions?" | `assets.equities.marketValue` | currency | Helper: "Rough total across everything is fine." |
-| 16a | *(assumption, inline)* "We're assuming those grow around 5% a year above inflation. Change that, or leave it?" | equities real growth | accept / set a rate | Default 5%. |
-| 17 | "Are you adding to that each month?" | `assets.equities.monthlyContribution` | currency | Skippable; defaults to 0. |
-| 17a | *(assumption, inline, conditional on 17 > 0)* "Will you nudge that up each year with inflation, or hold the number flat?" | contribution inflation | hold / inflate | Default: hold. |
+| 16a | *(assumption, inline, global)* "We're assuming those grow around 5% a year above inflation. Change that, or leave it?" | `assumptions.equityReturnRateAnnual` | accept / set a rate | Default 5%. |
+| 17 | "Are you adding to that each month?" | `assets.equities.monthlyContribution` | currency | Skippable; defaults to 0. No follow-up inflation question — the model applies the contribution as a flat monthly amount by design. |
 
-### Chapter 6 — *Other things you own* (gated)
+### Chapter 6A — *Investment properties* (gated)
 
-| 18 | "Do you own any investment properties, or other valuables you'd count — art, a second car, a boat?" | *(gate)* | Yes/No | If No, skip chapter. |
-| 19 | "Let's add the first one. What should we call it?" | `properties.01.displayName` *or* `assetsOfValue.01.displayName` | text | Followed by value + optional mortgage + optional annual cost. |
-| 19a | *(assumption, inline, per property)* "Will the rent on {name} rise with inflation?" | rental growth | Yes / set a rate | Default yes. |
-| 19b | *(assumption, inline, per other-asset)* "Is this holding its value, growing, or slowly losing value?" | asset appreciation | 3 chip options → 0% / +inflation / −inflation, with "set a specific rate" as a fourth | |
+Investment properties and other valuables are handled as **separate chapters**, mirroring how the calculator separates them, so the conversation doesn't force unlike things into the same sequence.
 
-Offer "Add another" as a soft secondary after each — up to 5 properties, 3 other assets, matching the calculator's slots.
+| # | Prompt | Field | Type | Notes |
+|---|---|---|---|---|
+| 18 | "Do you own any investment properties — somewhere you rent out, or plan to?" | *(gate)* | Yes/No | If No, skip to Chapter 6B. |
+| 19 | "Let's add the first one. What should we call it?" | `properties.NN.displayName` | text | Friendly name — "London flat", "the cottage". |
+| 20 | "What's it worth today?" | `properties.NN.marketValue` | currency | |
+| 21 | "Any mortgage or debt against it?" | `properties.NN.mortgage.balance` | currency | Skippable; if entered, follow-up for rate and monthly repayment. |
+| 22 | "Roughly what does it bring in each year in rent?" | `properties.NN.rentalIncome` | currency | Skippable (not every property is tenanted yet). |
+| 23 | "And what does it cost to run each year — maintenance, management, the bits that don't earn you anything?" | `properties.NN.annualOperatingCost` | currency | Skippable. |
+
+After each property, a soft "Add another property" link appears. **Up to 5 properties** (matches `PROPERTY_GROUPS` in `src/model/inputSchema.ts`).
+
+**Closing the chapter** — once the user declines to add another:
+
+| # | Prompt | Field | Type | Notes |
+|---|---|---|---|---|
+| 24a | *(assumption, inline, global — asked only if ≥1 property has non-zero `rentalIncome`)* "And we'll assume the rent rises each year with inflation. OK, or would you like a different rate?" | `assumptions.rentalIncomeGrowthRateAnnual` | accept / set a rate | Default: tracks inflation. Asked once globally, not per-property, because the calculator uses a single shared rate. |
+| 24b | *(assumption, inline, global — asked **only** if the user is a renter and thus skipped Q9a)* "One last thing: we'll let property values drift up about 2% a year. Sound right?" | `assumptions.propertyAppreciationRateAnnual` | accept / set a rate | Default 2%. If the user is an owner, this was already set at Q9a — do not re-ask. |
+
+### Chapter 6B — *Other things of value* (gated)
+
+| # | Prompt | Field | Type | Notes |
+|---|---|---|---|---|
+| 25 | "Anything else you'd count — art, a second car, a boat, a collection?" | *(gate)* | Yes/No | If No, skip to Chapter 7. |
+| 26 | "What's it called?" | `assetsOfValue.NN.displayName` | text | |
+| 27 | "What's it worth today?" | `assetsOfValue.NN.marketValue` | currency | |
+| 28 | *(per-asset assumption)* "Is it holding its value, growing, or slowly losing value?" | `assetsOfValue.NN.appreciationRateAnnual` | 3 chip options → `0%` / `+inflation` / `−inflation`, plus "set a specific rate" | Per-asset because the calculator genuinely stores a rate per asset. |
+| 29 | "Any debt against it?" | *(related asset-debt field, if present in schema)* | currency | Skippable. |
+| 30 | "And anything it costs you each year to keep — insurance, storage, upkeep?" | `assetsOfValue.NN.annualCosts` | currency | Skippable. |
+
+"Add another" soft link after each — **up to 5 other assets** (matches `ASSET_OF_VALUE_GROUPS` in `src/model/inputSchema.ts`).
 
 ### Chapter 7 — *People you support*
 
 | 20 | "Anyone you support financially — kids, parents, someone else?" | *(gate)* | Yes/No | |
-| 21 | "Who, and roughly what does it cost a year?" | `dependents.01.*` | text + currency + years | Up to 5 slots. |
-| 21a | *(assumption, inline, conditional on supportYearsRemaining > 5)* "Will the cost grow with inflation?" | dependent inflation | Yes/No | Default Yes. |
+| 21 | "Who, and roughly what does it cost a year?" | `dependents.01.*` | text + currency + years | Up to 5 slots. No inflation follow-up — the model automatically inflates dependent costs with the global inflation rate (`runScenario.ts:484`), so presenting it as optional would be misleading. |
 
 ### Chapter 8 — *The pension that kicks in later*
 
 | 22 | "When does your state or statutory pension start?" | `retirement.statutoryAge` | integer | Helper: "In most places this is somewhere between 65 and 68." |
-| 23 | "And roughly how much a year?" | `retirement.statePension.netAnnualAtStart` | currency | Skippable. |
-| 23a | *(assumption, inline)* "And we'll assume it rises with inflation. OK?" | pension growth | Yes / set a rate | Default Yes. |
-| 24 | "What about your partner's?" | `partner.retirement.statePension.netAnnualAtStart` | currency | Conditional + skippable. |
+| 23 | "And roughly how much a year?" | `retirement.statePension.netAnnualAtStart` | currency | Skippable. No inflation follow-up — the model automatically uplifts the pension with the global inflation rate (`runScenario.ts:412–420`). |
+| 24 | "What about your partner's?" | `partner.retirement.statePension.netAnnualAtStart` | currency | Conditional + skippable. Same: automatically inflated. |
 
 ### Chapter 9 — *Any debts we haven't mentioned?*
 
@@ -382,6 +417,7 @@ Flag these explicitly — surface in the full calculator later if at all:
 - **Multi-scenario comparison on the right.** The onboarding shows one projection only; comparison lives in the full calculator.
 - **Stock-market crash scenarios.** These live in the full calculator's *Major Future Events* panel. The handoff copy names them as a reason to continue.
 - **Liquidation priority editing.** Default (cheapest-first) is used throughout onboarding. User reorders in the full calculator.
+- **Global inflation rate.** The onboarding uses the model default. The user sets this once in the full calculator's Advanced Assumptions; changing it there reshapes every inflation-tracked quantity (dependent costs, pension, rental growth default, property growth default).
 
 ---
 

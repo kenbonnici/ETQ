@@ -433,7 +433,7 @@
         <div class="calc-result-number"><span id="c-out">54</span></div>
         <p class="calc-result-caption">The full model adds partner and dependants, home downsizing, investment properties with rental income, other assets of value, additional income streams and debt, reserve and legacy goals, stock-market crash scenarios and staged liquidations, and customisable assumptions throughout.</p>
         <div class="calc-note">
-          <a href="calculator.html" class="calc-choice"><span>Ease me in — one question at a time</span><span class="arrow">→</span></a>
+          <a href="onboarding.html" class="calc-choice"><span>Ease me in — one question at a time</span><span class="arrow">→</span></a>
           <a href="calculator.html" class="calc-choice"><span>I love numbers — unleash the full calculator</span><span class="arrow">→</span></a>
         </div>
       </div>
@@ -487,7 +487,7 @@
         <p>Six inputs. Get an approximate retirement age. Enough to tell you whether this is a conversation worth continuing.</p>
       </article>
       <article class="step">
-        <h3>Guided walkthrough</h3>
+        <h3><a href="onboarding.html" class="step-link">Guided walkthrough<span class="step-link-arrow">→</span></a></h3>
         <p>A guided walkthrough — one question at a time uncovering all income, expenses, assets, commitments, sales and scenarios that could impact your retirement. No jargon, no friction.</p>
       </article>
       <article class="step">
@@ -542,6 +542,23 @@
   }
   fields.forEach(id => document.getElementById(id).addEventListener('input', recalc));
   recalc();
+
+  function captureQuickEstimateSeed(){
+    try {
+      const seed = {
+        age: parseMoney(document.getElementById('c-age').value) || null,
+        netAnnualIncome: parseMoney(document.getElementById('c-income').value) || null,
+        livingExpensesAnnual: parseMoney(document.getElementById('c-spend').value) || null,
+        cashBalance: parseMoney(document.getElementById('c-savings').value) || null,
+        equityBalance: parseMoney(document.getElementById('c-invest').value) || null,
+        statePensionAnnual: parseMoney(document.getElementById('c-pension').value) || null
+      };
+      sessionStorage.setItem('etq:landing:quick-estimate', JSON.stringify(seed));
+    } catch { /* ignore */ }
+  }
+  document.querySelectorAll('a[href="onboarding.html"]').forEach(a => {
+    a.addEventListener('click', captureQuickEstimateSeed);
+  });
 
   // Counter gentle tick
   let count = 247583;
