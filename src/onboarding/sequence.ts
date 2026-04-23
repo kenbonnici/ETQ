@@ -114,7 +114,7 @@ export function makeAboutSequence(): QuestionDef[] {
       kind: "yesNo",
       fieldId: "partner.retirement.alsoRetiresEarly",
       prompt: "Would you and your partner like to retire early together?",
-      helper: "Your statutory pension ages are set later on — this is about the earlier, optional date.",
+      helper: "Your statutory retirement ages are set later on — this is about retiring earlier if you can.",
       activeWhen: partnerIncluded
     }
   ];
@@ -128,7 +128,7 @@ export function makeIncomeSequence(): QuestionDef[] {
       chapterTitle: CHAPTERS.income.title,
       kind: "currency",
       fieldId: "income.employment.netAnnual",
-      prompt: "What's your annual take-home pay from your main job?",
+      prompt: "What's your annual take-home income from your main occupation?",
       helper: "After tax, after pension contributions. Just you — we'll ask about your partner next.",
       skippable: true
     },

@@ -64,6 +64,7 @@ const modelUiState: ModelUiState = {
 let runHandle: number | null = null;
 let lastRunResult: ReturnType<typeof runModel> | null = null;
 let canvasReady = false;
+let activeKeyHandler: ((ev: KeyboardEvent) => void) | null = null;
 
 buildLayout();
 advanceToFirstUnanswered();
@@ -135,6 +136,10 @@ function advanceToFirstUnanswered(): void {
 function render(): void {
   const left = document.getElementById("ob-conversation");
   if (!left) return;
+  if (activeKeyHandler) {
+    document.removeEventListener("keydown", activeKeyHandler);
+    activeKeyHandler = null;
+  }
   left.innerHTML = "";
 
   let lastChapter: string | null = null;
@@ -316,6 +321,17 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
         chips.appendChild(btn);
       }
       attach(chips);
+      activeKeyHandler = (ev: KeyboardEvent) => {
+        if (ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+        const target = ev.target as HTMLElement | null;
+        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+        const key = ev.key.toLowerCase();
+        const tag = key === "y" ? "YES" : key === "n" ? "NO" : null;
+        if (!tag) return;
+        ev.preventDefault();
+        chips.querySelector<HTMLButtonElement>(`[data-onboarding-option="${tag}"]`)?.click();
+      };
+      document.addEventListener("keydown", activeKeyHandler);
       break;
     }
     case "ownerRenter": {
@@ -622,15 +638,17 @@ function paintEstimate(): void {
   const confidenceEl = document.getElementById("ob-confidence");
   if (!ageEl || !placeholderEl || !deltaEl || !warningEl || !confidenceEl) return;
 
-  const age = resolveEarliestAge();
+  const rawAge = resolveEarliestAge();
+  const coreAnswered = uiState.answered.has("livingExpenses") && uiState.answered.has("cash");
+  const age = coreAnswered ? rawAge : null;
   const hasAge = age !== null;
   const answeredFieldIds = new Set<string>();
   for (const q of sequence) {
     if (uiState.answered.has(q.id) && q.fieldId) answeredFieldIds.add(q.fieldId);
   }
-  const hasBlockers = lastRunResult?.validationMessages.some(
+  const hasBlockers = coreAnswered && (lastRunResult?.validationMessages.some(
     (m) => m.blocksProjection && answeredFieldIds.has(String(m.fieldId))
-  ) ?? false;
+  ) ?? false);
 
   if (!hasAge && !hasBlockers) {
     ageEl.textContent = "—";
