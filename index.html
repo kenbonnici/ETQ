@@ -179,14 +179,24 @@
     font-family: "Cormorant Garamond", Georgia, serif;
     font-weight: 600; font-size: 24px; margin: 0 0 8px; color: var(--forest);
   }
+  .calc-card-head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    gap: 16px; margin: 0 0 20px;
+  }
   .calc-privacy {
-    margin: 0 0 20px;
+    margin: 0;
     font-family: "Cormorant Garamond", Georgia, serif;
     font-style: italic;
     font-size: 15px; line-height: 1.5;
     color: var(--ink-soft);
     max-width: 44ch;
   }
+  .calc-clear {
+    background: none; border: 0; padding: 0; cursor: pointer;
+    font: inherit; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); font-weight: 500;
+  }
+  .calc-clear:hover { color: var(--ink-soft); text-decoration: underline; }
   .field { margin-bottom: 14px; }
   .field label {
     display: block; font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase;
@@ -401,36 +411,39 @@
 
     <div class="calc-grid">
       <div class="calc-card">
-        <p class="calc-privacy">All in your browser. Nothing saved, nothing sent.</p>
+        <div class="calc-card-head">
+          <p class="calc-privacy">All in your browser. Nothing saved, nothing sent.</p>
+          <button type="button" class="calc-clear" id="c-clear">Clear</button>
+        </div>
         <div class="field">
           <label for="c-age">Your age</label>
-          <input id="c-age" type="number" value="44" inputmode="numeric" />
+          <input id="c-age" type="number" inputmode="numeric" />
         </div>
         <div class="field">
           <label for="c-income">Net annual household income</label>
-          <input id="c-income" type="text" value="£185,000" />
+          <input id="c-income" type="text" />
         </div>
         <div class="field">
           <label for="c-spend">Annual living expenses</label>
-          <input id="c-spend" type="text" value="£72,000" />
+          <input id="c-spend" type="text" />
         </div>
         <div class="field">
           <label for="c-savings">Savings and Investments</label>
-          <input id="c-savings" type="text" value="£95,000" />
+          <input id="c-savings" type="text" />
         </div>
         <div class="field">
           <label for="c-invest">Other assets</label>
-          <input id="c-invest" type="text" value="£840,000" />
+          <input id="c-invest" type="text" />
         </div>
         <div class="field" style="margin-bottom:0">
           <label for="c-pension">Net annual retirement pension</label>
-          <input id="c-pension" type="text" value="£0" />
+          <input id="c-pension" type="text" />
         </div>
       </div>
 
       <div class="calc-result">
         <span class="calc-result-label">You could stop at</span>
-        <div class="calc-result-number"><span id="c-out">54</span></div>
+        <div class="calc-result-number"><span id="c-out">—</span></div>
         <p class="calc-result-caption">The full model adds partner and dependants, home downsizing, investment properties with rental income, other assets of value, additional income streams and debt, reserve and legacy goals, stock-market crash scenarios and staged liquidations, and customisable assumptions throughout.</p>
         <div class="calc-note">
           <a href="onboarding.html" class="calc-choice"><span>Ease me in — one question at a time</span><span class="arrow">→</span></a>
@@ -521,52 +534,7 @@
   </div>
 </footer>
 
-<script>
-  // Simple quick-start calc
-  const parseMoney = s => Number(String(s).replace(/[^0-9.]/g,'')) || 0;
-  const fmt = n => Math.round(n).toString();
-  const fields = ['c-age','c-income','c-spend','c-savings','c-invest','c-pension'];
-  function recalc(){
-    const age = parseMoney(document.getElementById('c-age').value);
-    const income = parseMoney(document.getElementById('c-income').value);
-    const spend = parseMoney(document.getElementById('c-spend').value);
-    const savings = parseMoney(document.getElementById('c-savings').value);
-    const invest = parseMoney(document.getElementById('c-invest').value);
-    const pension = parseMoney(document.getElementById('c-pension').value);
-    const surplus = Math.max(income - spend, 0);
-    let nw = savings + invest;
-    let a = age;
-    const target = Math.max(spend - pension, 0) * 25;
-    while (a < 95 && nw < target) { nw = nw*1.05 + surplus; a++; }
-    document.getElementById('c-out').textContent = a >= 95 ? '—' : a;
-  }
-  fields.forEach(id => document.getElementById(id).addEventListener('input', recalc));
-  recalc();
-
-  function captureQuickEstimateSeed(){
-    try {
-      const seed = {
-        age: parseMoney(document.getElementById('c-age').value) || null,
-        netAnnualIncome: parseMoney(document.getElementById('c-income').value) || null,
-        livingExpensesAnnual: parseMoney(document.getElementById('c-spend').value) || null,
-        cashBalance: parseMoney(document.getElementById('c-savings').value) || null,
-        equityBalance: parseMoney(document.getElementById('c-invest').value) || null,
-        statePensionAnnual: parseMoney(document.getElementById('c-pension').value) || null
-      };
-      sessionStorage.setItem('etq:landing:quick-estimate', JSON.stringify(seed));
-    } catch { /* ignore */ }
-  }
-  document.querySelectorAll('a[href="onboarding.html"]').forEach(a => {
-    a.addEventListener('click', captureQuickEstimateSeed);
-  });
-
-  // Counter gentle tick
-  let count = 247583;
-  setInterval(() => {
-    count += Math.random() < 0.6 ? 1 : 0;
-    document.getElementById('counter').textContent = count.toLocaleString();
-  }, 3200);
-</script>
+<script type="module" src="/src/landing/main.ts"></script>
 
 </body>
 </html>

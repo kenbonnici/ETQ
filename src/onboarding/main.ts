@@ -14,6 +14,7 @@ import {
 } from "./sequence";
 import { createCard, createChapterDivider, createChip, formatCurrency, formatPercent } from "./render";
 import { drawMiniChart } from "./chart";
+import { findEarliestRetirementAge } from "../shared/findEarliestRetirementAge";
 import {
   applySeedToFields,
   clearQuickEstimateSeed,
@@ -607,26 +608,14 @@ let cachedEarliestAge: number | null = null;
 
 function findEarliestSuccessfulAge(): number | null {
   cachedEarliestAge = null;
-  const currentAge = Number(fieldState["profile.currentAge"] ?? NaN);
-  const statutory  = Number(fieldState["retirement.statutoryAge"] ?? NaN);
-  if (!Number.isFinite(currentAge) || currentAge <= 0) {
-    lastRunResult = null;
-    return null;
+  const { age, result } = findEarliestRetirementAge(fieldState, modelUiState);
+  if (age !== null) {
+    modelUiState.earlyRetirementAge = age;
+    lastRunResult = result;
+    cachedEarliestAge = age;
+    return age;
   }
-  const lo = Math.max(18, Math.floor(currentAge));
-  const hi = Number.isFinite(statutory) && statutory > lo ? Math.ceil(statutory) : Math.min(95, lo + 40);
-  let lastResult: ReturnType<typeof runModel> | null = null;
-  for (let age = lo; age <= hi; age += 1) {
-    const result = runModel({ ...fieldState }, { ...modelUiState, earlyRetirementAge: age });
-    lastResult = result;
-    if (result.outputs.scenarioEarly.retirementSuccessful) {
-      modelUiState.earlyRetirementAge = age;
-      lastRunResult = result;
-      cachedEarliestAge = age;
-      return age;
-    }
-  }
-  lastRunResult = lastResult;
+  lastRunResult = result;
   return null;
 }
 
