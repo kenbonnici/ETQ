@@ -143,23 +143,27 @@ function render(): void {
   }
   left.innerHTML = "";
 
-  let lastChapter: string | null = null;
-  for (const q of sequence) {
-    if (!isQuestionActive(q, ctx())) continue;
-    if (!uiState.answered.has(q.id)) break;
-    if (q.chapter !== lastChapter && q.chapterTitle) {
-      left.appendChild(createChapterDivider(q.chapterTitle));
-      lastChapter = q.chapter;
-    }
-    const chip = renderChip(q);
-    left.appendChild(chip);
-  }
-
   if (uiState.completed || uiState.activeQuestionId === "handoff") {
     left.appendChild(renderHandoffCard());
   } else if (uiState.activeQuestionId) {
     const active = sequence.find((s) => s.id === uiState.activeQuestionId);
     if (active) left.appendChild(renderActiveCard(active));
+  }
+
+  const chapters: { title: string; questions: QuestionDef[] }[] = [];
+  for (const q of sequence) {
+    if (!isQuestionActive(q, ctx())) continue;
+    if (!uiState.answered.has(q.id)) break;
+    const last = chapters[chapters.length - 1];
+    if (last && last.title === q.chapterTitle) last.questions.push(q);
+    else chapters.push({ title: q.chapterTitle, questions: [q] });
+  }
+  for (let i = chapters.length - 1; i >= 0; i -= 1) {
+    const ch = chapters[i];
+    if (ch.title) left.appendChild(createChapterDivider(ch.title));
+    for (let j = ch.questions.length - 1; j >= 0; j -= 1) {
+      left.appendChild(renderChip(ch.questions[j]));
+    }
   }
 
   scheduleRun();
@@ -641,11 +645,11 @@ function paintEstimate(): void {
 
   if (!hasAge && !hasBlockers) {
     ageEl.textContent = "—";
-    placeholderEl.hidden = uiState.answered.size > 3;
+    placeholderEl.hidden = false;
+    placeholderEl.textContent = pendingEstimateMessage();
     deltaEl.hidden = true;
     warningEl.hidden = true;
-    confidenceEl.hidden = uiState.answered.size === 0;
-    renderConfidenceDots();
+    confidenceEl.hidden = true;
     return;
   }
   if (hasBlockers) {
@@ -671,6 +675,24 @@ function paintEstimate(): void {
 
   confidenceEl.hidden = false;
   renderConfidenceDots();
+}
+
+function pendingEstimateMessage(): string {
+  if (uiState.answered.size === 0) {
+    return "The age will start to appear as you answer.";
+  }
+  const needsLiving = !uiState.answered.has("livingExpenses");
+  const needsCash = !uiState.answered.has("cash");
+  if (needsLiving && needsCash) {
+    return "We'll have an estimate once you share your annual spending and liquid savings.";
+  }
+  if (needsLiving) {
+    return "We'll have an estimate once you share your annual spending.";
+  }
+  if (needsCash) {
+    return "We'll have an estimate once you share your liquid savings.";
+  }
+  return "A few more answers should surface an age — investments, pensions, or other assets.";
 }
 
 function renderConfidenceDots(): void {
