@@ -255,7 +255,8 @@ export function makeSavingsSequence(): QuestionDef[] {
       chapterTitle: CHAPTERS.savings.title,
       kind: "currency",
       fieldId: "assets.equities.monthlyContribution",
-      prompt: "Are you adding to that each month?",
+      prompt: "How much are you adding each month?",
+      helper: "Leave blank if you're not adding anything right now.",
       skippable: true
     }
   ];
@@ -319,8 +320,8 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       chapterTitle: CHAPTERS.property.title,
       kind: "currency",
       fieldId: balanceField,
-      prompt: "Any mortgage or debt against it?",
-      helper: "Just the balance — leave blank if none.",
+      prompt: "Outstanding mortgage or loan balance?",
+      helper: "Leave blank if there's none.",
       skippable: true,
       activeWhen: active
     },
@@ -428,7 +429,8 @@ function assetSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       chapterTitle: CHAPTERS.valuables.title,
       kind: "currency",
       fieldId: balanceField,
-      prompt: "Any debt against it?",
+      prompt: "Outstanding debt against it?",
+      helper: "Leave blank if there's none.",
       skippable: true,
       activeWhen: active
     },

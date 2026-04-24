@@ -248,6 +248,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
       attach(row);
       attach(errorEl);
       const actions = buildActions(q, () => {
+        if (q.skippable && input.value.trim() === "") { skipAndAdvance(); return; }
         const parsed = parseNumeric(q.kind, input.value);
         if (parsed.error) { errorEl.textContent = parsed.error; return; }
         if (q.fieldId) fieldState[q.fieldId] = parsed.value;
