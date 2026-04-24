@@ -71,8 +71,6 @@ test.describe("Progressive Onboarding", () => {
     await page.locator("[data-onboarding-option=\"TAPER\"]").click();
     await page.locator("[data-toggle-field-id=\"housing.status\"][data-toggle-option=\"Owner\"]").click();
     await answerText(page, "homeValue", "500000");
-    // Accept default property growth
-    await page.locator("[data-onboarding-continue=\"propertyGrowth\"]").click();
     await answerYesNo(page, "hasMortgage", "NO");
     // Click the housing-status chip to re-open
     await page.locator("[data-onboarding-chip=\"housingStatus\"]").click();
@@ -93,7 +91,6 @@ test.describe("Progressive Onboarding", () => {
     await answerText(page, "rent", "12000");
     await answerText(page, "cash", "200000");
     await answerText(page, "equities", "2000000");
-    await page.locator("[data-onboarding-continue=\"equityReturn\"]").click();
     await answerText(page, "equityContrib", "0");
     await answerYesNo(page, "propertiesGate", "NO");
     await answerYesNo(page, "assetsGate", "NO");

@@ -74,38 +74,17 @@ test("owner without mortgage skips mortgage balance/rate/repayment", () => {
   assert.equal(isQuestionActive(mortgageRepay!,   ctx(fields, gates)), false);
 });
 
-test("rentalGrowth assumption only activates when at least one property has rental income", () => {
-  const sequence = buildFullSequence();
-  const rentalGrowth = sequence.find((s) => s.id === "rentalGrowth");
-  assert.ok(rentalGrowth);
-  const fields = createEmptyFieldState();
-  fields["profile.currentAge"] = 48;
-  const gates = { propertiesGate: "YES" as const };
-  assert.equal(
-    isQuestionActive(rentalGrowth!, ctx(fields, gates)),
-    false,
-    "no rental income yet"
-  );
-  fields["properties.01.rentalIncomeNetAnnual"] = 12_000;
-  assert.equal(
-    isQuestionActive(rentalGrowth!, ctx(fields, gates)),
-    true,
-    "becomes active after any rental income"
-  );
-});
-
 test("switching Owner -> Renter prunes orphaned home answers", () => {
   const sequence = buildFullSequence();
   const answered = new Set<string>([
     "age", "partnerInclude", "userIncome", "livingExpenses", "spendingTaper",
-    "housingStatus", "homeValue", "propertyGrowth", "hasMortgage"
+    "housingStatus", "homeValue", "hasMortgage"
   ]);
   const fields = createEmptyFieldState();
   fields["profile.currentAge"] = 48;
   fields["housing.status"] = "Renter";
   const pruned = pruneOrphanedAnswers(sequence, ctx(fields), answered);
   assert.equal(pruned.has("homeValue"), false);
-  assert.equal(pruned.has("propertyGrowth"), false);
   assert.equal(pruned.has("hasMortgage"), false);
   assert.equal(pruned.has("housingStatus"), true);
   assert.equal(pruned.has("age"), true);

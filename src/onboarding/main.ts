@@ -396,7 +396,6 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
             fieldState["spending.adjustments.secondBracket.deltaRate"] = 0;
             fieldState["spending.adjustments.finalBracket.deltaRate"] = 0;
           }
-          uiState.acceptedAssumptions.add(q.id);
           uiState.answered.add(q.id);
           advanceToFirstUnanswered();
           render();
@@ -491,8 +490,7 @@ function buildProgressText(q: QuestionDef): string {
   const activeList = sequence.filter((s) => isQuestionActive(s, ctx()) && s.id !== "handoff");
   const idx = activeList.findIndex((s) => s.id === q.id);
   const position = idx >= 0 ? idx + 1 : 1;
-  const total = activeList.length;
-  return `${q.chapterTitle.toUpperCase()} · ${position} of ${total}`;
+  return `${q.chapterTitle.toUpperCase()} · STEP ${position}`;
 }
 
 function parseNumeric(kind: QuestionDef["kind"], raw: string): { value: number | null; error: string | null } {

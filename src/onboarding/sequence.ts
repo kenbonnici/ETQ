@@ -49,11 +49,6 @@ function isYes(value: unknown): boolean {
   return String(value ?? "").trim().toUpperCase() === "YES";
 }
 
-function isNum(value: unknown): number {
-  const n = Number(value);
-  return Number.isFinite(n) ? n : 0;
-}
-
 function gateYes(ctx: ActivationCtx, id: string): boolean {
   return ctx.gates[id] === "YES";
 }
@@ -129,7 +124,7 @@ export function makeIncomeSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "income.employment.netAnnual",
       prompt: "What's your annual take-home income from your main occupation?",
-      helper: "After tax, after pension contributions. Just you — we'll ask about your partner next.",
+      helper: "After tax, after pension contributions.",
       skippable: true
     },
     {
@@ -161,8 +156,6 @@ export function makeSpendingSequence(): QuestionDef[] {
       chapter: CHAPTERS.spending.id,
       chapterTitle: CHAPTERS.spending.title,
       kind: "spendingTaper",
-      assumption: true,
-      defaultAssumptionLabel: "gently tapering with age",
       prompt: "Most people spend a bit less as they age — less commuting, less going out. Should we taper gently, or hold steady?"
     }
   ];
@@ -185,17 +178,6 @@ export function makeHousingSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "housing.01Residence.marketValue",
       prompt: "What's your home worth today, roughly?",
-      activeWhen: isOwner
-    },
-    {
-      id: "propertyGrowth",
-      chapter: CHAPTERS.housing.id,
-      chapterTitle: CHAPTERS.housing.title,
-      kind: "percent",
-      fieldId: "assumptions.propertyAppreciationRateAnnual",
-      assumption: true,
-      defaultAssumptionLabel: "property values drifting up ~3% a year",
-      prompt: "And we'll let property values drift up about 3% a year — that rate covers your home and any investment properties. Sound right?",
       activeWhen: isOwner
     },
     {
@@ -266,16 +248,6 @@ export function makeSavingsSequence(): QuestionDef[] {
       fieldId: "assets.equities.marketValue",
       prompt: "And invested in the stock market — ETFs, funds, pensions?",
       helper: "Rough total across everything is fine."
-    },
-    {
-      id: "equityReturn",
-      chapter: CHAPTERS.savings.id,
-      chapterTitle: CHAPTERS.savings.title,
-      kind: "percent",
-      fieldId: "assumptions.equityReturnRateAnnual",
-      assumption: true,
-      defaultAssumptionLabel: "stocks returning ~8% a year",
-      prompt: "We're assuming those grow around 8% a year. Change that, or leave it?"
     },
     {
       id: "equityContrib",
@@ -385,38 +357,9 @@ export function makePropertySequence(): QuestionDef[] {
     gateId: "propertiesGate",
     prompt: "Do you own any investment properties — somewhere you rent out, or plan to?"
   };
-  const anyRental = (ctx: ActivationCtx): boolean => {
-    for (let i = 1; i <= 5; i += 1) {
-      const pad = String(i).padStart(2, "0");
-      if (isNum(ctx.fields[`properties.${pad}.rentalIncomeNetAnnual` as FieldId]) > 0) return true;
-    }
-    return false;
-  };
-  const rentalGrowth: QuestionDef = {
-    id: "rentalGrowth",
-    chapter: CHAPTERS.property.id,
-    chapterTitle: CHAPTERS.property.title,
-    kind: "percent",
-    fieldId: "assumptions.rentalIncomeGrowthRateAnnual",
-    assumption: true,
-    defaultAssumptionLabel: "rents rising ~2% a year",
-    prompt: "And we'll assume the rent rises each year with inflation. OK, or would you like a different rate?",
-    activeWhen: (ctx) => gateYes(ctx, "propertiesGate") && anyRental(ctx)
-  };
-  const renterPropertyGrowth: QuestionDef = {
-    id: "propertyGrowthRenter",
-    chapter: CHAPTERS.property.id,
-    chapterTitle: CHAPTERS.property.title,
-    kind: "percent",
-    fieldId: "assumptions.propertyAppreciationRateAnnual",
-    assumption: true,
-    defaultAssumptionLabel: "property values drifting up ~3% a year",
-    prompt: "One last thing: we'll let property values drift up about 3% a year. Sound right?",
-    activeWhen: (ctx) => gateYes(ctx, "propertiesGate") && isRenter(ctx)
-  };
   const items: QuestionDef[] = [];
   for (let i = 1 as 1 | 2 | 3 | 4 | 5; i <= 5; i = (i + 1) as 1 | 2 | 3 | 4 | 5) items.push(...propertySequence(i));
-  return [gate, ...items, rentalGrowth, renterPropertyGrowth];
+  return [gate, ...items];
 }
 
 function assetSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
