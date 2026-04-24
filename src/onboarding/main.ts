@@ -87,11 +87,6 @@ function buildLayout(): void {
   right.className = "ob-estimate";
   right.id = "ob-estimate";
   right.innerHTML = `
-    <p class="ob-estimate-label">You could stop working at</p>
-    <div class="ob-estimate-age" id="ob-estimate-age" aria-live="polite">—</div>
-    <p class="ob-estimate-placeholder" id="ob-estimate-placeholder">The age will start to appear as you answer.</p>
-    <p class="ob-estimate-delta" id="ob-estimate-delta" hidden></p>
-    <p class="ob-estimate-warning" id="ob-estimate-warning" hidden></p>
     <div class="ob-confidence" id="ob-confidence" hidden>
       <span class="ob-confidence-dots">
         <span class="ob-confidence-dot" data-idx="0"></span>
@@ -100,6 +95,11 @@ function buildLayout(): void {
       </span>
       <span id="ob-confidence-label">Rough estimate · add more answers to sharpen it.</span>
     </div>
+    <p class="ob-estimate-label">You could stop working at</p>
+    <div class="ob-estimate-age" id="ob-estimate-age" aria-live="polite">—</div>
+    <p class="ob-estimate-placeholder" id="ob-estimate-placeholder">The age will start to appear as you answer.</p>
+    <p class="ob-estimate-delta" id="ob-estimate-delta" hidden></p>
+    <p class="ob-estimate-warning" id="ob-estimate-warning" hidden></p>
     <div class="ob-chart-wrap" id="ob-chart-wrap">
       <canvas class="ob-chart-canvas" id="ob-chart-canvas"></canvas>
       <div class="ob-chart-legend" id="ob-chart-legend">
@@ -112,7 +112,8 @@ function buildLayout(): void {
       </div>
     </div>
     <p class="ob-estimate-assumptions" id="ob-estimate-assumptions">
-      Assuming 8% equity returns, 3% property growth. Fine-tune in the full calculator.
+      Assuming 8% equity returns, 3% property growth.<br>
+      <span class="ob-estimate-assumptions-cta">Fine-tune in the full calculator.</span>
     </p>
   `;
   app.appendChild(left);
