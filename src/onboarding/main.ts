@@ -74,11 +74,55 @@ render();
 
 function wireNavJump(): void {
   const btn = document.querySelector<HTMLButtonElement>("[data-onboarding-jump]");
-  if (!btn) return;
-  btn.addEventListener("click", () => {
-    writeDraftFromOnboarding(fieldState, modelUiState.earlyRetirementAge);
-    clearQuickEstimateSeed();
-    navigateToCalculator();
+  if (btn) {
+    btn.addEventListener("click", () => {
+      writeDraftFromOnboarding(fieldState, modelUiState.earlyRetirementAge);
+      clearQuickEstimateSeed();
+      navigateToCalculator();
+    });
+  }
+  const restart = document.querySelector<HTMLButtonElement>("[data-onboarding-restart]");
+  if (restart) {
+    restart.addEventListener("click", async () => {
+      const ok = await showConfirm(
+        "Start over? Your answers so far will be cleared and you'll begin from the first question. This cannot be undone."
+      );
+      if (!ok) return;
+      try { window.localStorage.removeItem("etq:scenario:draft:v2"); } catch { /* ignore */ }
+      clearQuickEstimateSeed();
+      window.location.assign("onboarding.html");
+    });
+  }
+}
+
+function showConfirm(message: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const overlay = document.createElement("div");
+    overlay.className = "confirm-overlay";
+    overlay.innerHTML = `<div class="confirm-dialog" role="alertdialog" aria-modal="true">
+      <p></p>
+      <div class="confirm-actions">
+        <button class="confirm-cancel" type="button">Cancel</button>
+        <button class="confirm-ok" type="button">Start over</button>
+      </div>
+    </div>`;
+    overlay.querySelector("p")!.textContent = message;
+    const cancel = overlay.querySelector<HTMLButtonElement>(".confirm-cancel")!;
+    const ok = overlay.querySelector<HTMLButtonElement>(".confirm-ok")!;
+    const close = (result: boolean): void => {
+      document.removeEventListener("keydown", onKey);
+      overlay.remove();
+      resolve(result);
+    };
+    const onKey = (ev: KeyboardEvent): void => {
+      if (ev.key === "Escape") { ev.preventDefault(); close(false); }
+    };
+    cancel.addEventListener("click", () => close(false));
+    ok.addEventListener("click", () => close(true));
+    overlay.addEventListener("click", (e) => { if (e.target === overlay) close(false); });
+    document.addEventListener("keydown", onKey);
+    document.body.appendChild(overlay);
+    cancel.focus();
   });
 }
 

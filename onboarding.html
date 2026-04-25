@@ -56,13 +56,64 @@
     text-decoration: none;
   }
   .wordmark svg { width: 28px; height: 14px; }
-  .nav-jump {
+  .nav-actions { display: inline-flex; align-items: center; gap: 24px; }
+  .nav-jump, .nav-restart {
     font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
     color: var(--ink-soft);
     background: none; border: none; padding: 4px 2px;
     cursor: pointer; font-family: inherit;
   }
-  .nav-jump:hover { color: var(--forest); }
+  .nav-jump:hover, .nav-restart:hover { color: var(--forest); }
+  .nav-restart { color: var(--muted); }
+
+  .confirm-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(18, 35, 31, 0.25);
+    backdrop-filter: blur(2px);
+    animation: confirm-fade-in 0.15s ease-out;
+  }
+  @keyframes confirm-fade-in { from { opacity: 0; } }
+  .confirm-dialog {
+    position: relative;
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    box-shadow: 0 24px 48px -12px rgba(18, 35, 31, 0.25);
+    padding: 28px 32px 22px;
+    max-width: 420px; width: 90%;
+    animation: confirm-slide-in 0.15s ease-out;
+  }
+  @keyframes confirm-slide-in { from { opacity: 0; transform: translateY(-8px) scale(0.97); } }
+  .confirm-dialog p {
+    margin: 0 0 22px;
+    font-size: 15px; line-height: 1.5;
+    color: var(--ink);
+    font-family: "Inter", sans-serif;
+  }
+  .confirm-actions {
+    display: flex; justify-content: flex-end; gap: 12px;
+  }
+  .confirm-cancel, .confirm-ok {
+    padding: 10px 20px;
+    font-family: "Inter", sans-serif;
+    font-size: 13px; font-weight: 500;
+    letter-spacing: 0.04em;
+    border-radius: 2px; cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+  }
+  .confirm-cancel {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
+  .confirm-cancel:hover { background: var(--cream); border-color: var(--forest); color: var(--forest); }
+  .confirm-ok {
+    background: var(--amber);
+    border: 1px solid var(--amber);
+    color: var(--cream-soft);
+  }
+  .confirm-ok:hover { background: #9a6324; border-color: #9a6324; }
 
   .ob-shell {
     position: relative; z-index: 1;
@@ -369,7 +420,10 @@
       </svg>
       Enough to Quit
     </a>
-    <button type="button" class="nav-jump" data-onboarding-jump>Jump to full calculator →</button>
+    <div class="nav-actions">
+      <button type="button" class="nav-restart" data-onboarding-restart>Start over</button>
+      <button type="button" class="nav-jump" data-onboarding-jump>Jump to full calculator →</button>
+    </div>
   </div>
 </nav>
 <main id="app"></main>
