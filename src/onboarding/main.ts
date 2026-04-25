@@ -735,6 +735,7 @@ function paintEstimate(): void {
 
   if (!hasAge && !hasBlockers) {
     ageEl.textContent = "—";
+    ageEl.dataset.state = "empty";
     placeholderEl.hidden = false;
     placeholderEl.textContent = pendingEstimateMessage();
     deltaEl.hidden = true;
@@ -744,6 +745,7 @@ function paintEstimate(): void {
   }
   if (hasBlockers) {
     ageEl.textContent = "—";
+    ageEl.dataset.state = "empty";
     placeholderEl.hidden = true;
     warningEl.hidden = false;
     warningEl.textContent = "One of the numbers needs a second look.";
@@ -751,6 +753,7 @@ function paintEstimate(): void {
     return;
   }
   ageEl.textContent = hasAge ? String(age) : "—";
+  ageEl.dataset.state = hasAge ? "value" : "empty";
   placeholderEl.hidden = true;
   warningEl.hidden = true;
 
