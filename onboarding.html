@@ -55,11 +55,14 @@
     color: var(--forest);
     text-decoration: none;
   }
-  .nav-back {
+  .wordmark svg { width: 28px; height: 14px; }
+  .nav-jump {
     font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
-    color: var(--ink-soft); text-decoration: none;
+    color: var(--ink-soft);
+    background: none; border: none; padding: 4px 2px;
+    cursor: pointer; font-family: inherit;
   }
-  .nav-back:hover { color: var(--forest); }
+  .nav-jump:hover { color: var(--forest); }
 
   .ob-shell {
     position: relative; z-index: 1;
@@ -358,8 +361,15 @@
 <body>
 <nav class="top">
   <div class="inner">
-    <a href="index.html" class="wordmark">ETQ</a>
-    <a href="index.html" class="nav-back">← Back to landing</a>
+    <a href="index.html" class="wordmark" aria-label="Enough to Quit — home">
+      <svg viewBox="2 6 16 8" aria-hidden="true">
+        <path d="M 4 13 A 6 6 0 0 1 16 13" fill="#c98a3f"/>
+        <path d="M 6.5 13 A 3.5 3.5 0 0 1 13.5 13" fill="#e6a45a" opacity="0.6"/>
+        <line x1="2" y1="13" x2="18" y2="13" stroke="#1f3a35" stroke-width="1.1" stroke-linecap="round"/>
+      </svg>
+      Enough to Quit
+    </a>
+    <button type="button" class="nav-jump" data-onboarding-jump>Jump to full calculator →</button>
   </div>
 </nav>
 <main id="app"></main>

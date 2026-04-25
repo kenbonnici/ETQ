@@ -68,8 +68,19 @@ let canvasReady = false;
 let activeKeyHandler: ((ev: KeyboardEvent) => void) | null = null;
 
 buildLayout();
+wireNavJump();
 advanceToFirstUnanswered();
 render();
+
+function wireNavJump(): void {
+  const btn = document.querySelector<HTMLButtonElement>("[data-onboarding-jump]");
+  if (!btn) return;
+  btn.addEventListener("click", () => {
+    writeDraftFromOnboarding(fieldState, modelUiState.earlyRetirementAge);
+    clearQuickEstimateSeed();
+    navigateToCalculator();
+  });
+}
 
 function initializeFieldState(): FieldState {
   const state = createEmptyFieldState();

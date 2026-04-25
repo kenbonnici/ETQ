@@ -5921,8 +5921,6 @@ if (!scenarioStorageAvailable) {
   setScenarioManagerNotice("Local save is unavailable in this browser", "warning", 5000);
 }
 
-const cameFromOnboarding = window.location.hash.includes("from=onboarding");
-
 resetCashflowExpandedGroups("collapsed");
 resetNetworthExpandedGroups("collapsed");
 activeView = readPersistedActiveView();
@@ -5936,26 +5934,3 @@ if (!restoreDraftScenarioIfAvailable()) {
   recalc();
 }
 
-if (cameFromOnboarding) {
-  const banner = document.createElement("div");
-  banner.id = "onboarding-handoff-banner";
-  banner.setAttribute("role", "status");
-  banner.style.cssText = [
-    "position:fixed", "left:50%", "top:16px", "transform:translateX(-50%)",
-    "background:#fbf6ec", "color:#12231f", "border:1px solid #e3d9c4",
-    "border-radius:2px", "padding:14px 22px", "font:14px/1.4 Inter, sans-serif",
-    "box-shadow:0 16px 40px -28px rgba(31,58,53,0.3)", "z-index:50",
-    "display:flex", "align-items:center", "gap:16px"
-  ].join(";");
-  banner.innerHTML = `
-    <span>Here's what you built. Edit anything, or keep exploring.</span>
-    <button type="button" data-dismiss-onboarding-banner
-      style="background:none;border:none;color:#7d8a90;cursor:pointer;font:14px Inter, sans-serif;">dismiss</button>
-  `;
-  const dismiss = (): void => {
-    banner.remove();
-  };
-  banner.querySelector<HTMLButtonElement>("[data-dismiss-onboarding-banner]")?.addEventListener("click", dismiss);
-  window.setTimeout(dismiss, 10_000);
-  document.body.appendChild(banner);
-}

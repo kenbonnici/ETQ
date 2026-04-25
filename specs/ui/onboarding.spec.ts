@@ -109,8 +109,6 @@ test.describe("Progressive Onboarding", () => {
     ]);
     void navResp;
 
-    await expect(page.locator("#onboarding-handoff-banner")).toBeVisible();
-
     const draftRaw = await page.evaluate(() => window.localStorage.getItem("etq:scenario:draft:v2"));
     expect(draftRaw).not.toBeNull();
     const draft = JSON.parse(String(draftRaw));
