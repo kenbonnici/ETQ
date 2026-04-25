@@ -71,6 +71,7 @@ buildLayout();
 wireNavJump();
 advanceToFirstUnanswered();
 render();
+syncRestartVisibility();
 
 function wireNavJump(): void {
   const btn = document.querySelector<HTMLButtonElement>("[data-onboarding-jump]");
@@ -84,6 +85,7 @@ function wireNavJump(): void {
   const restart = document.querySelector<HTMLButtonElement>("[data-onboarding-restart]");
   if (restart) {
     restart.addEventListener("click", async () => {
+      if (!hasClearableState()) return;
       const ok = await showConfirm(
         "Start over? Your answers so far will be cleared and you'll begin from the first question. This cannot be undone."
       );
@@ -93,6 +95,20 @@ function wireNavJump(): void {
       window.location.assign("onboarding.html");
     });
   }
+}
+
+function hasClearableState(): boolean {
+  if (uiState.answered.size > 0) return true;
+  try {
+    if (window.localStorage.getItem("etq:scenario:draft:v2")) return true;
+  } catch { /* ignore */ }
+  return false;
+}
+
+function syncRestartVisibility(): void {
+  const btn = document.querySelector<HTMLButtonElement>("[data-onboarding-restart]");
+  if (!btn) return;
+  btn.hidden = !hasClearableState();
 }
 
 function showConfirm(message: string): Promise<boolean> {
@@ -223,6 +239,7 @@ function render(): void {
   }
 
   scheduleRun();
+  syncRestartVisibility();
 }
 
 function renderChip(q: QuestionDef): HTMLElement {
