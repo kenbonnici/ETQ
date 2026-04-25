@@ -74,6 +74,19 @@ render();
 syncRestartVisibility();
 
 function wireNavJump(): void {
+  const home = document.querySelector<HTMLAnchorElement>("[data-onboarding-home]");
+  if (home) {
+    home.addEventListener("click", async (ev) => {
+      if (!hasClearableState()) return;
+      if (ev.metaKey || ev.ctrlKey || ev.shiftKey || (ev as MouseEvent).button === 1) return;
+      ev.preventDefault();
+      const ok = await showConfirm(
+        "Leave the walkthrough? Your answers so far will be lost. This cannot be undone.",
+        { okLabel: "Leave", cancelLabel: "Stay here" }
+      );
+      if (ok) window.location.assign(home.getAttribute("href") ?? "index.html");
+    });
+  }
   const btn = document.querySelector<HTMLButtonElement>("[data-onboarding-jump]");
   if (btn) {
     btn.addEventListener("click", () => {
@@ -111,18 +124,23 @@ function syncRestartVisibility(): void {
   btn.hidden = !hasClearableState();
 }
 
-function showConfirm(message: string): Promise<boolean> {
+function showConfirm(
+  message: string,
+  options: { okLabel?: string; cancelLabel?: string } = {}
+): Promise<boolean> {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
     overlay.className = "confirm-overlay";
     overlay.innerHTML = `<div class="confirm-dialog" role="alertdialog" aria-modal="true">
       <p></p>
       <div class="confirm-actions">
-        <button class="confirm-cancel" type="button">Cancel</button>
-        <button class="confirm-ok" type="button">Start over</button>
+        <button class="confirm-cancel" type="button"></button>
+        <button class="confirm-ok" type="button"></button>
       </div>
     </div>`;
     overlay.querySelector("p")!.textContent = message;
+    overlay.querySelector<HTMLButtonElement>(".confirm-cancel")!.textContent = options.cancelLabel ?? "Cancel";
+    overlay.querySelector<HTMLButtonElement>(".confirm-ok")!.textContent = options.okLabel ?? "Start over";
     const cancel = overlay.querySelector<HTMLButtonElement>(".confirm-cancel")!;
     const ok = overlay.querySelector<HTMLButtonElement>(".confirm-ok")!;
     const close = (result: boolean): void => {
