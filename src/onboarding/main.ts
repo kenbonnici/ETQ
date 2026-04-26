@@ -280,7 +280,7 @@ function buildLayout(): void {
   right.innerHTML = `
     <p class="ob-estimate-label">You could stop working at</p>
     <div class="ob-estimate-age" id="ob-estimate-age" aria-live="polite">—</div>
-    <p class="ob-estimate-placeholder" id="ob-estimate-placeholder">The age will start to appear as you answer.</p>
+    <p class="ob-estimate-placeholder" id="ob-estimate-placeholder">Your earliest possible retirement age will appear as you answer.</p>
     <p class="ob-estimate-delta" id="ob-estimate-delta" hidden></p>
     <p class="ob-estimate-warning" id="ob-estimate-warning" hidden></p>
     <div class="ob-chart-wrap" id="ob-chart-wrap">
@@ -1348,7 +1348,7 @@ function paintEstimate(): void {
 
 function pendingEstimateMessage(): string {
   if (uiState.answered.size === 0) {
-    return "The age will start to appear as you answer.";
+    return "Your earliest possible retirement age will appear as you answer.";
   }
   const needsLiving = !uiState.answered.has("livingExpenses");
   const needsCash = !uiState.answered.has("cash");
