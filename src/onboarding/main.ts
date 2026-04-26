@@ -1265,7 +1265,8 @@ function paintEstimate(): void {
   const placeholderEl = document.getElementById("ob-estimate-placeholder");
   const deltaEl = document.getElementById("ob-estimate-delta");
   const warningEl = document.getElementById("ob-estimate-warning");
-  if (!ageEl || !placeholderEl || !deltaEl || !warningEl) return;
+  const panelEl = document.getElementById("ob-estimate");
+  if (!ageEl || !placeholderEl || !deltaEl || !warningEl || !panelEl) return;
 
   const rawAge = resolveEarliestAge();
   const coreAnswered = uiState.answered.has("livingExpenses") && uiState.answered.has("cash");
@@ -1278,6 +1279,10 @@ function paintEstimate(): void {
   const hasBlockers = coreAnswered && (lastRunResult?.validationMessages.some(
     (m) => m.blocksProjection && answeredFieldIds.has(String(m.fieldId))
   ) ?? false);
+
+  // Panel chrome (border/shadow/fill) only appears once we have a real number to show.
+  if (hasAge) panelEl.setAttribute("data-has-estimate", "true");
+  else panelEl.removeAttribute("data-has-estimate");
 
   if (!hasAge && !hasBlockers) {
     setHeroAge(ageEl, null);

@@ -131,11 +131,11 @@
   .ob-list-item { display: block; }
 
   .ob-card {
-    background: var(--cream-soft);
-    border: 1px solid var(--rule);
-    border-radius: 4px;
-    padding: 36px 40px;
-    box-shadow: 0 24px 48px -32px rgba(31, 58, 53, 0.18);
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 8px 0 32px;
+    box-shadow: none;
     animation: ob-card-in 320ms ease-out both;
   }
   @keyframes ob-card-in {
@@ -431,9 +431,20 @@
   .ob-estimate {
     position: sticky; top: 96px;
     align-self: start;
-    background: var(--paper);
-    border: 1px solid rgba(227, 217, 196, 0.5);
+    background: transparent;
+    border: 1px solid transparent;
     border-radius: 14px;
+    padding: 24px 28px;
+    box-shadow: none;
+    transition:
+      background 280ms ease,
+      border-color 280ms ease,
+      box-shadow 280ms ease,
+      padding 280ms ease;
+  }
+  .ob-estimate[data-has-estimate="true"] {
+    background: var(--paper);
+    border-color: rgba(227, 217, 196, 0.5);
     padding: 36px 36px 32px;
     box-shadow: 0 30px 60px -40px rgba(31,58,53,0.22);
   }
@@ -452,14 +463,10 @@
     color: var(--forest-deep);
     font-variant-numeric: tabular-nums;
     margin: 0 0 22px;
-    padding-bottom: 4px;
-    transition: font-size 220ms ease, color 220ms ease;
+    transition: opacity 220ms ease;
   }
   .ob-estimate-age[data-state="empty"] {
-    font-size: 36px;
-    color: var(--rule);
-    line-height: 1;
-    margin: 4px 0 18px;
+    display: none;
   }
   .ob-estimate-delta {
     font-size: 16px;
@@ -468,10 +475,12 @@
     min-height: 1.4em;
   }
   .ob-estimate-placeholder {
-    font-size: 15px;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 22px;
+    line-height: 1.35;
     color: var(--ink-soft);
-    margin: 0 0 20px;
-    font-style: italic;
+    margin: 4px 0 0;
+    max-width: 32ch;
   }
   .ob-chart-wrap { margin: 12px 0 20px; display: none; position: relative; }
   .ob-chart-wrap[data-visible="true"] { display: block; }
@@ -518,6 +527,12 @@
     margin: 20px 0 0;
     padding-top: 16px;
     border-top: 1px solid var(--rule);
+  }
+  .ob-estimate:not([data-has-estimate="true"]) .ob-estimate-assumptions {
+    display: none;
+  }
+  .ob-estimate:not([data-has-estimate="true"]) .ob-estimate-label {
+    display: none;
   }
   .ob-estimate-assumptions-summary {
     display: flex;
@@ -594,7 +609,7 @@
       font-size: 48px;
     }
     .ob-chart-wrap, .ob-estimate-assumptions { display: none !important; }
-    .ob-card { padding: 24px 20px; }
+    .ob-card { padding: 8px 0 24px; }
   }
 
   @media (prefers-reduced-motion: reduce) {
