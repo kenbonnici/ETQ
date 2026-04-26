@@ -353,6 +353,12 @@ body {
   border: 1px solid var(--line-soft);
   border-radius: 12px;
   box-shadow: 0 6px 18px rgb(15 23 42 / 0.035);
+  container-type: inline-size;
+  container-name: dashboard-header;
+}
+
+@container dashboard-header (max-width: 1320px) {
+  .brand-text { display: none; }
 }
 
 .dashboard-header > .view-tabs {
