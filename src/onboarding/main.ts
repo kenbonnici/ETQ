@@ -363,11 +363,18 @@ function render(): void {
   }
   left.innerHTML = "";
 
+  const active = uiState.activeQuestionId
+    ? sequence.find((s) => s.id === uiState.activeQuestionId) ?? null
+    : null;
+  // Compact "add another?" gates belong inline within their chapter, not pinned
+  // at the top of the conversation — otherwise they read as orphans with no
+  // visible parent. Regular active questions still render at the top.
+  const activeIsCompact = !!active && !!active.compact && active.kind === "yesNo";
+
   if (uiState.completed || uiState.activeQuestionId === "handoff") {
     left.appendChild(wrapInListItem(renderHandoffCard()));
-  } else if (uiState.activeQuestionId) {
-    const active = sequence.find((s) => s.id === uiState.activeQuestionId);
-    if (active) left.appendChild(wrapInListItem(renderActiveCard(active)));
+  } else if (active && !activeIsCompact) {
+    left.appendChild(wrapInListItem(renderActiveCard(active)));
   }
 
   const chapters: { title: string; questions: QuestionDef[] }[] = [];
@@ -382,6 +389,9 @@ function render(): void {
   for (let i = chapters.length - 1; i >= 0; i -= 1) {
     const ch = chapters[i];
     if (ch.title) left.appendChild(wrapInListItem(createChapterDivider(ch.title), true));
+    if (activeIsCompact && active && ch.title === active.chapterTitle) {
+      left.appendChild(wrapInListItem(renderActiveCard(active)));
+    }
     for (let j = ch.questions.length - 1; j >= 0; j -= 1) {
       left.appendChild(wrapInListItem(renderChip(ch.questions[j])));
     }
