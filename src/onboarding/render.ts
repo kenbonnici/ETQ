@@ -1,10 +1,21 @@
 import { QuestionDef } from "./sequence";
 
-export function createCard(q: QuestionDef, progressText: string): HTMLElement {
+export function createCard(q: QuestionDef, progressText: string, onBack?: () => void): HTMLElement {
   const section = document.createElement("section");
   section.className = "ob-card";
   section.setAttribute("data-onboarding-card", q.id);
   section.setAttribute("aria-labelledby", `ob-prompt-${q.id}`);
+
+  if (onBack) {
+    const back = document.createElement("button");
+    back.type = "button";
+    back.className = "ob-back";
+    back.setAttribute("aria-label", "Back to previous question");
+    back.setAttribute("data-onboarding-back", q.id);
+    back.innerHTML = "← <span>back</span>";
+    back.addEventListener("click", onBack);
+    section.appendChild(back);
+  }
 
   const eyebrow = document.createElement("p");
   eyebrow.className = "ob-eyebrow";

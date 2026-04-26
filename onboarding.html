@@ -226,6 +226,18 @@
     box-shadow: inset 0 0 0 1px var(--forest-deep);
   }
 
+  .ob-back {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: none; border: none; padding: 0; margin: 0 0 16px;
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: color 160ms ease;
+  }
+  .ob-back:hover { color: var(--forest); }
+  .ob-back span { letter-spacing: 0.04em; }
+
   .ob-actions {
     display: flex; align-items: center; gap: 22px; flex-wrap: wrap;
   }

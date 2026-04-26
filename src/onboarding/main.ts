@@ -441,6 +441,20 @@ function editChip(q: QuestionDef): void {
   focusActiveInput();
 }
 
+function findPreviousAnswered(q: QuestionDef): QuestionDef | null {
+  const idx = sequence.findIndex((s) => s.id === q.id);
+  if (idx <= 0) return null;
+  const c = ctx();
+  for (let i = idx - 1; i >= 0; i -= 1) {
+    const candidate = sequence[i];
+    if (candidate.id === "handoff") continue;
+    if (!isQuestionActive(candidate, c)) continue;
+    if (!uiState.answered.has(candidate.id)) continue;
+    return candidate;
+  }
+  return null;
+}
+
 function dependentNameFor(q: QuestionDef): string | null {
   const m = q.id.match(/^dependent(\d+)(Cost|Years)$/);
   if (!m) return null;
@@ -480,7 +494,9 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
   const progressText = buildProgressText(q);
   const softPrompt = softConfirmPrompt(q);
   const resolvedPrompt = softPrompt ?? resolvePromptPlaceholders(q);
-  const card = createCard(resolvedPrompt !== q.prompt ? { ...q, prompt: resolvedPrompt } : q, progressText);
+  const prev = findPreviousAnswered(q);
+  const onBack = prev ? () => editChip(prev) : undefined;
+  const card = createCard(resolvedPrompt !== q.prompt ? { ...q, prompt: resolvedPrompt } : q, progressText, onBack);
 
   const errorEl = document.createElement("p");
   errorEl.className = "ob-error";
