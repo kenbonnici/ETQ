@@ -202,17 +202,30 @@ function buildLayout(): void {
     </div>
     <details class="ob-estimate-assumptions" id="ob-estimate-assumptions">
       <summary class="ob-estimate-assumptions-summary">
-        <span class="ob-estimate-assumptions-summary-text">This estimate is based on a number of assumptions you can fine-tune in the full calculator.</span>
+        <span class="ob-estimate-assumptions-summary-text">This estimate uses default assumptions and skips some things only the full calculator covers.</span>
         <span class="ob-estimate-assumptions-toggle" aria-hidden="true"></span>
       </summary>
-      <ul class="ob-estimate-assumptions-list">
-        <li>Investment growth rates (equities, cash, rental income, salary)</li>
-        <li>Property appreciation and selling costs</li>
-        <li>Inflation applied to spending and other figures over time</li>
-        <li>How your spending shifts through retirement</li>
-        <li>Early-retirement pension reduction and partner timing</li>
-        <li>Planning horizon and the order assets are drawn down</li>
-      </ul>
+      <div class="ob-estimate-assumptions-section">
+        <p class="ob-estimate-assumptions-section-label">Adjust in the full calculator</p>
+        <ul class="ob-estimate-assumptions-list">
+          <li>Investment growth rates (equities, cash, rental income, salary)</li>
+          <li>Property appreciation, and selling costs on stocks, property, and other assets</li>
+          <li>Inflation applied to spending and other figures over time</li>
+          <li>How your spending shifts through retirement</li>
+          <li>Early-retirement pension reduction and partner timing</li>
+          <li>Planning horizon and the order assets are drawn down</li>
+        </ul>
+      </div>
+      <div class="ob-estimate-assumptions-section">
+        <p class="ob-estimate-assumptions-section-label">Add in the full calculator</p>
+        <ul class="ob-estimate-assumptions-list">
+          <li>One-off future events (inheritance, asset sales, weddings, renovations)</li>
+          <li>Plans to downsize or change your home later in life</li>
+          <li>Side income (freelance, consulting) and any post-retirement work</li>
+          <li>A cash reserve to keep on hand and money to leave behind</li>
+          <li>Effects of future market crashes you want to plan around</li>
+        </ul>
+      </div>
     </details>
   `;
   app.appendChild(left);
