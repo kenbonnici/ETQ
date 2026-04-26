@@ -3,6 +3,7 @@ import { pruneInactiveFieldState } from "../model/activation";
 
 const DRAFT_KEY = "etq:scenario:draft:v2";
 const SESSION_SEED_KEY = "etq:landing:quick-estimate";
+const ONBOARDING_STATE_KEY = "etq:onboarding:state:v1";
 
 export interface QuickEstimateSeed {
   age?: number | null;
@@ -83,4 +84,42 @@ export function writeDraftFromOnboarding(
 
 export function navigateToCalculator(): void {
   window.location.href = "calculator.html#from=onboarding";
+}
+
+export interface PersistedOnboardingState {
+  version: 1;
+  savedAt: string;
+  fields: FieldState;
+  ui: {
+    answered: string[];
+    staleAnswered: string[];
+    gates: Record<string, "YES" | "NO" | null>;
+    acceptedAssumptions: string[];
+    activeQuestionId: string | null;
+  };
+}
+
+export function readOnboardingState(): PersistedOnboardingState | null {
+  try {
+    const raw = window.localStorage.getItem(ONBOARDING_STATE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.version !== 1) return null;
+    if (!parsed.fields || typeof parsed.fields !== "object") return null;
+    if (!parsed.ui || typeof parsed.ui !== "object") return null;
+    return parsed as PersistedOnboardingState;
+  } catch {
+    return null;
+  }
+}
+
+export function writeOnboardingState(state: PersistedOnboardingState): void {
+  try {
+    window.localStorage.setItem(ONBOARDING_STATE_KEY, JSON.stringify(state));
+  } catch { /* ignore quota errors */ }
+}
+
+export function clearOnboardingState(): void {
+  try { window.localStorage.removeItem(ONBOARDING_STATE_KEY); } catch { /* ignore */ }
 }

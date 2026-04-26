@@ -6,8 +6,7 @@ import { FieldId } from "../model/fieldRegistry";
 import {
   ActivationCtx,
   buildFullSequence,
-  collectActiveAnswered,
-  findFirstUnanswered,
+  findNextToConfirm,
   isQuestionActive,
   pruneOrphanedAnswers,
   QuestionDef
@@ -17,10 +16,14 @@ import { drawMiniChart } from "./chart";
 import { findEarliestRetirementAge } from "../shared/findEarliestRetirementAge";
 import {
   applySeedToFields,
+  clearOnboardingState,
   clearQuickEstimateSeed,
   navigateToCalculator,
+  PersistedOnboardingState,
+  readOnboardingState,
   readQuickEstimateSeed,
-  writeDraftFromOnboarding
+  writeDraftFromOnboarding,
+  writeOnboardingState
 } from "./handoff";
 
 const DEFAULT_EARLY_RETIREMENT_AGE = 55;
@@ -35,6 +38,7 @@ const SPENDING_TAPER_DEFAULTS = {
 
 interface OnboardingUiState {
   answered: Set<string>;
+  staleAnswered: Set<string>;
   gates: Record<string, "YES" | "NO" | null>;
   acceptedAssumptions: Set<string>;
   activeQuestionId: string | null;
@@ -45,13 +49,15 @@ const appRoot = document.querySelector<HTMLElement>("#app");
 if (!appRoot) throw new Error("Missing #app root for onboarding.");
 const app: HTMLElement = appRoot;
 
-const fieldState: FieldState = initializeFieldState();
+const restored = readOnboardingState();
+const fieldState: FieldState = initializeFieldState(restored);
 const sequence = buildFullSequence();
 const uiState: OnboardingUiState = {
-  answered: new Set(),
-  gates: {},
-  acceptedAssumptions: new Set(),
-  activeQuestionId: null,
+  answered: new Set(restored?.ui.answered ?? []),
+  staleAnswered: new Set(restored?.ui.staleAnswered ?? []),
+  gates: { ...(restored?.ui.gates ?? {}) },
+  acceptedAssumptions: new Set(restored?.ui.acceptedAssumptions ?? []),
+  activeQuestionId: restored?.ui.activeQuestionId ?? null,
   completed: false
 };
 
@@ -91,6 +97,7 @@ function wireNavJump(): void {
   if (btn) {
     btn.addEventListener("click", () => {
       writeDraftFromOnboarding(fieldState, modelUiState.earlyRetirementAge);
+      clearOnboardingState();
       clearQuickEstimateSeed();
       navigateToCalculator();
     });
@@ -104,6 +111,7 @@ function wireNavJump(): void {
       );
       if (!ok) return;
       try { window.localStorage.removeItem("etq:scenario:draft:v2"); } catch { /* ignore */ }
+      clearOnboardingState();
       clearQuickEstimateSeed();
       window.location.assign("onboarding.html");
     });
@@ -114,6 +122,7 @@ function hasClearableState(): boolean {
   if (uiState.answered.size > 0) return true;
   try {
     if (window.localStorage.getItem("etq:scenario:draft:v2")) return true;
+    if (window.localStorage.getItem("etq:onboarding:state:v1")) return true;
   } catch { /* ignore */ }
   return false;
 }
@@ -160,11 +169,32 @@ function showConfirm(
   });
 }
 
-function initializeFieldState(): FieldState {
+function initializeFieldState(restored: PersistedOnboardingState | null): FieldState {
   const state = createEmptyFieldState();
+  if (restored) {
+    for (const [k, v] of Object.entries(restored.fields)) {
+      state[k as keyof FieldState] = v as RawInputValue;
+    }
+    return state;
+  }
   const seed = readQuickEstimateSeed();
   if (seed) applySeedToFields(seed, state);
   return state;
+}
+
+function persistOnboardingState(): void {
+  writeOnboardingState({
+    version: 1,
+    savedAt: new Date().toISOString(),
+    fields: { ...fieldState },
+    ui: {
+      answered: Array.from(uiState.answered),
+      staleAnswered: Array.from(uiState.staleAnswered),
+      gates: { ...uiState.gates },
+      acceptedAssumptions: Array.from(uiState.acceptedAssumptions),
+      activeQuestionId: uiState.activeQuestionId
+    }
+  });
 }
 
 function buildLayout(): void {
@@ -237,7 +267,7 @@ function ctx(): ActivationCtx {
 }
 
 function advanceToFirstUnanswered(): void {
-  const next = findFirstUnanswered(sequence, ctx(), uiState.answered);
+  const next = findNextToConfirm(sequence, ctx(), uiState.answered, uiState.staleAnswered);
   if (!next) {
     uiState.activeQuestionId = "handoff";
     uiState.completed = true;
@@ -245,6 +275,19 @@ function advanceToFirstUnanswered(): void {
     uiState.activeQuestionId = next.id;
     uiState.completed = next.id === "handoff";
   }
+}
+
+// Drop stale entries for questions that are no longer active or no longer answered.
+function pruneStaleAnswered(): void {
+  const next = new Set<string>();
+  for (const id of uiState.staleAnswered) {
+    if (!uiState.answered.has(id)) continue;
+    const q = sequence.find((s) => s.id === id);
+    if (!q) continue;
+    if (!isQuestionActive(q, ctx())) continue;
+    next.add(id);
+  }
+  uiState.staleAnswered = next;
 }
 
 function render(): void {
@@ -266,7 +309,8 @@ function render(): void {
   const chapters: { title: string; questions: QuestionDef[] }[] = [];
   for (const q of sequence) {
     if (!isQuestionActive(q, ctx())) continue;
-    if (!uiState.answered.has(q.id)) break;
+    if (q.id === uiState.activeQuestionId) continue;
+    if (!uiState.answered.has(q.id)) continue;
     const last = chapters[chapters.length - 1];
     if (last && last.title === q.chapterTitle) last.questions.push(q);
     else chapters.push({ title: q.chapterTitle, questions: [q] });
@@ -281,6 +325,7 @@ function render(): void {
 
   scheduleRun();
   syncRestartVisibility();
+  persistOnboardingState();
 }
 
 function renderChip(q: QuestionDef): HTMLElement {
@@ -289,6 +334,7 @@ function renderChip(q: QuestionDef): HTMLElement {
     ? `default: ${q.defaultAssumptionLabel ?? "accepted"}`
     : undefined;
   const chip = createChip(q, formatted, assumptionText);
+  if (uiState.staleAnswered.has(q.id)) chip.setAttribute("data-stale", "true");
   chip.addEventListener("click", () => editChip(q));
   chip.addEventListener("keydown", (ev) => {
     if ((ev as KeyboardEvent).key === "Enter") {
@@ -301,15 +347,20 @@ function renderChip(q: QuestionDef): HTMLElement {
 
 function editChip(q: QuestionDef): void {
   uiState.answered.delete(q.id);
+  uiState.staleAnswered.delete(q.id);
   uiState.activeQuestionId = q.id;
   uiState.completed = false;
-  // Mark subsequent chips as stale visually via re-render (they just disappear;
-  // we remove all later answers so the user walks back through).
+  // Mark subsequent answered questions as stale: their values are kept so most
+  // re-confirmations are Enter-Enter, but the user must walk through each before
+  // the projection is considered final. This prevents stale dependent answers
+  // from quietly persisting after an upstream edit.
   const idx = sequence.findIndex((s) => s.id === q.id);
   if (idx >= 0) {
     for (let i = idx + 1; i < sequence.length; i += 1) {
-      uiState.answered.delete(sequence[i].id);
-      if (sequence[i].assumption) uiState.acceptedAssumptions.delete(sequence[i].id);
+      const later = sequence[i];
+      if (uiState.answered.has(later.id)) {
+        uiState.staleAnswered.add(later.id);
+      }
     }
   }
   render();
@@ -328,7 +379,9 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
 
   const commitAndAdvance = (): void => {
     uiState.answered.add(q.id);
+    uiState.staleAnswered.delete(q.id);
     uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
+    pruneStaleAnswered();
     advanceToFirstUnanswered();
     render();
     focusActiveInput();
@@ -438,7 +491,9 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
             fieldState["housing.01Residence.mortgage.monthlyRepayment"] = null;
           }
           uiState.answered.add(q.id);
+          uiState.staleAnswered.delete(q.id);
           uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
+          pruneStaleAnswered();
           advanceToFirstUnanswered();
           render();
           focusActiveInput();
@@ -482,7 +537,9 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
             fieldState["housing.rentAnnual"] = null;
           }
           uiState.answered.add(q.id);
+          uiState.staleAnswered.delete(q.id);
           uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
+          pruneStaleAnswered();
           advanceToFirstUnanswered();
           render();
           focusActiveInput();
@@ -517,6 +574,34 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
             fieldState["spending.adjustments.finalBracket.deltaRate"] = 0;
           }
           uiState.answered.add(q.id);
+          uiState.staleAnswered.delete(q.id);
+          pruneStaleAnswered();
+          advanceToFirstUnanswered();
+          render();
+          focusActiveInput();
+        });
+        chips.appendChild(btn);
+      }
+      attach(chips);
+      break;
+    }
+    case "downsizingMode": {
+      const chips = document.createElement("div");
+      chips.className = "ob-chips";
+      for (const opt of ["Buy", "Rent"]) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "ob-chip-btn";
+        btn.textContent = opt;
+        btn.setAttribute("data-onboarding-option", opt.toUpperCase());
+        btn.addEventListener("click", () => {
+          if (q.fieldId) fieldState[q.fieldId] = opt;
+          if (opt === "Buy") fieldState["housing.downsize.newRentAnnual"] = null;
+          else fieldState["housing.downsize.newHomePurchaseCost"] = null;
+          uiState.answered.add(q.id);
+          uiState.staleAnswered.delete(q.id);
+          uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
+          pruneStaleAnswered();
           advanceToFirstUnanswered();
           render();
           focusActiveInput();
@@ -542,6 +627,8 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
         btn.addEventListener("click", () => {
           if (q.fieldId) fieldState[q.fieldId] = opt.rate;
           uiState.answered.add(q.id);
+          uiState.staleAnswered.delete(q.id);
+          pruneStaleAnswered();
           advanceToFirstUnanswered();
           render();
           focusActiveInput();
@@ -574,6 +661,7 @@ function renderHandoffCard(): HTMLElement {
   `;
   card.querySelector<HTMLButtonElement>("[data-onboarding-handoff]")?.addEventListener("click", () => {
     writeDraftFromOnboarding(fieldState, modelUiState.earlyRetirementAge);
+    clearOnboardingState();
     clearQuickEstimateSeed();
     navigateToCalculator();
   });
@@ -683,6 +771,21 @@ function validateCrossField(q: QuestionDef, value: number): string | null {
     }
     case "housing.01Residence.mortgage.balance":
       break;
+    case "housing.downsize.year": {
+      const thisYear = new Date().getFullYear();
+      if (value <= thisYear) {
+        return `Needs to be a year after ${thisYear}.`;
+      }
+      const ageNowDz = Number(fieldState["profile.currentAge"] ?? NaN);
+      const lifeExpectancyDz = Number(fieldState["planning.lifeExpectancyAge"] ?? NaN);
+      if (Number.isFinite(ageNowDz) && Number.isFinite(lifeExpectancyDz)) {
+        const maxYear = thisYear + Math.max(0, Math.round(lifeExpectancyDz - ageNowDz - 1));
+        if (value > maxYear) {
+          return `Needs to be on or before ${maxYear} to stay within the plan horizon.`;
+        }
+      }
+      break;
+    }
   }
 
   // A named dependent with zero annual cost is meaningless — calculator's
@@ -756,6 +859,11 @@ function formatAnswer(q: QuestionDef): string {
     const final = Number(fieldState["spending.adjustments.finalBracket.deltaRate"] ?? 0);
     if (first === 0 && second === 0 && final === 0) return "Hold steady";
     return "Taper gently";
+  }
+  if (q.kind === "downsizingMode") {
+    if (!q.fieldId) return "—";
+    const v = String(fieldState[q.fieldId] ?? "").trim();
+    return v || "—";
   }
   if (q.kind === "appreciationChoice") {
     if (!q.fieldId) return "—";

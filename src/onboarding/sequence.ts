@@ -9,6 +9,7 @@ export type QuestionKind =
   | "ownerRenter"
   | "spendingTaper"
   | "appreciationChoice"
+  | "downsizingMode"
   | "text";
 
 export interface QuestionDef {
@@ -73,6 +74,17 @@ function isRenter(ctx: ActivationCtx): boolean {
 
 function hasMortgage(ctx: ActivationCtx): boolean {
   return ctx.gates["hasMortgage"] === "YES";
+}
+
+function isDownsizing(ctx: ActivationCtx): boolean {
+  return ctx.gates["downsizingGate"] === "YES";
+}
+
+function downsizingMode(ctx: ActivationCtx): "BUY" | "RENT" | null {
+  const v = String(ctx.fields["housing.downsize.newHomeMode"] ?? "").trim().toUpperCase();
+  if (v === "BUY") return "BUY";
+  if (v === "RENT") return "RENT";
+  return null;
 }
 
 function numericFieldValue(ctx: ActivationCtx, fieldId: FieldId): number {
@@ -234,6 +246,56 @@ export function makeHousingSequence(): QuestionDef[] {
       prompt: "What's the monthly rent?",
       helper: "Enter the amount you pay each month.",
       activeWhen: isRenter
+    },
+    {
+      id: "downsizeGate",
+      chapter: CHAPTERS.housing.id,
+      chapterTitle: CHAPTERS.housing.title,
+      kind: "yesNo",
+      gateId: "downsizingGate",
+      prompt: "Any plans to downsize one day?",
+      helper: "Selling and moving somewhere smaller, or to a new place. Skip if you're not sure.",
+      skippable: true,
+      activeWhen: isOwner
+    },
+    {
+      id: "downsizeYear",
+      chapter: CHAPTERS.housing.id,
+      chapterTitle: CHAPTERS.housing.title,
+      kind: "integer",
+      fieldId: "housing.downsize.year",
+      prompt: "In what year are you thinking?",
+      helper: "A future year, e.g. 2035.",
+      activeWhen: (ctx) => isOwner(ctx) && isDownsizing(ctx)
+    },
+    {
+      id: "downsizeMode",
+      chapter: CHAPTERS.housing.id,
+      chapterTitle: CHAPTERS.housing.title,
+      kind: "downsizingMode",
+      fieldId: "housing.downsize.newHomeMode",
+      prompt: "Will you buy the new place, or rent it?",
+      activeWhen: (ctx) => isOwner(ctx) && isDownsizing(ctx) && numericFieldValue(ctx, "housing.downsize.year") > 0
+    },
+    {
+      id: "downsizeCost",
+      chapter: CHAPTERS.housing.id,
+      chapterTitle: CHAPTERS.housing.title,
+      kind: "currency",
+      fieldId: "housing.downsize.newHomePurchaseCost",
+      prompt: "Roughly what would the new place cost?",
+      helper: "In today's money is fine.",
+      activeWhen: (ctx) => isOwner(ctx) && isDownsizing(ctx) && downsizingMode(ctx) === "BUY"
+    },
+    {
+      id: "downsizeRent",
+      chapter: CHAPTERS.housing.id,
+      chapterTitle: CHAPTERS.housing.title,
+      kind: "currency",
+      fieldId: "housing.downsize.newRentAnnual",
+      prompt: "And roughly what annual rent?",
+      helper: "Today's money is fine.",
+      activeWhen: (ctx) => isOwner(ctx) && isDownsizing(ctx) && downsizingMode(ctx) === "RENT"
     }
   ];
 }
@@ -706,6 +768,23 @@ export function findFirstUnanswered(
   for (const q of sequence) {
     if (!isQuestionActive(q, ctx)) continue;
     if (answered.has(q.id)) continue;
+    return q;
+  }
+  return null;
+}
+
+// Like findFirstUnanswered, but treats anything in `stale` as needing re-confirmation.
+// Used after a chip edit: subsequent answers are kept (values retained) but the user
+// must Enter through each again before the walkthrough is considered complete.
+export function findNextToConfirm(
+  sequence: QuestionDef[],
+  ctx: ActivationCtx,
+  answered: Set<string>,
+  stale: Set<string>
+): QuestionDef | null {
+  for (const q of sequence) {
+    if (!isQuestionActive(q, ctx)) continue;
+    if (answered.has(q.id) && !stale.has(q.id)) continue;
     return q;
   }
   return null;

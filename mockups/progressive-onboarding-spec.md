@@ -1,7 +1,7 @@
 # Progressive Onboarding — Hi-Fi Design Spec
 
-**Document status:** v1.1 — ready for hi-fi mockup
-**Last updated:** 2026-04-22 (revisions: Ch 1 Q4 phrasing, Ch 2 Q5 scope, property-growth consolidation, Ch 5 Q15 broadened, Ch 6 split + 5 slots each, removal of questions that misrepresent hardcoded inflation)
+**Document status:** v1.2 — reconciled with shipped implementation
+**Last updated:** 2026-04-26 (revisions: configurable assumptions deferred to a right-panel list rather than inline; downsizing flow expanded into year + buy-vs-rent + cost/rent; chip-edit semantics reaffirmed as non-destructive stale-and-rewalk; mid-walkthrough persistence)
 **Scope:** design spec only. No implementation in this document.
 
 ---
@@ -148,7 +148,9 @@ Three states per question:
 
 ### 4.5 Edit-in-place rule
 
-Editing any answered chip revives it as the active card and **invalidates all chips below it** (they grey to 50% opacity). User must Continue through each again — most will just be Enter-Enter-Enter since values are retained. This prevents stale dependent answers (e.g. changing "Owner" to "Renter" must drop the mortgage answers).
+Editing any answered chip revives it as the active card and **invalidates all chips below it** (they grey to 50% opacity via `data-stale="true"`). User must Continue through each again — most will just be Enter-Enter-Enter since values are retained. This prevents stale dependent answers (e.g. changing "Owner" to "Renter" must drop the mortgage answers, which it does via `pruneOrphanedAnswers`).
+
+**Implementation note:** stale entries remain in the persisted answered set with retained field values; a parallel `staleAnswered` set tracks which still need re-confirmation. The walkthrough is not "complete" until `staleAnswered` is empty.
 
 ---
 
@@ -193,7 +195,7 @@ Before the first two numbers come in, the hero number reads "—" with a warm pl
 
 The onboarding uses the real calculator field sequence but groups it into **chapters**. Each chapter opens with its own small eyebrow ("About you", "Money coming in", etc.).
 
-**Assumptions are distributed into their natural chapters** — every *configurable* assumption rides in on the same prompt that raised it, phrased as a soft confirmation with a pre-filled default. If the user accepts the default (single Enter), the question collapses into a compact *inline* chip rather than its own full chip, to keep the transcript from bloating. The advisor metaphor holds: we make the call, then check with you. We never leave a blank.
+**Configurable assumptions are surfaced in the right-panel "Adjust in the full calculator" list, not inline.** An earlier draft of this spec inlined assumption confirmations (property growth, equity returns, rental growth) into their natural chapters. In implementation we found that pattern bloated the transcript and made the early walkthrough feel like a settings dialogue. The shipped design uses defaults silently and lists them under the live estimate so the user sees what's been assumed and where to adjust later, without being asked. **Per-asset** assumptions (e.g. an art collection's appreciation choice) remain inline because they are genuinely per-item rather than global. The legacy 7a/9a/16a/24a/24b rows below are kept for reference but are **not** asked in the conversation.
 
 **Only configurable assumptions are surfaced.** The calculator's model engine hard-codes inflation for some quantities — they track the global inflation rate automatically, with no per-item knob. These are **not** asked in the onboarding, because presenting them as optional would be dishonest. Specifically:
 
@@ -238,7 +240,11 @@ The **global inflation rate itself** is set in the full calculator (under Advanc
 | 11 | "How much is still owed?" | `housing.01Residence.mortgage.balance` | currency | |
 | 12 | "At what interest rate?" | `housing.01Residence.mortgage.interestRateAnnual` | percent | |
 | 13 | "And the monthly repayment?" | `housing.01Residence.mortgage.monthlyRepayment` | currency | |
-| 14 | "Any plans to downsize one day?" | triggers `housing.downsizingYear` etc. | Yes/No | Skippable. If Yes: year + buy/rent + cost. |
+| 14  | "Any plans to downsize one day?" | *(gate)* `downsizingGate` | Yes/No | Skippable; Owner only. If Yes, walks through the four follow-ups below. |
+| 14a | "In what year are you thinking?" | `housing.downsize.year` | integer (calendar year) | Validated to be a future year inside the planning horizon. |
+| 14b | "Will you buy the new place, or rent it?" | `housing.downsize.newHomeMode` | Buy / Rent | Two chip buttons. Selecting one clears the irrelevant field below. |
+| 14c | "Roughly what would the new place cost?" | `housing.downsize.newHomePurchaseCost` | currency | Active only when 14b = Buy. |
+| 14d | "And roughly what annual rent?" | `housing.downsize.newRentAnnual` | currency | Active only when 14b = Rent. |
 
 **If Renter:**
 
@@ -384,8 +390,11 @@ Reused verbatim from landing so the two pages feel like one product.
 ## 10. State & persistence
 
 - **Single source of truth:** the same `FieldState` object the calculator uses. No shadow schema.
-- Persist on every commit to `localStorage` under a key the calculator also reads, so users can close the tab and resume — and arrive in the full calculator with their work intact.
-- UI-only state (which question is active, which chips are collapsed) lives in a separate `OnboardingUiState` object that is *not* persisted — refreshing returns the user to "first unanswered active question", which is deterministic from `FieldState` alone.
+- Persist on every commit so users can close the tab and resume:
+  - Onboarding-specific blob at `etq:onboarding:state:v1` carries `FieldState` plus the `OnboardingUiState` (`answered`, `staleAnswered`, `gates`, `acceptedAssumptions`, `activeQuestionId`). On load this is preferred over the seed.
+  - Calculator-compatible draft at `etq:scenario:draft:v2` is written only at handoff or via "save and come back later", so opening the calculator separately doesn't pick up half-finished onboarding state.
+- The earlier "UI state is deterministic from FieldState alone" position was abandoned in implementation: gates and assumption-acceptance flags are not derivable from `FieldState`, so they are persisted alongside it.
+- On Restart or successful handoff, both keys are cleared.
 
 ---
 

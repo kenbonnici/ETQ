@@ -82,6 +82,11 @@ function shortLabel(q: QuestionDef): string {
   if (q.id === "mortgageRate") return "mortgage rate";
   if (q.id === "mortgageRepayment") return "monthly repayment";
   if (q.id === "rent") return "monthly rent";
+  if (q.id === "downsizeGate") return "plan to downsize";
+  if (q.id === "downsizeYear") return "downsize year";
+  if (q.id === "downsizeMode") return "buy or rent next";
+  if (q.id === "downsizeCost") return "new home cost";
+  if (q.id === "downsizeRent") return "new annual rent";
   if (q.id === "cash") return "liquid savings";
   if (q.id === "equities") return "stock-market investments";
   if (q.id === "equityReturn") return "equity return";
