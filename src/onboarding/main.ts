@@ -441,6 +441,24 @@ function editChip(q: QuestionDef): void {
   focusActiveInput();
 }
 
+function dependentNameFor(q: QuestionDef): string | null {
+  const m = q.id.match(/^dependent(\d+)(Cost|Years)$/);
+  if (!m) return null;
+  const pad = String(Number(m[1])).padStart(2, "0");
+  const fieldId = `dependents.${pad}.displayName` as FieldId;
+  const raw = String(fieldState[fieldId] ?? "").trim();
+  return raw || null;
+}
+
+function resolvePromptPlaceholders(q: QuestionDef): string {
+  if (!q.prompt.includes("{name}")) return q.prompt;
+  const name = dependentNameFor(q);
+  if (name) return q.prompt.replace(/\{name\}/g, name);
+  // Fallback: drop the bracketed phrase that uses {name} so we never show the
+  // raw placeholder. "support {name} each year" → "each year".
+  return q.prompt.replace(/support \{name\} /g, "").replace(/\{name\}/g, "");
+}
+
 function softConfirmPrompt(q: QuestionDef): string | null {
   if (!uiState.seededQuestions.has(q.id) || !q.fieldId) return null;
   const raw = fieldState[q.fieldId];
@@ -461,7 +479,8 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
   }
   const progressText = buildProgressText(q);
   const softPrompt = softConfirmPrompt(q);
-  const card = createCard(softPrompt ? { ...q, prompt: softPrompt } : q, progressText);
+  const resolvedPrompt = softPrompt ?? resolvePromptPlaceholders(q);
+  const card = createCard(resolvedPrompt !== q.prompt ? { ...q, prompt: resolvedPrompt } : q, progressText);
 
   const errorEl = document.createElement("p");
   errorEl.className = "ob-error";

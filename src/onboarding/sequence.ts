@@ -629,7 +629,7 @@ function dependentSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       chapterTitle: CHAPTERS.people.title,
       kind: "currency",
       fieldId: costField,
-      prompt: "Roughly how much does it cost a year?",
+      prompt: "Roughly how much does it cost to support {name} each year?",
       activeWhen: active
     },
     {
