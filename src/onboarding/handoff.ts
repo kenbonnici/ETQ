@@ -1,5 +1,11 @@
 import { FieldState } from "../model/types";
 import { pruneInactiveFieldState } from "../model/activation";
+import {
+  createEmptyLivingExpenseCategoryValues,
+  hasAnyLivingExpenseCategoryValue,
+  LivingExpenseCategoryValues,
+  LivingExpensesMode
+} from "../ui/livingExpenses";
 
 const DRAFT_KEY = "etq:scenario:draft:v2";
 const SESSION_SEED_KEY = "etq:landing:quick-estimate";
@@ -70,8 +76,12 @@ export interface PersistedSnapshotOnboarding {
 
 export function writeDraftFromOnboarding(
   fields: FieldState,
-  earlyRetirementAge: number
+  earlyRetirementAge: number,
+  livingExpensesMode: LivingExpensesMode = "single",
+  livingExpenseCategoryValues: LivingExpenseCategoryValues = createEmptyLivingExpenseCategoryValues()
 ): void {
+  const usingExpanded =
+    livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValue(livingExpenseCategoryValues);
   const snapshot: PersistedSnapshotOnboarding = {
     version: 2,
     savedAt: new Date().toISOString(),
@@ -82,8 +92,8 @@ export function writeDraftFromOnboarding(
       advancedAssumptionsOpen: false,
       earlyRetirementAge,
       selectedCurrency: "EUR",
-      livingExpensesMode: "single",
-      livingExpenseCategoryValues: {}
+      livingExpensesMode: usingExpanded ? "expanded" : "single",
+      livingExpenseCategoryValues: usingExpanded ? { ...livingExpenseCategoryValues } : {}
     }
   };
   try {
@@ -105,6 +115,8 @@ export interface PersistedOnboardingState {
     gates: Record<string, "YES" | "NO" | null>;
     acceptedAssumptions: string[];
     seededQuestions?: string[];
+    livingExpensesMode?: LivingExpensesMode;
+    livingExpenseCategoryValues?: LivingExpenseCategoryValues;
     activeQuestionId: string | null;
   };
 }

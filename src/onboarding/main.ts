@@ -25,6 +25,16 @@ import {
   writeDraftFromOnboarding,
   writeOnboardingState
 } from "./handoff";
+import {
+  createEmptyLivingExpenseCategoryValues,
+  hasAnyLivingExpenseCategoryValue,
+  LIVING_EXPENSE_CATEGORY_DEFINITIONS,
+  LivingExpenseCategoryId,
+  LivingExpenseCategoryValues,
+  LivingExpensesMode,
+  seedLivingExpenseCategoryValuesFromTotal,
+  sumLivingExpenseCategoryValues
+} from "../ui/livingExpenses";
 
 const DEFAULT_EARLY_RETIREMENT_AGE = 55;
 const RUN_DEBOUNCE_MS = 150;
@@ -42,6 +52,8 @@ interface OnboardingUiState {
   gates: Record<string, "YES" | "NO" | null>;
   acceptedAssumptions: Set<string>;
   seededQuestions: Set<string>;
+  livingExpensesMode: LivingExpensesMode;
+  livingExpenseCategoryValues: LivingExpenseCategoryValues;
   activeQuestionId: string | null;
   completed: boolean;
 }
@@ -60,6 +72,10 @@ const uiState: OnboardingUiState = {
   gates: { ...(restored?.ui.gates ?? {}) },
   acceptedAssumptions: new Set(restored?.ui.acceptedAssumptions ?? []),
   seededQuestions: new Set(restored?.ui.seededQuestions ?? Array.from(seededFromInit)),
+  livingExpensesMode: restored?.ui.livingExpensesMode ?? "single",
+  livingExpenseCategoryValues: restored?.ui.livingExpenseCategoryValues
+    ? { ...createEmptyLivingExpenseCategoryValues(), ...restored.ui.livingExpenseCategoryValues }
+    : createEmptyLivingExpenseCategoryValues(),
   activeQuestionId: restored?.ui.activeQuestionId ?? null,
   completed: false
 };
@@ -130,7 +146,12 @@ function wireNavJump(): void {
   const btn = document.querySelector<HTMLButtonElement>("[data-onboarding-jump]");
   if (btn) {
     btn.addEventListener("click", () => {
-      writeDraftFromOnboarding(fieldState, modelUiState.earlyRetirementAge);
+      writeDraftFromOnboarding(
+        fieldState,
+        modelUiState.earlyRetirementAge,
+        uiState.livingExpensesMode,
+        uiState.livingExpenseCategoryValues
+      );
       clearOnboardingState();
       clearQuickEstimateSeed();
       navigateToCalculator();
@@ -233,6 +254,8 @@ function persistOnboardingState(): void {
       gates: { ...uiState.gates },
       acceptedAssumptions: Array.from(uiState.acceptedAssumptions),
       seededQuestions: Array.from(uiState.seededQuestions),
+      livingExpensesMode: uiState.livingExpensesMode,
+      livingExpenseCategoryValues: { ...uiState.livingExpenseCategoryValues },
       activeQuestionId: uiState.activeQuestionId
     }
   });
@@ -430,6 +453,10 @@ function softConfirmPrompt(q: QuestionDef): string | null {
 }
 
 function renderActiveCard(q: QuestionDef): HTMLElement {
+  if (q.compact && q.kind === "yesNo") return renderCompactGate(q);
+  if (q.id === "livingExpenses" && uiState.livingExpensesMode === "expanded") {
+    return renderLivingExpensesExpanded(q);
+  }
   const progressText = buildProgressText(q);
   const softPrompt = softConfirmPrompt(q);
   const card = createCard(softPrompt ? { ...q, prompt: softPrompt } : q, progressText);
@@ -498,6 +525,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
         commitAndAdvance();
       }, skipAndAdvance);
       attach(actions);
+      if (q.id === "livingExpenses") attach(buildBreakItDownLink());
       input.addEventListener("keydown", (ev) => {
         if ((ev as KeyboardEvent).key === "Enter") {
           ev.preventDefault();
@@ -706,31 +734,230 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
   return card;
 }
 
+function buildBreakItDownLink(): HTMLElement {
+  const wrap = document.createElement("p");
+  wrap.className = "ob-break-it-down";
+  const link = document.createElement("button");
+  link.type = "button";
+  link.className = "ob-link";
+  link.setAttribute("data-onboarding-break-down", "true");
+  link.textContent = "I'd rather break it down by category";
+  link.addEventListener("click", () => {
+    const total = Number(fieldState["spending.livingExpenses.annual"] ?? 0);
+    if (!hasAnyLivingExpenseCategoryValue(uiState.livingExpenseCategoryValues) && total > 0) {
+      uiState.livingExpenseCategoryValues = seedLivingExpenseCategoryValuesFromTotal(total);
+    }
+    uiState.livingExpensesMode = "expanded";
+    render();
+    focusActiveInput();
+  });
+  wrap.appendChild(link);
+  return wrap;
+}
+
+function renderLivingExpensesExpanded(q: QuestionDef): HTMLElement {
+  const progressText = buildProgressText(q);
+  const card = createCard({
+    ...q,
+    prompt: "Let's break it down — roughly what do you spend on each, in a year?",
+    helper: "Skip categories that don't apply. We'll add up the total for the projection."
+  }, progressText);
+
+  const grid = document.createElement("div");
+  grid.className = "ob-le-grid";
+
+  const inputs: Array<{ id: LivingExpenseCategoryId; el: HTMLInputElement }> = [];
+  for (const { id, label } of LIVING_EXPENSE_CATEGORY_DEFINITIONS) {
+    const row = document.createElement("label");
+    row.className = "ob-le-row";
+    const lbl = document.createElement("span");
+    lbl.className = "ob-le-label";
+    lbl.textContent = label;
+    const inputWrap = document.createElement("span");
+    inputWrap.className = "ob-le-input-wrap";
+    const prefix = document.createElement("span");
+    prefix.className = "ob-le-prefix";
+    prefix.textContent = "€";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.inputMode = "decimal";
+    input.autocomplete = "off";
+    input.className = "ob-le-input";
+    input.setAttribute("data-onboarding-le-category", id);
+    const v = uiState.livingExpenseCategoryValues[id];
+    input.value = v === null || v === undefined ? "" : String(Math.round(v));
+    inputWrap.appendChild(prefix);
+    inputWrap.appendChild(input);
+    row.appendChild(lbl);
+    row.appendChild(inputWrap);
+    grid.appendChild(row);
+    inputs.push({ id, el: input });
+  }
+  card.appendChild(grid);
+
+  const totalEl = document.createElement("p");
+  totalEl.className = "ob-le-total";
+  const updateTotal = (): void => {
+    let sum = 0;
+    for (const { el } of inputs) {
+      const n = Number(el.value.replace(/[€$£,\s]/g, ""));
+      if (Number.isFinite(n)) sum += n;
+    }
+    totalEl.textContent = `Total: €${Math.round(sum).toLocaleString("en-IE")} a year`;
+  };
+  updateTotal();
+  for (const { el } of inputs) el.addEventListener("input", updateTotal);
+  card.appendChild(totalEl);
+
+  const errorEl = document.createElement("p");
+  errorEl.className = "ob-error";
+  errorEl.id = `ob-error-${q.id}`;
+  card.appendChild(errorEl);
+
+  const actions = document.createElement("div");
+  actions.className = "ob-actions";
+  const continueBtn = document.createElement("button");
+  continueBtn.type = "button";
+  continueBtn.className = "btn btn-primary";
+  continueBtn.setAttribute("data-onboarding-continue", q.id);
+  continueBtn.textContent = "Continue →";
+  continueBtn.addEventListener("click", () => {
+    const next = createEmptyLivingExpenseCategoryValues();
+    let anyValue = false;
+    for (const { id, el } of inputs) {
+      const trimmed = el.value.trim();
+      if (trimmed === "") { next[id] = null; continue; }
+      const n = Number(trimmed.replace(/[€$£,\s]/g, ""));
+      if (!Number.isFinite(n) || n < 0) {
+        errorEl.textContent = "One of the categories doesn't look like a number.";
+        return;
+      }
+      next[id] = n;
+      if (n > 0) anyValue = true;
+    }
+    if (!anyValue) {
+      errorEl.textContent = "Add at least one category, or switch back to a single number.";
+      return;
+    }
+    uiState.livingExpenseCategoryValues = next;
+    fieldState["spending.livingExpenses.annual"] = sumLivingExpenseCategoryValues(next);
+    uiState.answered.add(q.id);
+    uiState.staleAnswered.delete(q.id);
+    uiState.seededQuestions.delete(q.id);
+    uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
+    pruneStaleAnswered();
+    advanceToFirstUnanswered();
+    render();
+    focusActiveInput();
+  });
+  actions.appendChild(continueBtn);
+  card.appendChild(actions);
+
+  const switchBack = document.createElement("p");
+  switchBack.className = "ob-break-it-down";
+  const back = document.createElement("button");
+  back.type = "button";
+  back.className = "ob-link";
+  back.textContent = "Back to a single number";
+  back.addEventListener("click", () => {
+    uiState.livingExpensesMode = "single";
+    render();
+    focusActiveInput();
+  });
+  switchBack.appendChild(back);
+  card.appendChild(switchBack);
+
+  return card;
+}
+
+function renderCompactGate(q: QuestionDef): HTMLElement {
+  const card = document.createElement("section");
+  card.className = "ob-card ob-card-compact";
+  card.setAttribute("data-onboarding-card", q.id);
+
+  const yes = document.createElement("button");
+  yes.type = "button";
+  yes.className = "ob-compact-add";
+  yes.setAttribute("data-onboarding-yesno", q.id);
+  yes.setAttribute("data-onboarding-option", "YES");
+  yes.textContent = q.prompt.replace(/\?$/, "");
+
+  const no = document.createElement("button");
+  no.type = "button";
+  no.className = "ob-compact-skip";
+  no.setAttribute("data-onboarding-yesno", q.id);
+  no.setAttribute("data-onboarding-option", "NO");
+  no.textContent = "no, continue →";
+
+  const choose = (option: "YES" | "NO"): void => {
+    if (q.gateId) uiState.gates[q.gateId] = option;
+    uiState.answered.add(q.id);
+    uiState.staleAnswered.delete(q.id);
+    uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
+    pruneStaleAnswered();
+    advanceToFirstUnanswered();
+    render();
+    focusActiveInput();
+  };
+  yes.addEventListener("click", () => choose("YES"));
+  no.addEventListener("click", () => choose("NO"));
+  card.appendChild(yes);
+  card.appendChild(no);
+
+  activeKeyHandler = (ev: KeyboardEvent) => {
+    if (ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    const target = ev.target as HTMLElement | null;
+    if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+    const key = ev.key.toLowerCase();
+    const tag = key === "y" ? "YES" : key === "n" ? "NO" : null;
+    if (!tag) return;
+    ev.preventDefault();
+    choose(tag);
+  };
+  document.addEventListener("keydown", activeKeyHandler);
+
+  return card;
+}
+
 function renderHandoffCard(): HTMLElement {
   const age = resolveEarliestAge();
   const card = document.createElement("section");
-  card.className = "ob-card";
+  card.className = "ob-card ob-card-handoff";
   card.setAttribute("data-onboarding-card", "handoff");
+  const ageBlock = age !== null
+    ? `<p class="ob-handoff-label">You could stop working at</p>
+       <div class="ob-handoff-age">${age}</div>`
+    : `<p class="ob-handoff-label">Your picture is ready</p>`;
   card.innerHTML = `
     <p class="ob-eyebrow">That's the picture</p>
-    <h2 class="ob-prompt">${age !== null ? `You could stop working at ${age}.` : "Your picture is ready."}</h2>
-    <p class="ob-helper">
+    ${ageBlock}
+    <p class="ob-helper ob-handoff-helper">
       There's more you can explore in the full model — stock-market downturns, one-off future events,
       the order we'd sell things in if you needed to. None of it is required.
     </p>
-    <div class="ob-actions">
+    <div class="ob-actions ob-handoff-actions">
       <button type="button" class="btn btn-primary" data-onboarding-handoff>Take me to the full calculator →</button>
       <button type="button" class="ob-skip" data-onboarding-save>save and come back later</button>
     </div>
   `;
   card.querySelector<HTMLButtonElement>("[data-onboarding-handoff]")?.addEventListener("click", () => {
-    writeDraftFromOnboarding(fieldState, modelUiState.earlyRetirementAge);
+    writeDraftFromOnboarding(
+      fieldState,
+      modelUiState.earlyRetirementAge,
+      uiState.livingExpensesMode,
+      uiState.livingExpenseCategoryValues
+    );
     clearOnboardingState();
     clearQuickEstimateSeed();
     navigateToCalculator();
   });
   card.querySelector<HTMLButtonElement>("[data-onboarding-save]")?.addEventListener("click", () => {
-    writeDraftFromOnboarding(fieldState, modelUiState.earlyRetirementAge);
+    writeDraftFromOnboarding(
+      fieldState,
+      modelUiState.earlyRetirementAge,
+      uiState.livingExpensesMode,
+      uiState.livingExpenseCategoryValues
+    );
     (card.querySelector("[data-onboarding-save]") as HTMLElement).textContent = "saved locally";
   });
   return card;
@@ -1117,18 +1344,47 @@ function pendingEstimateMessage(): string {
 }
 
 function renderConfidenceDots(): void {
-  const filled = Math.min(3, Math.floor(uiState.answered.size / 5));
+  // Tie dots to which informative chapters are filled in, not raw answer count.
+  // Dot 1: minimum to compute an age (current age + spending + cash).
+  // Dot 2: + investing context (equities + housing/rent decided).
+  // Dot 3: + future-income context (pension info + downsize/property/dependents covered).
+  const has = (id: string): boolean => uiState.answered.has(id);
+  const dotChecks: Array<{ ready: boolean; needs: string }> = [
+    {
+      ready: has("age") && has("livingExpenses") && has("cash"),
+      needs: "your age, annual spending, and liquid savings"
+    },
+    {
+      ready: has("equities") && (has("homeValue") || has("rent")),
+      needs: "your stock-market investments and housing"
+    },
+    {
+      ready: has("statutoryAge") && uiState.answered.has("statePension")
+        && (uiState.gates["downsizingGate"] !== null || !has("homeValue"))
+        && uiState.gates["propertiesGate"] !== null
+        && uiState.gates["dependentsGate"] !== null,
+      needs: "your pension, downsizing plans, and any other commitments"
+    }
+  ];
+  const filled = dotChecks.findIndex((c) => !c.ready);
+  const filledCount = filled === -1 ? dotChecks.length : filled;
   document.querySelectorAll<HTMLSpanElement>(".ob-confidence-dot").forEach((dot, i) => {
-    if (i < filled) dot.setAttribute("data-filled", "true");
+    if (i < filledCount) dot.setAttribute("data-filled", "true");
     else dot.removeAttribute("data-filled");
   });
   const label = document.getElementById("ob-confidence-label");
-  if (label) {
-    label.textContent =
-      filled === 0 ? "Rough estimate · add more answers to sharpen it."
-      : filled === 1 ? "Getting there · a few more answers will sharpen it."
-      : filled === 2 ? "Close to a full picture."
-      : "You've given us a full picture.";
+  if (!label) return;
+  if (filledCount === dotChecks.length) {
+    label.textContent = "You've given us a full picture.";
+    return;
+  }
+  const next = dotChecks[filledCount];
+  if (filledCount === 0) {
+    label.textContent = `Rough estimate · we'll sharpen it once we know ${next.needs}.`;
+  } else if (filledCount === 1) {
+    label.textContent = `Getting there · sharing ${next.needs} will tighten this.`;
+  } else {
+    label.textContent = `Close to a full picture · ${next.needs} would round it out.`;
   }
 }
 

@@ -288,6 +288,137 @@
   }
   .ob-chip:hover .ob-chip-edit { opacity: 1; }
 
+  .ob-link {
+    background: none; border: none;
+    padding: 0; margin: 0;
+    cursor: pointer;
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .ob-link:hover { color: var(--forest); }
+  .ob-break-it-down { margin: 18px 0 0; }
+
+  .ob-le-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 24px;
+    margin: 12px 0 14px;
+  }
+  .ob-le-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .ob-le-label {
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    flex: 1 1 auto;
+  }
+  .ob-le-input-wrap {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 4px;
+    flex: 0 0 auto;
+  }
+  .ob-le-prefix {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 16px;
+    color: var(--muted);
+  }
+  .ob-le-input {
+    width: 8ch;
+    text-align: right;
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--forest-deep);
+    background: transparent;
+    border: none; outline: none;
+    padding: 2px 0;
+  }
+  .ob-le-total {
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: 8px 0 18px;
+  }
+  @media (max-width: 700px) {
+    .ob-le-grid { grid-template-columns: 1fr; }
+  }
+
+  .ob-card-compact {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    padding: 14px 18px;
+    background: transparent;
+    border: 1px dashed var(--rule);
+    border-radius: 4px;
+    box-shadow: none;
+  }
+  .ob-compact-add {
+    flex: 0 1 auto;
+    background: none; border: none;
+    cursor: pointer;
+    font-family: "Inter", sans-serif;
+    font-size: 14px; font-weight: 500;
+    color: var(--accent);
+    padding: 6px 0;
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 160ms ease, color 160ms ease;
+  }
+  .ob-compact-add::before { content: "+ "; }
+  .ob-compact-add:hover { color: var(--forest); border-bottom-color: var(--accent); }
+  .ob-compact-skip {
+    flex: 0 0 auto;
+    background: none; border: none;
+    cursor: pointer;
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    color: var(--muted);
+    padding: 6px 0;
+  }
+  .ob-compact-skip:hover { color: var(--ink-soft); }
+
+  .ob-card-handoff {
+    padding: 56px 56px 48px;
+    background: linear-gradient(180deg, var(--cream-soft) 0%, var(--paper) 100%);
+    border-color: var(--rule);
+    box-shadow: 0 36px 72px -36px rgba(31, 58, 53, 0.28);
+  }
+  .ob-handoff-label {
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 6px 0 4px;
+  }
+  .ob-handoff-age {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-weight: 500;
+    font-size: clamp(96px, 11vw, 168px);
+    line-height: 1;
+    color: var(--forest-deep);
+    font-variant-numeric: tabular-nums;
+    margin: 0 0 18px;
+  }
+  .ob-handoff-helper { max-width: 56ch; margin-bottom: 36px; }
+  .ob-handoff-actions { gap: 28px; }
+  @media (max-width: 960px) {
+    .ob-card-handoff { padding: 32px 24px 28px; }
+    .ob-handoff-age { font-size: 84px; }
+  }
+
   .ob-chapter-divider {
     font-family: "Inter", sans-serif;
     font-size: 11px; font-weight: 500;

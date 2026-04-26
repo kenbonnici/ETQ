@@ -24,6 +24,10 @@ export interface QuestionDef {
   skippable?: boolean;
   assumption?: boolean;
   defaultAssumptionLabel?: string;
+  // True for soft "add another?" gates between repeating items (properties,
+  // valuables, dependents 2..5). Renders as a compact link layout instead of
+  // a full prompt card so the conversation doesn't feel padded.
+  compact?: boolean;
   activeWhen?: (ctx: ActivationCtx) => boolean;
 }
 
@@ -360,6 +364,7 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
         kind: "yesNo",
         gateId: gate,
         prompt: "Add another investment property?",
+        compact: true,
         activeWhen: (ctx) => {
           if (!prevNameField) return false;
           const prev = String(ctx.fields[prevNameField] ?? "").trim();
@@ -483,6 +488,7 @@ function assetSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
         kind: "yesNo",
         gateId: gate,
         prompt: "Add another?",
+        compact: true,
         activeWhen: (ctx) => {
           if (!prevNameField) return false;
           const prev = String(ctx.fields[prevNameField] ?? "").trim();
@@ -599,6 +605,7 @@ function dependentSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
         kind: "yesNo",
         gateId: gate,
         prompt: "Anyone else?",
+        compact: true,
         activeWhen: (ctx) => {
           if (!prevNameField) return false;
           const prev = String(ctx.fields[prevNameField] ?? "").trim();
@@ -661,7 +668,7 @@ export function makePensionSequence(): QuestionDef[] {
       kind: "integer",
       fieldId: "retirement.statutoryAge",
       prompt: "When does your state or statutory pension start?",
-      helper: "Usually between 65 and 68. Anywhere from 50 to 70 works, as long as it is later than your current age."
+      helper: "Most countries set it between 65 and 68. It just needs to be later than your current age."
     },
     {
       id: "statePension",
