@@ -200,10 +200,20 @@ function buildLayout(): void {
         </span>
       </div>
     </div>
-    <p class="ob-estimate-assumptions" id="ob-estimate-assumptions">
-      Assuming 8% equity returns, 3% property growth.<br>
-      <span class="ob-estimate-assumptions-cta">Fine-tune in the full calculator.</span>
-    </p>
+    <details class="ob-estimate-assumptions" id="ob-estimate-assumptions">
+      <summary class="ob-estimate-assumptions-summary">
+        <span class="ob-estimate-assumptions-summary-text">This estimate is based on a number of assumptions you can fine-tune in the full calculator.</span>
+        <span class="ob-estimate-assumptions-toggle" aria-hidden="true"></span>
+      </summary>
+      <ul class="ob-estimate-assumptions-list">
+        <li>Investment growth rates (equities, cash, rental income, salary)</li>
+        <li>Property appreciation and selling costs</li>
+        <li>Inflation applied to spending and other figures over time</li>
+        <li>How your spending shifts through retirement</li>
+        <li>Early-retirement pension reduction and partner timing</li>
+        <li>Planning horizon and the order assets are drawn down</li>
+      </ul>
+    </details>
   `;
   app.appendChild(left);
   app.appendChild(right);
