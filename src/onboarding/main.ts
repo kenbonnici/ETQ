@@ -487,7 +487,6 @@ function softConfirmPrompt(q: QuestionDef): string | null {
 }
 
 function renderActiveCard(q: QuestionDef): HTMLElement {
-  if (q.compact && q.kind === "yesNo") return renderCompactGate(q);
   if (q.id === "livingExpenses" && uiState.livingExpensesMode === "expanded") {
     return renderLivingExpensesExpanded(q);
   }
@@ -916,55 +915,6 @@ function renderLivingExpensesExpanded(q: QuestionDef): HTMLElement {
   });
   switchBack.appendChild(back);
   card.appendChild(switchBack);
-
-  return card;
-}
-
-function renderCompactGate(q: QuestionDef): HTMLElement {
-  const card = document.createElement("section");
-  card.className = "ob-card ob-card-compact";
-  card.setAttribute("data-onboarding-card", q.id);
-
-  const yes = document.createElement("button");
-  yes.type = "button";
-  yes.className = "ob-compact-add";
-  yes.setAttribute("data-onboarding-yesno", q.id);
-  yes.setAttribute("data-onboarding-option", "YES");
-  yes.textContent = q.prompt.replace(/\?$/, "");
-
-  const no = document.createElement("button");
-  no.type = "button";
-  no.className = "ob-compact-skip";
-  no.setAttribute("data-onboarding-yesno", q.id);
-  no.setAttribute("data-onboarding-option", "NO");
-  no.textContent = "no, continue →";
-
-  const choose = (option: "YES" | "NO"): void => {
-    if (q.gateId) uiState.gates[q.gateId] = option;
-    uiState.answered.add(q.id);
-    uiState.staleAnswered.delete(q.id);
-    uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
-    pruneStaleAnswered();
-    advanceToFirstUnanswered();
-    render();
-    focusActiveInput();
-  };
-  yes.addEventListener("click", () => choose("YES"));
-  no.addEventListener("click", () => choose("NO"));
-  card.appendChild(yes);
-  card.appendChild(no);
-
-  activeKeyHandler = (ev: KeyboardEvent) => {
-    if (ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.altKey) return;
-    const target = ev.target as HTMLElement | null;
-    if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
-    const key = ev.key.toLowerCase();
-    const tag = key === "y" ? "YES" : key === "n" ? "NO" : null;
-    if (!tag) return;
-    ev.preventDefault();
-    choose(tag);
-  };
-  document.addEventListener("keydown", activeKeyHandler);
 
   return card;
 }
