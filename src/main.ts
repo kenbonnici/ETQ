@@ -672,10 +672,13 @@ function formatAxisCurrencyParts(
     };
   }
   const scaled = Math.abs(value) / axisUnit.div;
-  const rounded = Math.round(scaled);
+  const formatted = scaled.toLocaleString("en-US", {
+    minimumFractionDigits: axisDecimals,
+    maximumFractionDigits: axisDecimals
+  });
   return {
     prefix,
-    amount: `${rounded.toLocaleString("en-US")}${axisUnit.suffix}`
+    amount: `${formatted}${axisUnit.suffix}`
   };
 }
 
