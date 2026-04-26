@@ -278,14 +278,6 @@ function buildLayout(): void {
   right.className = "ob-estimate";
   right.id = "ob-estimate";
   right.innerHTML = `
-    <div class="ob-confidence" id="ob-confidence" hidden>
-      <span class="ob-confidence-dots">
-        <span class="ob-confidence-dot" data-idx="0"></span>
-        <span class="ob-confidence-dot" data-idx="1"></span>
-        <span class="ob-confidence-dot" data-idx="2"></span>
-      </span>
-      <span id="ob-confidence-label">Rough estimate · add more answers to sharpen it.</span>
-    </div>
     <p class="ob-estimate-label">You could stop working at</p>
     <div class="ob-estimate-age" id="ob-estimate-age" aria-live="polite">—</div>
     <p class="ob-estimate-placeholder" id="ob-estimate-placeholder">The age will start to appear as you answer.</p>
@@ -1273,8 +1265,7 @@ function paintEstimate(): void {
   const placeholderEl = document.getElementById("ob-estimate-placeholder");
   const deltaEl = document.getElementById("ob-estimate-delta");
   const warningEl = document.getElementById("ob-estimate-warning");
-  const confidenceEl = document.getElementById("ob-confidence");
-  if (!ageEl || !placeholderEl || !deltaEl || !warningEl || !confidenceEl) return;
+  if (!ageEl || !placeholderEl || !deltaEl || !warningEl) return;
 
   const rawAge = resolveEarliestAge();
   const coreAnswered = uiState.answered.has("livingExpenses") && uiState.answered.has("cash");
@@ -1295,7 +1286,6 @@ function paintEstimate(): void {
     placeholderEl.textContent = pendingEstimateMessage();
     deltaEl.hidden = true;
     warningEl.hidden = true;
-    confidenceEl.hidden = true;
     return;
   }
   if (hasBlockers) {
@@ -1320,9 +1310,6 @@ function paintEstimate(): void {
   } else {
     deltaEl.hidden = true;
   }
-
-  confidenceEl.hidden = false;
-  renderConfidenceDots();
 }
 
 function pendingEstimateMessage(): string {
@@ -1341,51 +1328,6 @@ function pendingEstimateMessage(): string {
     return "We'll have an estimate once you share your liquid savings.";
   }
   return "A few more answers should surface an age — investments, pensions, or other assets.";
-}
-
-function renderConfidenceDots(): void {
-  // Tie dots to which informative chapters are filled in, not raw answer count.
-  // Dot 1: minimum to compute an age (current age + spending + cash).
-  // Dot 2: + investing context (equities + housing/rent decided).
-  // Dot 3: + future-income context (pension info + downsize/property/dependents covered).
-  const has = (id: string): boolean => uiState.answered.has(id);
-  const dotChecks: Array<{ ready: boolean; needs: string }> = [
-    {
-      ready: has("age") && has("livingExpenses") && has("cash"),
-      needs: "your age, annual spending, and liquid savings"
-    },
-    {
-      ready: has("equities") && (has("homeValue") || has("rent")),
-      needs: "your stock-market investments and housing"
-    },
-    {
-      ready: has("statutoryAge") && uiState.answered.has("statePension")
-        && (uiState.gates["downsizingGate"] !== null || !has("homeValue"))
-        && uiState.gates["propertiesGate"] !== null
-        && uiState.gates["dependentsGate"] !== null,
-      needs: "your pension, downsizing plans, and any other commitments"
-    }
-  ];
-  const filled = dotChecks.findIndex((c) => !c.ready);
-  const filledCount = filled === -1 ? dotChecks.length : filled;
-  document.querySelectorAll<HTMLSpanElement>(".ob-confidence-dot").forEach((dot, i) => {
-    if (i < filledCount) dot.setAttribute("data-filled", "true");
-    else dot.removeAttribute("data-filled");
-  });
-  const label = document.getElementById("ob-confidence-label");
-  if (!label) return;
-  if (filledCount === dotChecks.length) {
-    label.textContent = "You've given us a full picture.";
-    return;
-  }
-  const next = dotChecks[filledCount];
-  if (filledCount === 0) {
-    label.textContent = `Rough estimate · we'll sharpen it once we know ${next.needs}.`;
-  } else if (filledCount === 1) {
-    label.textContent = `Getting there · sharing ${next.needs} will tighten this.`;
-  } else {
-    label.textContent = `Close to a full picture · ${next.needs} would round it out.`;
-  }
 }
 
 function paintChart(): void {
