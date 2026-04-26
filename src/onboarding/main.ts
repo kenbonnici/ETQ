@@ -1,6 +1,6 @@
 import { applySectionActivation, pruneInactiveFieldState } from "../model/activation";
 import { runModel } from "../model/index";
-import { createEmptyFieldState, getDefaultFieldValue } from "../model/inputSchema";
+import { createEmptyFieldState, getDefaultFieldValue, FIELD_VALIDATION_RULES } from "../model/inputSchema";
 import { FieldState, ModelUiState, RawInputValue } from "../model/types";
 import { FieldId } from "../model/fieldRegistry";
 import {
@@ -365,6 +365,10 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
         if (q.skippable && input.value.trim() === "") { skipAndAdvance(); return; }
         const parsed = parseNumeric(q.kind, input.value);
         if (parsed.error) { errorEl.textContent = parsed.error; return; }
+        if (parsed.value !== null) {
+          const rangeError = validateNumericValue(q, parsed.value);
+          if (rangeError) { errorEl.textContent = rangeError; return; }
+        }
         if (q.fieldId) fieldState[q.fieldId] = parsed.value;
         if (q.assumption && parsed.value !== null) {
           const fieldDefault = getDefaultForField(q.fieldId);
@@ -402,6 +406,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
       const actions = buildActions(q, () => {
         const v = input.value.trim();
         if (v === "") { errorEl.textContent = "A short name helps keep the picture clear."; return; }
+        if (v.length > 60) { errorEl.textContent = "Try to keep the name under 60 characters."; return; }
         if (q.fieldId) fieldState[q.fieldId] = v;
         commitAndAdvance();
       }, skipAndAdvance);
@@ -606,6 +611,122 @@ function buildProgressText(q: QuestionDef): string {
   const idx = activeList.findIndex((s) => s.id === q.id);
   const position = idx >= 0 ? idx + 1 : 1;
   return `${q.chapterTitle.toUpperCase()} · STEP ${position}`;
+}
+
+function formatLimit(kind: QuestionDef["kind"], value: number): string {
+  if (kind === "percent") return `${(value * 100).toFixed(value * 100 % 1 === 0 ? 0 : 1)}%`;
+  if (kind === "currency") return `€${Math.round(value).toLocaleString("en-IE")}`;
+  return String(value);
+}
+
+function validateNumericValue(q: QuestionDef, value: number): string | null {
+  if (!Number.isFinite(value)) return "That doesn't look like a number.";
+
+  // Sanity caps independent of any field-specific rule.
+  if (q.kind === "currency" && value > 1_000_000_000) {
+    return "That seems too large — please double-check.";
+  }
+  if (q.kind === "percent" && Math.abs(value) > 1) {
+    // parseNumeric divides values >1 by 100, so a remaining magnitude >1 means
+    // the user really did mean something like 500% — almost always a typo.
+    return "That rate looks too high — enter as a percent, e.g. 4.5 for 4.5%.";
+  }
+
+  const rule = q.fieldId ? FIELD_VALIDATION_RULES[q.fieldId] : undefined;
+  if (rule) {
+    if (rule.integer && !Number.isInteger(value)) return "Needs to be a whole number.";
+    if (rule.positive && value <= 0) return "Needs to be greater than zero.";
+    if (rule.nonNegative && value < 0) return "Can't be negative.";
+    if (rule.clampBounds?.min !== undefined && value < rule.clampBounds.min) {
+      return `Needs to be at least ${formatLimit(q.kind, rule.clampBounds.min)}.`;
+    }
+    if (rule.clampBounds?.max !== undefined && value > rule.clampBounds.max) {
+      return `Needs to be at most ${formatLimit(q.kind, rule.clampBounds.max)}.`;
+    }
+    if (q.kind === "percent" && value <= -1) return "Can't be -100% or lower.";
+  } else if (q.kind === "currency") {
+    // Default: currency amounts can't be negative.
+    if (value < 0) return "Can't be negative.";
+  }
+
+  return validateCrossField(q, value);
+}
+
+function validateCrossField(q: QuestionDef, value: number): string | null {
+  // Only check against fields the user has actually answered. Default values
+  // (e.g. statutory age default of 65) must not block earlier questions, since
+  // the user hasn't seen the helper text or constraints for them yet.
+  const answered = uiState.answered;
+
+  switch (q.fieldId) {
+    case "retirement.statutoryAge": {
+      // Current age is always answered first in the sequence.
+      const ageNow = Number(fieldState["profile.currentAge"] ?? NaN);
+      if (Number.isFinite(ageNow) && value <= ageNow) {
+        return `Needs to be later than your current age (${ageNow}). Edit that step if you'd like to adjust.`;
+      }
+      if (answered.has("partnerAge")) {
+        const partnerAge = Number(fieldState["partner.profile.currentAge"] ?? NaN);
+        if (Number.isFinite(partnerAge) && value <= partnerAge) {
+          return `Needs to be later than your partner's age (${partnerAge}).`;
+        }
+      }
+      break;
+    }
+    case "profile.currentAge":
+    case "partner.profile.currentAge": {
+      // Only fires when re-editing age after statutory was answered (rare,
+      // since editing a chip clears later answers).
+      if (!answered.has("statutoryAge")) break;
+      const statutory = Number(fieldState["retirement.statutoryAge"] ?? NaN);
+      if (Number.isFinite(statutory) && value >= statutory) {
+        return `Needs to be less than your statutory pension age (${statutory}).`;
+      }
+      break;
+    }
+    case "housing.01Residence.mortgage.balance": {
+      if (!answered.has("homeValue")) break;
+      const homeValue = Number(fieldState["housing.01Residence.marketValue"] ?? NaN);
+      if (Number.isFinite(homeValue) && homeValue > 0 && value > homeValue) {
+        return `Higher than the home value (${formatLimit("currency", homeValue)}).`;
+      }
+      break;
+    }
+  }
+
+  // Property loan must not exceed the property's value.
+  const propLoanMatch = q.id.match(/^property(\d+)Loan$/);
+  if (propLoanMatch) {
+    const idx = propLoanMatch[1];
+    if (answered.has(`property${idx}Value`)) {
+      const pad = idx.padStart(2, "0");
+      const propValue = Number(fieldState[`properties.${pad}.marketValue` as FieldId] ?? NaN);
+      if (Number.isFinite(propValue) && propValue > 0 && value > propValue) {
+        return `Higher than the property's value (${formatLimit("currency", propValue)}).`;
+      }
+    }
+  }
+
+  // Asset loan must not exceed the asset's value.
+  const assetLoanMatch = q.id.match(/^asset(\d+)Loan$/);
+  if (assetLoanMatch) {
+    const idx = assetLoanMatch[1];
+    if (answered.has(`asset${idx}Value`)) {
+      const pad = idx.padStart(2, "0");
+      const assetValue = Number(fieldState[`assetsOfValue.${pad}.marketValue` as FieldId] ?? NaN);
+      if (Number.isFinite(assetValue) && assetValue > 0 && value > assetValue) {
+        return `Higher than the item's value (${formatLimit("currency", assetValue)}).`;
+      }
+    }
+  }
+
+  // A named dependent with zero annual cost is meaningless — calculator's
+  // cross-field validator would flag this later; surface it inline instead.
+  if (/^dependent\d+Cost$/.test(q.id) && value <= 0) {
+    return "Needs to be greater than zero.";
+  }
+
+  return null;
 }
 
 function parseNumeric(kind: QuestionDef["kind"], raw: string): { value: number | null; error: string | null } {

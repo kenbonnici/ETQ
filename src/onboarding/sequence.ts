@@ -83,7 +83,8 @@ export function makeAboutSequence(): QuestionDef[] {
       chapterTitle: CHAPTERS.about.title,
       kind: "integer",
       fieldId: "profile.currentAge",
-      prompt: "Let's start simple — how old are you?"
+      prompt: "Let's start simple — how old are you?",
+      helper: "A whole number between 18 and 100."
     },
     {
       id: "partnerInclude",
@@ -100,6 +101,7 @@ export function makeAboutSequence(): QuestionDef[] {
       kind: "integer",
       fieldId: "partner.profile.currentAge",
       prompt: "And how old is your partner?",
+      helper: "A whole number between 18 and 100.",
       activeWhen: partnerIncluded
     },
     {
@@ -205,6 +207,7 @@ export function makeHousingSequence(): QuestionDef[] {
       kind: "percent",
       fieldId: "housing.01Residence.mortgage.interestRateAnnual",
       prompt: "At what interest rate?",
+      helper: "Enter as a percent — e.g. 4.5 means 4.5%.",
       activeWhen: (ctx) => isOwner(ctx) && hasMortgage(ctx)
     },
     {
@@ -517,6 +520,7 @@ function dependentSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       kind: "integer",
       fieldId: yearsField,
       prompt: "For how many more years?",
+      helper: "A whole number from 1 to 99.",
       activeWhen: active
     }
   ];
@@ -545,7 +549,7 @@ export function makePensionSequence(): QuestionDef[] {
       kind: "integer",
       fieldId: "retirement.statutoryAge",
       prompt: "When does your state or statutory pension start?",
-      helper: "In most places this is somewhere between 65 and 68."
+      helper: "In most places this is somewhere between 65 and 68 — anywhere from 50 to 70 works."
     },
     {
       id: "statePension",
@@ -595,6 +599,7 @@ export function makeDebtsSequence(): QuestionDef[] {
       kind: "percent",
       fieldId: "debts.other.interestRateAnnual",
       prompt: "At what interest rate?",
+      helper: "Enter as a percent — e.g. 8 means 8%.",
       activeWhen: (ctx) => gateYes(ctx, "debtsGate")
     },
     {
