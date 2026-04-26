@@ -104,8 +104,7 @@ export function makeAboutSequence(): QuestionDef[] {
       chapterTitle: CHAPTERS.about.title,
       kind: "integer",
       fieldId: "profile.currentAge",
-      prompt: "Let's start simple — how old are you?",
-      helper: "A whole number between 18 and 100."
+      prompt: "Let's start simple — how old are you?"
     },
     {
       id: "partnerInclude",
@@ -122,7 +121,6 @@ export function makeAboutSequence(): QuestionDef[] {
       kind: "integer",
       fieldId: "partner.profile.currentAge",
       prompt: "And how old is your partner?",
-      helper: "A whole number between 18 and 100.",
       activeWhen: partnerIncluded
     },
     {
@@ -132,7 +130,6 @@ export function makeAboutSequence(): QuestionDef[] {
       kind: "yesNo",
       fieldId: "partner.retirement.alsoRetiresEarly",
       prompt: "Would you and your partner like to retire early together?",
-      helper: "Your statutory pension age is set later on - this is about retiring earlier if you can.",
       activeWhen: partnerIncluded
     }
   ];
@@ -147,7 +144,7 @@ export function makeIncomeSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "income.employment.netAnnual",
       prompt: "What's your annual take-home income from your main occupation?",
-      helper: "After tax, after pension contributions.",
+      helper: "Net you receive after tax, social security and pension contributions.",
       skippable: true
     },
     {
@@ -156,7 +153,7 @@ export function makeIncomeSequence(): QuestionDef[] {
       chapterTitle: CHAPTERS.income.title,
       kind: "currency",
       fieldId: "partner.income.employment.netAnnual",
-      prompt: "And your partner's take-home from their main job?",
+      prompt: "And your partner's take-home from their main occupation?",
       skippable: true,
       activeWhen: partnerIncluded
     }
@@ -171,8 +168,7 @@ export function makeSpendingSequence(): QuestionDef[] {
       chapterTitle: CHAPTERS.spending.title,
       kind: "currency",
       fieldId: "spending.livingExpenses.annual",
-      prompt: "And roughly how much do you spend in a typical year?",
-      helper: "An honest guess is better than a precise one."
+      prompt: "And roughly how much do you spend in a typical year?"
     },
     {
       id: "spendingTaper",
@@ -228,7 +224,6 @@ export function makeHousingSequence(): QuestionDef[] {
       kind: "percent",
       fieldId: "housing.01Residence.mortgage.interestRateAnnual",
       prompt: "At what interest rate?",
-      helper: "Enter as a percent - e.g. 4.5 means 4.5%.",
       activeWhen: (ctx) => isOwner(ctx) && hasMortgage(ctx)
     },
     {
@@ -410,7 +405,6 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       kind: "percent",
       fieldId: rateField,
       prompt: "At what interest rate?",
-      helper: "Enter as a percent - e.g. 4.5 means 4.5%.",
       activeWhen: (ctx) => active(ctx) && numericFieldValue(ctx, balanceField) > 0
     },
     {
@@ -542,7 +536,6 @@ function assetSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       kind: "percent",
       fieldId: rateField,
       prompt: "At what interest rate?",
-      helper: "Enter as a percent - e.g. 4.5 means 4.5%.",
       activeWhen: (ctx) => active(ctx) && numericFieldValue(ctx, balanceField) > 0
     },
     {
@@ -718,7 +711,6 @@ export function makeDebtsSequence(): QuestionDef[] {
       kind: "percent",
       fieldId: "debts.other.interestRateAnnual",
       prompt: "At what interest rate?",
-      helper: "Enter as a percent - e.g. 8 means 8%.",
       activeWhen: (ctx) => gateYes(ctx, "debtsGate")
     },
     {

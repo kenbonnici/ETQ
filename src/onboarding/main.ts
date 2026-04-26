@@ -514,7 +514,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
       prefix.className = "ob-input-prefix";
       prefix.textContent = q.kind === "currency" ? "€" : "";
       const input = document.createElement("input");
-      input.className = "ob-input";
+      input.className = q.kind === "percent" ? "ob-input ob-input--auto" : "ob-input";
       input.type = "text";
       input.inputMode = q.kind === "currency" ? "decimal" : q.kind === "integer" ? "numeric" : "decimal";
       input.autocomplete = "off";
@@ -524,6 +524,19 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
       input.value = formatInputInitial(q, initial);
       row.appendChild(prefix);
       row.appendChild(input);
+      if (q.kind === "percent") {
+        const suffix = document.createElement("span");
+        suffix.className = "ob-input-suffix";
+        suffix.textContent = "%";
+        row.appendChild(suffix);
+        row.addEventListener("mousedown", (ev) => {
+          if (ev.target === input) return;
+          ev.preventDefault();
+          input.focus();
+          const len = input.value.length;
+          input.setSelectionRange(len, len);
+        });
+      }
       attach(row);
       attach(errorEl);
       const actions = buildActions(q, () => {
