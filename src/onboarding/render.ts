@@ -132,7 +132,7 @@ function shortLabel(q: QuestionDef): string {
 }
 
 export function formatCurrency(n: number | null | undefined): string {
-  if (n === null || n === undefined || !Number.isFinite(n) || n === 0) return "€0";
+  if (n === null || n === undefined || !Number.isFinite(n)) return "—";
   return `€${Math.round(n).toLocaleString("en-IE")}`;
 }
 

@@ -41,6 +41,7 @@ interface OnboardingUiState {
   staleAnswered: Set<string>;
   gates: Record<string, "YES" | "NO" | null>;
   acceptedAssumptions: Set<string>;
+  seededQuestions: Set<string>;
   activeQuestionId: string | null;
   completed: boolean;
 }
@@ -50,13 +51,15 @@ if (!appRoot) throw new Error("Missing #app root for onboarding.");
 const app: HTMLElement = appRoot;
 
 const restored = readOnboardingState();
-const fieldState: FieldState = initializeFieldState(restored);
+const seededFromInit = new Set<string>();
+const fieldState: FieldState = initializeFieldState(restored, seededFromInit);
 const sequence = buildFullSequence();
 const uiState: OnboardingUiState = {
   answered: new Set(restored?.ui.answered ?? []),
   staleAnswered: new Set(restored?.ui.staleAnswered ?? []),
   gates: { ...(restored?.ui.gates ?? {}) },
   acceptedAssumptions: new Set(restored?.ui.acceptedAssumptions ?? []),
+  seededQuestions: new Set(restored?.ui.seededQuestions ?? Array.from(seededFromInit)),
   activeQuestionId: restored?.ui.activeQuestionId ?? null,
   completed: false
 };
@@ -72,12 +75,43 @@ let runHandle: number | null = null;
 let lastRunResult: ReturnType<typeof runModel> | null = null;
 let canvasReady = false;
 let activeKeyHandler: ((ev: KeyboardEvent) => void) | null = null;
+let displayedAge: number | null = null;
+let ageTweenHandle: number | null = null;
+const AGE_TWEEN_MS = 600;
 
 buildLayout();
 wireNavJump();
+wireEscapeKey();
 advanceToFirstUnanswered();
 render();
 syncRestartVisibility();
+
+function wireEscapeKey(): void {
+  document.addEventListener("keydown", (ev) => {
+    if (ev.key !== "Escape") return;
+    if (document.querySelector(".confirm-overlay")) return; // dialog handles its own Escape
+    if (!isMidEdit()) return;
+    ev.preventDefault();
+    cancelChipEdit();
+  });
+}
+
+function isMidEdit(): boolean {
+  if (uiState.staleAnswered.size === 0) return false;
+  const id = uiState.activeQuestionId;
+  if (!id) return false;
+  return !uiState.answered.has(id);
+}
+
+function cancelChipEdit(): void {
+  const id = uiState.activeQuestionId;
+  if (id) uiState.answered.add(id);
+  uiState.staleAnswered.clear();
+  uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
+  advanceToFirstUnanswered();
+  render();
+  focusActiveInput();
+}
 
 function wireNavJump(): void {
   const home = document.querySelector<HTMLAnchorElement>("[data-onboarding-home]");
@@ -169,7 +203,10 @@ function showConfirm(
   });
 }
 
-function initializeFieldState(restored: PersistedOnboardingState | null): FieldState {
+function initializeFieldState(
+  restored: PersistedOnboardingState | null,
+  seededOut: Set<string>
+): FieldState {
   const state = createEmptyFieldState();
   if (restored) {
     for (const [k, v] of Object.entries(restored.fields)) {
@@ -178,7 +215,10 @@ function initializeFieldState(restored: PersistedOnboardingState | null): FieldS
     return state;
   }
   const seed = readQuickEstimateSeed();
-  if (seed) applySeedToFields(seed, state);
+  if (seed) {
+    const seeded = applySeedToFields(seed, state);
+    seeded.forEach((id) => seededOut.add(id));
+  }
   return state;
 }
 
@@ -192,14 +232,23 @@ function persistOnboardingState(): void {
       staleAnswered: Array.from(uiState.staleAnswered),
       gates: { ...uiState.gates },
       acceptedAssumptions: Array.from(uiState.acceptedAssumptions),
+      seededQuestions: Array.from(uiState.seededQuestions),
       activeQuestionId: uiState.activeQuestionId
     }
   });
 }
 
+function wrapInListItem(child: HTMLElement, presentational = false): HTMLLIElement {
+  const li = document.createElement("li");
+  li.className = "ob-list-item";
+  if (presentational) li.setAttribute("role", "presentation");
+  li.appendChild(child);
+  return li;
+}
+
 function buildLayout(): void {
   app.classList.add("ob-shell");
-  const left = document.createElement("div");
+  const left = document.createElement("ol");
   left.className = "ob-conversation";
   left.id = "ob-conversation";
   const right = document.createElement("aside");
@@ -300,10 +349,10 @@ function render(): void {
   left.innerHTML = "";
 
   if (uiState.completed || uiState.activeQuestionId === "handoff") {
-    left.appendChild(renderHandoffCard());
+    left.appendChild(wrapInListItem(renderHandoffCard()));
   } else if (uiState.activeQuestionId) {
     const active = sequence.find((s) => s.id === uiState.activeQuestionId);
-    if (active) left.appendChild(renderActiveCard(active));
+    if (active) left.appendChild(wrapInListItem(renderActiveCard(active)));
   }
 
   const chapters: { title: string; questions: QuestionDef[] }[] = [];
@@ -317,9 +366,9 @@ function render(): void {
   }
   for (let i = chapters.length - 1; i >= 0; i -= 1) {
     const ch = chapters[i];
-    if (ch.title) left.appendChild(createChapterDivider(ch.title));
+    if (ch.title) left.appendChild(wrapInListItem(createChapterDivider(ch.title), true));
     for (let j = ch.questions.length - 1; j >= 0; j -= 1) {
-      left.appendChild(renderChip(ch.questions[j]));
+      left.appendChild(wrapInListItem(renderChip(ch.questions[j])));
     }
   }
 
@@ -367,9 +416,23 @@ function editChip(q: QuestionDef): void {
   focusActiveInput();
 }
 
+function softConfirmPrompt(q: QuestionDef): string | null {
+  if (!uiState.seededQuestions.has(q.id) || !q.fieldId) return null;
+  const raw = fieldState[q.fieldId];
+  if (raw === null || raw === undefined || raw === "") return null;
+  if (q.id === "age") return `We have you down as ${raw} — does that still feel right?`;
+  if (q.kind === "currency") {
+    const num = Number(raw);
+    if (!Number.isFinite(num)) return null;
+    return `You told us €${Math.round(num).toLocaleString("en-IE")} — does that still feel right?`;
+  }
+  return null;
+}
+
 function renderActiveCard(q: QuestionDef): HTMLElement {
   const progressText = buildProgressText(q);
-  const card = createCard(q, progressText);
+  const softPrompt = softConfirmPrompt(q);
+  const card = createCard(softPrompt ? { ...q, prompt: softPrompt } : q, progressText);
 
   const errorEl = document.createElement("p");
   errorEl.className = "ob-error";
@@ -380,6 +443,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
   const commitAndAdvance = (): void => {
     uiState.answered.add(q.id);
     uiState.staleAnswered.delete(q.id);
+    uiState.seededQuestions.delete(q.id);
     uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
     pruneStaleAnswered();
     advanceToFirstUnanswered();
@@ -698,7 +762,8 @@ function buildProgressText(q: QuestionDef): string {
   const activeList = sequence.filter((s) => isQuestionActive(s, ctx()) && s.id !== "handoff");
   const idx = activeList.findIndex((s) => s.id === q.id);
   const position = idx >= 0 ? idx + 1 : 1;
-  return `${q.chapterTitle.toUpperCase()} · STEP ${position}`;
+  const total = activeList.length || position;
+  return `${q.chapterTitle.toUpperCase()} · ${position} OF ${total}`;
 }
 
 function formatLimit(kind: QuestionDef["kind"], value: number): string {
@@ -940,6 +1005,42 @@ function findEarliestSuccessfulAge(): number | null {
   return null;
 }
 
+function setHeroAge(ageEl: HTMLElement, target: number | null): void {
+  if (ageTweenHandle !== null) {
+    window.cancelAnimationFrame(ageTweenHandle);
+    ageTweenHandle = null;
+  }
+  if (target === null) {
+    ageEl.textContent = "—";
+    displayedAge = null;
+    return;
+  }
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const start = displayedAge;
+  if (start === null || reduced || start === target) {
+    ageEl.textContent = String(target);
+    displayedAge = target;
+    return;
+  }
+  const startTime = performance.now();
+  const from = start;
+  const to = target;
+  const tick = (now: number): void => {
+    const t = Math.min(1, (now - startTime) / AGE_TWEEN_MS);
+    const eased = 1 - Math.pow(1 - t, 3);
+    const v = Math.round(from + (to - from) * eased);
+    ageEl.textContent = String(v);
+    if (t < 1) {
+      ageTweenHandle = window.requestAnimationFrame(tick);
+    } else {
+      ageEl.textContent = String(to);
+      displayedAge = to;
+      ageTweenHandle = null;
+    }
+  };
+  ageTweenHandle = window.requestAnimationFrame(tick);
+}
+
 function paintEstimate(): void {
   const ageEl = document.getElementById("ob-estimate-age");
   const placeholderEl = document.getElementById("ob-estimate-placeholder");
@@ -961,7 +1062,7 @@ function paintEstimate(): void {
   ) ?? false);
 
   if (!hasAge && !hasBlockers) {
-    ageEl.textContent = "—";
+    setHeroAge(ageEl, null);
     ageEl.dataset.state = "empty";
     placeholderEl.hidden = false;
     placeholderEl.textContent = pendingEstimateMessage();
@@ -971,7 +1072,7 @@ function paintEstimate(): void {
     return;
   }
   if (hasBlockers) {
-    ageEl.textContent = "—";
+    setHeroAge(ageEl, null);
     ageEl.dataset.state = "empty";
     placeholderEl.hidden = true;
     warningEl.hidden = false;
@@ -979,7 +1080,7 @@ function paintEstimate(): void {
     deltaEl.hidden = true;
     return;
   }
-  ageEl.textContent = hasAge ? String(age) : "—";
+  setHeroAge(ageEl, hasAge ? age : null);
   ageEl.dataset.state = hasAge ? "value" : "empty";
   placeholderEl.hidden = true;
   warningEl.hidden = true;
@@ -1061,16 +1162,18 @@ function paintChart(): void {
     values: cash,
     color: "#0f766e",
     fill: "rgba(15,118,110,0.12)",
-    lineWidth: 1.5
+    lineWidth: 1.5,
+    label: "cash"
   });
   if (hasNetWorthSignal) {
     series.push({
       values: networth,
       color: "#1f3a35",
-      lineWidth: 1.5
+      lineWidth: 1.5,
+      label: "net worth"
     });
   }
-  drawMiniChart(canvas, { ages, currentAge, series });
+  drawMiniChart(canvas, { ages, currentAge, series, tooltipHost: wrap });
 
   const legend = document.getElementById("ob-chart-legend");
   if (legend) {

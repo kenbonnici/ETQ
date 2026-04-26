@@ -30,18 +30,27 @@ export function clearQuickEstimateSeed(): void {
   try { window.sessionStorage.removeItem(SESSION_SEED_KEY); } catch { /* ignore */ }
 }
 
-export function applySeedToFields(seed: QuickEstimateSeed | null, fields: FieldState): void {
-  if (!seed) return;
-  const set = (fieldId: string, value: number | null | undefined): void => {
-    if (value === undefined || value === null || !Number.isFinite(Number(value))) return;
-    fields[fieldId as keyof FieldState] = Number(value);
-  };
-  set("profile.currentAge", seed.age ?? null);
-  set("income.employment.netAnnual", seed.netAnnualIncome ?? null);
-  set("spending.livingExpenses.annual", seed.livingExpensesAnnual ?? null);
-  set("assets.cash.totalBalance", seed.cashBalance ?? null);
-  set("assets.equities.marketValue", seed.equityBalance ?? null);
-  set("retirement.statePension.netAnnualAtStart", seed.statePensionAnnual ?? null);
+// Maps each QuickEstimateSeed slot to (FieldId, the onboarding question id that
+// should soft-confirm if the slot was applied). Mirrors §2.2 of the spec.
+const SEED_FIELD_MAP: ReadonlyArray<readonly [keyof QuickEstimateSeed, string, string]> = [
+  ["age", "profile.currentAge", "age"],
+  ["netAnnualIncome", "income.employment.netAnnual", "userIncome"],
+  ["livingExpensesAnnual", "spending.livingExpenses.annual", "livingExpenses"],
+  ["cashBalance", "assets.cash.totalBalance", "cash"],
+  ["equityBalance", "assets.equities.marketValue", "equities"],
+  ["statePensionAnnual", "retirement.statePension.netAnnualAtStart", "statePension"]
+];
+
+export function applySeedToFields(seed: QuickEstimateSeed | null, fields: FieldState): Set<string> {
+  const seededQuestions = new Set<string>();
+  if (!seed) return seededQuestions;
+  for (const [seedKey, fieldId, questionId] of SEED_FIELD_MAP) {
+    const raw = seed[seedKey];
+    if (raw === undefined || raw === null || !Number.isFinite(Number(raw))) continue;
+    fields[fieldId as keyof FieldState] = Number(raw);
+    seededQuestions.add(questionId);
+  }
+  return seededQuestions;
 }
 
 export interface PersistedSnapshotOnboarding {
@@ -95,6 +104,7 @@ export interface PersistedOnboardingState {
     staleAnswered: string[];
     gates: Record<string, "YES" | "NO" | null>;
     acceptedAssumptions: string[];
+    seededQuestions?: string[];
     activeQuestionId: string | null;
   };
 }

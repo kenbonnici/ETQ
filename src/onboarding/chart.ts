@@ -3,12 +3,49 @@ export interface MiniChartSeries {
   color: string;
   fill?: string;
   lineWidth?: number;
+  label?: string;
 }
 
 export interface MiniChartOptions {
   currentAge: number;
   ages: number[];
   series: MiniChartSeries[];
+  tooltipHost?: HTMLElement;
+}
+
+interface ChartLayout {
+  padL: number; padR: number; padT: number; padB: number;
+  plotW: number; plotH: number;
+  minVal: number; maxVal: number;
+  xFor: (i: number) => number;
+  yFor: (v: number) => number;
+}
+
+const CHART_TOOLTIP_HANDLER = Symbol.for("ob.chartTooltipHandler");
+const CHART_LAYOUT_KEY = Symbol.for("ob.chartLayout");
+
+interface CanvasWithMeta extends HTMLCanvasElement {
+  [CHART_TOOLTIP_HANDLER]?: (ev: MouseEvent | { type: "leave" }) => void;
+  [CHART_LAYOUT_KEY]?: { layout: ChartLayout; opts: MiniChartOptions };
+}
+
+function formatCurrency(v: number): string {
+  if (!Number.isFinite(v)) return "—";
+  const sign = v < 0 ? "-" : "";
+  const abs = Math.abs(Math.round(v));
+  return `${sign}€${abs.toLocaleString("en-IE")}`;
+}
+
+function ensureTooltip(host: HTMLElement): HTMLElement {
+  let tip = host.querySelector<HTMLElement>(".ob-chart-tooltip");
+  if (!tip) {
+    tip = document.createElement("div");
+    tip.className = "ob-chart-tooltip";
+    tip.setAttribute("role", "presentation");
+    host.style.position = host.style.position || "relative";
+    host.appendChild(tip);
+  }
+  return tip;
 }
 
 export function drawMiniChart(canvas: HTMLCanvasElement, opts: MiniChartOptions): void {
@@ -108,4 +145,67 @@ export function drawMiniChart(canvas: HTMLCanvasElement, opts: MiniChartOptions)
     const x = xFor(i);
     ctx.fillText(String(age), x, padT + plotH + 6);
   }
+
+  const meta: CanvasWithMeta = canvas as CanvasWithMeta;
+  meta[CHART_LAYOUT_KEY] = {
+    layout: { padL, padR, padT, padB, plotW, plotH, minVal, maxVal, xFor, yFor },
+    opts
+  };
+
+  if (opts.tooltipHost) {
+    attachTooltip(meta, opts.tooltipHost);
+  }
+}
+
+function attachTooltip(canvas: CanvasWithMeta, host: HTMLElement): void {
+  const tip = ensureTooltip(host);
+  tip.style.display = "none";
+
+  // Detach any prior handler before re-binding so stale closures don't fire.
+  const prior = canvas[CHART_TOOLTIP_HANDLER];
+  if (prior) {
+    canvas.removeEventListener("mousemove", prior as EventListener);
+    canvas.removeEventListener("mouseleave", prior as EventListener);
+  }
+
+  const handler = (ev: MouseEvent | { type: "leave" }): void => {
+    if ((ev as { type: string }).type === "leave" || (ev as { type: string }).type === "mouseleave") {
+      tip.style.display = "none";
+      return;
+    }
+    const meta = canvas[CHART_LAYOUT_KEY];
+    if (!meta) return;
+    const { layout, opts } = meta;
+    const rect = canvas.getBoundingClientRect();
+    const me = ev as MouseEvent;
+    const x = me.clientX - rect.left;
+    const y = me.clientY - rect.top;
+    if (x < layout.padL || x > layout.padL + layout.plotW || y < layout.padT || y > layout.padT + layout.plotH) {
+      tip.style.display = "none";
+      return;
+    }
+    const n = opts.ages.length;
+    if (n === 0) return;
+    const ratio = (x - layout.padL) / Math.max(1, layout.plotW);
+    const i = Math.min(n - 1, Math.max(0, Math.round(ratio * (n - 1))));
+    const age = opts.ages[i];
+    const lines: string[] = [`Age ${age}`];
+    for (const s of opts.series) {
+      const v = s.values[i];
+      const lbl = s.label ?? "value";
+      lines.push(`${lbl}: ${formatCurrency(Number(v))}`);
+    }
+    tip.innerHTML = lines.map((l, idx) => `<span class="ob-chart-tooltip-line${idx===0?" is-head":""}">${l}</span>`).join("");
+    tip.style.display = "block";
+    const tipWidth = tip.offsetWidth || 120;
+    const hostRect = host.getBoundingClientRect();
+    let left = (rect.left - hostRect.left) + x + 12;
+    if (left + tipWidth > hostRect.width - 4) left = (rect.left - hostRect.left) + x - tipWidth - 12;
+    tip.style.left = `${Math.max(4, left)}px`;
+    tip.style.top = `${(rect.top - hostRect.top) + Math.max(layout.padT, y - 18)}px`;
+  };
+
+  canvas.addEventListener("mousemove", handler as EventListener);
+  canvas.addEventListener("mouseleave", () => handler({ type: "leave" }) as void);
+  canvas[CHART_TOOLTIP_HANDLER] = handler;
 }
