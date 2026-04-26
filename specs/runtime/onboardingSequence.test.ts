@@ -74,6 +74,32 @@ test("owner without mortgage skips mortgage balance/rate/repayment", () => {
   assert.equal(isQuestionActive(mortgageRepay!,   ctx(fields, gates)), false);
 });
 
+test("property and asset loan follow-ups only appear for positive balances", () => {
+  const sequence = buildFullSequence();
+  const fields = createEmptyFieldState();
+  fields["profile.currentAge"] = 48;
+  fields["properties.01.displayName"] = "Flat";
+  fields["assetsOfValue.01.displayName"] = "Car";
+  const gates = { propertiesGate: "YES" as const, assetsGate: "YES" as const };
+  const propertyRate = sequence.find((s) => s.id === "property1LoanRate");
+  const propertyRepay = sequence.find((s) => s.id === "property1LoanRepayment");
+  const assetRate = sequence.find((s) => s.id === "asset1LoanRate");
+  const assetRepay = sequence.find((s) => s.id === "asset1LoanRepayment");
+
+  assert.equal(isQuestionActive(propertyRate!, ctx(fields, gates)), false);
+  assert.equal(isQuestionActive(propertyRepay!, ctx(fields, gates)), false);
+  assert.equal(isQuestionActive(assetRate!, ctx(fields, gates)), false);
+  assert.equal(isQuestionActive(assetRepay!, ctx(fields, gates)), false);
+
+  fields["properties.01.loan.balance"] = 100_000;
+  fields["assetsOfValue.01.loan.balance"] = 5_000;
+
+  assert.equal(isQuestionActive(propertyRate!, ctx(fields, gates)), true);
+  assert.equal(isQuestionActive(propertyRepay!, ctx(fields, gates)), true);
+  assert.equal(isQuestionActive(assetRate!, ctx(fields, gates)), true);
+  assert.equal(isQuestionActive(assetRepay!, ctx(fields, gates)), true);
+});
+
 test("switching Owner -> Renter prunes orphaned home answers", () => {
   const sequence = buildFullSequence();
   const answered = new Set<string>([

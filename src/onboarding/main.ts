@@ -622,10 +622,7 @@ function formatLimit(kind: QuestionDef["kind"], value: number): string {
 function validateNumericValue(q: QuestionDef, value: number): string | null {
   if (!Number.isFinite(value)) return "That doesn't look like a number.";
 
-  // Sanity caps independent of any field-specific rule.
-  if (q.kind === "currency" && value > 1_000_000_000) {
-    return "That seems too large — please double-check.";
-  }
+  // Sanity cap independent of any field-specific rule.
   if (q.kind === "percent" && Math.abs(value) > 1) {
     // parseNumeric divides values >1 by 100, so a remaining magnitude >1 means
     // the user really did mean something like 500% — almost always a typo.
@@ -684,46 +681,25 @@ function validateCrossField(q: QuestionDef, value: number): string | null {
       }
       break;
     }
-    case "housing.01Residence.mortgage.balance": {
-      if (!answered.has("homeValue")) break;
-      const homeValue = Number(fieldState["housing.01Residence.marketValue"] ?? NaN);
-      if (Number.isFinite(homeValue) && homeValue > 0 && value > homeValue) {
-        return `Higher than the home value (${formatLimit("currency", homeValue)}).`;
-      }
+    case "housing.01Residence.mortgage.balance":
       break;
-    }
-  }
-
-  // Property loan must not exceed the property's value.
-  const propLoanMatch = q.id.match(/^property(\d+)Loan$/);
-  if (propLoanMatch) {
-    const idx = propLoanMatch[1];
-    if (answered.has(`property${idx}Value`)) {
-      const pad = idx.padStart(2, "0");
-      const propValue = Number(fieldState[`properties.${pad}.marketValue` as FieldId] ?? NaN);
-      if (Number.isFinite(propValue) && propValue > 0 && value > propValue) {
-        return `Higher than the property's value (${formatLimit("currency", propValue)}).`;
-      }
-    }
-  }
-
-  // Asset loan must not exceed the asset's value.
-  const assetLoanMatch = q.id.match(/^asset(\d+)Loan$/);
-  if (assetLoanMatch) {
-    const idx = assetLoanMatch[1];
-    if (answered.has(`asset${idx}Value`)) {
-      const pad = idx.padStart(2, "0");
-      const assetValue = Number(fieldState[`assetsOfValue.${pad}.marketValue` as FieldId] ?? NaN);
-      if (Number.isFinite(assetValue) && assetValue > 0 && value > assetValue) {
-        return `Higher than the item's value (${formatLimit("currency", assetValue)}).`;
-      }
-    }
   }
 
   // A named dependent with zero annual cost is meaningless — calculator's
   // cross-field validator would flag this later; surface it inline instead.
   if (/^dependent\d+Cost$/.test(q.id) && value <= 0) {
     return "Needs to be greater than zero.";
+  }
+  const dependentYearsMatch = q.id.match(/^dependent(\d+)Years$/);
+  if (dependentYearsMatch) {
+    const ageNow = Number(fieldState["profile.currentAge"] ?? NaN);
+    const lifeExpectancy = Number(fieldState["planning.lifeExpectancyAge"] ?? NaN);
+    if (Number.isFinite(ageNow) && Number.isFinite(lifeExpectancy)) {
+      const maxYears = Math.max(1, lifeExpectancy - ageNow);
+      if (value > maxYears) {
+        return `Needs to be ${maxYears} year${maxYears === 1 ? "" : "s"} or less to stay within the plan horizon.`;
+      }
+    }
   }
 
   return null;
@@ -736,8 +712,7 @@ function parseNumeric(kind: QuestionDef["kind"], raw: string): { value: number |
   const asNum = Number(cleaned);
   if (!Number.isFinite(asNum)) return { value: null, error: "That doesn't look like a number." };
   if (kind === "percent") {
-    const rate = Math.abs(asNum) > 1 ? asNum / 100 : asNum;
-    return { value: rate, error: null };
+    return { value: asNum / 100, error: null };
   }
   if (kind === "integer" && !Number.isInteger(asNum)) return { value: Math.round(asNum), error: null };
   return { value: asNum, error: null };

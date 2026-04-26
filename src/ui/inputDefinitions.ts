@@ -36,7 +36,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 4,
     fieldId: "profile.currentAge",
     label: "Your age",
-    tooltip: "Must be entered",
+    tooltip: "Whole number between 18 and 100.",
     uiNote: "",
     sampleValue: "48",
     type: "integer"
@@ -45,7 +45,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 5,
     fieldId: "partner.profile.currentAge",
     label: "Partner age",
-    tooltip: "",
+    tooltip: "Whole number between 18 and 100.",
     uiNote: "Show only if partner is included",
     sampleValue: "46",
     type: "integer"
@@ -126,7 +126,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 17,
     fieldId: "housing.01Residence.mortgage.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
@@ -135,7 +135,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 18,
     fieldId: "housing.01Residence.mortgage.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month.",
     uiNote: "",
     sampleValue: "800",
     type: "number"
@@ -144,7 +144,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 20,
     fieldId: "retirement.statutoryAge",
     label: "Statutory retirement age",
-    tooltip: "Age at which pension starts",
+    tooltip: "Usually between 65 and 68. Must be 50-70 and later than current age.",
     uiNote: "",
     sampleValue: "65",
     type: "integer"
@@ -171,7 +171,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 24,
     fieldId: "housing.rentAnnual",
     label: "Home monthly rent",
-    tooltip: "Current monthly rent",
+    tooltip: "Current monthly rent.",
     uiNote: "",
     sampleValue: "",
     type: "number"
@@ -225,7 +225,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 36,
     fieldId: "dependents.01.supportYearsRemaining",
     label: "Years to support",
-    tooltip: "",
+    tooltip: "Whole years, within the plan's time horizon.",
     uiNote: "Hide until user enters dependent name",
     sampleValue: "3",
     type: "integer"
@@ -252,7 +252,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 41,
     fieldId: "dependents.02.supportYearsRemaining",
     label: "Years to support",
-    tooltip: "",
+    tooltip: "Whole years, within the plan's time horizon.",
     uiNote: "Hide until user enters dependent name",
     sampleValue: "5",
     type: "integer"
@@ -279,7 +279,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 46,
     fieldId: "dependents.03.supportYearsRemaining",
     label: "Years to support",
-    tooltip: "",
+    tooltip: "Whole years, within the plan's time horizon.",
     uiNote: "Hide until user enters dependent name",
     sampleValue: "2",
     type: "integer"
@@ -306,7 +306,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 51,
     fieldId: "dependents.04.supportYearsRemaining",
     label: "Years to support",
-    tooltip: "",
+    tooltip: "Whole years, within the plan's time horizon.",
     uiNote: "Hide until user enters dependent name",
     sampleValue: "3",
     type: "integer"
@@ -333,7 +333,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 56,
     fieldId: "dependents.05.supportYearsRemaining",
     label: "Years to support",
-    tooltip: "",
+    tooltip: "Whole years, within the plan's time horizon.",
     uiNote: "Hide until user enters dependent name",
     sampleValue: "6",
     type: "integer"
@@ -656,8 +656,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 114,
     fieldId: "properties.01.rentalIncomeNetAnnual",
-    label: "Rental income: Sliema",
-    tooltip: "Net annual after all costs and tax",
+    label: "Gross rent: Sliema",
+    tooltip: "Gross annual rent before property running costs.",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "12000",
     type: "number"
@@ -665,8 +665,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 115,
     fieldId: "properties.02.rentalIncomeNetAnnual",
-    label: "Rental income: Gzira",
-    tooltip: "Net annual after all costs and tax",
+    label: "Gross rent: Gzira",
+    tooltip: "Gross annual rent before property running costs.",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "10000",
     type: "number"
@@ -674,8 +674,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 116,
     fieldId: "properties.03.rentalIncomeNetAnnual",
-    label: "Rental income: Qormi",
-    tooltip: "Net annual after all costs and tax",
+    label: "Gross rent: Qormi",
+    tooltip: "Gross annual rent before property running costs.",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "8000",
     type: "number"
@@ -683,8 +683,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 117,
     fieldId: "properties.04.rentalIncomeNetAnnual",
-    label: "Rental income: Gudja",
-    tooltip: "Net annual after all costs and tax",
+    label: "Gross rent: Gudja",
+    tooltip: "Gross annual rent before property running costs.",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "5000",
     type: "number"
@@ -692,8 +692,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 118,
     fieldId: "properties.05.rentalIncomeNetAnnual",
-    label: "Rental income: Marsa",
-    tooltip: "Net annual after all costs and tax",
+    label: "Gross rent: Marsa",
+    tooltip: "Gross annual rent before property running costs.",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "6500",
     type: "number"
@@ -729,7 +729,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 128,
     fieldId: "properties.01.loan.balance",
     label: "Balance",
-    tooltip: "Enter 0 or leave blank if none",
+    tooltip: "Enter 0 or leave blank if none.",
     uiNote: "",
     sampleValue: "50000",
     type: "number"
@@ -738,7 +738,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 129,
     fieldId: "properties.01.loan.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
@@ -747,7 +747,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 130,
     fieldId: "properties.01.loan.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month on this loan.",
     uiNote: "",
     sampleValue: "500",
     type: "number"
@@ -756,7 +756,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 133,
     fieldId: "properties.02.loan.balance",
     label: "Balance",
-    tooltip: "Enter 0 or leave blank if none",
+    tooltip: "Enter 0 or leave blank if none.",
     uiNote: "",
     sampleValue: "8500",
     type: "number"
@@ -765,7 +765,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 134,
     fieldId: "properties.02.loan.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.02",
     type: "percent"
@@ -774,7 +774,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 135,
     fieldId: "properties.02.loan.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month on this loan.",
     uiNote: "",
     sampleValue: "200",
     type: "number"
@@ -783,7 +783,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 138,
     fieldId: "properties.03.loan.balance",
     label: "Balance",
-    tooltip: "Enter 0 or leave blank if none",
+    tooltip: "Enter 0 or leave blank if none.",
     uiNote: "",
     sampleValue: "15000",
     type: "number"
@@ -792,7 +792,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 139,
     fieldId: "properties.03.loan.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.05",
     type: "percent"
@@ -801,7 +801,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 140,
     fieldId: "properties.03.loan.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month on this loan.",
     uiNote: "",
     sampleValue: "250",
     type: "number"
@@ -810,7 +810,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 143,
     fieldId: "properties.04.loan.balance",
     label: "Balance",
-    tooltip: "Enter 0 or leave blank if none",
+    tooltip: "Enter 0 or leave blank if none.",
     uiNote: "",
     sampleValue: "4680",
     type: "number"
@@ -819,7 +819,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 144,
     fieldId: "properties.04.loan.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.02",
     type: "percent"
@@ -828,7 +828,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 145,
     fieldId: "properties.04.loan.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month on this loan.",
     uiNote: "",
     sampleValue: "80",
     type: "number"
@@ -837,7 +837,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 148,
     fieldId: "properties.05.loan.balance",
     label: "Balance",
-    tooltip: "Enter 0 or leave blank if none",
+    tooltip: "Enter 0 or leave blank if none.",
     uiNote: "",
     sampleValue: "9524",
     type: "number"
@@ -846,7 +846,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 149,
     fieldId: "properties.05.loan.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
@@ -855,7 +855,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 150,
     fieldId: "properties.05.loan.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month on this loan.",
     uiNote: "",
     sampleValue: "120",
     type: "number"
@@ -864,7 +864,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 153,
     fieldId: "assetsOfValue.01.loan.balance",
     label: "Balance",
-    tooltip: "Enter 0 or leave blank if none",
+    tooltip: "Enter 0 or leave blank if none.",
     uiNote: "",
     sampleValue: "2500",
     type: "number"
@@ -873,7 +873,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 154,
     fieldId: "assetsOfValue.01.loan.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
@@ -882,7 +882,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 155,
     fieldId: "assetsOfValue.01.loan.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month on this debt.",
     uiNote: "",
     sampleValue: "75",
     type: "number"
@@ -891,7 +891,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 158,
     fieldId: "assetsOfValue.02.loan.balance",
     label: "Balance",
-    tooltip: "Enter 0 or leave blank if none",
+    tooltip: "Enter 0 or leave blank if none.",
     uiNote: "",
     sampleValue: "6000",
     type: "number"
@@ -900,7 +900,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 159,
     fieldId: "assetsOfValue.02.loan.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.02",
     type: "percent"
@@ -909,7 +909,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 160,
     fieldId: "assetsOfValue.02.loan.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month on this debt.",
     uiNote: "",
     sampleValue: "86",
     type: "number"
@@ -918,7 +918,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 163,
     fieldId: "assetsOfValue.03.loan.balance",
     label: "Balance",
-    tooltip: "Enter 0 or leave blank if none",
+    tooltip: "Enter 0 or leave blank if none.",
     uiNote: "",
     sampleValue: "7500",
     type: "number"
@@ -927,7 +927,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 164,
     fieldId: "assetsOfValue.03.loan.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.05",
     type: "percent"
@@ -936,7 +936,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 165,
     fieldId: "assetsOfValue.03.loan.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month on this debt.",
     uiNote: "",
     sampleValue: "125",
     type: "number"
@@ -945,7 +945,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 168,
     fieldId: "assetsOfValue.04.loan.balance",
     label: "Balance",
-    tooltip: "Enter 0 or leave blank if none",
+    tooltip: "Enter 0 or leave blank if none.",
     uiNote: "",
     sampleValue: "40000",
     type: "number"
@@ -954,7 +954,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 169,
     fieldId: "assetsOfValue.04.loan.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.06",
     type: "percent"
@@ -963,7 +963,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 170,
     fieldId: "assetsOfValue.04.loan.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month on this debt.",
     uiNote: "",
     sampleValue: "624",
     type: "number"
@@ -972,7 +972,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 173,
     fieldId: "assetsOfValue.05.loan.balance",
     label: "Balance",
-    tooltip: "Enter 0 or leave blank if none",
+    tooltip: "Enter 0 or leave blank if none.",
     uiNote: "",
     sampleValue: "3800",
     type: "number"
@@ -981,7 +981,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 174,
     fieldId: "assetsOfValue.05.loan.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.03",
     type: "percent"
@@ -990,7 +990,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 175,
     fieldId: "assetsOfValue.05.loan.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month on this debt.",
     uiNote: "",
     sampleValue: "110",
     type: "number"
@@ -1008,7 +1008,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 179,
     fieldId: "debts.other.interestRateAnnual",
     label: "Interest rate",
-    tooltip: "",
+    tooltip: "Enter as a percent, e.g. 4.5 for 4.5%.",
     uiNote: "",
     sampleValue: "0.06",
     type: "percent"
@@ -1017,7 +1017,7 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
     row: 180,
     fieldId: "debts.other.monthlyRepayment",
     label: "Monthly repayment",
-    tooltip: "",
+    tooltip: "The amount you pay each month.",
     uiNote: "",
     sampleValue: "50",
     type: "number"

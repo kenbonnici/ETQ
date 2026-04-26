@@ -35,7 +35,7 @@ test.describe("Progressive Onboarding", () => {
     await expect(page.locator("[data-onboarding-card=\"partnerAge\"]")).toHaveCount(0);
   });
 
-  test("renter branch asks for annual rent and skips home value / mortgage", async ({ page }) => {
+  test("renter branch asks for monthly rent and skips home value / mortgage", async ({ page }) => {
     await gotoOnboarding(page);
     await answerText(page, "age", "48");
     await answerYesNo(page, "partnerInclude", "NO");
@@ -44,6 +44,7 @@ test.describe("Progressive Onboarding", () => {
     await page.locator("[data-onboarding-option=\"TAPER\"]").click();
     await page.locator("[data-toggle-field-id=\"housing.status\"][data-toggle-option=\"Renter\"]").click();
     await expect(page.locator("[data-onboarding-card=\"rent\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-card=\"rent\"]")).toContainText("monthly rent");
     await expect(page.locator("[data-onboarding-card=\"homeValue\"]")).toHaveCount(0);
     await expect(page.locator("[data-onboarding-card=\"hasMortgage\"]")).toHaveCount(0);
   });

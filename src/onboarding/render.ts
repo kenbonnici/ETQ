@@ -81,7 +81,7 @@ function shortLabel(q: QuestionDef): string {
   if (q.id === "mortgageBalance") return "mortgage balance";
   if (q.id === "mortgageRate") return "mortgage rate";
   if (q.id === "mortgageRepayment") return "monthly repayment";
-  if (q.id === "rent") return "annual rent";
+  if (q.id === "rent") return "monthly rent";
   if (q.id === "cash") return "liquid savings";
   if (q.id === "equities") return "stock-market investments";
   if (q.id === "equityReturn") return "equity return";
@@ -101,8 +101,10 @@ function shortLabel(q: QuestionDef): string {
     if (q.id.endsWith("Gate")) return "add another?";
     if (q.id.endsWith("Name")) return "property name";
     if (q.id.endsWith("Value")) return "value";
+    if (q.id.endsWith("LoanRate")) return "loan rate";
+    if (q.id.endsWith("LoanRepayment")) return "monthly repayment";
     if (q.id.endsWith("Loan")) return "loan balance";
-    if (q.id.endsWith("Rent")) return "annual rent";
+    if (q.id.endsWith("Rent")) return "gross annual rent";
     if (q.id.endsWith("Cost")) return "annual cost";
   }
   if (q.id.startsWith("asset")) {
@@ -110,6 +112,8 @@ function shortLabel(q: QuestionDef): string {
     if (q.id.endsWith("Name")) return "name";
     if (q.id.endsWith("Value")) return "value";
     if (q.id.endsWith("Growth")) return "growth";
+    if (q.id.endsWith("LoanRate")) return "loan rate";
+    if (q.id.endsWith("LoanRepayment")) return "monthly repayment";
     if (q.id.endsWith("Loan")) return "debt against it";
     if (q.id.endsWith("Cost")) return "annual cost";
   }

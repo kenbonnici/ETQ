@@ -75,6 +75,11 @@ function hasMortgage(ctx: ActivationCtx): boolean {
   return ctx.gates["hasMortgage"] === "YES";
 }
 
+function numericFieldValue(ctx: ActivationCtx, fieldId: FieldId): number {
+  const value = Number(ctx.fields[fieldId] ?? 0);
+  return Number.isFinite(value) ? value : 0;
+}
+
 export function makeAboutSequence(): QuestionDef[] {
   return [
     {
@@ -111,7 +116,7 @@ export function makeAboutSequence(): QuestionDef[] {
       kind: "yesNo",
       fieldId: "partner.retirement.alsoRetiresEarly",
       prompt: "Would you and your partner like to retire early together?",
-      helper: "Your statutory retirement ages are set later on — this is about retiring earlier if you can.",
+      helper: "Your statutory pension age is set later on - this is about retiring earlier if you can.",
       activeWhen: partnerIncluded
     }
   ];
@@ -207,7 +212,7 @@ export function makeHousingSequence(): QuestionDef[] {
       kind: "percent",
       fieldId: "housing.01Residence.mortgage.interestRateAnnual",
       prompt: "At what interest rate?",
-      helper: "Enter as a percent — e.g. 4.5 means 4.5%.",
+      helper: "Enter as a percent - e.g. 4.5 means 4.5%.",
       activeWhen: (ctx) => isOwner(ctx) && hasMortgage(ctx)
     },
     {
@@ -217,6 +222,7 @@ export function makeHousingSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "housing.01Residence.mortgage.monthlyRepayment",
       prompt: "And the monthly repayment?",
+      helper: "The amount you pay each month.",
       activeWhen: (ctx) => isOwner(ctx) && hasMortgage(ctx)
     },
     {
@@ -225,8 +231,8 @@ export function makeHousingSequence(): QuestionDef[] {
       chapterTitle: CHAPTERS.housing.title,
       kind: "currency",
       fieldId: "housing.rentAnnual",
-      prompt: "What's the annual rent?",
-      helper: "Yearly total is easier to think about than monthly for long-term planning.",
+      prompt: "What's the monthly rent?",
+      helper: "Enter the amount you pay each month.",
       activeWhen: isRenter
     }
   ];
@@ -270,6 +276,8 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
   const nameField  = `properties.${pad}.displayName` as FieldId;
   const valueField = `properties.${pad}.marketValue` as FieldId;
   const balanceField   = `properties.${pad}.loan.balance` as FieldId;
+  const rateField = `properties.${pad}.loan.interestRateAnnual` as FieldId;
+  const repaymentField = `properties.${pad}.loan.monthlyRepayment` as FieldId;
   const rentField  = `properties.${pad}.rentalIncomeNetAnnual` as FieldId;
   const opCostField = `properties.${pad}.annualOperatingCost` as FieldId;
   const prevNameField = idx === 1 ? null : `properties.${String(idx - 1).padStart(2, "0")}.displayName` as FieldId;
@@ -329,13 +337,33 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       activeWhen: active
     },
     {
+      id: `property${idx}LoanRate`,
+      chapter: CHAPTERS.property.id,
+      chapterTitle: CHAPTERS.property.title,
+      kind: "percent",
+      fieldId: rateField,
+      prompt: "At what interest rate?",
+      helper: "Enter as a percent - e.g. 4.5 means 4.5%.",
+      activeWhen: (ctx) => active(ctx) && numericFieldValue(ctx, balanceField) > 0
+    },
+    {
+      id: `property${idx}LoanRepayment`,
+      chapter: CHAPTERS.property.id,
+      chapterTitle: CHAPTERS.property.title,
+      kind: "currency",
+      fieldId: repaymentField,
+      prompt: "And the monthly repayment?",
+      helper: "The amount you pay each month on this loan.",
+      activeWhen: (ctx) => active(ctx) && numericFieldValue(ctx, balanceField) > 0
+    },
+    {
       id: `property${idx}Rent`,
       chapter: CHAPTERS.property.id,
       chapterTitle: CHAPTERS.property.title,
       kind: "currency",
       fieldId: rentField,
-      prompt: "Roughly what does it bring in each year in rent?",
-      helper: "Leave blank if it's not tenanted yet.",
+      prompt: "Roughly what gross rent does it bring in each year?",
+      helper: "Before property running costs; those come next. Leave blank if it's not tenanted yet.",
       skippable: true,
       activeWhen: active
     },
@@ -372,6 +400,8 @@ function assetSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
   const valueField = `assetsOfValue.${pad}.marketValue` as FieldId;
   const appField   = `assetsOfValue.${pad}.appreciationRateAnnual` as FieldId;
   const balanceField  = `assetsOfValue.${pad}.loan.balance` as FieldId;
+  const rateField = `assetsOfValue.${pad}.loan.interestRateAnnual` as FieldId;
+  const repaymentField = `assetsOfValue.${pad}.loan.monthlyRepayment` as FieldId;
   const opCostField = `assetsOfValue.${pad}.annualCosts` as FieldId;
   const prevNameField = idx === 1 ? null : `assetsOfValue.${String(idx - 1).padStart(2, "0")}.displayName` as FieldId;
   const gate = `asset${idx}Gate`;
@@ -436,6 +466,26 @@ function assetSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       helper: "Leave blank if there's none.",
       skippable: true,
       activeWhen: active
+    },
+    {
+      id: `asset${idx}LoanRate`,
+      chapter: CHAPTERS.valuables.id,
+      chapterTitle: CHAPTERS.valuables.title,
+      kind: "percent",
+      fieldId: rateField,
+      prompt: "At what interest rate?",
+      helper: "Enter as a percent - e.g. 4.5 means 4.5%.",
+      activeWhen: (ctx) => active(ctx) && numericFieldValue(ctx, balanceField) > 0
+    },
+    {
+      id: `asset${idx}LoanRepayment`,
+      chapter: CHAPTERS.valuables.id,
+      chapterTitle: CHAPTERS.valuables.title,
+      kind: "currency",
+      fieldId: repaymentField,
+      prompt: "And the monthly repayment?",
+      helper: "The amount you pay each month on this debt.",
+      activeWhen: (ctx) => active(ctx) && numericFieldValue(ctx, balanceField) > 0
     },
     {
       id: `asset${idx}Cost`,
@@ -520,7 +570,7 @@ function dependentSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       kind: "integer",
       fieldId: yearsField,
       prompt: "For how many more years?",
-      helper: "A whole number from 1 to 99.",
+      helper: "A whole number from 1 to 99, within the plan's time horizon.",
       activeWhen: active
     }
   ];
@@ -549,7 +599,7 @@ export function makePensionSequence(): QuestionDef[] {
       kind: "integer",
       fieldId: "retirement.statutoryAge",
       prompt: "When does your state or statutory pension start?",
-      helper: "In most places this is somewhere between 65 and 68 — anywhere from 50 to 70 works."
+      helper: "Usually between 65 and 68. Anywhere from 50 to 70 works, as long as it is later than your current age."
     },
     {
       id: "statePension",
@@ -599,7 +649,7 @@ export function makeDebtsSequence(): QuestionDef[] {
       kind: "percent",
       fieldId: "debts.other.interestRateAnnual",
       prompt: "At what interest rate?",
-      helper: "Enter as a percent — e.g. 8 means 8%.",
+      helper: "Enter as a percent - e.g. 8 means 8%.",
       activeWhen: (ctx) => gateYes(ctx, "debtsGate")
     },
     {
@@ -609,6 +659,7 @@ export function makeDebtsSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "debts.other.monthlyRepayment",
       prompt: "And the monthly repayment?",
+      helper: "The amount you pay each month.",
       activeWhen: (ctx) => gateYes(ctx, "debtsGate")
     }
   ];
