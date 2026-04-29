@@ -398,10 +398,6 @@ function render(): void {
   const active = uiState.activeQuestionId
     ? sequence.find((s) => s.id === uiState.activeQuestionId) ?? null
     : null;
-  // Compact "add another?" gates belong inline within their chapter, not pinned
-  // at the top of the conversation — otherwise they read as orphans with no
-  // visible parent. Regular active questions still render at the top.
-  const activeIsCompact = !!active && !!active.compact && active.kind === "yesNo";
   const activeIdChanged = uiState.activeQuestionId !== lastRenderedActiveId;
 
   const markAnimate = (card: HTMLElement): HTMLElement => {
@@ -409,9 +405,12 @@ function render(): void {
     return card;
   };
 
+  // Every active question — including compact "add another?" gates — gets the
+  // pinned, sticky treatment. The card's eyebrow already names the chapter, so
+  // the gate doesn't need to sit inline among its siblings.
   if (uiState.completed || uiState.activeQuestionId === "handoff") {
     left.appendChild(wrapInListItem(markAnimate(renderHandoffCard())));
-  } else if (active && !activeIsCompact) {
+  } else if (active) {
     left.appendChild(wrapInListItem(markAnimate(renderActiveCard(active)), false, true));
   }
 
@@ -427,9 +426,6 @@ function render(): void {
   for (let i = chapters.length - 1; i >= 0; i -= 1) {
     const ch = chapters[i];
     if (ch.title) left.appendChild(wrapInListItem(createChapterDivider(ch.title), true));
-    if (activeIsCompact && active && ch.title === active.chapterTitle) {
-      left.appendChild(wrapInListItem(markAnimate(renderActiveCard(active))));
-    }
     for (let j = ch.questions.length - 1; j >= 0; j -= 1) {
       left.appendChild(wrapInListItem(renderChip(ch.questions[j])));
     }
