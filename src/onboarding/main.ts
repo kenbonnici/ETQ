@@ -339,14 +339,17 @@ function mountCurrencySelector(): void {
   const wrap = document.createElement("div");
   wrap.className = "nav-currency";
   wrap.innerHTML = `
+    <span class="nav-currency-value" aria-hidden="true">${selectedCurrency}</span>
     <select class="nav-currency-select" data-onboarding-currency aria-label="Currency selector">
       ${TOP_CURRENCIES.map((currency) => `<option value="${currency.code}" ${currency.code === selectedCurrency ? "selected" : ""}>${currency.code}</option>`).join("")}
     </select>
   `;
   navActions.insertBefore(wrap, navActions.firstChild);
   const select = wrap.querySelector<HTMLSelectElement>("[data-onboarding-currency]");
+  const value = wrap.querySelector<HTMLElement>(".nav-currency-value");
   select?.addEventListener("change", () => {
     selectedCurrency = isSupportedCurrency(select.value) ? select.value : DEFAULT_CURRENCY;
+    if (value) value.textContent = selectedCurrency;
     render();
     focusActiveInput();
   });
