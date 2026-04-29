@@ -36,16 +36,6 @@
     background: radial-gradient(at 85% 15%, rgba(178,116,42,0.08), transparent 60%);
     pointer-events: none; z-index: 0;
   }
-  body::after {
-    content: "";
-    position: fixed;
-    top: 52px;
-    left: 0; right: 0;
-    height: 30px;
-    background: var(--cream);
-    pointer-events: none;
-    z-index: 9;
-  }
   a { color: var(--forest); }
 
   nav.top {
@@ -207,9 +197,11 @@
   }
   .ob-list-item[data-sticky="true"] {
     position: sticky;
-    top: 78px;
+    top: 52px;
     z-index: 2;
     background: var(--cream);
+    padding-top: 24px;
+    margin-top: -24px;
   }
   .ob-list-item[data-sticky="true"]::after {
     content: "";
