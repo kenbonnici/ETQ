@@ -1,5 +1,6 @@
 import { FieldState } from "../model/types";
 import { pruneInactiveFieldState } from "../model/activation";
+import { DEFAULT_CURRENCY, isSupportedCurrency } from "../shared/currency";
 import {
   createEmptyLivingExpenseCategoryValues,
   hasAnyLivingExpenseCategoryValue,
@@ -78,7 +79,8 @@ export function writeDraftFromOnboarding(
   fields: FieldState,
   earlyRetirementAge: number,
   livingExpensesMode: LivingExpensesMode = "single",
-  livingExpenseCategoryValues: LivingExpenseCategoryValues = createEmptyLivingExpenseCategoryValues()
+  livingExpenseCategoryValues: LivingExpenseCategoryValues = createEmptyLivingExpenseCategoryValues(),
+  selectedCurrency: string = DEFAULT_CURRENCY
 ): void {
   const usingExpanded =
     livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValue(livingExpenseCategoryValues);
@@ -91,7 +93,7 @@ export function writeDraftFromOnboarding(
       majorFutureEventsOpen: false,
       advancedAssumptionsOpen: false,
       earlyRetirementAge,
-      selectedCurrency: "EUR",
+      selectedCurrency: isSupportedCurrency(selectedCurrency) ? selectedCurrency : DEFAULT_CURRENCY,
       livingExpensesMode: usingExpanded ? "expanded" : "single",
       livingExpenseCategoryValues: usingExpanded ? { ...livingExpenseCategoryValues } : {}
     }
@@ -115,6 +117,7 @@ export interface PersistedOnboardingState {
     gates: Record<string, "YES" | "NO" | null>;
     acceptedAssumptions: string[];
     seededQuestions?: string[];
+    selectedCurrency?: string;
     livingExpensesMode?: LivingExpensesMode;
     livingExpenseCategoryValues?: LivingExpenseCategoryValues;
     activeQuestionId: string | null;

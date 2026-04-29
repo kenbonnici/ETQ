@@ -14,6 +14,7 @@ import {
 import { createCard, createChapterDivider, createChip, formatCurrency, formatPercent } from "./render";
 import { drawMiniChart } from "./chart";
 import { findEarliestRetirementAge } from "../shared/findEarliestRetirementAge";
+import { DEFAULT_CURRENCY, TOP_CURRENCIES, currencySymbolFor, formatCurrencyAmount, isSupportedCurrency } from "../shared/currency";
 import {
   applySeedToFields,
   clearOnboardingState,
@@ -79,6 +80,9 @@ const uiState: OnboardingUiState = {
   activeQuestionId: restored?.ui.activeQuestionId ?? null,
   completed: false
 };
+let selectedCurrency = isSupportedCurrency(restored?.ui.selectedCurrency)
+  ? restored.ui.selectedCurrency
+  : DEFAULT_CURRENCY;
 
 const modelUiState: ModelUiState = {
   majorFutureEventsOpen: false,
@@ -96,6 +100,7 @@ let ageTweenHandle: number | null = null;
 const AGE_TWEEN_MS = 600;
 
 buildLayout();
+mountCurrencySelector();
 wireNavJump();
 wireEscapeKey();
 advanceToFirstUnanswered();
@@ -150,7 +155,8 @@ function wireNavJump(): void {
         fieldState,
         modelUiState.earlyRetirementAge,
         uiState.livingExpensesMode,
-        uiState.livingExpenseCategoryValues
+        uiState.livingExpenseCategoryValues,
+        selectedCurrency
       );
       clearOnboardingState();
       clearQuickEstimateSeed();
@@ -254,6 +260,7 @@ function persistOnboardingState(): void {
       gates: { ...uiState.gates },
       acceptedAssumptions: Array.from(uiState.acceptedAssumptions),
       seededQuestions: Array.from(uiState.seededQuestions),
+      selectedCurrency,
       livingExpensesMode: uiState.livingExpensesMode,
       livingExpenseCategoryValues: { ...uiState.livingExpenseCategoryValues },
       activeQuestionId: uiState.activeQuestionId
@@ -324,6 +331,25 @@ function buildLayout(): void {
   `;
   app.appendChild(left);
   app.appendChild(right);
+}
+
+function mountCurrencySelector(): void {
+  const navActions = document.querySelector<HTMLElement>(".nav-actions");
+  if (!navActions || navActions.querySelector("[data-onboarding-currency]")) return;
+  const wrap = document.createElement("div");
+  wrap.className = "nav-currency";
+  wrap.innerHTML = `
+    <select class="nav-currency-select" data-onboarding-currency aria-label="Currency selector">
+      ${TOP_CURRENCIES.map((currency) => `<option value="${currency.code}" ${currency.code === selectedCurrency ? "selected" : ""}>${currency.code}</option>`).join("")}
+    </select>
+  `;
+  navActions.insertBefore(wrap, navActions.firstChild);
+  const select = wrap.querySelector<HTMLSelectElement>("[data-onboarding-currency]");
+  select?.addEventListener("change", () => {
+    selectedCurrency = isSupportedCurrency(select.value) ? select.value : DEFAULT_CURRENCY;
+    render();
+    focusActiveInput();
+  });
 }
 
 function ctx(): ActivationCtx {
@@ -481,9 +507,15 @@ function softConfirmPrompt(q: QuestionDef): string | null {
   if (q.kind === "currency") {
     const num = Number(raw);
     if (!Number.isFinite(num)) return null;
-    return `You told us €${Math.round(num).toLocaleString("en-IE")} — does that still feel right?`;
+    return `You told us ${formatCurrencyAmount(num, selectedCurrency, "en-IE")} — does that still feel right?`;
   }
   return null;
+}
+
+function applyCurrencyPrefixStyle(el: HTMLElement, currencyCode: string): void {
+  const symbol = currencySymbolFor(currencyCode);
+  el.textContent = symbol;
+  el.classList.toggle("is-currency-code", symbol.length > 1);
 }
 
 function renderActiveCard(q: QuestionDef): HTMLElement {
@@ -527,7 +559,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
       row.className = "ob-input-row";
       const prefix = document.createElement("span");
       prefix.className = "ob-input-prefix";
-      prefix.textContent = q.kind === "currency" ? "€" : "";
+      if (q.kind === "currency") applyCurrencyPrefixStyle(prefix, selectedCurrency);
       const input = document.createElement("input");
       input.className = q.kind === "percent" ? "ob-input ob-input--auto" : "ob-input";
       input.type = "text";
@@ -826,7 +858,7 @@ function renderLivingExpensesExpanded(q: QuestionDef): HTMLElement {
     inputWrap.className = "ob-le-input-wrap";
     const prefix = document.createElement("span");
     prefix.className = "ob-le-prefix";
-    prefix.textContent = "€";
+    applyCurrencyPrefixStyle(prefix, selectedCurrency);
     const input = document.createElement("input");
     input.type = "text";
     input.inputMode = "decimal";
@@ -849,10 +881,10 @@ function renderLivingExpensesExpanded(q: QuestionDef): HTMLElement {
   const updateTotal = (): void => {
     let sum = 0;
     for (const { el } of inputs) {
-      const n = Number(el.value.replace(/[€$£,\s]/g, ""));
+      const n = Number(el.value.replace(/[^\d.+-]/g, ""));
       if (Number.isFinite(n)) sum += n;
     }
-    totalEl.textContent = `Total: €${Math.round(sum).toLocaleString("en-IE")} a year`;
+    totalEl.textContent = `Total: ${formatCurrencyAmount(sum, selectedCurrency, "en-IE")} a year`;
   };
   updateTotal();
   for (const { el } of inputs) el.addEventListener("input", updateTotal);
@@ -876,7 +908,7 @@ function renderLivingExpensesExpanded(q: QuestionDef): HTMLElement {
     for (const { id, el } of inputs) {
       const trimmed = el.value.trim();
       if (trimmed === "") { next[id] = null; continue; }
-      const n = Number(trimmed.replace(/[€$£,\s]/g, ""));
+      const n = Number(trimmed.replace(/[^\d.+-]/g, ""));
       if (!Number.isFinite(n) || n < 0) {
         errorEl.textContent = "One of the categories doesn't look like a number.";
         return;
@@ -945,7 +977,8 @@ function renderHandoffCard(): HTMLElement {
       fieldState,
       modelUiState.earlyRetirementAge,
       uiState.livingExpensesMode,
-      uiState.livingExpenseCategoryValues
+      uiState.livingExpenseCategoryValues,
+      selectedCurrency
     );
     clearOnboardingState();
     clearQuickEstimateSeed();
@@ -956,7 +989,8 @@ function renderHandoffCard(): HTMLElement {
       fieldState,
       modelUiState.earlyRetirementAge,
       uiState.livingExpensesMode,
-      uiState.livingExpenseCategoryValues
+      uiState.livingExpenseCategoryValues,
+      selectedCurrency
     );
     (card.querySelector("[data-onboarding-save]") as HTMLElement).textContent = "saved locally";
   });
@@ -995,7 +1029,7 @@ function buildProgressText(q: QuestionDef): string {
 
 function formatLimit(kind: QuestionDef["kind"], value: number): string {
   if (kind === "percent") return `${(value * 100).toFixed(value * 100 % 1 === 0 ? 0 : 1)}%`;
-  if (kind === "currency") return `€${Math.round(value).toLocaleString("en-IE")}`;
+  if (kind === "currency") return formatCurrencyAmount(value, selectedCurrency, "en-IE");
   return String(value);
 }
 
@@ -1103,7 +1137,7 @@ function validateCrossField(q: QuestionDef, value: number): string | null {
 function parseNumeric(kind: QuestionDef["kind"], raw: string): { value: number | null; error: string | null } {
   const trimmed = raw.trim();
   if (trimmed === "") return { value: null, error: "We need a number for this one." };
-  const cleaned = trimmed.replace(/[€$£,\s]/g, "").replace(/%$/, "");
+  const cleaned = trimmed.replace(/%$/, "").replace(/[^\d.+-]/g, "");
   const asNum = Number(cleaned);
   if (!Number.isFinite(asNum)) return { value: null, error: "That doesn't look like a number." };
   if (kind === "percent") {
@@ -1177,7 +1211,7 @@ function formatAnswer(q: QuestionDef): string {
   if (q.kind === "currency") {
     if (!q.fieldId) return "—";
     const v = fieldState[q.fieldId];
-    return formatCurrency(typeof v === "number" ? v : null);
+    return formatCurrency(typeof v === "number" ? v : null, selectedCurrency);
   }
   if (q.kind === "integer") {
     if (!q.fieldId) return "—";

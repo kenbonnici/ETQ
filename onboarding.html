@@ -40,14 +40,20 @@
 
   nav.top {
     position: sticky; top: 0; z-index: 10;
-    background: rgba(248,242,230,0.85);
+    background: rgba(255, 252, 246, 0.96);
     backdrop-filter: saturate(1.1) blur(6px);
-    border-bottom: 1px solid rgba(31, 58, 53, 0.1);
-    box-shadow: 0 8px 24px -24px rgba(18, 35, 31, 0.45);
+    border-bottom: 1px solid rgba(86, 68, 45, 0.18);
+    box-shadow: 0 16px 28px -26px rgba(18, 35, 31, 0.55);
+  }
+  nav.top::after {
+    content: "";
+    display: block;
+    height: 1px;
+    background: rgba(201, 138, 63, 0.42);
   }
   nav.top .inner {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 18px 40px; max-width: 1280px; margin: 0 auto;
+    padding: 16px 40px; max-width: 1280px; margin: 0 auto;
   }
   .wordmark {
     display: inline-flex; align-items: center; gap: 10px;
@@ -57,14 +63,61 @@
     text-decoration: none;
   }
   .wordmark svg { width: 28px; height: 14px; }
-  .nav-actions { display: inline-flex; align-items: center; gap: 24px; }
-  .nav-jump, .nav-restart {
-    font-size: 14px;
-    color: var(--ink-soft);
-    background: none; border: none; padding: 4px 2px;
-    cursor: pointer; font-family: inherit;
+  .nav-actions { display: inline-flex; align-items: center; gap: 12px; }
+  .nav-currency {
+    display: inline-flex;
+    align-items: center;
+    flex: 0 0 auto;
   }
-  .nav-jump:hover, .nav-restart:hover { color: var(--forest); }
+  .nav-currency-select {
+    width: auto;
+    min-width: 62px;
+    font-family: "Inter", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--forest);
+    background: rgba(255, 253, 248, 0.82);
+    border: 1px solid rgba(101, 79, 52, 0.14);
+    border-radius: 999px;
+    padding: 9px 28px 9px 14px;
+    appearance: none;
+    -webkit-appearance: none;
+    cursor: pointer;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    background-image:
+      linear-gradient(45deg, transparent 50%, rgba(31, 58, 53, 0.58) 50%),
+      linear-gradient(135deg, rgba(31, 58, 53, 0.58) 50%, transparent 50%);
+    background-position:
+      calc(100% - 15px) calc(50% + 1px),
+      calc(100% - 11px) calc(50% + 1px);
+    background-size: 4px 4px, 4px 4px;
+    background-repeat: no-repeat;
+  }
+  .nav-currency-select:hover {
+    border-color: rgba(31, 58, 53, 0.26);
+    background-color: rgba(255, 253, 248, 0.94);
+  }
+  .nav-currency-select:focus {
+    outline: none;
+    border-color: rgba(15, 118, 110, 0.5);
+    box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+  }
+  .nav-jump, .nav-restart {
+    font-size: 13px;
+    color: var(--ink-soft);
+    background: rgba(255, 253, 248, 0.55);
+    border: 1px solid rgba(101, 79, 52, 0.14);
+    border-radius: 999px;
+    padding: 8px 14px;
+    cursor: pointer; font-family: inherit;
+    transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+  }
+  .nav-jump:hover, .nav-restart:hover {
+    color: var(--forest);
+    background: rgba(255, 253, 248, 0.82);
+    border-color: rgba(31, 58, 53, 0.26);
+  }
   .nav-restart { color: var(--muted); }
 
   .confirm-overlay {
@@ -171,7 +224,7 @@
   }
 
   .ob-input-row {
-    display: flex; align-items: baseline; gap: 8px;
+    display: flex; align-items: baseline; gap: 6px;
     border-bottom: 1px solid var(--rule);
     padding: 4px 0 8px;
     margin-bottom: 28px;
@@ -180,6 +233,17 @@
   .ob-input-suffix {
     font-family: "Cormorant Garamond", Georgia, serif;
     font-size: 28px; color: var(--muted);
+  }
+  .ob-input-prefix.is-currency-code,
+  .ob-le-prefix.is-currency-code {
+    font-family: "Inter", sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    line-height: 1;
+    color: var(--muted);
+    transform: translateY(-1px);
   }
   .ob-input {
     flex: 1;
@@ -362,7 +426,7 @@
   .ob-le-input-wrap {
     display: inline-flex;
     align-items: baseline;
-    gap: 4px;
+    gap: 3px;
     flex: 0 0 auto;
   }
   .ob-le-prefix {
@@ -630,6 +694,17 @@
   }
 
   @media (max-width: 960px) {
+    nav.top .inner {
+      gap: 12px;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      padding: 16px 20px;
+    }
+    .nav-actions {
+      width: 100%;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
     .ob-shell {
       grid-template-columns: 1fr;
       gap: 28px;

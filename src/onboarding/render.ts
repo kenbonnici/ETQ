@@ -1,4 +1,5 @@
 import { QuestionDef } from "./sequence";
+import { DEFAULT_CURRENCY, formatCurrencyAmount } from "../shared/currency";
 
 export function createCard(q: QuestionDef, progressText: string, onBack?: () => void): HTMLElement {
   const section = document.createElement("section");
@@ -142,9 +143,8 @@ function shortLabel(q: QuestionDef): string {
   return q.id;
 }
 
-export function formatCurrency(n: number | null | undefined): string {
-  if (n === null || n === undefined || !Number.isFinite(n)) return "—";
-  return `€${Math.round(n).toLocaleString("en-IE")}`;
+export function formatCurrency(n: number | null | undefined, currencyCode = DEFAULT_CURRENCY): string {
+  return formatCurrencyAmount(n, currencyCode, "en-IE");
 }
 
 export function formatPercent(rate: number | null | undefined): string {
