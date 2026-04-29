@@ -93,6 +93,7 @@ const modelUiState: ModelUiState = {
 
 let runHandle: number | null = null;
 let lastRunResult: ReturnType<typeof runModel> | null = null;
+let lastRenderedActiveId: string | null = null;
 let canvasReady = false;
 let activeKeyHandler: ((ev: KeyboardEvent) => void) | null = null;
 let displayedAge: number | null = null;
@@ -268,10 +269,11 @@ function persistOnboardingState(): void {
   });
 }
 
-function wrapInListItem(child: HTMLElement, presentational = false): HTMLLIElement {
+function wrapInListItem(child: HTMLElement, presentational = false, sticky = false): HTMLLIElement {
   const li = document.createElement("li");
   li.className = "ob-list-item";
   if (presentational) li.setAttribute("role", "presentation");
+  if (sticky) li.setAttribute("data-sticky", "true");
   li.appendChild(child);
   return li;
 }
@@ -390,6 +392,7 @@ function render(): void {
     document.removeEventListener("keydown", activeKeyHandler);
     activeKeyHandler = null;
   }
+  const scrollY = window.scrollY;
   left.innerHTML = "";
 
   const active = uiState.activeQuestionId
@@ -399,11 +402,17 @@ function render(): void {
   // at the top of the conversation — otherwise they read as orphans with no
   // visible parent. Regular active questions still render at the top.
   const activeIsCompact = !!active && !!active.compact && active.kind === "yesNo";
+  const activeIdChanged = uiState.activeQuestionId !== lastRenderedActiveId;
+
+  const markAnimate = (card: HTMLElement): HTMLElement => {
+    if (activeIdChanged) card.setAttribute("data-animate-in", "true");
+    return card;
+  };
 
   if (uiState.completed || uiState.activeQuestionId === "handoff") {
-    left.appendChild(wrapInListItem(renderHandoffCard()));
+    left.appendChild(wrapInListItem(markAnimate(renderHandoffCard())));
   } else if (active && !activeIsCompact) {
-    left.appendChild(wrapInListItem(renderActiveCard(active)));
+    left.appendChild(wrapInListItem(markAnimate(renderActiveCard(active)), false, true));
   }
 
   const chapters: { title: string; questions: QuestionDef[] }[] = [];
@@ -419,13 +428,15 @@ function render(): void {
     const ch = chapters[i];
     if (ch.title) left.appendChild(wrapInListItem(createChapterDivider(ch.title), true));
     if (activeIsCompact && active && ch.title === active.chapterTitle) {
-      left.appendChild(wrapInListItem(renderActiveCard(active)));
+      left.appendChild(wrapInListItem(markAnimate(renderActiveCard(active))));
     }
     for (let j = ch.questions.length - 1; j >= 0; j -= 1) {
       left.appendChild(wrapInListItem(renderChip(ch.questions[j])));
     }
   }
 
+  lastRenderedActiveId = uiState.activeQuestionId;
+  if (window.scrollY !== scrollY) window.scrollTo(0, scrollY);
   scheduleRun();
   syncRestartVisibility();
   persistOnboardingState();
