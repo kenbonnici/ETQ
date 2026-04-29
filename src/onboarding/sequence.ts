@@ -45,7 +45,7 @@ const CHAPTERS = {
   property:  { id: "property",  title: "Investment properties" },
   valuables: { id: "valuables", title: "Other things of value" },
   people:    { id: "people",    title: "People you support" },
-  pension:   { id: "pension",   title: "The pension that kicks in later" },
+  pension:   { id: "pension",   title: "Pension" },
   debts:     { id: "debts",     title: "Any debts we haven't mentioned" },
   handoff:   { id: "handoff",   title: "" }
 } as const;
