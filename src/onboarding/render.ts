@@ -1,12 +1,19 @@
 import { QuestionDef } from "./sequence";
 import { DEFAULT_CURRENCY, formatCurrencyAmount } from "../shared/currency";
 
-export function createCard(q: QuestionDef, progressText: string, onBack?: () => void): HTMLElement {
+export function createCard(
+  q: QuestionDef,
+  chapterLabel: string,
+  counterLabel: string,
+  onBack?: () => void
+): HTMLElement {
   const section = document.createElement("section");
   section.className = "ob-card";
   section.setAttribute("data-onboarding-card", q.id);
   section.setAttribute("aria-labelledby", `ob-prompt-${q.id}`);
 
+  const topbar = document.createElement("div");
+  topbar.className = "ob-card-topbar";
   if (onBack) {
     const back = document.createElement("button");
     back.type = "button";
@@ -15,13 +22,22 @@ export function createCard(q: QuestionDef, progressText: string, onBack?: () => 
     back.setAttribute("data-onboarding-back", q.id);
     back.innerHTML = "← <span>back</span>";
     back.addEventListener("click", onBack);
-    section.appendChild(back);
+    topbar.appendChild(back);
   }
+  if (counterLabel) {
+    const counter = document.createElement("span");
+    counter.className = "ob-card-counter";
+    counter.textContent = counterLabel;
+    topbar.appendChild(counter);
+  }
+  if (topbar.childElementCount > 0) section.appendChild(topbar);
 
-  const eyebrow = document.createElement("p");
-  eyebrow.className = "ob-eyebrow";
-  eyebrow.textContent = progressText;
-  section.appendChild(eyebrow);
+  if (chapterLabel) {
+    const eyebrow = document.createElement("p");
+    eyebrow.className = "ob-eyebrow";
+    eyebrow.textContent = chapterLabel;
+    section.appendChild(eyebrow);
+  }
 
   const prompt = document.createElement("h2");
   prompt.className = "ob-prompt";
@@ -48,7 +64,7 @@ export function createChip(q: QuestionDef, formatted: string, assumptionText?: s
 
   const label = document.createElement("span");
   label.className = "ob-chip-label";
-  label.textContent = `${q.chapterTitle} · ${shortLabel(q)}`;
+  label.textContent = shortLabel(q);
   chip.appendChild(label);
 
   const valueWrap = document.createElement("span");

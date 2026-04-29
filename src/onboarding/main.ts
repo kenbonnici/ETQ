@@ -532,12 +532,12 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
   if (q.id === "livingExpenses" && uiState.livingExpensesMode === "expanded") {
     return renderLivingExpensesExpanded(q);
   }
-  const progressText = buildProgressText(q);
+  const { chapter, counter } = buildProgressLabels(q);
   const softPrompt = softConfirmPrompt(q);
   const resolvedPrompt = softPrompt ?? resolvePromptPlaceholders(q);
   const prev = findPreviousAnswered(q);
   const onBack = prev ? () => editChip(prev) : undefined;
-  const card = createCard(resolvedPrompt !== q.prompt ? { ...q, prompt: resolvedPrompt } : q, progressText, onBack);
+  const card = createCard(resolvedPrompt !== q.prompt ? { ...q, prompt: resolvedPrompt } : q, chapter, counter, onBack);
 
   const errorEl = document.createElement("p");
   errorEl.className = "ob-error";
@@ -847,12 +847,12 @@ function buildBreakItDownLink(): HTMLElement {
 }
 
 function renderLivingExpensesExpanded(q: QuestionDef): HTMLElement {
-  const progressText = buildProgressText(q);
+  const { chapter, counter } = buildProgressLabels(q);
   const card = createCard({
     ...q,
     prompt: "Let's break it down — roughly what do you spend on each, in a year?",
     helper: "Skip categories that don't apply. We'll add up the total for the projection."
-  }, progressText);
+  }, chapter, counter);
 
   const grid = document.createElement("div");
   grid.className = "ob-le-grid";
@@ -1029,12 +1029,15 @@ function buildActions(q: QuestionDef, onContinue: () => void, onSkip: () => void
   return wrap;
 }
 
-function buildProgressText(q: QuestionDef): string {
+function buildProgressLabels(q: QuestionDef): { chapter: string; counter: string } {
   const activeList = sequence.filter((s) => isQuestionActive(s, ctx()) && s.id !== "handoff");
   const idx = activeList.findIndex((s) => s.id === q.id);
   const position = idx >= 0 ? idx + 1 : 1;
   const total = activeList.length || position;
-  return `${q.chapterTitle.toUpperCase()} · ${position} OF ${total}`;
+  return {
+    chapter: q.chapterTitle.toUpperCase(),
+    counter: `${position} of ${total}`
+  };
 }
 
 function formatLimit(kind: QuestionDef["kind"], value: number): string {
