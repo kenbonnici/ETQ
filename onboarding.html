@@ -221,8 +221,7 @@
   .ob-card-topbar {
     display: flex;
     align-items: baseline;
-    justify-content: space-between;
-    gap: 16px;
+    gap: 12px;
     margin: 0 0 14px;
   }
   .ob-card-topbar .ob-back { margin: 0; }
@@ -230,8 +229,18 @@
     font-family: "Inter", sans-serif;
     font-size: 12px;
     font-weight: 500;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     color: var(--muted);
+    position: relative;
+    padding-left: 12px;
+  }
+  .ob-card-counter::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 50%;
+    width: 1px; height: 11px;
+    background: var(--rule);
+    transform: translateY(-50%);
   }
   .ob-eyebrow {
     font-family: "Inter", sans-serif;
