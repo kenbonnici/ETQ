@@ -36,6 +36,21 @@
     background: radial-gradient(at 85% 15%, rgba(178,116,42,0.08), transparent 60%);
     pointer-events: none; z-index: 0;
   }
+  body::after {
+    content: "";
+    position: fixed;
+    top: 53px;
+    left: 0; right: 0;
+    height: 28px;
+    background: linear-gradient(to bottom,
+      rgba(248, 242, 230, 0.92) 0%,
+      rgba(248, 242, 230, 0.65) 55%,
+      rgba(248, 242, 230, 0) 100%);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    pointer-events: none;
+    z-index: 9;
+  }
   a { color: var(--forest); }
 
   nav.top {
@@ -197,7 +212,7 @@
   }
   .ob-list-item[data-sticky="true"] {
     position: sticky;
-    top: 53px;
+    top: 78px;
     z-index: 2;
     background: rgba(248, 242, 230, 0.85);
     backdrop-filter: saturate(1.05) blur(10px);
