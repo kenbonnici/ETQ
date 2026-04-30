@@ -152,6 +152,31 @@ test.describe("Progressive Onboarding", () => {
     await expect(page.locator("[data-onboarding-jump-latest]")).toHaveCount(0);
   });
 
+  test("repeated back clicks keep jump-to-latest visible as the user moves further from the frontier", async ({ page }) => {
+    await gotoOnboarding(page);
+    await answerText(page, "age", "48");
+    await answerYesNo(page, "partnerInclude", "NO");
+    await answerText(page, "userIncome", "65000");
+    await answerText(page, "livingExpenses", "40000");
+    await expect(page.locator("[data-onboarding-card=\"spendingTaper\"]")).toBeVisible();
+
+    // First back: livingExpenses (one back, no jump-to-latest yet).
+    await page.locator("[data-onboarding-card=\"spendingTaper\"] [data-onboarding-back]").click();
+    await expect(page.locator("[data-onboarding-card=\"livingExpenses\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-jump-latest]")).toHaveCount(0);
+
+    // Second back: userIncome — now two questions away, jump-to-latest appears.
+    await page.locator("[data-onboarding-card=\"livingExpenses\"] [data-onboarding-back]").click();
+    await expect(page.locator("[data-onboarding-card=\"userIncome\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-jump-latest]")).toBeVisible();
+
+    // Third back: partnerInclude — still further; jump-to-latest must remain.
+    await page.locator("[data-onboarding-card=\"userIncome\"] [data-onboarding-back]").click();
+    await expect(page.locator("[data-onboarding-card=\"partnerInclude\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-jump-latest]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-forward]")).toBeVisible();
+  });
+
   test("jump-to-latest hides when only one question back from the frontier", async ({ page }) => {
     await gotoOnboarding(page);
     await answerText(page, "age", "48");

@@ -488,12 +488,18 @@ function editChip(q: QuestionDef): void {
   // is flagged stale: its prior answer stands until the user re-confirms or
   // navigates forward, and forward navigation uses staleness to know the
   // user is behind the natural latest.
+  const prevStale = new Set(uiState.staleAnswered);
   uiState.staleAnswered.clear();
   uiState.staleAnswered.add(q.id);
   if (idx >= 0) {
     for (let i = idx + 1; i < sequence.length; i += 1) {
       const later = sequence[i];
-      if (uiState.answered.has(later.id)) {
+      // Preserve later questions whose answer the user has already touched —
+      // either originally answered or carried over as stale from a previous
+      // back step. Without the prevStale carry-over, repeated back clicks
+      // would shrink the cascade and hide the forward/jump-to-latest
+      // affordance even though the natural frontier hasn't changed.
+      if (uiState.answered.has(later.id) || prevStale.has(later.id)) {
         uiState.staleAnswered.add(later.id);
       }
     }
