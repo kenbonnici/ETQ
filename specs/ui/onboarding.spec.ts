@@ -119,6 +119,53 @@ test.describe("Progressive Onboarding", () => {
     await expect(page.locator("[data-onboarding-card=\"userIncome\"]")).toHaveCount(0);
   });
 
+  test("forward and jump-to-latest let the user navigate back-and-forward without re-confirmation", async ({ page }) => {
+    await gotoOnboarding(page);
+    await answerText(page, "age", "48");
+    await answerYesNo(page, "partnerInclude", "NO");
+    await answerText(page, "userIncome", "65000");
+    await answerText(page, "livingExpenses", "40000");
+    await page.locator("[data-onboarding-option=\"STEADY\"]").click();
+    await page.locator("[data-toggle-field-id=\"housing.status\"][data-toggle-option=\"Renter\"]").click();
+    await answerText(page, "rent", "1000");
+    await answerText(page, "cash", "50000");
+    await expect(page.locator("[data-onboarding-card=\"equities\"]")).toBeVisible();
+
+    // Jump back five questions to userIncome via its chip.
+    await page.locator("[data-onboarding-chip=\"userIncome\"]").click();
+    await expect(page.locator("[data-onboarding-card=\"userIncome\"]")).toBeVisible();
+    // The legacy edit hint must be gone, so the active card stays in place.
+    await expect(page.locator(".ob-edit-hint")).toHaveCount(0);
+    await expect(page.locator("[data-onboarding-forward]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-jump-latest]")).toBeVisible();
+
+    // Forward steps through stale answers without requiring re-confirm and
+    // preserves the previously stored value in the next card's input.
+    await page.locator("[data-onboarding-forward]").click();
+    await expect(page.locator("[data-onboarding-card=\"livingExpenses\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-input=\"livingExpenses\"]")).toHaveValue("40000");
+
+    // Jump to latest skips remaining stale answers and lands on the frontier.
+    await page.locator("[data-onboarding-jump-latest]").click();
+    await expect(page.locator("[data-onboarding-card=\"equities\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-forward]")).toHaveCount(0);
+    await expect(page.locator("[data-onboarding-jump-latest]")).toHaveCount(0);
+  });
+
+  test("jump-to-latest hides when only one question back from the frontier", async ({ page }) => {
+    await gotoOnboarding(page);
+    await answerText(page, "age", "48");
+    await answerYesNo(page, "partnerInclude", "NO");
+    await answerText(page, "userIncome", "65000");
+    await expect(page.locator("[data-onboarding-card=\"livingExpenses\"]")).toBeVisible();
+
+    // Single step back from the frontier.
+    await page.locator("[data-onboarding-card=\"livingExpenses\"] [data-onboarding-back]").click();
+    await expect(page.locator("[data-onboarding-card=\"userIncome\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-forward]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-jump-latest]")).toHaveCount(0);
+  });
+
   test("handoff writes the draft snapshot and navigates with #from=onboarding", async ({ page }) => {
     await gotoOnboarding(page);
     await answerText(page, "age", "48");

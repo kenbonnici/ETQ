@@ -5,7 +5,9 @@ export function createCard(
   q: QuestionDef,
   chapterLabel: string,
   counterLabel: string,
-  onBack?: () => void
+  onBack?: () => void,
+  onForward?: () => void,
+  onJumpLatest?: () => void
 ): HTMLElement {
   const section = document.createElement("section");
   section.className = "ob-card";
@@ -30,6 +32,27 @@ export function createCard(
     counter.textContent = counterLabel;
     if (!onBack) counter.setAttribute("data-counter-leading", "true");
     topbar.appendChild(counter);
+  }
+  if (onForward) {
+    const fwd = document.createElement("button");
+    fwd.type = "button";
+    fwd.className = "ob-back ob-forward";
+    fwd.setAttribute("aria-label", "Forward to next question");
+    fwd.setAttribute("data-onboarding-forward", q.id);
+    fwd.innerHTML = "<span>forward</span> →";
+    fwd.addEventListener("click", onForward);
+    topbar.appendChild(fwd);
+  }
+  if (onJumpLatest) {
+    const jump = document.createElement("button");
+    jump.type = "button";
+    jump.className = "ob-back ob-jump-latest";
+    jump.setAttribute("aria-label", "Jump to latest question");
+    jump.setAttribute("title", "Skip to where you left off");
+    jump.setAttribute("data-onboarding-jump-latest", q.id);
+    jump.innerHTML = "<span>jump to latest</span> ⇥";
+    jump.addEventListener("click", onJumpLatest);
+    topbar.appendChild(jump);
   }
   if (topbar.childElementCount > 0) section.appendChild(topbar);
 

@@ -417,13 +417,6 @@ function render(): void {
   if (onHandoff) {
     left.appendChild(wrapInListItem(markAnimate(renderHandoffCard())));
   } else if (active) {
-    if (uiState.staleAnswered.size > 0) {
-      const hint = document.createElement("p");
-      hint.className = "ob-edit-hint";
-      const n = uiState.staleAnswered.size;
-      hint.textContent = `Editing — you'll re-confirm ${n} later answer${n === 1 ? "" : "s"} as you continue.`;
-      left.appendChild(hint);
-    }
     left.appendChild(wrapInListItem(markAnimate(renderActiveCard(active)), false, true));
   }
 
@@ -483,6 +476,7 @@ function editChip(q: QuestionDef): void {
       if (!isQuestionActive(earlier, c)) continue;
       if (uiState.answered.has(earlier.id)) continue;
       uiState.answered.add(earlier.id);
+      uiState.staleAnswered.delete(earlier.id);
     }
   }
   uiState.answered.delete(q.id);
@@ -490,8 +484,12 @@ function editChip(q: QuestionDef): void {
   uiState.completed = false;
   // Rebuild the stale cascade so it flows only from q forward. Any prior
   // cascade from an abandoned upstream edit is dropped — by jumping to q the
-  // user has implicitly accepted those earlier answers as standing.
+  // user has implicitly accepted those earlier answers as standing. q itself
+  // is flagged stale: its prior answer stands until the user re-confirms or
+  // navigates forward, and forward navigation uses staleness to know the
+  // user is behind the natural latest.
   uiState.staleAnswered.clear();
+  uiState.staleAnswered.add(q.id);
   if (idx >= 0) {
     for (let i = idx + 1; i < sequence.length; i += 1) {
       const later = sequence[i];
@@ -500,6 +498,71 @@ function editChip(q: QuestionDef): void {
       }
     }
   }
+  render();
+  focusActiveInput();
+}
+
+function computeForwardNavState(q: QuestionDef): { distance: number } {
+  if (q.id === "handoff") return { distance: 0 };
+  const c = ctx();
+  const active = sequence.filter((s) => isQuestionActive(s, c));
+  const curPos = active.findIndex((s) => s.id === q.id);
+  if (curPos < 0) return { distance: 0 };
+  const visited = new Set<string>(uiState.answered);
+  for (const id of uiState.staleAnswered) visited.add(id);
+  let frontierIdx = active.length;
+  for (let i = curPos + 1; i < active.length; i += 1) {
+    const candidate = active[i];
+    if (candidate.id === "handoff") { frontierIdx = i; break; }
+    if (!visited.has(candidate.id)) { frontierIdx = i; break; }
+  }
+  if (frontierIdx <= curPos) return { distance: 0 };
+  // The user is behind the natural latest if either: the current question
+  // itself was previously answered (so they navigated back), or there's at
+  // least one visited question between current and the frontier. Otherwise
+  // current IS the frontier and forward navigation has no meaning.
+  const behindFrontier = visited.has(q.id) || frontierIdx > curPos + 1;
+  if (!behindFrontier) return { distance: 0 };
+  return { distance: frontierIdx - curPos };
+}
+
+function forwardOne(): void {
+  const cur = uiState.activeQuestionId;
+  if (!cur || cur === "handoff") return;
+  uiState.answered.add(cur);
+  uiState.staleAnswered.delete(cur);
+  uiState.seededQuestions.delete(cur);
+  uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
+  pruneStaleAnswered();
+  const c = ctx();
+  const idx = sequence.findIndex((s) => s.id === cur);
+  let next: QuestionDef | null = null;
+  for (let i = idx + 1; i < sequence.length; i += 1) {
+    if (isQuestionActive(sequence[i], c)) { next = sequence[i]; break; }
+  }
+  if (!next || next.id === "handoff") {
+    advanceToFirstUnanswered();
+  } else {
+    // Make next the active edit card. If it's already answered/stale, remove
+    // from `answered` so the form renders pre-filled and editable while
+    // staying flagged stale until the user re-confirms via continue.
+    if (uiState.answered.has(next.id)) uiState.answered.delete(next.id);
+    uiState.activeQuestionId = next.id;
+    uiState.completed = false;
+  }
+  render();
+  focusActiveInput();
+}
+
+function jumpToLatest(): void {
+  const cur = uiState.activeQuestionId;
+  if (!cur || cur === "handoff") return;
+  uiState.answered.add(cur);
+  for (const id of uiState.staleAnswered) uiState.answered.add(id);
+  uiState.staleAnswered.clear();
+  uiState.seededQuestions.delete(cur);
+  uiState.answered = pruneOrphanedAnswers(sequence, ctx(), uiState.answered);
+  advanceToFirstUnanswered();
   render();
   focusActiveInput();
 }
@@ -564,7 +627,17 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
   const resolvedPrompt = softPrompt ?? resolvePromptPlaceholders(q);
   const prev = findPreviousAnswered(q);
   const onBack = prev ? () => editChip(prev) : undefined;
-  const card = createCard(resolvedPrompt !== q.prompt ? { ...q, prompt: resolvedPrompt } : q, chapter, counter, onBack);
+  const { distance } = computeForwardNavState(q);
+  const onForward = distance >= 1 ? () => forwardOne() : undefined;
+  const onJumpLatest = distance >= 2 ? () => jumpToLatest() : undefined;
+  const card = createCard(
+    resolvedPrompt !== q.prompt ? { ...q, prompt: resolvedPrompt } : q,
+    chapter,
+    counter,
+    onBack,
+    onForward,
+    onJumpLatest
+  );
 
   const errorEl = document.createElement("p");
   errorEl.className = "ob-error";
