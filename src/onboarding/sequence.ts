@@ -153,6 +153,7 @@ export function makeIncomeSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "partner.income.employment.netAnnual",
       prompt: "And your partner's take-home from their main occupation?",
+      blankAsZero: true,
       activeWhen: partnerIncluded
     }
   ];
@@ -305,7 +306,8 @@ export function makeSavingsSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "assets.cash.totalBalance",
       prompt: "How much do you have in liquid savings?",
-      helper: "Current and savings accounts, bonds, and term deposits"
+      helper: "Current and savings accounts, bonds, and term deposits",
+      blankAsZero: true
     },
     {
       id: "equities",
@@ -314,7 +316,8 @@ export function makeSavingsSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "assets.equities.marketValue",
       prompt: "And invested in the stock market?",
-      helper: "Current market value of equity portfolio"
+      helper: "Current market value of equity portfolio",
+      blankAsZero: true
     },
     {
       id: "equityContrib",
@@ -421,6 +424,7 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       fieldId: rentField,
       prompt: "Roughly what gross rent does it bring in each year?",
       helper: "Before property running costs; those come next. Leave blank if it's not tenanted yet.",
+      blankAsZero: true,
       activeWhen: active
     },
     {
@@ -430,6 +434,7 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       kind: "currency",
       fieldId: opCostField,
       prompt: "And what does it cost to run each year — maintenance, management?",
+      blankAsZero: true,
       activeWhen: active
     }
   ];
@@ -548,6 +553,7 @@ function assetSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       kind: "currency",
       fieldId: opCostField,
       prompt: "And anything it costs you each year to keep — insurance, storage, upkeep?",
+      blankAsZero: true,
       activeWhen: active
     }
   ];
@@ -663,7 +669,8 @@ export function makePensionSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "retirement.statePension.netAnnualAtStart",
       prompt: "And roughly how much a year?",
-      helper: "Net annual pension entitlement"
+      helper: "Net annual pension entitlement",
+      blankAsZero: true
     },
     {
       id: "partnerPension",
@@ -672,6 +679,7 @@ export function makePensionSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "partner.retirement.statePension.netAnnualAtStart",
       prompt: "What about your partner's?",
+      blankAsZero: true,
       activeWhen: partnerIncluded
     }
   ];
