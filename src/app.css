@@ -3539,6 +3539,38 @@ small {
   .field--half + .field--half {
     margin-left: 0;
   }
+
+  .dashboard-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 8px;
+  }
+
+  .dashboard-header > .retire-check-result {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    border-right: 0;
+    padding-right: 0;
+    max-width: 100%;
+    white-space: normal;
+  }
+
+  .dashboard-header > .retirement-stepper {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: start;
+    flex-wrap: wrap;
+  }
+
+  .dashboard-header > .view-tabs {
+    grid-column: 2;
+    grid-row: 2;
+    justify-self: end;
+    margin-left: 0;
+  }
+
+  .brand-link {
+    display: none;
+  }
 }
 
 @media (max-width: 960px) {
@@ -3664,5 +3696,170 @@ small {
   .cashflow-label-cell {
     min-width: 210px;
     max-width: 210px;
+  }
+
+  .scenario-manager {
+    padding: 12px 14px;
+  }
+
+  .section-scenarios {
+    padding: 12px 14px;
+  }
+
+  .left,
+  .right,
+  .timeline-panel,
+  .projection-view {
+    border-radius: 10px;
+  }
+
+  .right {
+    padding: 12px;
+  }
+
+  .timeline-end-year {
+    font-size: 11px;
+  }
+
+  .timeline-end-age {
+    font-size: 11px;
+  }
+
+  .projection-toolbar {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .projection-toolbar-controls {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .scenario-name-input,
+  .scenario-library-field select,
+  .scenario-action-btn {
+    font-size: 13px;
+    height: 38px;
+    line-height: 36px;
+  }
+}
+
+@media (max-width: 520px) {
+  .layout {
+    gap: 12px;
+    padding: 10px;
+  }
+
+  .left {
+    padding: 10px;
+  }
+
+  .right {
+    padding: 10px;
+  }
+
+  .timeline-panel {
+    padding: 10px;
+  }
+
+  .projection-view {
+    padding: 10px;
+  }
+
+  .dashboard-header {
+    padding: 8px 10px;
+    column-gap: 12px;
+  }
+
+  .scenario-manager {
+    padding: 10px 12px;
+  }
+
+  .section-scenarios {
+    padding: 10px 12px;
+  }
+
+  .view-tab-btn {
+    min-width: 0;
+    padding: 0 12px;
+    font-size: 12px;
+  }
+
+  .retire-check-result {
+    padding-left: 10px;
+    padding-right: 0;
+    border-right: 0;
+    font-size: 13px;
+  }
+
+  .retire-check-result-value,
+  .retire-check-result-age-token,
+  .retire-check-result-status {
+    font-size: 17px;
+  }
+
+  .retirement-stepper-label {
+    font-size: 10px;
+  }
+
+  .retirement-stepper-field {
+    height: 28px;
+  }
+
+  .retirement-stepper-field #early-ret-age {
+    width: 60px;
+    font-size: 16px;
+  }
+
+  .scenario-action-btn {
+    padding: 0 8px;
+    font-size: 11px;
+  }
+
+  .cashflow-corner-cell,
+  .cashflow-label-cell {
+    min-width: 168px;
+    max-width: 168px;
+  }
+
+  .cashflow-label-inner {
+    padding: 10px 14px 10px calc(14px + (var(--cashflow-indent) * 14px));
+  }
+
+  .cashflow-table .cashflow-corner-cell {
+    padding: 11px 12px 8px;
+  }
+
+  .cashflow-year-cell {
+    min-width: 92px;
+  }
+
+  .cashflow-year-button {
+    padding: 10px 6px 7px;
+  }
+
+  .cashflow-year-label {
+    font-size: 13px;
+  }
+
+  .timeline-axis {
+    left: 36px;
+  }
+
+  .timeline-endcap,
+  .timeline-milestone {
+    left: 36px;
+    width: calc(100% - 46px);
+  }
+
+  .timeline-end-year,
+  .timeline-item-year {
+    font-size: 10px;
+    left: -8px;
+  }
+
+  .timeline-end-age {
+    font-size: 10px;
+    left: 8px;
   }
 }
