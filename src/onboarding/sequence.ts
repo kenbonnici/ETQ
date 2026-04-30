@@ -22,6 +22,7 @@ export interface QuestionDef {
   fieldId?: FieldId;
   gateId?: string;
   skippable?: boolean;
+  blankAsZero?: boolean;
   assumption?: boolean;
   defaultAssumptionLabel?: string;
   // True for soft "add another?" gates between repeating items (properties,
@@ -307,7 +308,7 @@ export function makeSavingsSequence(): QuestionDef[] {
       chapterTitle: CHAPTERS.savings.title,
       kind: "currency",
       fieldId: "assets.cash.totalBalance",
-      prompt: "How much do you have in liquid savings — current accounts, savings, bonds, term deposits?",
+      prompt: "How much do you have in liquid savings?",
       helper: "Current and savings accounts, bonds, and term deposits"
     },
     {
@@ -316,7 +317,7 @@ export function makeSavingsSequence(): QuestionDef[] {
       chapterTitle: CHAPTERS.savings.title,
       kind: "currency",
       fieldId: "assets.equities.marketValue",
-      prompt: "And invested in the stock market — ETFs, funds, pensions?",
+      prompt: "And invested in the stock market?",
       helper: "Current market value of equity portfolio"
     },
     {
@@ -325,9 +326,10 @@ export function makeSavingsSequence(): QuestionDef[] {
       chapterTitle: CHAPTERS.savings.title,
       kind: "currency",
       fieldId: "assets.equities.monthlyContribution",
-      prompt: "How much are you adding each month?",
+      prompt: "How much are you adding to your equity investments each month?",
       helper: "Leave blank if you're not adding anything right now.",
-      skippable: true
+      skippable: false,
+      blankAsZero: true
     }
   ];
 }
