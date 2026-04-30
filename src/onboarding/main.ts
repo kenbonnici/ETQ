@@ -469,15 +469,29 @@ function renderChip(q: QuestionDef): HTMLElement {
 }
 
 function editChip(q: QuestionDef): void {
+  const idx = sequence.findIndex((s) => s.id === q.id);
+  // If the user previously opened an earlier question for edit (via chip click
+  // or "← back") but never re-confirmed it, that question is currently absent
+  // from `answered`. Clicking forward to a later chip is an implicit signal
+  // that the earlier answers should stand — their fieldState values were
+  // preserved throughout, so re-mark them answered. Without this, advancing
+  // after the new edit would jump back to the abandoned earlier question.
+  if (idx > 0) {
+    const c = ctx();
+    for (let i = 0; i < idx; i += 1) {
+      const earlier = sequence[i];
+      if (!isQuestionActive(earlier, c)) continue;
+      if (uiState.answered.has(earlier.id)) continue;
+      uiState.answered.add(earlier.id);
+    }
+  }
   uiState.answered.delete(q.id);
-  uiState.staleAnswered.delete(q.id);
   uiState.activeQuestionId = q.id;
   uiState.completed = false;
-  // Mark subsequent answered questions as stale: their values are kept so most
-  // re-confirmations are Enter-Enter, but the user must walk through each before
-  // the projection is considered final. This prevents stale dependent answers
-  // from quietly persisting after an upstream edit.
-  const idx = sequence.findIndex((s) => s.id === q.id);
+  // Rebuild the stale cascade so it flows only from q forward. Any prior
+  // cascade from an abandoned upstream edit is dropped — by jumping to q the
+  // user has implicitly accepted those earlier answers as standing.
+  uiState.staleAnswered.clear();
   if (idx >= 0) {
     for (let i = idx + 1; i < sequence.length; i += 1) {
       const later = sequence[i];

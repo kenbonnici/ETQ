@@ -81,6 +81,44 @@ test.describe("Progressive Onboarding", () => {
     await expect(page.locator("[data-onboarding-chip=\"hasMortgage\"]")).toHaveCount(0);
   });
 
+  test("editing a chip resumes from the next stale question, not an earlier abandoned edit", async ({ page }) => {
+    // Repro for the bug where opening an early chip and then jumping to a later
+    // chip caused the post-edit flow to snap back to the first earlier edit.
+    await gotoOnboarding(page);
+    await answerText(page, "age", "48");
+    await answerYesNo(page, "partnerInclude", "NO");
+    await answerText(page, "userIncome", "65000");
+    await answerText(page, "livingExpenses", "40000");
+    await page.locator("[data-onboarding-option=\"STEADY\"]").click();
+    await page.locator("[data-toggle-field-id=\"housing.status\"][data-toggle-option=\"Renter\"]").click();
+    await answerText(page, "rent", "1000");
+    await answerText(page, "cash", "50000");
+    await answerText(page, "equities", "100000");
+    await answerText(page, "equityContrib", "0");
+    await answerYesNo(page, "propertiesGate", "YES");
+    await answerText(page, "property1Name", "Sliema Flat");
+    await answerText(page, "property1Value", "350000");
+    await answerText(page, "property1Loan", "0");
+    await answerText(page, "property1Rent", "12000");
+    await answerText(page, "property1Cost", "2000");
+    await answerYesNo(page, "property2Gate", "NO");
+
+    // Open an early chip (partnerInclude), then before re-confirming jump
+    // forward to a later chip (property1Name).
+    await page.locator("[data-onboarding-chip=\"partnerInclude\"]").click();
+    await expect(page.locator("[data-onboarding-card=\"partnerInclude\"]")).toBeVisible();
+    await page.locator("[data-onboarding-chip=\"property1Name\"]").click();
+    await expect(page.locator("[data-onboarding-card=\"property1Name\"]")).toBeVisible();
+
+    // Re-confirm the property name. Flow must resume at the next valid question
+    // after property1Name, not snap back to the abandoned partnerInclude edit
+    // or to any other earlier question.
+    await page.locator("[data-onboarding-continue=\"property1Name\"]").click();
+    await expect(page.locator("[data-onboarding-card=\"property1Value\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-card=\"partnerInclude\"]")).toHaveCount(0);
+    await expect(page.locator("[data-onboarding-card=\"userIncome\"]")).toHaveCount(0);
+  });
+
   test("handoff writes the draft snapshot and navigates with #from=onboarding", async ({ page }) => {
     await gotoOnboarding(page);
     await answerText(page, "age", "48");
