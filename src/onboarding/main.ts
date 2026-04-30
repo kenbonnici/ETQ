@@ -697,17 +697,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
         chips.appendChild(btn);
       }
       attach(chips);
-      activeKeyHandler = (ev: KeyboardEvent) => {
-        if (ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.altKey) return;
-        const target = ev.target as HTMLElement | null;
-        if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
-        const key = ev.key.toLowerCase();
-        const tag = key === "y" ? "YES" : key === "n" ? "NO" : null;
-        if (!tag) return;
-        ev.preventDefault();
-        chips.querySelector<HTMLButtonElement>(`[data-onboarding-option="${tag}"]`)?.click();
-      };
-      document.addEventListener("keydown", activeKeyHandler);
+      attachChipKeyShortcuts(chips);
       break;
     }
     case "ownerRenter": {
@@ -743,6 +733,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
         chips.appendChild(btn);
       }
       attach(chips);
+      attachChipKeyShortcuts(chips);
       break;
     }
     case "spendingTaper": {
@@ -779,6 +770,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
         chips.appendChild(btn);
       }
       attach(chips);
+      attachChipKeyShortcuts(chips);
       break;
     }
     case "downsizingMode": {
@@ -805,6 +797,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
         chips.appendChild(btn);
       }
       attach(chips);
+      attachChipKeyShortcuts(chips);
       break;
     }
     case "appreciationChoice": {
@@ -832,10 +825,31 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
         chips.appendChild(btn);
       }
       attach(chips);
+      attachChipKeyShortcuts(chips);
       break;
     }
   }
   return card;
+}
+
+function attachChipKeyShortcuts(chips: HTMLElement): void {
+  activeKeyHandler = (ev: KeyboardEvent) => {
+    if (ev.defaultPrevented || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+    const target = ev.target as HTMLElement | null;
+    if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)) return;
+    if (ev.key.length !== 1) return;
+    const key = ev.key.toLowerCase();
+    const buttons = chips.querySelectorAll<HTMLButtonElement>("button.ob-chip-btn");
+    for (const btn of buttons) {
+      const label = (btn.textContent || "").trim();
+      if (label && label[0].toLowerCase() === key) {
+        ev.preventDefault();
+        btn.click();
+        return;
+      }
+    }
+  };
+  document.addEventListener("keydown", activeKeyHandler);
 }
 
 function buildBreakItDownLink(): HTMLElement {
