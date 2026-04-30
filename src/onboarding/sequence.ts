@@ -21,7 +21,6 @@ export interface QuestionDef {
   helper?: string;
   fieldId?: FieldId;
   gateId?: string;
-  skippable?: boolean;
   blankAsZero?: boolean;
   assumption?: boolean;
   defaultAssumptionLabel?: string;
@@ -145,8 +144,7 @@ export function makeIncomeSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "income.employment.netAnnual",
       prompt: "What's your annual take-home income from your main occupation?",
-      helper: "Annual net of tax income from employment or self-employment.",
-      skippable: true
+      helper: "Annual net of tax income from employment or self-employment."
     },
     {
       id: "partnerIncome",
@@ -155,7 +153,6 @@ export function makeIncomeSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "partner.income.employment.netAnnual",
       prompt: "And your partner's take-home from their main occupation?",
-      skippable: true,
       activeWhen: partnerIncluded
     }
   ];
@@ -256,7 +253,6 @@ export function makeHousingSequence(): QuestionDef[] {
       gateId: "downsizingGate",
       prompt: "Any plans to downsize one day?",
       helper: "Selling and moving somewhere smaller, or to a new place.",
-      skippable: true,
       activeWhen: isOwner
     },
     {
@@ -328,7 +324,6 @@ export function makeSavingsSequence(): QuestionDef[] {
       fieldId: "assets.equities.monthlyContribution",
       prompt: "How much are you adding to your equity investments each month?",
       helper: "Leave blank if you're not adding anything right now.",
-      skippable: false,
       blankAsZero: true
     }
   ];
@@ -397,7 +392,6 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       fieldId: balanceField,
       prompt: "Outstanding mortgage or loan balance?",
       helper: "Leave blank if there's none.",
-      skippable: true,
       activeWhen: active
     },
     {
@@ -427,7 +421,6 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       fieldId: rentField,
       prompt: "Roughly what gross rent does it bring in each year?",
       helper: "Before property running costs; those come next. Leave blank if it's not tenanted yet.",
-      skippable: true,
       activeWhen: active
     },
     {
@@ -437,7 +430,6 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       kind: "currency",
       fieldId: opCostField,
       prompt: "And what does it cost to run each year — maintenance, management?",
-      skippable: true,
       activeWhen: active
     }
   ];
@@ -528,7 +520,6 @@ function assetSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       fieldId: balanceField,
       prompt: "Outstanding debt against it?",
       helper: "Leave blank if there's none.",
-      skippable: true,
       activeWhen: active
     },
     {
@@ -557,7 +548,6 @@ function assetSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       kind: "currency",
       fieldId: opCostField,
       prompt: "And anything it costs you each year to keep — insurance, storage, upkeep?",
-      skippable: true,
       activeWhen: active
     }
   ];
@@ -673,8 +663,7 @@ export function makePensionSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "retirement.statePension.netAnnualAtStart",
       prompt: "And roughly how much a year?",
-      helper: "Net annual pension entitlement",
-      skippable: true
+      helper: "Net annual pension entitlement"
     },
     {
       id: "partnerPension",
@@ -683,7 +672,6 @@ export function makePensionSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "partner.retirement.statePension.netAnnualAtStart",
       prompt: "What about your partner's?",
-      skippable: true,
       activeWhen: partnerIncluded
     }
   ];

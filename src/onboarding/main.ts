@@ -569,11 +569,6 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
     focusActiveInput();
   };
 
-  const skipAndAdvance = (): void => {
-    if (q.fieldId) fieldState[q.fieldId] = null;
-    commitAndAdvance();
-  };
-
   switch (q.kind) {
     case "integer":
     case "currency":
@@ -610,7 +605,6 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
       attach(row);
       attach(errorEl);
       const actions = buildActions(q, () => {
-        if (q.skippable && input.value.trim() === "") { skipAndAdvance(); return; }
         if (q.blankAsZero && input.value.trim() === "") {
           if (q.fieldId) fieldState[q.fieldId] = 0;
           commitAndAdvance();
@@ -632,7 +626,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
           }
         }
         commitAndAdvance();
-      }, skipAndAdvance);
+      });
       attach(actions);
       if (q.id === "livingExpenses") attach(buildBreakItDownLink());
       input.addEventListener("keydown", (ev) => {
@@ -663,7 +657,7 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
         if (v.length > 60) { errorEl.textContent = "Try to keep the name under 60 characters."; return; }
         if (q.fieldId) fieldState[q.fieldId] = v;
         commitAndAdvance();
-      }, skipAndAdvance);
+      });
       attach(actions);
       input.addEventListener("keydown", (ev) => {
         if ((ev as KeyboardEvent).key === "Enter") {
@@ -1051,7 +1045,7 @@ function renderHandoffCard(): HTMLElement {
   return card;
 }
 
-function buildActions(q: QuestionDef, onContinue: () => void, onSkip: () => void): HTMLElement {
+function buildActions(q: QuestionDef, onContinue: () => void): HTMLElement {
   const wrap = document.createElement("div");
   wrap.className = "ob-actions";
   const btn = document.createElement("button");
@@ -1061,15 +1055,6 @@ function buildActions(q: QuestionDef, onContinue: () => void, onSkip: () => void
   btn.textContent = "Continue →";
   btn.addEventListener("click", onContinue);
   wrap.appendChild(btn);
-  if (q.skippable) {
-    const skip = document.createElement("button");
-    skip.type = "button";
-    skip.className = "ob-skip";
-    skip.setAttribute("data-onboarding-skip", q.id);
-    skip.textContent = "skip for now";
-    skip.addEventListener("click", onSkip);
-    wrap.appendChild(skip);
-  }
   return wrap;
 }
 
