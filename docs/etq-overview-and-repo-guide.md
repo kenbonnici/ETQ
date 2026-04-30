@@ -4,56 +4,104 @@ ETQ is a deterministic retirement-planning web application implemented as a plai
 
 The webapp is the source of truth. Historical Excel artifacts explain some of the repo's history, but they are no longer the governing model or the verification target.
 
-Its main product behavior is to compare two scenarios:
-- retire at a user-selected early retirement age
-- retire at the statutory retirement age
+Current live product surfaces:
+- landing quick estimate: `index.html` + `src/landing/main.ts`
+- guided onboarding: `onboarding.html` + `src/onboarding/main.ts`
+- full calculator: `calculator.html` + `src/main.ts`
+
+The calculator is still the source of truth for model behavior. Landing and onboarding are now first-class parts of the webapp and hand off into the calculator through browser storage.
+
+Current Product Behavior
+
+The app no longer behaves as only a simple "user-selected early retirement age vs statutory retirement age" comparison.
+
+Current product behavior is:
+- the landing page offers a lightweight quick-estimate input that previews the earliest retirement age using the same model stack
+- the onboarding flow collects a smaller guided subset of semantic inputs and writes a calculator draft snapshot
+- the full calculator computes the earliest viable retirement age from the current inputs
+- the main dashboard presents the earliest viable retirement age, or statutory retirement age if none is viable, as the primary comparison
+- the dashboard compares that primary scenario against the user-selected comparison retirement age from the stepper
+- when partner shared early retirement is active, the comparison control presents a calendar year rather than an age, while the model still remains age-based underneath
 
 The main rendered outputs are:
 - yearly cash projections
 - yearly net worth projections
 - milestone and event timeline hints
+- custom comparison charts with hover context
+- a charts view and a projections view
 - expandable projection tables for cash flow and net worth
 - an earliest-viable-retirement indicator
 - per-scenario retirement-success flags based on minimum cash buffer plus legacy target
 
 Current Application Shape
 
-The app remains a single-page plain TypeScript direct-DOM application centered on `src/main.ts`.
+The repo is now a small multi-entry Vite app rather than only a single calculator page.
 
-Important UI behaviors:
-- the left panel is metadata-driven from authored semantic input definitions rather than hardcoded field markup
-- the UI persists a local draft plus named saved scenarios in `localStorage`
-- saved scenarios now persist planned sell years alongside semantic field values and UI-only state
-- the scenario manager includes sample data, save, load, delete, clear, and draft-status flows
-- annual living expenses can be entered as one total or through expanded categories that always sync back into the same underlying field
-- property and asset liquidation order can be manually overridden in the UI, including explicit exclusion from staged liquidation
-- planned sell years can be entered for properties and assets of value and participate in both validation and model behavior
-- the right side renders custom canvas cash and net-worth comparison charts
-- a separate timeline panel renders milestone and event markers by age and year, with early/statutory scenario toggles
-- a lower projection section renders detailed cash-flow and net-worth tables with scenario tabs, expand/collapse controls, and scroll restoration
+Build entry points are declared in `vite.config.js`:
+- `index.html`
+- `calculator.html`
+- `onboarding.html`
+
+Important browser-level behaviors:
+- the landing page stores its quick-estimate inputs in `sessionStorage` and writes a seed for onboarding handoff
+- the onboarding flow stores resumable progress in `localStorage`, including answered/gated question state and living-expense helper state
+- onboarding handoff writes a calculator draft snapshot into the same storage contract the calculator uses
+- the calculator persists a draft scenario plus named scenarios in `localStorage`
+- saved scenarios persist planned sell years alongside semantic field values and UI-only state
+- the calculator persists selected currency and living-expenses helper state inside the draft/named snapshots
+- the dashboard view (`Charts` vs `Projections`) is persisted separately
+- the projections area preserves scenario selection, expand/collapse state, and scroll restoration
 
 Architecture Overview
 
-1. Browser orchestration
-`src/main.ts` owns most browser behavior:
+1. Entry points and handoff
+
+`src/landing/main.ts`
+- reads six lightweight quick-estimate inputs
+- recalculates a rough earliest retirement age with debounce
+- persists landing inputs in `sessionStorage`
+- writes a quick-estimate seed used by onboarding
+
+`src/onboarding/main.ts`
+- renders the guided conversational onboarding UI
+- computes a live estimate panel and mini chart as answers accumulate
+- persists resumable onboarding progress
+- prunes orphaned answers as branches change
+- hands off to the full calculator by writing the calculator draft snapshot
+
+`src/onboarding/handoff.ts`
+- owns the storage contract between landing, onboarding, and calculator
+- maps quick-estimate seed values into semantic field ids
+- writes onboarding progress
+- writes calculator draft snapshots with pruned semantic fields and UI helper state
+
+`src/main.ts`
+- owns the full calculator shell
+- remains intentionally large
+- should be treated as the runtime shell for the calculator, not as accidental architecture to clean up incidentally
+
+2. Calculator shell
+
+`src/main.ts` owns most calculator browser behavior:
 - DOM shell creation
 - metadata-driven input rendering
 - touched-field and validation reveal behavior
 - scenario-manager persistence and notices
-- charts, timeline, and projection-table rendering
+- charts, tooltips, timeline, and projection-table rendering
 - earliest-viable-retirement search and indicator rendering
+- comparison-age stepper behavior
 - sample-data loading
 - downsizing preview and liquidation-order interaction logic
 - planned-sell-year jump/focus behavior
+- charts/projections view switching
 
-This file is intentionally large and should be treated as the current runtime shell for the app, not as accidental architecture to clean up incidentally.
+3. Input metadata and semantic ids
 
-2. Input metadata and semantic ids
 Authored semantic field ids are defined in `src/model/fieldRegistry.ts`.
 
 Authored input definitions live in `src/ui/inputDefinitions.ts`, with model-facing validation/schema metadata in `src/model/inputSchema.ts`.
 
-Supporting UI helpers live in:
+Supporting calculator UI helpers live in:
 - `src/ui/runtimeFields.ts`
 - `src/ui/runtimeRules.ts`
 - `src/ui/livingExpenses.ts`
@@ -65,16 +113,32 @@ Those modules define:
 - stepper behavior
 - liquidation-order UI helpers
 - timeline milestone derivation helpers
+- living-expense helper categories and aggregation
 
-3. Input schema and state
+4. Input schema and state
+
 Important current shapes live in `src/model/types.ts`:
 - `FieldState`: raw semantic browser values keyed by field id
-- `ModelUiState`: UI-only state such as section toggles, early retirement age, liquidation-order mode, optional projection month override, and optional test-only debug mode
+- `ModelUiState`: UI-only calculator state such as section toggles, comparison retirement age, liquidation-order mode, optional projection month override, and optional test-only debug mode
 - `EffectiveInputs`: normalized engine inputs
 
 The live pipeline is semantic input state into normalized engine input state. The webapp no longer routes through workbook-shaped raw inputs.
 
-4. Activation and planned-sale resolution
+5. Landing and onboarding sequence
+
+The onboarding sequence definition lives in `src/onboarding/sequence.ts`.
+
+Current behavior includes:
+- chapter-based guided questions
+- activation gates for partner, housing, mortgage, properties, valuables, dependents, pension, and debts
+- soft "add another?" prompts for repeatable groups
+- pruning of stale answers when a branch changes
+- living-expense question flow that can still hand off expanded helper state to the calculator
+
+The shared earliest-retirement search helper lives in `src/shared/findEarliestRetirementAge.ts`.
+
+6. Activation and planned-sale resolution
+
 `src/model/activation.ts` prunes inactive inputs before validation and normalization.
 
 Examples:
@@ -92,7 +156,8 @@ Examples:
 
 Planned sell years are constrained to the active projection window and flow into both normalization and runtime UI behavior.
 
-5. Validation
+7. Validation
+
 `src/model/validate.ts` validates activated semantic fields and returns UI-facing messages.
 
 Validation covers:
@@ -102,11 +167,13 @@ Validation covers:
 - cross-field consistency
 - downsizing window and mode-specific requirements
 - repayment-vs-interest warnings for loans
+- duplicate and out-of-range liquidation ranks
 - planned sell year window checks
 
-Projection gating is semantic: some errors are marked `blocksProjection`, and the retire-check indicator uses that gating rather than ad hoc UI rules.
+Projection gating is semantic: some errors are marked `blocksProjection`, and the retirement indicator uses that gating rather than ad hoc UI rules.
 
-6. Normalization
+8. Normalization
+
 `src/model/normalization.ts` converts activated `FieldState` into `EffectiveInputs`.
 
 Current responsibilities include:
@@ -117,8 +184,10 @@ Current responsibilities include:
 - carrying planned sell years into normalized property and asset arrays
 - resolving liquidation priority automatically or from manual ranks
 - materializing liquidation-rank inputs before validation and normalization so the rest of the pipeline sees the effective order
+- excluding scheduled disposals from staged-liquidation priority
 
-7. Projection timing
+9. Projection timing
+
 `src/model/projectionTiming.ts` resolves timing inputs used by the annual model:
 - `currentYear`
 - `currentMonth`
@@ -130,9 +199,10 @@ Important current truth:
 - the displayed projection axis starts at the current year and current age
 - first-period math still uses prorating and month offsets
 - `projectionMonthOverride` exists for deterministic tests and fixtures
-- `monthsRemaining` is `13 - currentMonth`, so January behaves as a full year and mid-year overrides partially prorate only the first projected year
+- `monthsRemaining` is `13 - currentMonth`, so January behaves as a full year and mid-year overrides only the first projected year
 
-8. Model coordination
+10. Model coordination
+
 `src/model/index.ts` is the top-level coordinator.
 
 The pipeline order is load-bearing and must remain:
@@ -145,18 +215,20 @@ The pipeline order is load-bearing and must remain:
 
 It then:
 - runs the statutory scenario
-- runs the early-retirement scenario
+- runs the early-retirement scenario for the currently requested comparison age
 - derives `retirementSuccessful` per scenario from cash-buffer and legacy checks
 - returns paired outputs plus validation and section-collapse metadata
 
-9. Scenario engine
+11. Scenario engine
+
 The shared engine lives in `src/model/engines/runScenario.ts`.
 
 Thin wrappers parameterize it for the statutory and early-retirement comparisons.
 
 Current engine behavior includes:
 - main income until retirement
-- other work income until its configured end age
+- partner employment income and pension behavior, including shared-early-retirement handling
+- other work income until its configured end age, or until the active scenario retirement age when no end age is set
 - state pension from statutory retirement age, reduced for early retirement by `pensionReductionPerYearEarly`
 - optional post-retirement supplementary income across a configured age range
 - one-off income and expense events by year
@@ -166,11 +238,31 @@ Current engine behavior includes:
 - yearly loan repayment schedules using fixed initial horizons and partial first-year treatment
 - staged liquidation to restore cash above the configured cash buffer
 - scheduled property and asset disposals driven by planned sell years
+- timeline milestone generation from scenario outputs
 
 Current Functional Areas Worth Knowing
 
-1. Scenario manager and local persistence
-The app persists:
+1. Landing quick estimate
+
+The landing page:
+- collects age, income, annual spending, cash, investments, and state pension
+- persists those raw inputs in `sessionStorage`
+- computes an earliest-retirement estimate through the same model path used elsewhere
+- writes a quick-estimate seed consumed by onboarding
+
+2. Guided onboarding and handoff
+
+The onboarding flow:
+- is resumable from `localStorage`
+- pre-fills from the landing-page seed when available
+- updates a live estimate panel as the user answers
+- prunes orphaned answers when earlier choices change
+- can save locally and resume later
+- writes a calculator draft snapshot and navigates to `calculator.html#from=onboarding`
+
+3. Scenario manager and local persistence
+
+The calculator persists:
 - a draft scenario snapshot
 - named scenario snapshots
 
@@ -179,27 +271,30 @@ Snapshots include:
 - planned sell year state
 - section open or closed state
 - selected currency
-- early retirement age
+- comparison retirement age
 - living-expense helper mode and category values
 
 Persistence is local-browser only.
 
-2. Living expenses helper
-The app supports:
+4. Retirement comparison presentation
+
+Current calculator behavior:
+- it searches candidate retirement ages from the current age through statutory retirement age
+- the earliest viable age becomes the primary displayed comparison when one exists
+- if no viable early-retirement age exists, statutory retirement age is the primary displayed comparison
+- the user-selected comparison age remains independently editable
+- the chart, timeline, and projection tables use the primary/comparison presentation layer, even though model internals still expose `scenarioEarly` and `scenarioNorm`
+
+5. Living expenses helper
+
+The calculator supports:
 - a single annual total
 - an expanded category mode
 
 Expanded categories are a UI helper only. They always sync back into the same underlying `spending.livingExpenses.annual` field, and existing totals can seed the expanded categories.
 
-3. Earliest viable retirement indicator
-`src/main.ts` searches candidate early retirement ages from the current age through statutory retirement age and reports:
-- the earliest viable age token
-- a "Now" state when the current age is already viable
-- or "Not yet viable"
+6. Manual liquidation ordering and planned disposals
 
-This check uses the same model outputs the rest of the app uses.
-
-4. Manual liquidation ordering and planned disposals
 Current behavior:
 - when manual ordering is off, the model derives a default order by ascending active asset value
 - when manual ordering is on, user-entered ranks are used directly
@@ -207,7 +302,8 @@ Current behavior:
 - assets with a planned sell year are treated as scheduled and are removed from staged-liquidity ordering
 - liquidation priority spans both investment properties and assets of value
 
-5. Downsizing behavior
+7. Downsizing behavior
+
 Current rules include:
 - downsizing year must fall inside the projection window
 - buy-specific versus rent-specific inputs are mutually exclusive
@@ -216,7 +312,25 @@ Current rules include:
 - the UI preview estimates proceeds, payoff, replacement cost, and released cash using the same timing concepts as the model
 - timeline milestones include downsizing sale, purchase, and rent-start events when applicable
 
-6. Retirement-success rule
+8. Dashboard views and projections
+
+The calculator now has two top-level dashboard views:
+- `Charts`
+- `Projections`
+
+The charts view shows:
+- cash and net-worth comparison charts
+- the timeline panel
+
+The projections view shows:
+- cash-flow tables
+- net-worth tables
+- shared scenario selection between projections and timeline
+- independent expand/collapse state for cash-flow and net-worth sections
+- scroll restoration when switching sections or scenarios
+
+9. Retirement-success rule
+
 `retirementSuccessful` is true for a scenario only if:
 - every projected cash balance stays at or above `minimumCashBuffer`
 - final projected net worth stays at or above `legacyAmount`
@@ -232,7 +346,9 @@ Most important invariants to preserve:
 - the displayed axis still beginning at the current year and current age
 - planned sell years remaining constrained to the projection window
 - liquidation rank `0` meaning excluded
-- default liquidation order selling the cheapest eligible assets first unless the user overrides it
+- default liquidation order selling the cheapest eligible assets first unless the user overrides
+- the calculator's primary displayed comparison remaining earliest viable retirement age, or statutory fallback, against the user-selected comparison age
+- storage handoff contracts between landing, onboarding, and calculator remaining compatible unless deliberately changed
 
 Testing Regime
 
@@ -248,13 +364,14 @@ The scripts break down like this:
 - `npm run test:runtime`
   Runs the Node runtime suite in `specs/runtime/*.test.ts`.
 - `npm run test:ui`
-  Runs the Playwright browser suite in `specs/ui/app.spec.ts`.
+  Runs the Playwright browser suites, including calculator and onboarding coverage.
 - `npm run test:golden`
   Runs only the golden snapshot suite.
 - `npm run test:update-snapshots`
   Regenerates checked-in golden snapshots after a deliberate logic change.
 
 1. Golden personas
+
 The golden suite lives in:
 - `specs/runtime/golden.test.ts`
 - `specs/runtime/golden/fixtures.ts`
@@ -271,6 +388,7 @@ Each persona snapshots, for both the statutory and early-retirement scenarios:
 This is the main drift detector for projection math. If a logic change moves yearly outputs, the checked-in snapshot diff should show exactly which persona, scenario, and series values changed.
 
 2. Invariant coverage
+
 The runtime invariants suite lives in:
 - `specs/runtime/invariants.test.ts`
 - `specs/runtime/fixtures/invariantFixtures.ts`
@@ -284,6 +402,7 @@ The golden suite catches broad output drift.
 The invariant suite checks accounting truths that should remain valid even when outputs change intentionally.
 
 3. Runtime behavior coverage
+
 Other runtime tests cover focused behaviors such as:
 - activation and pruning
 - validation rules
@@ -291,9 +410,11 @@ Other runtime tests cover focused behaviors such as:
 - living-expense helper semantics
 - runtime visibility and liquidation-order helpers
 - engine behavior for forced and planned sales
+- onboarding sequence branching and pruning
 
 4. UI coverage
-The Playwright suite in `specs/ui/app.spec.ts` covers browser behavior such as:
+
+The Playwright suites cover browser behavior such as:
 - scenario manager flows and local persistence
 - conditional field visibility
 - planned sell year focus and tab order
@@ -301,10 +422,16 @@ The Playwright suite in `specs/ui/app.spec.ts` covers browser behavior such as:
 - charts, timeline, and projection table rendering
 - liquidation reorder, exclude/include, and keyboard interactions
 - sample-data loading and semantic fixture restoration
+- onboarding branching, chips, estimate visibility, and handoff navigation
 
-The UI suite is not the primary drift detector for projection math. That job belongs to the runtime golden suite plus the invariant suite.
+Main files:
+- `specs/ui/app.spec.ts`
+- `specs/ui/onboarding.spec.ts`
+
+The UI suites are not the primary drift detector for projection math. That job belongs to the runtime golden suite plus the invariant suite.
 
 5. Snapshot update discipline
+
 Snapshot regeneration is intentionally manual.
 
 Use this flow:
