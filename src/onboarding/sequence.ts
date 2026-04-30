@@ -175,7 +175,8 @@ export function makeSpendingSequence(): QuestionDef[] {
       chapter: CHAPTERS.spending.id,
       chapterTitle: CHAPTERS.spending.title,
       kind: "spendingTaper",
-      prompt: "Most people spend a bit less as they age — less commuting, less going out. Should we taper gently, or hold steady?"
+      prompt: "Most people spend less as they age — less commuting, less going out. Should we taper spending, or keep it steady?",
+      helper: "Taper applies ~10% lower spending from age 65, and ~20% lower from 75 (vs. today). Steady keeps spending flat for life."
     }
   ];
 }

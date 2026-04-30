@@ -740,8 +740,8 @@ function renderActiveCard(q: QuestionDef): HTMLElement {
       const chips = document.createElement("div");
       chips.className = "ob-chips";
       for (const opt of [
-        { label: "Taper gently", tag: "TAPER" },
-        { label: "Hold steady",  tag: "STEADY" }
+        { label: "Taper", tag: "TAPER" },
+        { label: "Steady",  tag: "STEADY" }
       ]) {
         const btn = document.createElement("button");
         btn.type = "button";
@@ -1236,8 +1236,8 @@ function formatAnswer(q: QuestionDef): string {
     const first = Number(fieldState["spending.adjustments.firstBracket.deltaRate"] ?? 0);
     const second = Number(fieldState["spending.adjustments.secondBracket.deltaRate"] ?? 0);
     const final = Number(fieldState["spending.adjustments.finalBracket.deltaRate"] ?? 0);
-    if (first === 0 && second === 0 && final === 0) return "Hold steady";
-    return "Taper gently";
+    if (first === 0 && second === 0 && final === 0) return "Steady";
+    return "Taper";
   }
   if (q.kind === "downsizingMode") {
     if (!q.fieldId) return "—";
