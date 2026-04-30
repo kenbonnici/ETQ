@@ -144,7 +144,7 @@ export function makeIncomeSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "income.employment.netAnnual",
       prompt: "What's your annual take-home income from your main occupation?",
-      helper: "Net you receive after tax, social security and pension contributions.",
+      helper: "Annual net of tax income from employment or self-employment.",
       skippable: true
     },
     {
@@ -283,7 +283,7 @@ export function makeHousingSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "housing.downsize.newHomePurchaseCost",
       prompt: "Roughly what would the new place cost?",
-      helper: "In today's money is fine.",
+      helper: "At today's prices, including agency, tax, legal fees, moving, improvements etc.",
       activeWhen: (ctx) => isOwner(ctx) && isDownsizing(ctx) && downsizingMode(ctx) === "BUY"
     },
     {
@@ -293,7 +293,6 @@ export function makeHousingSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "housing.downsize.newRentAnnual",
       prompt: "And roughly what annual rent?",
-      helper: "Today's money is fine.",
       activeWhen: (ctx) => isOwner(ctx) && isDownsizing(ctx) && downsizingMode(ctx) === "RENT"
     }
   ];
@@ -308,7 +307,7 @@ export function makeSavingsSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "assets.cash.totalBalance",
       prompt: "How much do you have in liquid savings — current accounts, savings, bonds, term deposits?",
-      helper: "Everything you could reach within a month or two. Stocks come next."
+      helper: "Current and savings accounts, bonds, and term deposits"
     },
     {
       id: "equities",
@@ -317,7 +316,7 @@ export function makeSavingsSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "assets.equities.marketValue",
       prompt: "And invested in the stock market — ETFs, funds, pensions?",
-      helper: "Rough total across everything is fine."
+      helper: "Current market value of equity portfolio"
     },
     {
       id: "equityContrib",
@@ -623,6 +622,7 @@ function dependentSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       kind: "currency",
       fieldId: costField,
       prompt: "Roughly how much does it cost to support {name} each year?",
+      helper: "Food, education, healthcare,\netc.",
       activeWhen: active
     },
     {
@@ -632,7 +632,7 @@ function dependentSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       kind: "integer",
       fieldId: yearsField,
       prompt: "For how many more years?",
-      helper: "A whole number from 1 to 99, within the plan's time horizon.",
+      helper: "Whole years, within the plan's time horizon.",
       activeWhen: active
     }
   ];
@@ -661,7 +661,7 @@ export function makePensionSequence(): QuestionDef[] {
       kind: "integer",
       fieldId: "retirement.statutoryAge",
       prompt: "When does your state or statutory pension start?",
-      helper: "Most countries set it between 65 and 68. It just needs to be later than your current age."
+      helper: "Usually between 65 and 68. Must be 50-70 and later than current age."
     },
     {
       id: "statePension",
@@ -670,6 +670,7 @@ export function makePensionSequence(): QuestionDef[] {
       kind: "currency",
       fieldId: "retirement.statePension.netAnnualAtStart",
       prompt: "And roughly how much a year?",
+      helper: "Net annual pension entitlement",
       skippable: true
     },
     {
