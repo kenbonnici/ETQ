@@ -254,7 +254,7 @@ export function makeHousingSequence(): QuestionDef[] {
       kind: "yesNo",
       gateId: "downsizingGate",
       prompt: "Any plans to downsize one day?",
-      helper: "Selling and moving somewhere smaller, or to a new place. Skip if you're not sure.",
+      helper: "Selling and moving somewhere smaller, or to a new place.",
       skippable: true,
       activeWhen: isOwner
     },
@@ -265,7 +265,7 @@ export function makeHousingSequence(): QuestionDef[] {
       kind: "integer",
       fieldId: "housing.downsize.year",
       prompt: "In what year are you thinking?",
-      helper: "A future year, e.g. 2035.",
+      helper: `A future year, e.g. ${new Date().getFullYear() + 5}.`,
       activeWhen: (ctx) => isOwner(ctx) && isDownsizing(ctx)
     },
     {
