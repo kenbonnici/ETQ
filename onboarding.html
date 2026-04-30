@@ -224,29 +224,14 @@
     margin: 0 0 14px;
   }
   .ob-card-topbar .ob-back { margin: 0; }
-  .ob-card-counter {
-    font-family: "Inter", sans-serif;
-    font-size: 13px;
-    font-weight: 400;
-    letter-spacing: 0.04em;
-    color: var(--ink-soft);
-    position: relative;
-    padding-left: 12px;
-  }
-  .ob-card-counter::before {
-    content: "";
-    position: absolute;
-    left: 0; top: 50%;
-    width: 1px; height: 11px;
-    background: var(--rule);
-    transform: translateY(-50%);
-  }
-  .ob-card-counter[data-counter-leading="true"] { padding-left: 0; }
-  .ob-card-counter[data-counter-leading="true"]::before { display: none; }
   .ob-card-topbar .ob-forward {
     position: relative;
     padding-left: 14px;
   }
+  .ob-card-topbar .ob-forward:first-child {
+    padding-left: 0;
+  }
+  .ob-card-topbar .ob-forward:first-child::before { display: none; }
   .ob-card-topbar .ob-forward::before {
     content: "";
     position: absolute;
@@ -265,6 +250,17 @@
     letter-spacing: 0.16em; text-transform: uppercase;
     color: var(--amber);
     margin: 0 0 16px;
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .ob-eyebrow .ob-card-counter {
+    font-weight: 400;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    text-transform: none;
+    font-size: 12px;
   }
   .ob-prompt {
     font-family: "Cormorant Garamond", Georgia, serif;

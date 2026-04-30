@@ -26,13 +26,6 @@ export function createCard(
     back.addEventListener("click", onBack);
     topbar.appendChild(back);
   }
-  if (counterLabel) {
-    const counter = document.createElement("span");
-    counter.className = "ob-card-counter";
-    counter.textContent = counterLabel;
-    if (!onBack) counter.setAttribute("data-counter-leading", "true");
-    topbar.appendChild(counter);
-  }
   if (onForward) {
     const fwd = document.createElement("button");
     fwd.type = "button";
@@ -56,10 +49,21 @@ export function createCard(
   }
   if (topbar.childElementCount > 0) section.appendChild(topbar);
 
-  if (chapterLabel) {
+  if (chapterLabel || counterLabel) {
     const eyebrow = document.createElement("p");
     eyebrow.className = "ob-eyebrow";
-    eyebrow.textContent = chapterLabel;
+    if (chapterLabel) {
+      const labelEl = document.createElement("span");
+      labelEl.className = "ob-eyebrow-label";
+      labelEl.textContent = chapterLabel;
+      eyebrow.appendChild(labelEl);
+    }
+    if (counterLabel) {
+      const counter = document.createElement("span");
+      counter.className = "ob-card-counter";
+      counter.textContent = counterLabel;
+      eyebrow.appendChild(counter);
+    }
     section.appendChild(eyebrow);
   }
 
