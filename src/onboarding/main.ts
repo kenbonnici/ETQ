@@ -463,6 +463,22 @@ function renderChip(q: QuestionDef): HTMLElement {
 
 function editChip(q: QuestionDef): void {
   const idx = sequence.findIndex((s) => s.id === q.id);
+  // The currently-active question may itself be an in-progress edit (its
+  // answer lives in fieldState + staleAnswered, but it's been removed from
+  // `answered` so the active card renders pre-filled). Restore it before
+  // navigating away; otherwise repeated back-clicks silently drop chips for
+  // each intermediate stale-edit, since render only emits chips for entries
+  // still in `answered`.
+  const prevActiveId = uiState.activeQuestionId;
+  if (
+    prevActiveId &&
+    prevActiveId !== q.id &&
+    prevActiveId !== "handoff" &&
+    uiState.staleAnswered.has(prevActiveId) &&
+    !uiState.answered.has(prevActiveId)
+  ) {
+    uiState.answered.add(prevActiveId);
+  }
   // If the user previously opened an earlier question for edit (via chip click
   // or "← back") but never re-confirmed it, that question is currently absent
   // from `answered`. Clicking forward to a later chip is an implicit signal

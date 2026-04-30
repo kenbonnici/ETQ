@@ -152,6 +152,66 @@ test.describe("Progressive Onboarding", () => {
     await expect(page.locator("[data-onboarding-jump-latest]")).toHaveCount(0);
   });
 
+  test("repeated back clicks preserve every still-valid answered chip in history", async ({ page }) => {
+    // Repro: chained back navigation must not silently drop chips for the
+    // intermediate questions whose values are preserved.
+    await gotoOnboarding(page);
+    await answerText(page, "age", "48");
+    await answerYesNo(page, "partnerInclude", "NO");
+    await answerText(page, "userIncome", "65000");
+    await answerText(page, "livingExpenses", "40000");
+    await expect(page.locator("[data-onboarding-card=\"spendingTaper\"]")).toBeVisible();
+
+    // Three back-steps in a row.
+    await page.locator("[data-onboarding-card=\"spendingTaper\"] [data-onboarding-back]").click();
+    await expect(page.locator("[data-onboarding-card=\"livingExpenses\"]")).toBeVisible();
+    await page.locator("[data-onboarding-card=\"livingExpenses\"] [data-onboarding-back]").click();
+    await expect(page.locator("[data-onboarding-card=\"userIncome\"]")).toBeVisible();
+    await page.locator("[data-onboarding-card=\"userIncome\"] [data-onboarding-back]").click();
+    await expect(page.locator("[data-onboarding-card=\"partnerInclude\"]")).toBeVisible();
+
+    // Every previously-answered question (other than the current active one)
+    // must still appear in history. Before the fix, userIncome and
+    // livingExpenses chips disappeared on the second/third back click.
+    await expect(page.locator("[data-onboarding-chip=\"age\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-chip=\"userIncome\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-chip=\"livingExpenses\"]")).toBeVisible();
+  });
+
+  test("chained chip-clicks backward preserve every answered chip", async ({ page }) => {
+    await gotoOnboarding(page);
+    await answerText(page, "age", "48");
+    await answerYesNo(page, "partnerInclude", "NO");
+    await answerText(page, "userIncome", "65000");
+    await answerText(page, "livingExpenses", "40000");
+    await page.locator("[data-onboarding-option=\"STEADY\"]").click();
+    await page.locator("[data-toggle-field-id=\"housing.status\"][data-toggle-option=\"Renter\"]").click();
+    await answerText(page, "rent", "1000");
+    await expect(page.locator("[data-onboarding-card=\"cash\"]")).toBeVisible();
+
+    // Click chip far back, then click an even earlier chip. The intermediate
+    // first-target chip must still render even though it became stale-edit.
+    await page.locator("[data-onboarding-chip=\"livingExpenses\"]").click();
+    await expect(page.locator("[data-onboarding-card=\"livingExpenses\"]")).toBeVisible();
+    await page.locator("[data-onboarding-chip=\"userIncome\"]").click();
+    await expect(page.locator("[data-onboarding-card=\"userIncome\"]")).toBeVisible();
+
+    // livingExpenses (the abandoned previous edit target) and all later
+    // answered questions must still be visible as chips.
+    await expect(page.locator("[data-onboarding-chip=\"livingExpenses\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-chip=\"spendingTaper\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-chip=\"housingStatus\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-chip=\"rent\"]")).toBeVisible();
+
+    // Continuing from userIncome carries forward the stale cascade — the
+    // next active card is livingExpenses (already pre-filled), and the
+    // prior chips remain.
+    await page.locator("[data-onboarding-continue=\"userIncome\"]").click();
+    await expect(page.locator("[data-onboarding-card=\"livingExpenses\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-input=\"livingExpenses\"]")).toHaveValue("40000");
+    await expect(page.locator("[data-onboarding-chip=\"userIncome\"]")).toBeVisible();
+  });
+
   test("repeated back clicks keep jump-to-latest visible as the user moves further from the frontier", async ({ page }) => {
     await gotoOnboarding(page);
     await answerText(page, "age", "48");
