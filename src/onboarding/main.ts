@@ -287,8 +287,10 @@ function buildLayout(): void {
   right.className = "ob-estimate";
   right.id = "ob-estimate";
   right.innerHTML = `
+    <p class="ob-estimate-placeholder-label">Your estimate</p>
     <p class="ob-estimate-label">You could stop working at</p>
     <div class="ob-estimate-age" id="ob-estimate-age" aria-live="polite">—</div>
+    <span class="ob-estimate-delta-shift" id="ob-estimate-delta-shift" aria-hidden="true"></span>
     <p class="ob-estimate-placeholder" id="ob-estimate-placeholder">Your earliest possible retirement age will appear as you answer.</p>
     <p class="ob-estimate-delta" id="ob-estimate-delta" hidden></p>
     <p class="ob-estimate-warning" id="ob-estimate-warning" hidden></p>
@@ -405,12 +407,23 @@ function render(): void {
     return card;
   };
 
+  const onHandoff = uiState.completed || uiState.activeQuestionId === "handoff";
+  if (onHandoff) app.setAttribute("data-on-handoff", "true");
+  else app.removeAttribute("data-on-handoff");
+
   // Every active question — including compact "add another?" gates — gets the
   // pinned, sticky treatment. The card's eyebrow already names the chapter, so
   // the gate doesn't need to sit inline among its siblings.
-  if (uiState.completed || uiState.activeQuestionId === "handoff") {
+  if (onHandoff) {
     left.appendChild(wrapInListItem(markAnimate(renderHandoffCard())));
   } else if (active) {
+    if (uiState.staleAnswered.size > 0) {
+      const hint = document.createElement("p");
+      hint.className = "ob-edit-hint";
+      const n = uiState.staleAnswered.size;
+      hint.textContent = `Editing — you'll re-confirm ${n} later answer${n === 1 ? "" : "s"} as you continue.`;
+      left.appendChild(hint);
+    }
     left.appendChild(wrapInListItem(markAnimate(renderActiveCard(active)), false, true));
   }
 
@@ -980,6 +993,7 @@ function renderHandoffCard(): HTMLElement {
     <div class="ob-actions ob-handoff-actions">
       <button type="button" class="btn btn-primary" data-onboarding-handoff>Take me to the full calculator →</button>
       <button type="button" class="ob-skip" data-onboarding-save>save and come back later</button>
+      <span class="ob-saved-toast" data-onboarding-saved-toast aria-live="polite"></span>
     </div>
   `;
   card.querySelector<HTMLButtonElement>("[data-onboarding-handoff]")?.addEventListener("click", () => {
@@ -994,7 +1008,10 @@ function renderHandoffCard(): HTMLElement {
     clearQuickEstimateSeed();
     navigateToCalculator();
   });
-  card.querySelector<HTMLButtonElement>("[data-onboarding-save]")?.addEventListener("click", () => {
+  const saveBtn = card.querySelector<HTMLButtonElement>("[data-onboarding-save]");
+  const toast = card.querySelector<HTMLElement>("[data-onboarding-saved-toast]");
+  let toastHandle: number | null = null;
+  saveBtn?.addEventListener("click", () => {
     writeDraftFromOnboarding(
       fieldState,
       modelUiState.earlyRetirementAge,
@@ -1002,7 +1019,15 @@ function renderHandoffCard(): HTMLElement {
       uiState.livingExpenseCategoryValues,
       selectedCurrency
     );
-    (card.querySelector("[data-onboarding-save]") as HTMLElement).textContent = "saved locally";
+    if (toast) {
+      toast.textContent = "Saved on this device — pick up here next visit.";
+      toast.setAttribute("data-visible", "true");
+      if (toastHandle !== null) window.clearTimeout(toastHandle);
+      toastHandle = window.setTimeout(() => {
+        toast?.removeAttribute("data-visible");
+        toastHandle = null;
+      }, 3200);
+    }
   });
   return card;
 }
@@ -1031,12 +1056,13 @@ function buildActions(q: QuestionDef, onContinue: () => void, onSkip: () => void
 
 function buildProgressLabels(q: QuestionDef): { chapter: string; counter: string } {
   const activeList = sequence.filter((s) => isQuestionActive(s, ctx()) && s.id !== "handoff");
-  const idx = activeList.findIndex((s) => s.id === q.id);
-  const position = idx >= 0 ? idx + 1 : 1;
-  const total = activeList.length || position;
+  const sameChapter = activeList.filter((s) => s.chapterTitle === q.chapterTitle);
+  const chapterIdx = sameChapter.findIndex((s) => s.id === q.id);
+  const chapterPos = chapterIdx >= 0 ? chapterIdx + 1 : 1;
+  const chapterTotal = sameChapter.length || chapterPos;
   return {
     chapter: q.chapterTitle.toUpperCase(),
-    counter: `${position} of ${total}`
+    counter: `${chapterPos} of ${chapterTotal}`
   };
 }
 
@@ -1279,6 +1305,29 @@ function findEarliestSuccessfulAge(): number | null {
   return null;
 }
 
+let deltaShiftHandle: number | null = null;
+function flashAgeChange(ageEl: HTMLElement, from: number, to: number): void {
+  ageEl.removeAttribute("data-changed");
+  // restart animation
+  void ageEl.offsetWidth;
+  ageEl.setAttribute("data-changed", "true");
+  const shift = document.getElementById("ob-estimate-delta-shift");
+  if (shift) {
+    const diff = to - from;
+    const sign = diff > 0 ? "+" : "";
+    shift.textContent = `${sign}${diff} year${Math.abs(diff) === 1 ? "" : "s"}`;
+    shift.setAttribute("data-visible", "true");
+    if (deltaShiftHandle !== null) window.clearTimeout(deltaShiftHandle);
+    deltaShiftHandle = window.setTimeout(() => {
+      shift.removeAttribute("data-visible");
+      deltaShiftHandle = window.setTimeout(() => {
+        shift.textContent = "";
+        deltaShiftHandle = null;
+      }, 240);
+    }, 1800);
+  }
+}
+
 function setHeroAge(ageEl: HTMLElement, target: number | null): void {
   if (ageTweenHandle !== null) {
     window.cancelAnimationFrame(ageTweenHandle);
@@ -1289,6 +1338,8 @@ function setHeroAge(ageEl: HTMLElement, target: number | null): void {
     displayedAge = null;
     return;
   }
+  const previous = displayedAge;
+  if (previous !== null && previous !== target) flashAgeChange(ageEl, previous, target);
   const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const start = displayedAge;
   if (start === null || reduced || start === target) {

@@ -28,6 +28,7 @@ export function createCard(
     const counter = document.createElement("span");
     counter.className = "ob-card-counter";
     counter.textContent = counterLabel;
+    if (!onBack) counter.setAttribute("data-counter-leading", "true");
     topbar.appendChild(counter);
   }
   if (topbar.childElementCount > 0) section.appendChild(topbar);
