@@ -289,11 +289,15 @@ function buildLayout(): void {
   right.innerHTML = `
     <p class="ob-estimate-placeholder-label">Your estimate</p>
     <p class="ob-estimate-label">Estimate so far</p>
-    <div class="ob-estimate-age" id="ob-estimate-age" aria-live="polite">—</div>
-    <span class="ob-estimate-delta-shift" id="ob-estimate-delta-shift" aria-hidden="true"></span>
-    <p class="ob-estimate-progress" id="ob-estimate-progress" hidden></p>
+    <div class="ob-estimate-hero">
+      <div class="ob-estimate-age" id="ob-estimate-age" aria-live="polite">—</div>
+      <div class="ob-estimate-hero-meta">
+        <span class="ob-estimate-delta-shift" id="ob-estimate-delta-shift" aria-hidden="true"></span>
+        <p class="ob-estimate-progress" id="ob-estimate-progress" hidden></p>
+        <p class="ob-estimate-delta" id="ob-estimate-delta" hidden></p>
+      </div>
+    </div>
     <p class="ob-estimate-placeholder" id="ob-estimate-placeholder">Your earliest possible retirement age will appear as you answer.</p>
-    <p class="ob-estimate-delta" id="ob-estimate-delta" hidden></p>
     <p class="ob-estimate-warning" id="ob-estimate-warning" hidden></p>
     <div class="ob-chart-wrap" id="ob-chart-wrap">
       <canvas class="ob-chart-canvas" id="ob-chart-canvas"></canvas>
