@@ -1021,15 +1021,22 @@ function renderLivingExpensesExpanded(q: QuestionDef): HTMLElement {
   }
   card.appendChild(grid);
 
-  const totalEl = document.createElement("p");
+  const totalEl = document.createElement("div");
   totalEl.className = "ob-le-total";
+  const totalLabel = document.createElement("span");
+  totalLabel.className = "ob-le-total-label";
+  totalLabel.textContent = "Total a year";
+  const totalValue = document.createElement("span");
+  totalValue.className = "ob-le-total-value";
+  totalEl.appendChild(totalLabel);
+  totalEl.appendChild(totalValue);
   const updateTotal = (): void => {
     let sum = 0;
     for (const { el } of inputs) {
       const n = Number(el.value.replace(/[^\d.+-]/g, ""));
       if (Number.isFinite(n)) sum += n;
     }
-    totalEl.textContent = `Total: ${formatCurrencyAmount(sum, selectedCurrency, "en-IE")} a year`;
+    totalValue.textContent = formatCurrencyAmount(sum, selectedCurrency, "en-IE");
   };
   updateTotal();
   for (const { el } of inputs) el.addEventListener("input", updateTotal);
