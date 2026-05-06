@@ -288,9 +288,10 @@ function buildLayout(): void {
   right.id = "ob-estimate";
   right.innerHTML = `
     <p class="ob-estimate-placeholder-label">Your estimate</p>
-    <p class="ob-estimate-label">You could stop working at</p>
+    <p class="ob-estimate-label">Estimate so far</p>
     <div class="ob-estimate-age" id="ob-estimate-age" aria-live="polite">—</div>
     <span class="ob-estimate-delta-shift" id="ob-estimate-delta-shift" aria-hidden="true"></span>
+    <p class="ob-estimate-progress" id="ob-estimate-progress" hidden></p>
     <p class="ob-estimate-placeholder" id="ob-estimate-placeholder">Your earliest possible retirement age will appear as you answer.</p>
     <p class="ob-estimate-delta" id="ob-estimate-delta" hidden></p>
     <p class="ob-estimate-warning" id="ob-estimate-warning" hidden></p>
@@ -1116,8 +1117,8 @@ function renderHandoffCard(): HTMLElement {
     <p class="ob-eyebrow">That's the picture</p>
     ${ageBlock}
     <p class="ob-helper ob-handoff-helper">
-      There's more you can explore in the full model — stock-market downturns, one-off future events,
-      the order we'd sell things in if you needed to. None of it is required.
+      The full calculator is where this firms up. You'll set growth rates, inflation,
+      the order we'd sell things in if you needed to, and the future events you want to plan around.
     </p>
     <div class="ob-actions ob-handoff-actions">
       <button type="button" class="btn btn-primary" data-onboarding-handoff>Take me to the full calculator →</button>
@@ -1486,13 +1487,20 @@ function setHeroAge(ageEl: HTMLElement, target: number | null): void {
   ageTweenHandle = window.requestAnimationFrame(tick);
 }
 
+function countAnsweredActive(): { answered: number; total: number } {
+  const active = sequence.filter((s) => isQuestionActive(s, ctx()) && s.id !== "handoff");
+  const answered = active.filter((s) => uiState.answered.has(s.id)).length;
+  return { answered, total: active.length };
+}
+
 function paintEstimate(): void {
   const ageEl = document.getElementById("ob-estimate-age");
   const placeholderEl = document.getElementById("ob-estimate-placeholder");
   const deltaEl = document.getElementById("ob-estimate-delta");
   const warningEl = document.getElementById("ob-estimate-warning");
   const panelEl = document.getElementById("ob-estimate");
-  if (!ageEl || !placeholderEl || !deltaEl || !warningEl || !panelEl) return;
+  const progressEl = document.getElementById("ob-estimate-progress");
+  if (!ageEl || !placeholderEl || !deltaEl || !warningEl || !panelEl || !progressEl) return;
 
   const rawAge = resolveEarliestAge();
   const coreAnswered = uiState.answered.has("livingExpenses") && uiState.answered.has("cash");
@@ -1517,6 +1525,7 @@ function paintEstimate(): void {
     placeholderEl.textContent = pendingEstimateMessage();
     deltaEl.hidden = true;
     warningEl.hidden = true;
+    progressEl.hidden = true;
     return;
   }
   if (hasBlockers) {
@@ -1526,12 +1535,20 @@ function paintEstimate(): void {
     warningEl.hidden = false;
     warningEl.textContent = "One of the numbers needs a second look.";
     deltaEl.hidden = true;
+    progressEl.hidden = true;
     return;
   }
   setHeroAge(ageEl, hasAge ? age : null);
   ageEl.dataset.state = hasAge ? "value" : "empty";
   placeholderEl.hidden = true;
   warningEl.hidden = true;
+  const { answered, total } = countAnsweredActive();
+  if (hasAge && total > 0 && answered < total) {
+    progressEl.hidden = false;
+    progressEl.textContent = `${answered} of ${total} answers in, defaults for the rest, still refining.`;
+  } else {
+    progressEl.hidden = true;
+  }
 
   const statutory = Number(fieldState["retirement.statutoryAge"] ?? 0);
   if (hasAge && statutory && statutory > age) {
