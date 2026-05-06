@@ -310,33 +310,6 @@ function buildLayout(): void {
         </span>
       </div>
     </div>
-    <details class="ob-estimate-assumptions" id="ob-estimate-assumptions">
-      <summary class="ob-estimate-assumptions-summary">
-        <span class="ob-estimate-assumptions-summary-text">This estimate uses default assumptions and skips some things only the full calculator covers.</span>
-        <span class="ob-estimate-assumptions-toggle" aria-hidden="true"></span>
-      </summary>
-      <div class="ob-estimate-assumptions-section">
-        <p class="ob-estimate-assumptions-section-label">Adjust in the full calculator</p>
-        <ul class="ob-estimate-assumptions-list">
-          <li>Investment growth rates (equities, cash, rental income, salary)</li>
-          <li>Property appreciation, and selling costs on stocks, property, and other assets</li>
-          <li>Inflation applied to spending and other figures over time</li>
-          <li>How your spending shifts through retirement</li>
-          <li>Early-retirement pension reduction and partner timing</li>
-          <li>Planning horizon and the order assets are drawn down</li>
-        </ul>
-      </div>
-      <div class="ob-estimate-assumptions-section">
-        <p class="ob-estimate-assumptions-section-label">Add in the full calculator</p>
-        <ul class="ob-estimate-assumptions-list">
-          <li>One-off future events (inheritance, asset sales, weddings, renovations)</li>
-          <li>Plans to downsize or change your home later in life</li>
-          <li>Side income (freelance, consulting) and any post-retirement work</li>
-          <li>A cash reserve to keep on hand and money to leave behind</li>
-          <li>Effects of future market crashes you want to plan around</li>
-        </ul>
-      </div>
-    </details>
   `;
   app.appendChild(left);
   app.appendChild(right);
@@ -1110,20 +1083,69 @@ function renderLivingExpensesExpanded(q: QuestionDef): HTMLElement {
 
 function renderHandoffCard(): HTMLElement {
   const age = resolveEarliestAge();
+  const statutory = Number(fieldState["retirement.statutoryAge"] ?? 0);
   const card = document.createElement("section");
   card.className = "ob-card ob-card-handoff";
   card.setAttribute("data-onboarding-card", "handoff");
-  const ageBlock = age !== null
-    ? `<p class="ob-handoff-label">You could stop working at</p>
-       <div class="ob-handoff-age">${age}</div>`
-    : `<p class="ob-handoff-label">Your picture is ready</p>`;
+
+  let tone: "early" | "atStatutory" | "notViable";
+  let hero: string;
+  if (age === null) {
+    tone = "notViable";
+    hero = `
+      <p class="ob-handoff-label">Your picture so far</p>
+      <div class="ob-handoff-statement">Not quite there with this set of answers.</div>
+      <p class="ob-handoff-subline">Tune assumptions or schedule the big stuff to see if there's room.</p>
+    `;
+  } else if (statutory && age < statutory) {
+    tone = "early";
+    const gap = statutory - age;
+    const yearWord = gap === 1 ? "year" : "years";
+    hero = `
+      <p class="ob-handoff-label">You could stop working at</p>
+      <div class="ob-handoff-age">${age}</div>
+      <p class="ob-handoff-subline">That's ${gap} ${yearWord} before the statutory age of ${statutory}.</p>
+    `;
+  } else {
+    tone = "atStatutory";
+    hero = `
+      <p class="ob-handoff-label">On track to stop at the statutory age</p>
+      <div class="ob-handoff-age">${age}</div>
+    `;
+  }
+  card.setAttribute("data-tone", tone);
   card.innerHTML = `
-    <p class="ob-eyebrow">That's the picture</p>
-    ${ageBlock}
+    ${hero}
     <p class="ob-helper ob-handoff-helper">
-      The full calculator is where this firms up. You'll set growth rates, inflation,
-      the order we'd sell things in if you needed to, and the future events you want to plan around.
+      A starting estimate, not the final word. The full calculator sharpens this with growth and inflation rates, planned sales of assets and the order they'd be sold in if cash ran short, and major future income or spending events you schedule yourself.
     </p>
+    <details class="ob-estimate-assumptions ob-handoff-details">
+      <summary class="ob-estimate-assumptions-summary">
+        <span class="ob-estimate-assumptions-summary-text">What's missing — and what could move the number</span>
+        <span class="ob-estimate-assumptions-toggle" aria-hidden="true"></span>
+      </summary>
+      <div class="ob-estimate-assumptions-section">
+        <p class="ob-estimate-assumptions-section-label">Sharpen the estimate</p>
+        <ul class="ob-estimate-assumptions-list">
+          <li>Investment growth rates (equities, cash, rental income, salary)</li>
+          <li>Property appreciation, and selling costs on stocks, property, and other assets</li>
+          <li>Inflation applied to spending and other figures over time</li>
+          <li>How your spending shifts through retirement</li>
+          <li>Early-retirement pension reduction and partner timing</li>
+          <li>Planning horizon, planned sales of assets, and the order assets are drawn down</li>
+        </ul>
+      </div>
+      <div class="ob-estimate-assumptions-section">
+        <p class="ob-estimate-assumptions-section-label">Add to the picture</p>
+        <ul class="ob-estimate-assumptions-list">
+          <li>One-off future events (inheritance, asset sales, weddings, renovations)</li>
+          <li>Plans to downsize or change your home later in life</li>
+          <li>Side income (freelance, consulting) and any post-retirement work</li>
+          <li>A cash reserve to keep on hand and money to leave behind</li>
+          <li>Effects of future market crashes you want to plan around</li>
+        </ul>
+      </div>
+    </details>
     <div class="ob-actions ob-handoff-actions">
       <button type="button" class="btn btn-primary" data-onboarding-handoff>Take me to the full calculator →</button>
       <button type="button" class="ob-skip" data-onboarding-save>save and come back later</button>
