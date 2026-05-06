@@ -148,7 +148,7 @@ let uiState: ModelUiState = {
   manualPropertyLiquidationOrder: false
 };
 
-interface PersistedScenarioSnapshotV2 {
+interface PersistedScenarioSnapshot {
   version: 2;
   savedAt: string;
   fields: FieldState;
@@ -163,11 +163,11 @@ interface PersistedScenarioSnapshotV2 {
   };
 }
 
-interface NamedScenarioRecordV1 {
+interface NamedScenarioRecord {
   id: string;
   name: string;
   updatedAt: string;
-  snapshot: PersistedScenarioSnapshotV2;
+  snapshot: PersistedScenarioSnapshot;
 }
 
 interface ScenarioManagerNotice {
@@ -267,7 +267,7 @@ const DOWNSIZING_PREVIEW_INPUT_FIELDS = new Set<FieldId>([
 
 let scenarioStorageAvailable = true;
 let activeSavedScenarioId: string | null = null;
-let activeScenarioStatusSnapshot: PersistedScenarioSnapshotV2 | null = null;
+let activeScenarioStatusSnapshot: PersistedScenarioSnapshot | null = null;
 let selectedSavedScenarioId: string | null = null;
 let scenarioDraftName = "";
 let scenarioManagerNotice: ScenarioManagerNotice | null = null;
@@ -1254,14 +1254,14 @@ function normalizePersistedFields(raw: unknown): FieldState {
   return pruneInactiveFieldState(sanitizedFields);
 }
 
-function normalizePersistedSnapshot(raw: unknown): PersistedScenarioSnapshotV2 | null {
+function normalizePersistedSnapshot(raw: unknown): PersistedScenarioSnapshot | null {
   if (!raw || typeof raw !== "object") return null;
-  const candidate = raw as Partial<PersistedScenarioSnapshotV2>;
+  const candidate = raw as Partial<PersistedScenarioSnapshot>;
   if (candidate.version !== 2) return null;
 
   const ui = candidate.ui && typeof candidate.ui === "object" ? candidate.ui : {};
   const livingExpenseValues = sanitizeLivingExpenseCategoryValues(
-    (ui as Partial<PersistedScenarioSnapshotV2["ui"]>).livingExpenseCategoryValues
+    (ui as Partial<PersistedScenarioSnapshot["ui"]>).livingExpenseCategoryValues
   );
 
   return {
@@ -1270,13 +1270,13 @@ function normalizePersistedSnapshot(raw: unknown): PersistedScenarioSnapshotV2 |
     fields: normalizePersistedFields(candidate.fields),
     plannedSellYears: normalizePersistedPlannedSellYears(candidate.plannedSellYears),
     ui: {
-      majorFutureEventsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV2["ui"]>).majorFutureEventsOpen),
-      advancedAssumptionsOpen: Boolean((ui as Partial<PersistedScenarioSnapshotV2["ui"]>).advancedAssumptionsOpen),
-      earlyRetirementAge: Number((ui as Partial<PersistedScenarioSnapshotV2["ui"]>).earlyRetirementAge),
-      selectedCurrency: isTopCurrency((ui as Partial<PersistedScenarioSnapshotV2["ui"]>).selectedCurrency)
-        ? String((ui as Partial<PersistedScenarioSnapshotV2["ui"]>).selectedCurrency)
+      majorFutureEventsOpen: Boolean((ui as Partial<PersistedScenarioSnapshot["ui"]>).majorFutureEventsOpen),
+      advancedAssumptionsOpen: Boolean((ui as Partial<PersistedScenarioSnapshot["ui"]>).advancedAssumptionsOpen),
+      earlyRetirementAge: Number((ui as Partial<PersistedScenarioSnapshot["ui"]>).earlyRetirementAge),
+      selectedCurrency: isTopCurrency((ui as Partial<PersistedScenarioSnapshot["ui"]>).selectedCurrency)
+        ? String((ui as Partial<PersistedScenarioSnapshot["ui"]>).selectedCurrency)
         : DEFAULT_CURRENCY,
-      livingExpensesMode: (ui as Partial<PersistedScenarioSnapshotV2["ui"]>).livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(livingExpenseValues)
+      livingExpensesMode: (ui as Partial<PersistedScenarioSnapshot["ui"]>).livingExpensesMode === "expanded" && hasAnyLivingExpenseCategoryValues(livingExpenseValues)
         ? "expanded"
         : "single",
       livingExpenseCategoryValues: livingExpenseValues
@@ -1284,7 +1284,7 @@ function normalizePersistedSnapshot(raw: unknown): PersistedScenarioSnapshotV2 |
   };
 }
 
-function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshotV2 {
+function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshot {
   return {
     version: 2,
     savedAt: new Date().toISOString(),
@@ -1301,7 +1301,7 @@ function collectPersistedScenarioSnapshot(): PersistedScenarioSnapshotV2 {
   };
 }
 
-function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshotV2): boolean {
+function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshot): boolean {
   if (INPUT_DEFINITIONS.some((def) => (snapshot.fields[def.fieldId] ?? null) !== (DEFAULT_PERSISTED_FIELDS[def.fieldId] ?? null))) return true;
   if (hasAnyPlannedSellYearState(snapshot.plannedSellYears)) return true;
   if (snapshot.ui.majorFutureEventsOpen || snapshot.ui.advancedAssumptionsOpen) return true;
@@ -1310,7 +1310,7 @@ function snapshotHasMeaningfulState(snapshot: PersistedScenarioSnapshotV2): bool
   return false;
 }
 
-function snapshotHasSavableData(snapshot: PersistedScenarioSnapshotV2): boolean {
+function snapshotHasSavableData(snapshot: PersistedScenarioSnapshot): boolean {
   if (INPUT_DEFINITIONS.some((def) => (snapshot.fields[def.fieldId] ?? null) !== (DEFAULT_PERSISTED_FIELDS[def.fieldId] ?? null))) return true;
   if (hasAnyPlannedSellYearState(snapshot.plannedSellYears)) return true;
   if (snapshot.ui.selectedCurrency !== DEFAULT_CURRENCY) return true;
@@ -1318,7 +1318,7 @@ function snapshotHasSavableData(snapshot: PersistedScenarioSnapshotV2): boolean 
   return false;
 }
 
-function snapshotsMatchForScenarioStatus(a: PersistedScenarioSnapshotV2, b: PersistedScenarioSnapshotV2): boolean {
+function snapshotsMatchForScenarioStatus(a: PersistedScenarioSnapshot, b: PersistedScenarioSnapshot): boolean {
   if (INPUT_DEFINITIONS.some((def) => (a.fields[def.fieldId] ?? null) !== (b.fields[def.fieldId] ?? null))) return false;
   if (PLANNED_SELL_YEAR_FIELDS.some((fieldId) => (a.plannedSellYears?.[fieldId] ?? null) !== (b.plannedSellYears?.[fieldId] ?? null))) return false;
   if (a.ui.selectedCurrency !== b.ui.selectedCurrency) return false;
@@ -1326,7 +1326,7 @@ function snapshotsMatchForScenarioStatus(a: PersistedScenarioSnapshotV2, b: Pers
   return LIVING_EXPENSE_CATEGORY_DEFINITIONS.every(({ id }) => a.ui.livingExpenseCategoryValues[id] === b.ui.livingExpenseCategoryValues[id]);
 }
 
-function getScenarioDraftStatus(scenarios: NamedScenarioRecordV1[]): "not-saved" | "unsaved-changes" | null {
+function getScenarioDraftStatus(scenarios: NamedScenarioRecord[]): "not-saved" | "unsaved-changes" | null {
   const currentSnapshot = collectPersistedScenarioSnapshot();
   if (!snapshotHasSavableData(currentSnapshot)) return null;
   if (activeScenarioStatusSnapshot) {
@@ -1360,11 +1360,11 @@ function syncScenarioActionButtonState(): void {
   syncScenarioDraftStatusIndicator();
 }
 
-function readDraftScenarioSnapshot(): PersistedScenarioSnapshotV2 | null {
+function readDraftScenarioSnapshot(): PersistedScenarioSnapshot | null {
   return normalizePersistedSnapshot(readScenarioStorageJson<unknown>(SCENARIO_DRAFT_STORAGE_KEY));
 }
 
-function writeDraftScenarioSnapshot(snapshot: PersistedScenarioSnapshotV2): void {
+function writeDraftScenarioSnapshot(snapshot: PersistedScenarioSnapshot): void {
   if (!scenarioStorageAvailable) return;
   if (!snapshotHasMeaningfulState(snapshot)) {
     removeScenarioStorageKey(SCENARIO_DRAFT_STORAGE_KEY);
@@ -1382,14 +1382,14 @@ function schedulePersistDraft(): void {
   }, 250);
 }
 
-function readNamedScenarios(): NamedScenarioRecordV1[] {
+function readNamedScenarios(): NamedScenarioRecord[] {
   const raw = readScenarioStorageJson<unknown>(NAMED_SCENARIOS_STORAGE_KEY);
   if (!Array.isArray(raw)) return [];
 
   const scenarios = raw
-    .map((entry): NamedScenarioRecordV1 | null => {
+    .map((entry): NamedScenarioRecord | null => {
       if (!entry || typeof entry !== "object") return null;
-      const record = entry as Partial<NamedScenarioRecordV1>;
+      const record = entry as Partial<NamedScenarioRecord>;
       const snapshot = normalizePersistedSnapshot(record.snapshot);
       const name = typeof record.name === "string" ? normalizeScenarioName(record.name) : "";
       if (!snapshot || name.length === 0) return null;
@@ -1404,13 +1404,13 @@ function readNamedScenarios(): NamedScenarioRecordV1[] {
         snapshot
       };
     })
-    .filter((entry): entry is NamedScenarioRecordV1 => entry !== null);
+    .filter((entry): entry is NamedScenarioRecord => entry !== null);
 
   scenarios.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   return scenarios;
 }
 
-function writeNamedScenarios(scenarios: NamedScenarioRecordV1[]): void {
+function writeNamedScenarios(scenarios: NamedScenarioRecord[]): void {
   if (!scenarioStorageAvailable) return;
   writeScenarioStorageJson(NAMED_SCENARIOS_STORAGE_KEY, scenarios);
 }
@@ -1434,7 +1434,7 @@ function createScenarioId(): string {
 }
 
 function applyPersistedScenarioSnapshot(
-  snapshot: PersistedScenarioSnapshotV2,
+  snapshot: PersistedScenarioSnapshot,
   notice: { message: string; tone?: ScenarioManagerNotice["tone"] } | null = null
 ): void {
   const restoredFields = snapshot.fields;
@@ -1604,7 +1604,7 @@ async function saveCurrentScenario(): Promise<void> {
   const scenarioId = targetScenarioId
     ?? duplicate?.id
     ?? createScenarioId();
-  const nextEntry: NamedScenarioRecordV1 = {
+  const nextEntry: NamedScenarioRecord = {
     id: scenarioId,
     name: normalizedName,
     updatedAt: new Date().toISOString(),

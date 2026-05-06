@@ -8,9 +8,9 @@ import {
   LivingExpensesMode
 } from "../ui/livingExpenses";
 
-const DRAFT_KEY = "etq:scenario:draft:v2";
+export const SCENARIO_DRAFT_KEY = "etq:scenario:draft:v2";
 const SESSION_SEED_KEY = "etq:landing:quick-estimate";
-const ONBOARDING_STATE_KEY = "etq:onboarding:state:v1";
+export const ONBOARDING_STATE_KEY = "etq:onboarding:state:v1";
 
 export interface QuickEstimateSeed {
   age?: number | null;
@@ -99,7 +99,7 @@ export function writeDraftFromOnboarding(
     }
   };
   try {
-    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(snapshot));
+    window.localStorage.setItem(SCENARIO_DRAFT_KEY, JSON.stringify(snapshot));
   } catch { /* ignore quota errors */ }
 }
 

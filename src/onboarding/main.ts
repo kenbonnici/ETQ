@@ -20,9 +20,11 @@ import {
   clearOnboardingState,
   clearQuickEstimateSeed,
   navigateToCalculator,
+  ONBOARDING_STATE_KEY,
   PersistedOnboardingState,
   readOnboardingState,
   readQuickEstimateSeed,
+  SCENARIO_DRAFT_KEY,
   writeDraftFromOnboarding,
   writeOnboardingState
 } from "./handoff";
@@ -172,7 +174,7 @@ function wireNavJump(): void {
         "Start over? Your answers so far will be cleared and you'll begin from the first question. This cannot be undone."
       );
       if (!ok) return;
-      try { window.localStorage.removeItem("etq:scenario:draft:v2"); } catch { /* ignore */ }
+      try { window.localStorage.removeItem(SCENARIO_DRAFT_KEY); } catch { /* ignore */ }
       clearOnboardingState();
       clearQuickEstimateSeed();
       window.location.assign("onboarding.html");
@@ -183,8 +185,8 @@ function wireNavJump(): void {
 function hasClearableState(): boolean {
   if (uiState.answered.size > 0) return true;
   try {
-    if (window.localStorage.getItem("etq:scenario:draft:v2")) return true;
-    if (window.localStorage.getItem("etq:onboarding:state:v1")) return true;
+    if (window.localStorage.getItem(SCENARIO_DRAFT_KEY)) return true;
+    if (window.localStorage.getItem(ONBOARDING_STATE_KEY)) return true;
   } catch { /* ignore */ }
   return false;
 }
