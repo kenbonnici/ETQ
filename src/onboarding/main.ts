@@ -65,9 +65,16 @@ const appRoot = document.querySelector<HTMLElement>("#app");
 if (!appRoot) throw new Error("Missing #app root for onboarding.");
 const app: HTMLElement = appRoot;
 
-const restored = readOnboardingState();
+const restoredFromStorage = readOnboardingState();
 const seededFromInit = new Set<string>();
-const fieldState: FieldState = initializeFieldState(restored, seededFromInit);
+const fieldState: FieldState = initializeFieldState(restoredFromStorage, seededFromInit);
+// A fresh landing seed wins over any prior resume state — the user just
+// committed to those numbers via the landing form, so a stale walkthrough
+// from a previous visit must not silently swallow them.
+if (seededFromInit.size > 0 && restoredFromStorage) clearOnboardingState();
+if (seededFromInit.size > 0) clearQuickEstimateSeed();
+const restored: PersistedOnboardingState | null =
+  seededFromInit.size > 0 ? null : restoredFromStorage;
 const sequence = buildFullSequence();
 const uiState: OnboardingUiState = {
   answered: new Set(restored?.ui.answered ?? []),
@@ -238,16 +245,16 @@ function initializeFieldState(
   seededOut: Set<string>
 ): FieldState {
   const state = createEmptyFieldState();
-  if (restored) {
-    for (const [k, v] of Object.entries(restored.fields)) {
-      state[k as keyof FieldState] = v as RawInputValue;
-    }
-    return state;
-  }
   const seed = readQuickEstimateSeed();
   if (seed) {
     const seeded = applySeedToFields(seed, state);
     seeded.forEach((id) => seededOut.add(id));
+  }
+  if (seededOut.size > 0) return state;
+  if (restored) {
+    for (const [k, v] of Object.entries(restored.fields)) {
+      state[k as keyof FieldState] = v as RawInputValue;
+    }
   }
   return state;
 }

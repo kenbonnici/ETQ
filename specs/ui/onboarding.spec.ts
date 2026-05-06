@@ -304,4 +304,71 @@ test.describe("Progressive Onboarding", () => {
     const ageInput = page.locator("[data-onboarding-input=\"age\"]");
     await expect(ageInput).toHaveValue("52");
   });
+
+  test("'Ease me in' seeds the six landing inputs and asks for confirmation, not a blank restart", async ({ page }) => {
+    await page.goto("/ETQ/index.html");
+    await page.evaluate(() => {
+      try { window.localStorage.clear(); window.sessionStorage.clear(); } catch { /* ignore */ }
+    });
+    await page.goto("/ETQ/index.html");
+    await page.locator("#c-age").fill("47");
+    await page.locator("#c-income").fill("110000");
+    await page.locator("#c-spend").fill("55000");
+    await page.locator("#c-savings").fill("40000");
+    await page.locator("#c-invest").fill("180000");
+    await page.locator("#c-pension").fill("12000");
+
+    await Promise.all([
+      page.waitForURL(/\/ETQ\/onboarding\.html/),
+      page.locator('a.calc-choice[href="onboarding.html"]').click()
+    ]);
+
+    const ageCard = page.locator('[data-onboarding-card="age"]');
+    await expect(ageCard).toBeVisible();
+    await expect(ageCard).toContainText("does that still feel right?");
+    await expect(page.locator('[data-onboarding-input="age"]')).toHaveValue("47");
+
+    await page.locator('[data-onboarding-continue="age"]').click();
+    await expect(page.locator('[data-onboarding-card="partnerInclude"]')).toBeVisible();
+    await page.locator('[data-onboarding-yesno="partnerInclude"][data-onboarding-option="NO"]').click();
+
+    const incomeCard = page.locator('[data-onboarding-card="userIncome"]');
+    await expect(incomeCard).toBeVisible();
+    await expect(incomeCard).toContainText("does that still feel right?");
+    await expect(page.locator('[data-onboarding-input="userIncome"]')).toHaveValue("110000");
+  });
+
+  test("a fresh landing seed wins over a stale onboarding resume state", async ({ page }) => {
+    await page.addInitScript(() => {
+      try {
+        window.localStorage.clear();
+        window.sessionStorage.clear();
+        window.localStorage.setItem(
+          "etq:onboarding:state:v1",
+          JSON.stringify({
+            version: 1,
+            savedAt: new Date().toISOString(),
+            fields: { "profile.currentAge": 33, "spending.livingExpenses.annual": 12000 },
+            ui: {
+              answered: ["age"],
+              staleAnswered: [],
+              gates: {},
+              acceptedAssumptions: [],
+              seededQuestions: [],
+              activeQuestionId: "partnerInclude"
+            }
+          })
+        );
+        window.sessionStorage.setItem(
+          "etq:landing:quick-estimate",
+          JSON.stringify({ age: 47, livingExpensesAnnual: 55000 })
+        );
+      } catch { /* ignore */ }
+    });
+    await page.goto("/ETQ/onboarding.html");
+    const ageCard = page.locator('[data-onboarding-card="age"]');
+    await expect(ageCard).toBeVisible();
+    await expect(page.locator('[data-onboarding-input="age"]')).toHaveValue("47");
+    await expect(ageCard).toContainText("does that still feel right?");
+  });
 });
