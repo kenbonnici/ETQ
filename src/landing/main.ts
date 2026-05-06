@@ -1,6 +1,6 @@
 import { createEmptyFieldState } from "../model/inputSchema";
 import { ModelUiState } from "../model/types";
-import { applySeedToFields, QuickEstimateSeed } from "../onboarding/handoff";
+import { applySeedToFields, QuickEstimateSeed, writeDraftFromOnboarding } from "../onboarding/handoff";
 import { findEarliestRetirementAge } from "../shared/findEarliestRetirementAge";
 
 const INPUTS_KEY = "etq:landing:inputs";
@@ -87,6 +87,18 @@ function writeSeedOnNav(): void {
   } catch { /* ignore */ }
 }
 
+function hasAnySeedValue(seed: QuickEstimateSeed): boolean {
+  return Object.values(seed).some((v) => v !== null && v !== undefined);
+}
+
+function writeDraftOnCalculatorNav(): void {
+  const seed = readSeed();
+  if (!hasAnySeedValue(seed)) return;
+  const fields = createEmptyFieldState();
+  applySeedToFields(seed, fields);
+  writeDraftFromOnboarding(fields, DEFAULT_EARLY_RETIREMENT_AGE);
+}
+
 function initCounter(): void {
   const el = document.getElementById("counter");
   if (!el) return;
@@ -116,6 +128,9 @@ document.getElementById("c-clear")?.addEventListener("click", () => {
 });
 document.querySelectorAll<HTMLAnchorElement>('a[href="onboarding.html"]').forEach((a) => {
   a.addEventListener("click", writeSeedOnNav);
+});
+document.querySelectorAll<HTMLAnchorElement>('a[href="calculator.html"]').forEach((a) => {
+  a.addEventListener("click", writeDraftOnCalculatorNav);
 });
 recalc();
 initCounter();
