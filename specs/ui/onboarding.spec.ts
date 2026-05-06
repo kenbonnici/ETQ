@@ -287,6 +287,126 @@ test.describe("Progressive Onboarding", () => {
     expect(draft.version).toBe(2);
     expect(draft.fields["profile.currentAge"]).toBe(48);
     expect(draft.fields["spending.livingExpenses.annual"]).toBe(30000);
+
+    const resumeRaw = await page.evaluate(() => window.localStorage.getItem("etq:onboarding:state:v1"));
+    expect(resumeRaw).not.toBeNull();
+    const resume = JSON.parse(String(resumeRaw));
+    expect(resume.version).toBe(1);
+    expect(resume.fields["profile.currentAge"]).toBe(48);
+    expect(resume.ui.answered).toEqual(expect.arrayContaining(["age", "userIncome", "livingExpenses"]));
+    expect(resume.ui.activeQuestionId).toBe("handoff");
+  });
+
+  test("returning to onboarding after handoff resumes the conversation, not a fresh start", async ({ page }) => {
+    await gotoOnboarding(page);
+    await answerText(page, "age", "48");
+    await answerYesNo(page, "partnerInclude", "NO");
+    await answerText(page, "userIncome", "200000");
+    await expect(page.locator("[data-onboarding-card=\"livingExpenses\"]")).toBeVisible();
+
+    await Promise.all([
+      page.waitForURL(/\/ETQ\/calculator\.html#from=onboarding/),
+      page.locator("[data-onboarding-jump]").click()
+    ]);
+
+    const resumeRaw = await page.evaluate(() => window.localStorage.getItem("etq:onboarding:state:v1"));
+    expect(resumeRaw).not.toBeNull();
+
+    await page.goto("/ETQ/onboarding.html");
+    await expect(page.locator("[data-onboarding-card=\"age\"]")).toHaveCount(0);
+    await expect(page.locator("[data-onboarding-chip=\"age\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-chip=\"userIncome\"]")).toBeVisible();
+    await expect(page.locator("[data-onboarding-card=\"livingExpenses\"]")).toBeVisible();
+  });
+
+  test("freshness gate: a newer calculator draft overlays the resume state on onboarding boot", async ({ page }) => {
+    await page.addInitScript(() => {
+      try { window.localStorage.clear(); window.sessionStorage.clear(); } catch { /* ignore */ }
+      window.localStorage.setItem("etq:onboarding:state:v1", JSON.stringify({
+        version: 1,
+        savedAt: "2024-01-01T00:00:00.000Z",
+        fields: {
+          "profile.currentAge": 48,
+          "income.employment.netAnnual": 60000,
+          "spending.livingExpenses.annual": 30000
+        },
+        ui: {
+          answered: ["age", "partnerInclude", "userIncome", "livingExpenses"],
+          staleAnswered: [],
+          gates: { partnerInclude: "NO" },
+          acceptedAssumptions: [],
+          seededQuestions: [],
+          selectedCurrency: "EUR",
+          livingExpensesMode: "single",
+          livingExpenseCategoryValues: {},
+          activeQuestionId: null
+        }
+      }));
+      window.localStorage.setItem("etq:scenario:draft:v2", JSON.stringify({
+        version: 2,
+        savedAt: "2024-01-02T00:00:00.000Z",
+        fields: {
+          "profile.currentAge": 48,
+          "income.employment.netAnnual": 60000,
+          "spending.livingExpenses.annual": 99999
+        },
+        plannedSellYears: {},
+        ui: {
+          majorFutureEventsOpen: false,
+          advancedAssumptionsOpen: false,
+          earlyRetirementAge: 65,
+          selectedCurrency: "EUR",
+          livingExpensesMode: "single",
+          livingExpenseCategoryValues: {}
+        }
+      }));
+    });
+    await page.goto("/ETQ/onboarding.html");
+    await page.locator("[data-onboarding-chip=\"livingExpenses\"]").click();
+    await expect(page.locator("[data-onboarding-input=\"livingExpenses\"]")).toHaveValue("99999");
+  });
+
+  test("freshness gate: an older calculator draft does not overwrite the resume state", async ({ page }) => {
+    await page.addInitScript(() => {
+      try { window.localStorage.clear(); window.sessionStorage.clear(); } catch { /* ignore */ }
+      window.localStorage.setItem("etq:onboarding:state:v1", JSON.stringify({
+        version: 1,
+        savedAt: "2024-01-02T00:00:00.000Z",
+        fields: {
+          "profile.currentAge": 48,
+          "income.employment.netAnnual": 60000,
+          "spending.livingExpenses.annual": 30000
+        },
+        ui: {
+          answered: ["age", "partnerInclude", "userIncome", "livingExpenses"],
+          staleAnswered: [],
+          gates: { partnerInclude: "NO" },
+          acceptedAssumptions: [],
+          seededQuestions: [],
+          selectedCurrency: "EUR",
+          livingExpensesMode: "single",
+          livingExpenseCategoryValues: {},
+          activeQuestionId: null
+        }
+      }));
+      window.localStorage.setItem("etq:scenario:draft:v2", JSON.stringify({
+        version: 2,
+        savedAt: "2024-01-01T00:00:00.000Z",
+        fields: { "spending.livingExpenses.annual": 11111 },
+        plannedSellYears: {},
+        ui: {
+          majorFutureEventsOpen: false,
+          advancedAssumptionsOpen: false,
+          earlyRetirementAge: 65,
+          selectedCurrency: "EUR",
+          livingExpensesMode: "single",
+          livingExpenseCategoryValues: {}
+        }
+      }));
+    });
+    await page.goto("/ETQ/onboarding.html");
+    await page.locator("[data-onboarding-chip=\"livingExpenses\"]").click();
+    await expect(page.locator("[data-onboarding-input=\"livingExpenses\"]")).toHaveValue("30000");
   });
 
   test("sessionStorage seed pre-fills the age question", async ({ page }) => {

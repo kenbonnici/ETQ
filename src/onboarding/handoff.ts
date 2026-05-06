@@ -80,6 +80,22 @@ export interface PersistedSnapshotOnboarding {
   };
 }
 
+export function readDraftSnapshot(): PersistedSnapshotOnboarding | null {
+  try {
+    const raw = window.localStorage.getItem(SCENARIO_DRAFT_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return null;
+    if (parsed.version !== 2) return null;
+    if (!parsed.fields || typeof parsed.fields !== "object") return null;
+    if (!parsed.ui || typeof parsed.ui !== "object") return null;
+    if (typeof parsed.savedAt !== "string") return null;
+    return parsed as PersistedSnapshotOnboarding;
+  } catch {
+    return null;
+  }
+}
+
 export function writeDraftFromOnboarding(
   fields: FieldState,
   earlyRetirementAge: number,

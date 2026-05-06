@@ -83,6 +83,7 @@ import {
   seedLivingExpenseCategoryValuesFromTotal,
   sumLivingExpenseCategoryValues
 } from "./ui/livingExpenses";
+import { readOnboardingState } from "./onboarding/handoff";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
@@ -1570,8 +1571,30 @@ async function confirmAndLoadSampleData(): Promise<void> {
 function restoreDraftScenarioIfAvailable(): boolean {
   if (!scenarioStorageAvailable) return false;
   const draft = readDraftScenarioSnapshot();
-  if (!draft) return false;
-  applyPersistedScenarioSnapshot(draft);
+  // Freshness gate: if the onboarding state was edited more recently than the
+  // draft, overlay onboarding fields and UI helpers. Calculator-only state
+  // (plannedSellYears, earlyRetirementAge, section toggles) stays from the
+  // draft when available; otherwise it falls back to the snapshot defaults.
+  const onb = readOnboardingState();
+  let snapshot = draft;
+  if (onb && (!draft || onb.savedAt > draft.savedAt)) {
+    snapshot = normalizePersistedSnapshot({
+      version: 2,
+      savedAt: onb.savedAt,
+      fields: { ...(draft?.fields ?? {}), ...onb.fields },
+      plannedSellYears: draft?.plannedSellYears,
+      ui: {
+        majorFutureEventsOpen: draft?.ui.majorFutureEventsOpen ?? false,
+        advancedAssumptionsOpen: draft?.ui.advancedAssumptionsOpen ?? false,
+        earlyRetirementAge: draft?.ui.earlyRetirementAge,
+        selectedCurrency: onb.ui.selectedCurrency ?? draft?.ui.selectedCurrency,
+        livingExpensesMode: onb.ui.livingExpensesMode ?? draft?.ui.livingExpensesMode,
+        livingExpenseCategoryValues: onb.ui.livingExpenseCategoryValues ?? draft?.ui.livingExpenseCategoryValues
+      }
+    });
+  }
+  if (!snapshot) return false;
+  applyPersistedScenarioSnapshot(snapshot);
   return true;
 }
 

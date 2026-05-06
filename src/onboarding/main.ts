@@ -23,6 +23,7 @@ import {
   navigateToCalculator,
   ONBOARDING_STATE_KEY,
   PersistedOnboardingState,
+  readDraftSnapshot,
   readOnboardingState,
   readQuickEstimateSeed,
   SCENARIO_DRAFT_KEY,
@@ -74,6 +75,26 @@ const fieldState: FieldState = initializeFieldState(restoredFromStorage, seededF
 // from a previous visit must not silently swallow them.
 if (seededFromInit.size > 0 && restoredFromStorage) clearOnboardingState();
 if (seededFromInit.size > 0) clearQuickEstimateSeed();
+// Freshness gate: if the calculator draft was modified more recently than
+// the onboarding resume state, overlay the draft's inputs and UI helpers
+// onto the restored walkthrough. Returning to onboarding after editing in
+// the calculator should reflect those edits, while the answered/gates
+// structure is preserved so chips stay populated.
+if (seededFromInit.size === 0 && restoredFromStorage) {
+  const draft = readDraftSnapshot();
+  if (draft && draft.savedAt > restoredFromStorage.savedAt) {
+    for (const [k, v] of Object.entries(draft.fields)) {
+      fieldState[k as keyof FieldState] = v as RawInputValue;
+      restoredFromStorage.fields[k as keyof FieldState] = v as RawInputValue;
+    }
+    restoredFromStorage.ui.selectedCurrency = draft.ui.selectedCurrency;
+    restoredFromStorage.ui.livingExpensesMode = draft.ui.livingExpensesMode;
+    restoredFromStorage.ui.livingExpenseCategoryValues = {
+      ...createEmptyLivingExpenseCategoryValues(),
+      ...draft.ui.livingExpenseCategoryValues
+    };
+  }
+}
 const restored: PersistedOnboardingState | null =
   seededFromInit.size > 0 ? null : restoredFromStorage;
 const sequence = buildFullSequence();
@@ -169,7 +190,9 @@ function wireNavJump(): void {
         uiState.livingExpenseCategoryValues,
         selectedCurrency
       );
-      clearOnboardingState();
+      // Keep onboarding resume state intact so Back from the calculator
+      // returns the user to their walkthrough position. Start over is the
+      // only path that clears it.
       clearQuickEstimateSeed();
       navigateToCalculator();
     });
@@ -1183,7 +1206,8 @@ function renderHandoffCard(): HTMLElement {
       uiState.livingExpenseCategoryValues,
       selectedCurrency
     );
-    clearOnboardingState();
+    // Preserve onboarding resume state through the handoff: pressing Back
+    // from the calculator should restore the conversation, not restart it.
     clearQuickEstimateSeed();
     navigateToCalculator();
   });

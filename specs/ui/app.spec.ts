@@ -312,6 +312,94 @@ test("spending-by-age age steppers block invalid moves without showing inline er
   ).toHaveCount(0);
 });
 
+test("freshness gate: calculator boot prefers a newer onboarding state over the draft", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("etq:scenario:draft:v2", JSON.stringify({
+      version: 2,
+      savedAt: "2024-01-01T00:00:00.000Z",
+      fields: {
+        "profile.currentAge": 48,
+        "spending.livingExpenses.annual": 22222
+      },
+      plannedSellYears: {},
+      ui: {
+        majorFutureEventsOpen: false,
+        advancedAssumptionsOpen: false,
+        earlyRetirementAge: 65,
+        selectedCurrency: "EUR",
+        livingExpensesMode: "single",
+        livingExpenseCategoryValues: {}
+      }
+    }));
+    window.localStorage.setItem("etq:onboarding:state:v1", JSON.stringify({
+      version: 1,
+      savedAt: "2024-01-02T00:00:00.000Z",
+      fields: {
+        "profile.currentAge": 48,
+        "spending.livingExpenses.annual": 88888
+      },
+      ui: {
+        answered: ["age", "livingExpenses"],
+        staleAnswered: [],
+        gates: {},
+        acceptedAssumptions: [],
+        seededQuestions: [],
+        selectedCurrency: "EUR",
+        livingExpensesMode: "single",
+        livingExpenseCategoryValues: {},
+        activeQuestionId: null
+      }
+    }));
+  });
+
+  await page.goto("/ETQ/calculator.html");
+  await expect(page.locator(selectors.livingExpenses)).toHaveValue("88,888");
+});
+
+test("freshness gate: calculator boot keeps the draft when it is newer than onboarding state", async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem("etq:scenario:draft:v2", JSON.stringify({
+      version: 2,
+      savedAt: "2024-01-02T00:00:00.000Z",
+      fields: {
+        "profile.currentAge": 48,
+        "spending.livingExpenses.annual": 22222
+      },
+      plannedSellYears: {},
+      ui: {
+        majorFutureEventsOpen: false,
+        advancedAssumptionsOpen: false,
+        earlyRetirementAge: 65,
+        selectedCurrency: "EUR",
+        livingExpensesMode: "single",
+        livingExpenseCategoryValues: {}
+      }
+    }));
+    window.localStorage.setItem("etq:onboarding:state:v1", JSON.stringify({
+      version: 1,
+      savedAt: "2024-01-01T00:00:00.000Z",
+      fields: {
+        "profile.currentAge": 48,
+        "spending.livingExpenses.annual": 88888
+      },
+      ui: {
+        answered: ["age", "livingExpenses"],
+        staleAnswered: [],
+        gates: {},
+        acceptedAssumptions: [],
+        seededQuestions: [],
+        selectedCurrency: "EUR",
+        livingExpensesMode: "single",
+        livingExpenseCategoryValues: {},
+        activeQuestionId: null
+      }
+    }));
+  });
+
+  await page.goto("/ETQ/calculator.html");
+  await expect(page.locator(selectors.livingExpenses)).toHaveValue("22,222");
+});
+
 test("spending-by-age restores an invalid persisted second end age back to the default pair", async ({ page }) => {
   await page.addInitScript(() => {
     window.localStorage.setItem("etq:scenario:draft:v2", JSON.stringify({
