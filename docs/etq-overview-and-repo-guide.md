@@ -43,7 +43,7 @@ Build entry points are declared in `vite.config.js`:
 - `onboarding.html`
 
 Important browser-level behaviors:
-- the landing page stores its quick-estimate inputs in `sessionStorage` and writes a seed for onboarding handoff
+- the landing page stores its quick-estimate form values in `sessionStorage` under `etq:landing:inputs`, and writes a separate handoff seed under `etq:landing:quick-estimate` consumed by onboarding or by a direct calculator handoff
 - the onboarding flow stores resumable progress in `localStorage`, including answered/gated question state and living-expense helper state
 - onboarding handoff writes a calculator draft snapshot into the same storage contract the calculator uses
 - the calculator persists a draft scenario plus named scenarios in `localStorage`
@@ -74,6 +74,9 @@ Architecture Overview
 - maps quick-estimate seed values into semantic field ids
 - writes onboarding progress
 - writes calculator draft snapshots with pruned semantic fields and UI helper state
+
+`src/shared/currency.ts`
+- supplies the shared currency list, default, and formatting helpers used by all three surfaces and embedded in handoff snapshots
 
 `src/main.ts`
 - owns the full calculator shell
@@ -246,15 +249,17 @@ Current Functional Areas Worth Knowing
 
 The landing page:
 - collects age, income, annual spending, cash, investments, and state pension
-- persists those raw inputs in `sessionStorage`
+- persists those raw inputs in `sessionStorage` under `etq:landing:inputs` so the form survives reload
 - computes an earliest-retirement estimate through the same model path used elsewhere
-- writes a quick-estimate seed consumed by onboarding
+- writes a quick-estimate seed under `etq:landing:quick-estimate` when navigating to onboarding
+- when navigating straight to the calculator (the "I'm ready" CTA), also writes a calculator draft snapshot via the same handoff helper, so direct landing-to-calculator skips the onboarding flow without losing the entered values
 
 2. Guided onboarding and handoff
 
 The onboarding flow:
 - is resumable from `localStorage`
 - pre-fills from the landing-page seed when available
+- treats a fresh landing seed as authoritative on boot: any prior onboarding resume state is cleared so just-entered landing numbers cannot be silently swallowed by a stale walkthrough
 - updates a live estimate panel as the user answers
 - prunes orphaned answers when earlier choices change
 - can save locally and resume later

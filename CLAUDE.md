@@ -51,7 +51,7 @@ Do not cross layers unless necessary.
 
 ### Large-file constraint
 
-- `src/main.ts` is intentionally large (~5,900 lines)
+- `src/main.ts` is intentionally large (~6,000 lines)
 - Do not propose framework migration or broad componentization as incidental cleanup
 
 ## Core Invariants
@@ -93,7 +93,7 @@ Changes here require extra caution:
 - planned-sale logic
 - timing logic
 - dependency / activation rules
-- browser-storage snapshot contracts (`etq:scenario:draft:v2`, `etq:onboarding:state:v1`, landing session-storage seed)
+- browser-storage snapshot contracts: calculator draft `etq:scenario:draft:v2`, named scenarios `etq:scenario:named:v2`, onboarding resume `etq:onboarding:state:v1`, landing handoff seed `etq:landing:quick-estimate` (sessionStorage), landing form restore `etq:landing:inputs` (sessionStorage)
 
 If modifying any of the above:
 
@@ -131,6 +131,7 @@ A change is not complete unless the required checks pass. Run them yourself befo
 - `npm test` runs both runtime and Playwright UI coverage
 - calculator browser behaviour lives mainly in `specs/ui/app.spec.ts`
 - onboarding browser behaviour lives in `specs/ui/onboarding.spec.ts`
+- landing browser behaviour lives in `specs/ui/landing.spec.ts`
 - onboarding branching logic lives in `specs/runtime/onboardingSequence.test.ts`
 - the invariant suite is in `specs/runtime/invariants.test.ts`
 

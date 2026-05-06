@@ -134,6 +134,7 @@ Otherwise keep it short.
 
 When the task is about one of these, name it directly in the prompt:
 - landing quick estimate and `sessionStorage` seed handoff
+- direct landing-to-calculator handoff (the "I'm ready" CTA writes a calculator draft snapshot, separate from the landing-to-onboarding seed path)
 - guided onboarding question flow, gate pruning, and calculator draft handoff
 - scenario manager and local `localStorage` persistence
 - earliest-viable-retirement indicator and comparison stepper
