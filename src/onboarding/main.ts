@@ -1551,7 +1551,7 @@ function paintEstimate(): void {
   }
 
   const statutory = Number(fieldState["retirement.statutoryAge"] ?? 0);
-  if (hasAge && statutory && statutory > age) {
+  if (hasAge && statutory && statutory > age && uiState.answered.has("statutoryAge")) {
     deltaEl.hidden = false;
     const gap = statutory - age;
     deltaEl.textContent = `That's ${gap} year${gap === 1 ? "" : "s"} earlier than the statutory age of ${statutory}.`;
