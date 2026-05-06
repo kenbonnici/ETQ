@@ -612,13 +612,25 @@ function softConfirmPrompt(q: QuestionDef): string | null {
   if (!uiState.seededQuestions.has(q.id) || !q.fieldId) return null;
   const raw = fieldState[q.fieldId];
   if (raw === null || raw === undefined || raw === "") return null;
-  if (q.id === "age") return `We have you down as ${raw} — does that still feel right?`;
-  if (q.kind === "currency") {
-    const num = Number(raw);
-    if (!Number.isFinite(num)) return null;
-    return `You told us ${formatCurrencyAmount(num, selectedCurrency, "en-IE")} — does that still feel right?`;
+  if (q.id === "age") return `We have you down as ${raw} years old — is that right?`;
+  if (q.kind !== "currency") return null;
+  const num = Number(raw);
+  if (!Number.isFinite(num)) return null;
+  const amount = formatCurrencyAmount(num, selectedCurrency, "en-IE");
+  switch (q.id) {
+    case "userIncome":
+      return `Your annual take-home is around ${amount} — sound about right?`;
+    case "livingExpenses":
+      return `You spend around ${amount} a year — is that still right?`;
+    case "cash":
+      return `Around ${amount} in liquid savings — have we got that right?`;
+    case "equities":
+      return `And around ${amount} invested in the stock market — does that still feel right?`;
+    case "statePension":
+      return `Your state pension comes to about ${amount} a year — close enough?`;
+    default:
+      return null;
   }
-  return null;
 }
 
 function applyCurrencyPrefixStyle(el: HTMLElement, currencyCode: string): void {

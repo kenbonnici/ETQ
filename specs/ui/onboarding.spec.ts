@@ -325,7 +325,8 @@ test.describe("Progressive Onboarding", () => {
 
     const ageCard = page.locator('[data-onboarding-card="age"]');
     await expect(ageCard).toBeVisible();
-    await expect(ageCard).toContainText("does that still feel right?");
+    await expect(ageCard).toContainText("47 years old");
+    await expect(ageCard).toContainText("is that right?");
     await expect(page.locator('[data-onboarding-input="age"]')).toHaveValue("47");
 
     await page.locator('[data-onboarding-continue="age"]').click();
@@ -334,8 +335,15 @@ test.describe("Progressive Onboarding", () => {
 
     const incomeCard = page.locator('[data-onboarding-card="userIncome"]');
     await expect(incomeCard).toBeVisible();
-    await expect(incomeCard).toContainText("does that still feel right?");
+    await expect(incomeCard).toContainText("Your annual take-home is around");
+    await expect(incomeCard).toContainText("sound about right?");
     await expect(page.locator('[data-onboarding-input="userIncome"]')).toHaveValue("110000");
+
+    await page.locator('[data-onboarding-continue="userIncome"]').click();
+    const spendCard = page.locator('[data-onboarding-card="livingExpenses"]');
+    await expect(spendCard).toBeVisible();
+    await expect(spendCard).toContainText("You spend around");
+    await expect(spendCard).toContainText("is that still right?");
   });
 
   test("a fresh landing seed wins over a stale onboarding resume state", async ({ page }) => {
@@ -369,6 +377,6 @@ test.describe("Progressive Onboarding", () => {
     const ageCard = page.locator('[data-onboarding-card="age"]');
     await expect(ageCard).toBeVisible();
     await expect(page.locator('[data-onboarding-input="age"]')).toHaveValue("47");
-    await expect(ageCard).toContainText("does that still feel right?");
+    await expect(ageCard).toContainText("is that right?");
   });
 });
