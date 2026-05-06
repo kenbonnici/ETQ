@@ -552,7 +552,8 @@ function assetSequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       chapterTitle: CHAPTERS.valuables.title,
       kind: "currency",
       fieldId: opCostField,
-      prompt: "And anything it costs you each year to keep — insurance, storage, upkeep?",
+      prompt: "And any yearly running costs?",
+      helper: "Insurance, storage, upkeep, etc.",
       blankAsZero: true,
       activeWhen: active
     }
