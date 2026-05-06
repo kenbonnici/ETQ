@@ -656,8 +656,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 114,
     fieldId: "properties.01.rentalIncomeNetAnnual",
-    label: "Gross rent: Sliema",
-    tooltip: "Gross annual rent before property running costs.",
+    label: "Rent (after tax): Sliema",
+    tooltip: "Annual rent after tax, before property running costs.",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "12000",
     type: "number"
@@ -665,8 +665,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 115,
     fieldId: "properties.02.rentalIncomeNetAnnual",
-    label: "Gross rent: Gzira",
-    tooltip: "Gross annual rent before property running costs.",
+    label: "Rent (after tax): Gzira",
+    tooltip: "Annual rent after tax, before property running costs.",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "10000",
     type: "number"
@@ -674,8 +674,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 116,
     fieldId: "properties.03.rentalIncomeNetAnnual",
-    label: "Gross rent: Qormi",
-    tooltip: "Gross annual rent before property running costs.",
+    label: "Rent (after tax): Qormi",
+    tooltip: "Annual rent after tax, before property running costs.",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "8000",
     type: "number"
@@ -683,8 +683,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 117,
     fieldId: "properties.04.rentalIncomeNetAnnual",
-    label: "Gross rent: Gudja",
-    tooltip: "Gross annual rent before property running costs.",
+    label: "Rent (after tax): Gudja",
+    tooltip: "Annual rent after tax, before property running costs.",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "5000",
     type: "number"
@@ -692,8 +692,8 @@ const AUTHORED_INPUT_DEFINITIONS: AuthoredInputDefinition[] = [
   {
     row: 118,
     fieldId: "properties.05.rentalIncomeNetAnnual",
-    label: "Gross rent: Marsa",
-    tooltip: "Gross annual rent before property running costs.",
+    label: "Rent (after tax): Marsa",
+    tooltip: "Annual rent after tax, before property running costs.",
     uiNote: "Show with property name only if name was entered",
     sampleValue: "6500",
     type: "number"

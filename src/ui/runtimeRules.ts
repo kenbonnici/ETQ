@@ -722,7 +722,7 @@ export function getDynamicFieldLabel(def: InputDefinition, values: RuntimeValues
   const propertyByRentalIncomeField = PROPERTY_RUNTIME_GROUPS.find((group) => group.rentalIncomeField === def.fieldId);
   if (propertyByRentalIncomeField) {
     void propertyByRentalIncomeField;
-    return "Gross rent";
+    return "Rent (after tax)";
   }
   if (def.fieldId === RUNTIME_FIELDS.generalInflation) return "General inflation";
   if (def.fieldId === RUNTIME_FIELDS.spendingAdjustmentAge1) return "First end age";

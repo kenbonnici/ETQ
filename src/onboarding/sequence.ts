@@ -422,8 +422,8 @@ function propertySequence(idx: 1 | 2 | 3 | 4 | 5): QuestionDef[] {
       chapterTitle: CHAPTERS.property.title,
       kind: "currency",
       fieldId: rentField,
-      prompt: "Roughly what gross rent does it bring in each year?",
-      helper: "Before property running costs; those come next. Leave blank if it's not tenanted yet.",
+      prompt: "Roughly what rent does it bring in each year, after tax?",
+      helper: "After tax, before property running costs; those come next. Leave blank if it's not tenanted yet.",
       blankAsZero: true,
       activeWhen: active
     },
