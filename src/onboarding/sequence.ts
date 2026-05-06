@@ -689,12 +689,30 @@ export function makePensionSequence(): QuestionDef[] {
 export function makeDebtsSequence(): QuestionDef[] {
   return [
     {
+      id: "creditCardsGate",
+      chapter: CHAPTERS.debts.id,
+      chapterTitle: CHAPTERS.debts.title,
+      kind: "yesNo",
+      gateId: "creditCardsGate",
+      prompt: "Any credit card balance to clear?"
+    },
+    {
+      id: "creditCardBalance",
+      chapter: CHAPTERS.debts.id,
+      chapterTitle: CHAPTERS.debts.title,
+      kind: "currency",
+      fieldId: "debts.creditCards.balance",
+      prompt: "What's the combined balance across your cards?",
+      helper: "We'll assume you clear this ASAP.",
+      activeWhen: (ctx) => gateYes(ctx, "creditCardsGate")
+    },
+    {
       id: "debtsGate",
       chapter: CHAPTERS.debts.id,
       chapterTitle: CHAPTERS.debts.title,
       kind: "yesNo",
       gateId: "debtsGate",
-      prompt: "Any debts we haven't mentioned — credit card, personal loan, anything else?"
+      prompt: "Any other loans we haven't mentioned — personal loan, car loan, anything else?"
     },
     {
       id: "debtBalance",

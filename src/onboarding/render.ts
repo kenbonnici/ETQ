@@ -154,9 +154,11 @@ function shortLabel(q: QuestionDef): string {
   if (q.id === "statutoryAge") return "statutory pension age";
   if (q.id === "statePension") return "your state pension";
   if (q.id === "partnerPension") return "partner's state pension";
-  if (q.id === "debtsGate") return "other debts";
-  if (q.id === "debtBalance") return "debt balance";
-  if (q.id === "debtRate") return "debt rate";
+  if (q.id === "creditCardsGate") return "credit card balance";
+  if (q.id === "creditCardBalance") return "card balance";
+  if (q.id === "debtsGate") return "other loans";
+  if (q.id === "debtBalance") return "loan balance";
+  if (q.id === "debtRate") return "loan rate";
   if (q.id === "debtRepayment") return "monthly repayment";
   if (q.id.startsWith("property")) {
     if (q.id.endsWith("Gate")) return "add another?";

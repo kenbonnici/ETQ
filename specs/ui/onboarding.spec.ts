@@ -268,6 +268,7 @@ test.describe("Progressive Onboarding", () => {
     await answerYesNo(page, "dependentsGate", "NO");
     await answerText(page, "statutoryAge", "65");
     await answerText(page, "statePension", "14000");
+    await answerYesNo(page, "creditCardsGate", "NO");
     await answerYesNo(page, "debtsGate", "NO");
     await expect(page.locator("[data-onboarding-card=\"handoff\"]")).toBeVisible();
 
