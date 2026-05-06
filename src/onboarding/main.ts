@@ -17,6 +17,7 @@ import { findEarliestRetirementAge } from "../shared/findEarliestRetirementAge";
 import { DEFAULT_CURRENCY, TOP_CURRENCIES, currencySymbolFor, formatCurrencyAmount, isSupportedCurrency } from "../shared/currency";
 import {
   applySeedToFields,
+  clearLandingInputs,
   clearOnboardingState,
   clearQuickEstimateSeed,
   navigateToCalculator,
@@ -184,6 +185,7 @@ function wireNavJump(): void {
       try { window.localStorage.removeItem(SCENARIO_DRAFT_KEY); } catch { /* ignore */ }
       clearOnboardingState();
       clearQuickEstimateSeed();
+      clearLandingInputs();
       window.location.assign("onboarding.html");
     });
   }

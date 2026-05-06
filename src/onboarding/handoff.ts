@@ -10,6 +10,7 @@ import {
 
 export const SCENARIO_DRAFT_KEY = "etq:scenario:draft:v2";
 const SESSION_SEED_KEY = "etq:landing:quick-estimate";
+export const LANDING_INPUTS_KEY = "etq:landing:inputs";
 export const ONBOARDING_STATE_KEY = "etq:onboarding:state:v1";
 
 export interface QuickEstimateSeed {
@@ -35,6 +36,10 @@ export function readQuickEstimateSeed(): QuickEstimateSeed | null {
 
 export function clearQuickEstimateSeed(): void {
   try { window.sessionStorage.removeItem(SESSION_SEED_KEY); } catch { /* ignore */ }
+}
+
+export function clearLandingInputs(): void {
+  try { window.sessionStorage.removeItem(LANDING_INPUTS_KEY); } catch { /* ignore */ }
 }
 
 // Maps each QuickEstimateSeed slot to (FieldId, the onboarding question id that

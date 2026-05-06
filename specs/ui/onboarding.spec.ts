@@ -379,4 +379,38 @@ test.describe("Progressive Onboarding", () => {
     await expect(page.locator('[data-onboarding-input="age"]')).toHaveValue("47");
     await expect(ageCard).toContainText("is that right?");
   });
+
+  test("Start Over clears landing quick-estimate inputs as well as onboarding state", async ({ page }) => {
+    await page.goto("/ETQ/index.html");
+    await page.evaluate(() => {
+      try { window.localStorage.clear(); window.sessionStorage.clear(); } catch { /* ignore */ }
+    });
+    await page.goto("/ETQ/index.html");
+    await page.locator("#c-age").fill("47");
+    await page.locator("#c-income").fill("110000");
+    await page.locator("#c-spend").fill("55000");
+
+    await Promise.all([
+      page.waitForURL(/\/ETQ\/onboarding\.html/),
+      page.locator('a.calc-choice[href="onboarding.html"]').click()
+    ]);
+
+    await expect(page.locator('[data-onboarding-card="age"]')).toBeVisible();
+    page.once("dialog", () => { /* native confirm not used; overlay handles it */ });
+    await page.locator("[data-onboarding-restart]").click();
+    await page.locator(".confirm-overlay .confirm-ok").click();
+
+    await page.waitForURL(/\/ETQ\/onboarding\.html/);
+    const stored = await page.evaluate(() => ({
+      inputs: window.sessionStorage.getItem("etq:landing:inputs"),
+      seed: window.sessionStorage.getItem("etq:landing:quick-estimate")
+    }));
+    expect(stored.inputs).toBeNull();
+    expect(stored.seed).toBeNull();
+
+    await page.goto("/ETQ/index.html");
+    await expect(page.locator("#c-age")).toHaveValue("");
+    await expect(page.locator("#c-income")).toHaveValue("");
+    await expect(page.locator("#c-spend")).toHaveValue("");
+  });
 });

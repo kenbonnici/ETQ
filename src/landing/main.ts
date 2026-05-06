@@ -1,9 +1,8 @@
 import { createEmptyFieldState } from "../model/inputSchema";
 import { ModelUiState } from "../model/types";
-import { applySeedToFields, QuickEstimateSeed, writeDraftFromOnboarding } from "../onboarding/handoff";
+import { applySeedToFields, LANDING_INPUTS_KEY, QuickEstimateSeed, writeDraftFromOnboarding } from "../onboarding/handoff";
 import { findEarliestRetirementAge } from "../shared/findEarliestRetirementAge";
 
-const INPUTS_KEY = "etq:landing:inputs";
 const SEED_KEY = "etq:landing:quick-estimate";
 const FIELD_IDS = ["c-age", "c-income", "c-spend", "c-savings", "c-invest", "c-pension"] as const;
 const DEBOUNCE_MS = 150;
@@ -63,13 +62,13 @@ function persistInputs(): void {
     FIELD_IDS.forEach((id) => {
       obj[id] = getInput(id)?.value ?? "";
     });
-    sessionStorage.setItem(INPUTS_KEY, JSON.stringify(obj));
+    sessionStorage.setItem(LANDING_INPUTS_KEY, JSON.stringify(obj));
   } catch { /* ignore */ }
 }
 
 function restoreInputs(): void {
   try {
-    const raw = sessionStorage.getItem(INPUTS_KEY);
+    const raw = sessionStorage.getItem(LANDING_INPUTS_KEY);
     if (!raw) return;
     const obj = JSON.parse(raw) as Record<string, unknown>;
     FIELD_IDS.forEach((id) => {
