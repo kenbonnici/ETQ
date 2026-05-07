@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>ETQ — Disclaimer Package: Visual Walkthrough</title>
+<style>
+  @page {
+    size: A4;
+    margin: 22mm 18mm;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    color: #1a2327;
+    background: white;
+    font-family: -apple-system, "Helvetica Neue", "Segoe UI", system-ui, sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+  }
+  h1, h2, h3, h4 {
+    font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    color: #12231f;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+  h1 { font-size: 32pt; line-height: 1.05; margin-bottom: 8px; letter-spacing: -0.01em; }
+  h2 {
+    font-size: 18pt;
+    margin: 0 0 6pt;
+    padding-bottom: 6pt;
+    border-bottom: 1px solid #c98a3f;
+  }
+  h3 { font-size: 13pt; margin: 14pt 0 4pt; color: #1f3a35; }
+  h4 { font-size: 10.5pt; margin: 10pt 0 3pt; color: #1f3a35; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }
+  p { margin: 0 0 6pt; }
+  ul, ol { margin: 0 0 6pt; padding-left: 18pt; }
+  li { margin-bottom: 2pt; }
+  code, kbd {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 9pt;
+    background: #f3efe4;
+    padding: 1pt 4pt;
+    border-radius: 2pt;
+    color: #5e3e15;
+  }
+  hr { border: 0; border-top: 1px solid #e3d9c4; margin: 12pt 0; }
+
+  .cover {
+    page-break-after: always;
+    height: 240mm;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+    padding: 0 20mm;
+  }
+  .cover .eyebrow {
+    font-family: -apple-system, sans-serif;
+    font-size: 10pt;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #b2742a;
+    font-weight: 600;
+    margin-bottom: 28pt;
+  }
+  .cover h1 {
+    font-size: 44pt;
+    line-height: 1.05;
+    margin-bottom: 18pt;
+  }
+  .cover .subtitle {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-style: italic;
+    font-size: 16pt;
+    color: #415058;
+    max-width: 460pt;
+    margin: 0 auto 36pt;
+  }
+  .cover .meta {
+    font-size: 10pt;
+    color: #7d8a90;
+    letter-spacing: 0.04em;
+  }
+  .cover .meta span { margin: 0 10pt; }
+
+  .intro p { margin-bottom: 8pt; }
+
+  .stage {
+    page-break-inside: avoid;
+    margin: 12pt 0 0;
+    padding: 0;
+  }
+  .stage-h {
+    display: flex;
+    align-items: baseline;
+    gap: 10pt;
+    margin: 0 0 8pt;
+  }
+  .stage-h .num {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    font-size: 28pt;
+    color: #c98a3f;
+    line-height: 1;
+    font-weight: 500;
+  }
+  .stage-h h2 { border: 0; padding: 0; margin: 0; }
+
+  .component {
+    page-break-inside: avoid;
+    margin: 14pt 0 14pt;
+    padding: 12pt 14pt;
+    background: #fbf6ec;
+    border: 1px solid #e3d9c4;
+    border-left: 3px solid #1f3a35;
+    border-radius: 3pt;
+  }
+  .component h3 {
+    margin: 0 0 8pt;
+    font-size: 13pt;
+  }
+  .component .row {
+    margin-bottom: 8pt;
+  }
+  .component .row:last-child { margin-bottom: 0; }
+  .label {
+    display: inline-block;
+    font-size: 8.5pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #b2742a;
+    margin-right: 8pt;
+    min-width: 84pt;
+  }
+  .label-block {
+    display: block;
+    font-size: 8.5pt;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #b2742a;
+    margin: 0 0 3pt;
+  }
+  .copy {
+    background: white;
+    border: 1px dashed #c98a3f;
+    border-radius: 3pt;
+    padding: 8pt 12pt;
+    font-style: italic;
+    color: #1a2327;
+    margin: 4pt 0 0;
+  }
+  .copy strong, .copy em { font-style: normal; font-weight: 600; }
+  .pill {
+    display: inline-block;
+    padding: 2pt 8pt;
+    background: #1f3a35;
+    color: #fbf6ec;
+    border-radius: 999pt;
+    font-size: 8.5pt;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+  }
+  .pill--accent {
+    background: #c98a3f;
+  }
+  .underline {
+    text-decoration: underline;
+    text-underline-offset: 2pt;
+  }
+  table.flow {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0 0 6pt;
+    font-size: 9.5pt;
+  }
+  table.flow th, table.flow td {
+    text-align: left;
+    padding: 4pt 6pt;
+    border-bottom: 1px solid #e3d9c4;
+    vertical-align: top;
+  }
+  table.flow th {
+    background: #fbf6ec;
+    font-size: 8.5pt;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #b2742a;
+  }
+
+  .reset {
+    page-break-before: always;
+  }
+  .reset-card {
+    background: #f3efe4;
+    border-left: 3px solid #c98a3f;
+    padding: 12pt 14pt;
+    border-radius: 3pt;
+    margin: 10pt 0;
+  }
+  .reset-card pre {
+    background: #1a2327;
+    color: #fbf6ec;
+    padding: 8pt 10pt;
+    border-radius: 3pt;
+    margin: 4pt 0 6pt;
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 9pt;
+    line-height: 1.4;
+    overflow-x: auto;
+  }
+
+  .footer-note {
+    page-break-inside: avoid;
+    margin-top: 18pt;
+    padding: 10pt 12pt;
+    background: #f3efe4;
+    border-radius: 3pt;
+    font-size: 9pt;
+    color: #415058;
+    line-height: 1.45;
+  }
+  .footer-note strong { color: #1f3a35; }
+</style>
+</head>
+<body>
+
+<!-- COVER -->
+<section class="cover">
+  <div class="eyebrow">Operator visual reference</div>
+  <h1>ETQ — disclaimer package</h1>
+  <p class="subtitle">Every visual component the user encounters, in the order they encounter it. With trigger conditions and instructions to reproduce.</p>
+  <div class="meta">
+    <span>Last updated: 2026-05-07</span>
+    <span>·</span>
+    <span>For: Kenneth Bonnici (operator)</span>
+  </div>
+</section>
+
+<!-- INTRO -->
+<section class="intro">
+  <h2>How to use this guide</h2>
+  <p>This document walks you, as a user, through every disclosure currently in ETQ. It is structured chronologically — the first surface a user lands on, then onboarding, then the full calculator, then the disclaimer page itself. For each component you'll see <strong>what you see</strong>, <strong>when it appears</strong>, and <strong>how to trigger it</strong> from a clean browser.</p>
+  <p>Each component card uses the same anatomy: copy is shown verbatim in the dashed box; the orange labels mark the operational metadata. The cards in cream are the dismissible ones — once acknowledged, they go away (until storage is cleared).</p>
+  <p>To start with a clean state at any point, jump to the <em>Reset cheatsheet</em> on the last page.</p>
+</section>
+
+<!-- STAGE 1 -->
+<section class="stage">
+  <div class="stage-h"><span class="num">1</span><h2>Landing page (first arrival)</h2></div>
+  <p><strong>URL:</strong> <code>http://127.0.0.1:4173/ETQ/</code></p>
+  <p>Always-visible disclosures the user encounters before clicking anything. None require dismissal.</p>
+
+  <div class="component">
+    <h3>1.1 Trust-row pip</h3>
+    <div class="row"><span class="label">What you see</span> A horizontal row of five pips beneath the hero CTA buttons. The fifth one reads <span class="pill">Not financial advice</span>.</div>
+    <div class="row"><span class="label">When</span> Always visible while the user is on the landing page above the fold.</div>
+    <div class="row"><span class="label">How to trigger</span> Open the landing URL. The trust row is immediately visible under the "See if you can quit" button.</div>
+  </div>
+
+  <div class="component">
+    <h3>1.2 Quick-estimate privacy line</h3>
+    <div class="row"><span class="label">What you see</span> A small italic line at the top of the six-input calculator card.</div>
+    <div class="row"><span class="label-block">Verbatim copy</span>
+      <div class="copy">All in your browser. Nothing leaves your device. Your inputs are remembered locally so you can come back to them; clear them any time.</div>
+    </div>
+    <div class="row"><span class="label">When</span> Always visible.</div>
+    <div class="row"><span class="label">How to trigger</span> Scroll down to the "Thirty-second estimate" section on the landing page.</div>
+  </div>
+
+  <div class="component">
+    <h3>1.3 Quick-estimate result label and inline pip</h3>
+    <div class="row"><span class="label">What you see</span> An eyebrow label above the big age number, plus a subdued line beneath it. The label is case-aware:</div>
+    <div class="row" style="padding-left: 92pt;">
+      <ul>
+        <li>Empty / no result: <span class="pill pill--accent">Earliest viable at</span> + em-dash placeholder</li>
+        <li>Future case (age &gt; current): <span class="pill pill--accent">Earliest viable at age</span> + the age</li>
+        <li>"Now" case (age = current): <span class="pill pill--accent">Viable now, at age</span> + the age</li>
+      </ul>
+    </div>
+    <div class="row"><span class="label-block">Verbatim pip</span>
+      <div class="copy">Illustrative model output, not financial advice. Sensitive to your inputs and ETQ's default assumptions. <em>See limitations.</em></div>
+    </div>
+    <div class="row"><span class="label">When</span> Label always visible. Pip always visible.</div>
+    <div class="row"><span class="label">How to trigger</span> To see the case differentiation: in the calculator card, type your age in the first field, then enter inputs that produce different earliest-viable ages. Try age <code>45</code> with very low expenses and high savings to see "Viable now, at age 45". Try age <code>45</code> with normal expenses to see "Earliest viable at age 56" (or similar).</div>
+  </div>
+
+  <div class="component">
+    <h3>1.4 Bio non-MFSA/FCA-authorisation line</h3>
+    <div class="row"><span class="label">What you see</span> A small subdued italic-style paragraph at the bottom of the credibility section, separated from the bio by a thin top border.</div>
+    <div class="row"><span class="label-block">Verbatim</span>
+      <div class="copy">ETQ is not authorised by the MFSA or the FCA, and does not provide regulated financial advice or a personal recommendation.</div>
+    </div>
+    <div class="row"><span class="label">When</span> Always visible.</div>
+    <div class="row"><span class="label">How to trigger</span> Scroll past the calculator card on the landing to the "Not another 4% rule blog" section. The line sits below the four bio paragraphs.</div>
+  </div>
+
+  <div class="component">
+    <h3>1.5 Footer slogan and link strip</h3>
+    <div class="row"><span class="label">What you see</span> A short statement on the left of the page footer plus three right-aligned links: <strong>Disclaimer · Privacy · About</strong>.</div>
+    <div class="row"><span class="label-block">Verbatim slogan</span>
+      <div class="copy">© ETQ · Enough to Quit. A deterministic retirement-projection tool. For educational and informational use only. Not financial, tax, legal, or pension advice.</div>
+    </div>
+    <div class="row"><span class="label">When</span> Always visible at the bottom of the landing page.</div>
+    <div class="row"><span class="label">How to trigger</span> Scroll to the very bottom. The links lead to <code>disclaimer.html#disclaimer</code>, <code>#privacy</code>, <code>#about</code>.</div>
+  </div>
+</section>
+
+<!-- STAGE 2 -->
+<section class="stage">
+  <div class="stage-h"><span class="num">2</span><h2>Onboarding walkthrough</h2></div>
+  <p><strong>URL:</strong> <code>http://127.0.0.1:4173/ETQ/onboarding.html</code></p>
+  <p>One-time and persistent disclosures encountered during the guided question flow.</p>
+
+  <div class="component">
+    <h3>2.1 First-visit acknowledgement strip</h3>
+    <div class="row"><span class="label">What you see</span> A flowing strip directly below the top nav and above the first onboarding question. Cream-soft background, dark green left border, single paragraph plus a green <span class="pill">Got it</span> pill on the right. Non-blocking.</div>
+    <div class="row"><span class="label-block">Verbatim</span>
+      <div class="copy">ETQ is a self-help planning tool, not financial advice. It does not assess your circumstances or recommend any course of action. Speak to a qualified professional before acting on a projection. <em>Read the full disclaimer.</em></div>
+    </div>
+    <div class="row"><span class="label">When</span> First visit per browser. Suppressed by localStorage key <code>etq:disclaimer:ack:v1</code>. Re-shown after onboarding "Start over" or after clearing browser data.</div>
+    <div class="row"><span class="label">How to trigger</span> In DevTools console run:<br><code>localStorage.removeItem('etq:disclaimer:ack:v1')</code> — then reload the onboarding page.</div>
+  </div>
+
+  <div class="component">
+    <h3>2.2 Nav Disclaimer link</h3>
+    <div class="row"><span class="label">What you see</span> A small underlined "Disclaimer" link in the top nav, right of "Jump to full calculator →".</div>
+    <div class="row"><span class="label">When</span> Always visible.</div>
+    <div class="row"><span class="label">How to trigger</span> Look at the top of the onboarding page; the link is the rightmost item in the nav.</div>
+  </div>
+
+  <div class="component">
+    <h3>2.3 Persistent sticky bottom strip</h3>
+    <div class="row"><span class="label">What you see</span> A thin strip pinned to the bottom of the viewport, centred. Cream-soft background, separated from page content by a top border.</div>
+    <div class="row"><span class="label-block">Verbatim</span>
+      <div class="copy">Estimate, not advice. Result depends on the assumptions you choose. <em>What's assumed.</em></div>
+    </div>
+    <div class="row"><span class="label">When</span> Always visible while the user is anywhere on the onboarding flow. Stays pinned as the user scrolls.</div>
+    <div class="row"><span class="label">How to trigger</span> Open onboarding and look at the bottom of the viewport. The strip is non-interactive everywhere except the "What's assumed" link, so clicks pass through to chips behind it.</div>
+  </div>
+
+  <div class="component">
+    <h3>2.4 Live in-progress estimate pip</h3>
+    <div class="row"><span class="label">What you see</span> A small muted line beneath the live chart on the right-hand estimate panel.</div>
+    <div class="row"><span class="label-block">Verbatim</span>
+      <div class="copy">Illustrative model output, not financial advice. <em>See limitations.</em></div>
+    </div>
+    <div class="row"><span class="label">When</span> Visible as soon as the live-estimate panel mounts (which happens after the user has answered enough to produce an estimate).</div>
+    <div class="row"><span class="label">How to trigger</span> Answer the first few onboarding questions (age, take-home, living expenses, savings, investments) until the right-hand panel shows an age. The pip sits below the chart.</div>
+  </div>
+
+  <div class="component">
+    <h3>2.5 Handoff card (final onboarding screen)</h3>
+    <div class="row"><span class="label">What you see</span> The final card the user reaches after completing the walkthrough. Two short paragraphs of disclosure copy. The last sentence is underlined.</div>
+    <div class="row"><span class="label-block">Verbatim, paragraph 1</span>
+      <div class="copy">A starting estimate, not advice, based on your answers and ETQ's default assumptions for inflation, returns, pensions, and longevity. In the full calculator you can review and adjust all assumptions, plan for major events, schedule liquidations and more.</div>
+    </div>
+    <div class="row"><span class="label-block">Verbatim, paragraph 2</span>
+      <div class="copy">Real-life outcomes will differ. <span class="underline">Speak to a qualified professional before acting on the result.</span></div>
+    </div>
+    <div class="row"><span class="label">When</span> After the user has answered every active onboarding question. Reached automatically by completing the flow.</div>
+    <div class="row"><span class="label">How to trigger</span> Complete the onboarding walkthrough end-to-end (or open onboarding with a saved-but-completed state). The card sits at the bottom of the conversation list with a "Take me to the full calculator →" button.</div>
+  </div>
+
+  <div class="component">
+    <h3>2.6 Auto-restore toast</h3>
+    <div class="row"><span class="label">What you see</span> A small floating notice in the bottom-right corner of the viewport. Cream background, accent left border, three elements: text + Forget link + close ×.</div>
+    <div class="row"><span class="label-block">Verbatim</span>
+      <div class="copy">Restored your previous session from this browser. <em>Forget</em>  ×</div>
+    </div>
+    <div class="row"><span class="label">When</span> On page load, when prior onboarding state is restored AND the user had answered at least one question. Auto-dismisses after 6 seconds.</div>
+    <div class="row"><span class="label">How to trigger</span> 1. Open onboarding. 2. Answer the first question (age) and press Enter. 3. Reload the page. The toast appears bottom-right.</div>
+    <div class="row"><span class="label">"Forget" does</span> Clears <code>etq:scenario:draft:v2</code>, <code>etq:onboarding:state:v1</code>, <code>etq:landing:quick-estimate</code>, <code>etq:landing:inputs</code>, <code>etq:disclaimer:ack:v1</code>, then reloads to a fresh start. Same effect as the nav "Start over" button.</div>
+  </div>
+</section>
+
+<!-- STAGE 3 -->
+<section class="stage">
+  <div class="stage-h"><span class="num">3</span><h2>Full calculator</h2></div>
+  <p><strong>URL:</strong> <code>http://127.0.0.1:4173/ETQ/calculator.html</code></p>
+
+  <div class="component">
+    <h3>3.1 First-visit acknowledgement strip</h3>
+    <div class="row"><span class="label">What you see</span> Same strip as §2.1, mounted above the calculator's three-panel layout.</div>
+    <div class="row"><span class="label">When</span> Same trigger flag (<code>etq:disclaimer:ack:v1</code>) shared with onboarding. Dismissing it on either surface suppresses it on both.</div>
+    <div class="row"><span class="label">How to trigger</span> In DevTools console: <code>localStorage.removeItem('etq:disclaimer:ack:v1')</code> then reload <code>calculator.html</code>.</div>
+  </div>
+
+  <div class="component">
+    <h3>3.2 Headline result pip</h3>
+    <div class="row"><span class="label">What you see</span> A small subdued line directly below the "Earliest retirement [Now]" headline at the top of the dashboard.</div>
+    <div class="row"><span class="label-block">Verbatim</span>
+      <div class="copy">Illustrative model output, not financial advice. Sensitive to your inputs and assumptions. <em>See limitations.</em></div>
+    </div>
+    <div class="row"><span class="label">When</span> Always visible while the calculator is open.</div>
+    <div class="row"><span class="label">How to trigger</span> Open the calculator. The pip is at the top of the page, beneath the green "Earliest retirement" pill.</div>
+  </div>
+
+  <div class="component">
+    <h3>3.3 Headline message wording (now-case soften)</h3>
+    <div class="row"><span class="label">What you see</span> The visible green pill says <span class="pill">Now</span> when the user can retire today. The wording change is in the underlying message string (used for accessibility and DOM semantics) — it now reads "With your assumptions, retirement looks viable now at X" instead of the earlier "You can retire now at X!". The pill text is unchanged because the pill is sized for short status words.</div>
+    <div class="row"><span class="label">When</span> When the calculator's current age equals the earliest viable retirement age (i.e., the user could retire today).</div>
+    <div class="row"><span class="label">How to trigger</span> In the calculator, set the current age, then enter inputs that yield a retirement age equal to the current age. Inspect the DOM via DevTools to see the message string in <code>#retire-check-result</code>; the user-visible word is still "Now".</div>
+  </div>
+
+  <div class="component">
+    <h3>3.4 Nav Disclaimer link</h3>
+    <div class="row"><span class="label">What you see</span> A small underlined "Disclaimer" link in the dashboard header, on the right next to the "Enough to Quit" brand link.</div>
+    <div class="row"><span class="label">When</span> Always visible.</div>
+    <div class="row"><span class="label">How to trigger</span> Look at the top-right of the calculator page.</div>
+  </div>
+
+  <div class="component">
+    <h3>3.5 First-save inline notice</h3>
+    <div class="row"><span class="label">What you see</span> A small note at the top of the scenario manager panel (left side of the calculator, "Current inputs" section). Cream background, accent left border, message + green <span class="pill">Got it</span> pill.</div>
+    <div class="row"><span class="label-block">Verbatim</span>
+      <div class="copy"><strong>Saved on this device only.</strong> ETQ stores scenarios in your browser's local storage. Clearing browser data or switching device will lose them. There is no backup, no encryption, and no recovery; anyone using this browser profile can read these scenarios.</div>
+    </div>
+    <div class="row"><span class="label">When</span> The user has at least one saved scenario AND has not previously dismissed this notice. Suppressed by localStorage key <code>etq:disclaimer:save-info-seen:v1</code>.</div>
+    <div class="row"><span class="label">How to trigger</span> 1. Console: <code>localStorage.removeItem('etq:disclaimer:save-info-seen:v1')</code>. 2. In the scenario manager on the left, type a name (e.g. "Test") into the scenario name field. 3. Click <strong>Save</strong>. The notice appears above the input.</div>
+  </div>
+
+  <div class="component">
+    <h3>3.6 Auto-restore toast</h3>
+    <div class="row"><span class="label">What you see</span> Same toast as §2.6, bottom-right.</div>
+    <div class="row"><span class="label">When</span> On calculator load, when a draft snapshot is auto-restored.</div>
+    <div class="row"><span class="label">How to trigger</span> 1. Open the calculator and enter some inputs (e.g. age, life expectancy, living expenses). 2. Reload the page. The toast appears.</div>
+    <div class="row"><span class="label">"Forget" does</span> Removes only the draft key <code>etq:scenario:draft:v2</code> and reloads. Named scenarios saved in the scenario manager are preserved.</div>
+  </div>
+</section>
+
+<!-- STAGE 4 -->
+<section class="stage">
+  <div class="stage-h"><span class="num">4</span><h2>Disclaimer page</h2></div>
+  <p><strong>URL:</strong> <code>http://127.0.0.1:4173/ETQ/disclaimer.html</code></p>
+  <p>One static page reachable from every footer and nav. Five anchored sections.</p>
+
+  <div class="component">
+    <h3>4.1 Page-top interim notice</h3>
+    <div class="row"><span class="label-block">Verbatim</span>
+      <div class="copy">This page sets out ETQ's terms of use, the assumptions and limitations behind the tool, the risks you should consider before acting on a projection, and how data is handled. The wording is pending review by a Malta-qualified lawyer; the content is intended to be readable, accurate, and sufficient for everyday use of ETQ in the meantime.</div>
+    </div>
+    <div class="row"><span class="label">When</span> Always at the top of the page until lawyer-reviewed wording lands.</div>
+  </div>
+
+  <div class="component">
+    <h3>4.2 Anchor jumps and section content</h3>
+    <p>Below the interim notice sits a row of in-page jump links. Five anchored sections follow, each with the legal-style content quoted in the privacy-legal-compliance reference document.</p>
+    <table class="flow">
+      <tr><th>Anchor</th><th>Content</th><th>Sections</th></tr>
+      <tr><td><code>#disclaimer</code></td><td>Full legal-style text</td><td>12 numbered subsections</td></tr>
+      <tr><td><code>#assumptions</code></td><td>Defaults and limitations</td><td>5 subsections (does / does not / defaults / not modelled / sensitivity)</td></tr>
+      <tr><td><code>#risks</code></td><td>Risk warnings</td><td>5 subsections (investment / tax / pension / inflation / property / market)</td></tr>
+      <tr><td><code>#privacy</code></td><td>Browser-storage transparency</td><td>2 paragraphs</td></tr>
+      <tr><td><code>#about</code></td><td>Operator + contact + credentials</td><td>2 paragraphs</td></tr>
+    </table>
+    <div class="row"><span class="label">How to reach</span> Click <strong>Disclaimer</strong>, <strong>Privacy</strong>, or <strong>About</strong> in any footer; or click the <strong>Disclaimer</strong> link in the calculator/onboarding nav; or click any "See limitations" / "What's assumed" link in the inline pips.</div>
+  </div>
+</section>
+
+<!-- RESET -->
+<section class="reset">
+  <h2>Reset cheatsheet</h2>
+  <p>Use these from your browser's DevTools console to test any disclosure from a clean state.</p>
+
+  <div class="reset-card">
+    <strong>Open DevTools</strong>
+    <p style="margin: 4pt 0 0;">macOS Chrome / Edge / Brave: <kbd>Cmd</kbd> + <kbd>Option</kbd> + <kbd>I</kbd>. Click the <strong>Console</strong> tab. Paste the snippet, press Enter, then reload the page (<kbd>Cmd</kbd> + <kbd>R</kbd>).</p>
+  </div>
+
+  <div class="reset-card">
+    <strong>Reset everything (every disclosure visible again)</strong>
+    <pre>localStorage.clear(); sessionStorage.clear();</pre>
+    Then hard-reload (<kbd>Cmd</kbd> + <kbd>Shift</kbd> + <kbd>R</kbd>).
+  </div>
+
+  <div class="reset-card">
+    <strong>Re-show the first-visit acknowledgement strip (§2.1, §3.1)</strong>
+    <pre>localStorage.removeItem('etq:disclaimer:ack:v1');</pre>
+  </div>
+
+  <div class="reset-card">
+    <strong>Re-show the first-save inline notice (§3.5)</strong>
+    <pre>localStorage.removeItem('etq:disclaimer:save-info-seen:v1');</pre>
+    Then trigger a re-render of the scenario manager (e.g. click into and out of a field).
+  </div>
+
+  <div class="reset-card">
+    <strong>Re-trigger the auto-restore toast (§2.6, §3.6)</strong>
+    <p style="margin: 4pt 0 0;">Onboarding: answer at least one question, then reload. Calculator: enter at least one input that gets auto-saved to the draft snapshot, then reload.</p>
+  </div>
+
+  <div class="reset-card">
+    <strong>Inspect ETQ's storage</strong>
+    <p style="margin: 4pt 0 0;">DevTools → Application tab → Storage → Local Storage / Session Storage → look for keys prefixed <code>etq:</code>. Five working keys plus two disclaimer keys: see the privacy-legal-compliance reference document for the full inventory.</p>
+  </div>
+
+  <div class="footer-note">
+    <strong>Reading order tip.</strong> The fastest way to see every disclosure in one sitting is: 1) clear all storage, 2) open the landing page (covers §1.1-1.5), 3) click "Ease me in" to enter onboarding (covers §2.1-2.5), 4) on the handoff click "Take me to the full calculator" (covers §3.1-3.4), 5) save a scenario (covers §3.5), 6) reload the calculator (covers §3.6), 7) reload onboarding (covers §2.6), 8) click any "See limitations" link to reach the disclaimer page (covers §4).
+  </div>
+</section>
+
+</body>
+</html>
