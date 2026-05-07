@@ -130,7 +130,7 @@ export function getDefaultFieldValue(fieldId: FieldId): RawInputValue {
   if (fieldId === "assumptions.generalInflationRateAnnual") return 0.02;
   if (fieldId === "assumptions.propertyAppreciationRateAnnual") return 0.03;
   if (fieldId === "assumptions.cashYieldRateAnnual") return 0.02;
-  if (fieldId === "assumptions.equityReturnRateAnnual") return 0.08;
+  if (fieldId === "assumptions.equityReturnRateAnnual") return 0.065;
   if (fieldId === "assumptions.salaryGrowthRateAnnual") return 0.03;
   if (fieldId === "assumptions.rentalIncomeGrowthRateAnnual") return 0.02;
   if (fieldId === "retirement.earlyPensionReductionPerYear") return 500;
