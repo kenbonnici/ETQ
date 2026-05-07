@@ -78,6 +78,46 @@
   .nav-restart:hover { color: var(--ink-soft); }
   .nav-jump { color: var(--forest); }
   .nav-jump:hover { color: var(--forest-deep); }
+  .nav-disclaimer {
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    line-height: 1.2;
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    padding: 6px 2px;
+  }
+  .nav-disclaimer:hover { color: var(--ink-soft); }
+
+  .ob-page-disclaimer {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 24px;
+    background: rgba(248, 242, 230, 0.92);
+    backdrop-filter: saturate(1.05) blur(4px);
+    border-top: 1px solid var(--rule);
+    font-size: 12px;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    text-align: center;
+    pointer-events: none;
+  }
+  .ob-page-disclaimer a {
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    white-space: nowrap;
+    pointer-events: auto;
+  }
+  .ob-page-disclaimer a:hover { color: var(--ink-soft); }
 
   .nav-currency {
     position: relative;
@@ -947,6 +987,19 @@
     color: var(--amber);
     margin: 0 0 20px;
   }
+  .ob-estimate-pip {
+    font-size: 11px;
+    line-height: 1.4;
+    letter-spacing: 0.02em;
+    color: var(--muted);
+    margin: 14px 0 0;
+  }
+  .ob-estimate-pip a {
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .ob-estimate-pip a:hover { color: var(--ink-soft); }
 
   @media (max-width: 960px) {
     nav.top .inner {
@@ -1059,10 +1112,15 @@
     <div class="nav-actions">
       <button type="button" class="nav-restart" data-onboarding-restart>Start over</button>
       <button type="button" class="nav-jump" data-onboarding-jump>Jump to full calculator →</button>
+      <a class="nav-disclaimer" href="disclaimer.html#disclaimer">Disclaimer</a>
     </div>
   </div>
 </nav>
 <main id="app"></main>
+<aside class="ob-page-disclaimer" aria-label="Disclaimer">
+  <span>Estimate, not advice. Result depends on the assumptions you choose.</span>
+  <a href="disclaimer.html#assumptions">What's assumed</a>
+</aside>
 <script type="module" src="/src/onboarding/main.ts"></script>
 </body>
 </html>

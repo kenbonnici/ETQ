@@ -383,6 +383,42 @@ body {
   opacity: 1;
 }
 
+.dashboard-disclaimer-pip {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  max-width: 56ch;
+}
+
+.dashboard-disclaimer-pip a {
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dashboard-disclaimer-pip a:hover {
+  color: var(--forest, #1f3a35);
+}
+
+.dashboard-disclaimer-link {
+  grid-column: 5;
+  grid-row: 2;
+  justify-self: end;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.dashboard-disclaimer-link:hover {
+  color: var(--forest, #1f3a35);
+}
+
 .brand-logo {
   width: 26px;
   height: 13px;

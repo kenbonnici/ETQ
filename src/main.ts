@@ -338,6 +338,7 @@ app.innerHTML = `
     <section class="left" id="inputs-panel"></section>
     <header class="dashboard-header" id="dashboard-header">
       <p id="retire-check-result" class="retire-check-result"><span class="retire-check-result-label">Earliest retirement</span> <span class="retire-check-result-value">—</span></p>
+      <p class="dashboard-disclaimer-pip">Illustrative model output, not financial advice. Sensitive to your inputs and assumptions. <a href="disclaimer.html#assumptions">See limitations</a>.</p>
       <div class="retirement-stepper">
         <span id="retirement-stepper-label" class="retirement-stepper-label">Compare retiring at</span>
         <div class="retirement-stepper-field">
@@ -355,6 +356,7 @@ app.innerHTML = `
         <button id="view-tab-projections" class="view-tab-btn" type="button" role="tab" aria-selected="false" aria-controls="projections-view">Projections</button>
       </div>
       <a class="brand-link" href="index.html"><svg class="brand-logo" viewBox="2 6 16 8" aria-hidden="true"><path d="M 4 13 A 6 6 0 0 1 16 13" fill="#c98a3f"/><path d="M 6.5 13 A 3.5 3.5 0 0 1 13.5 13" fill="#e6a45a" opacity="0.6"/><line x1="2" y1="13" x2="18" y2="13" stroke="#1f3a35" stroke-width="1.1" stroke-linecap="round"/></svg><span class="brand-text">Enough to Quit</span></a>
+      <a class="dashboard-disclaimer-link" href="disclaimer.html#disclaimer">Disclaimer</a>
     </header>
     <section class="right" id="charts-view" role="tabpanel" aria-labelledby="view-tab-charts">
       <div class="chart-legend" id="charts-legend" hidden aria-hidden="true">

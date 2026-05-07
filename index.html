@@ -230,7 +230,14 @@
     color: var(--forest-deep); font-weight: 500;
   }
   .calc-result-number em { font-style: italic; color: var(--amber); }
-  .calc-result-caption { margin-top: 28px; color: var(--ink-soft); font-size: 15px; max-width: 40ch; }
+  .calc-disclaimer-pip {
+    margin: 14px 0 0; max-width: 44ch;
+    font-size: 12px; line-height: 1.4;
+    letter-spacing: 0.04em; color: var(--muted);
+  }
+  .calc-disclaimer-pip a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+  .calc-disclaimer-pip a:hover { color: var(--forest); }
+  .calc-result-caption { margin-top: 18px; color: var(--ink-soft); font-size: 15px; max-width: 40ch; }
   .calc-note { margin-top: 28px; max-width: 40ch; font-size: 15px; display: flex; flex-direction: column; gap: 12px; }
   .calc-choice {
     display: flex; align-items: center; justify-content: space-between;
@@ -269,6 +276,14 @@
   }
   .cred-body p { font-size: 17px; line-height: 1.65; color: var(--ink-soft); margin: 0 0 18px; text-wrap: pretty; }
   .cred-body p strong { color: var(--forest-deep); font-weight: 600; }
+  .cred-body p.cred-disclaimer {
+    margin-top: 28px;
+    padding-top: 18px;
+    border-top: 1px solid var(--rule);
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--muted);
+  }
 
   /* Counter */
   .counter-section { text-align: center; padding: 120px 0; }
@@ -350,7 +365,10 @@
     font-size: 13px; color: var(--muted);
     display: flex; align-items: center; justify-content: space-between;
   }
-  footer .container { display: flex; justify-content: space-between; align-items: center; }
+  footer .container { display: flex; justify-content: space-between; align-items: center; gap: 24px; flex-wrap: wrap; }
+  footer .footer-links { display: flex; gap: 18px; flex-wrap: wrap; list-style: none; margin: 0; padding: 0; }
+  footer .footer-links a { color: var(--muted); text-decoration: none; }
+  footer .footer-links a:hover { color: var(--forest); }
 
   @media (max-width: 820px) {
     .container { padding: 0 24px; }
@@ -430,6 +448,7 @@
         <li>Private</li>
         <li>No account</li>
         <li>Data stays in your browser</li>
+        <li>Not financial advice</li>
       </ul>
     </div>
     <div class="hero-visual">
@@ -484,6 +503,7 @@
       <div class="calc-result">
         <span class="calc-result-label" id="c-out-label">Earliest viable at</span>
         <div class="calc-result-number"><span id="c-out">—</span></div>
+        <p class="calc-disclaimer-pip">Illustrative model output, not financial advice. Sensitive to your inputs and ETQ's default assumptions. <a href="disclaimer.html#assumptions">See limitations</a>.</p>
         <p class="calc-result-caption">A first pass. Add your partner, property and rental income, debts and major future events, market scenarios and reserve goals next, and the answer sharpens.</p>
         <div class="calc-note">
           <a href="onboarding.html" class="calc-choice"><span>Ease me in — one question at a time</span><span class="arrow">→</span></a>
@@ -515,6 +535,7 @@
         <p>He wanted a model that reflects real life, not rules of thumb. He could not find one that met the standard, so he built a sophisticated Excel model himself, now the engine behind this tool.</p>
         <p>Most early retirement content is produced by people who have not had to live with their own advice. This tool reflects the perspective of someone who has already made the decision, validated the numbers, and acted on them.</p>
         <p>It is designed for people with demanding careers who want a full life projection, grounded in real cash flow and net worth dynamics, to know when work becomes optional, and how much sooner that could be.</p>
+        <p class="cred-disclaimer">ETQ is not authorised by the MFSA or the FCA, and does not provide regulated financial advice or a personal recommendation.</p>
       </div>
     </div>
   </div>
@@ -570,7 +591,12 @@
 
 <footer>
   <div class="container">
-    <span>© ETQ · Enough to Quit - A powerful deterministic retirement-planning tool grounded in real life. Built honestly, used daily.</span>
+    <span>© ETQ · Enough to Quit. A deterministic retirement-projection tool. For educational and informational use only. Not financial, tax, legal, or pension advice.</span>
+    <ul class="footer-links">
+      <li><a href="disclaimer.html#disclaimer">Disclaimer</a></li>
+      <li><a href="disclaimer.html#privacy">Privacy</a></li>
+      <li><a href="disclaimer.html#about">About</a></li>
+    </ul>
   </div>
 </footer>
 

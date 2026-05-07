@@ -333,6 +333,7 @@ function buildLayout(): void {
     </div>
     <p class="ob-estimate-placeholder" id="ob-estimate-placeholder">Your earliest possible retirement age will appear as you answer.</p>
     <p class="ob-estimate-warning" id="ob-estimate-warning" hidden></p>
+    <p class="ob-estimate-pip">Illustrative model output, not financial advice. <a href="disclaimer.html#assumptions">See limitations</a>.</p>
     <div class="ob-chart-wrap" id="ob-chart-wrap">
       <canvas class="ob-chart-canvas" id="ob-chart-canvas"></canvas>
       <div class="ob-chart-legend" id="ob-chart-legend">
