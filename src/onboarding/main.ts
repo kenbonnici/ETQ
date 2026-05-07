@@ -1163,7 +1163,7 @@ function renderHandoffCard(): HTMLElement {
   card.innerHTML = `
     ${hero}
     <p class="ob-helper ob-handoff-helper">
-      A starting estimate, not the final word. The full calculator sharpens this with growth and inflation rates, planned sales of assets and the order they'd be sold in if cash ran short, and major future income or spending events you schedule yourself.
+      A starting estimate, not advice. The figures come from your answers and ETQ's default assumptions for inflation, returns, pensions, and longevity; real-life outcomes will differ. The full calculator sharpens this with your own growth and inflation rates, planned sales, and major future events. Speak to a qualified professional before acting on the result.
     </p>
     <details class="ob-estimate-assumptions ob-handoff-details">
       <summary class="ob-estimate-assumptions-summary">

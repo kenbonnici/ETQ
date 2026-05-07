@@ -34,18 +34,30 @@ function readSeed(): QuickEstimateSeed {
 
 let runHandle: number | null = null;
 
+function setResultLabel(text: string): void {
+  const label = document.getElementById("c-out-label");
+  if (label) label.textContent = text;
+}
+
 function recalc(): void {
   const out = document.getElementById("c-out");
   if (!out) return;
   const seed = readSeed();
   if (!seed.age || !seed.livingExpensesAnnual) {
     out.textContent = "—";
+    setResultLabel("Earliest viable at");
     return;
   }
   const fields = createEmptyFieldState();
   applySeedToFields(seed, fields);
   const { age } = findEarliestRetirementAge(fields, baseUi);
-  out.textContent = age === null ? "—" : String(age);
+  if (age === null) {
+    out.textContent = "—";
+    setResultLabel("Earliest viable at");
+    return;
+  }
+  out.textContent = String(age);
+  setResultLabel(age === seed.age ? "Viable now, at age" : "Earliest viable at age");
 }
 
 function scheduleRecalc(): void {
