@@ -59,6 +59,7 @@ body {
 }
 
 .left {
+  position: relative;
   padding: 12px;
   overflow: auto;
   max-height: calc(100vh - 32px);

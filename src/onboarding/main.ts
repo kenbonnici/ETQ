@@ -1,4 +1,5 @@
 import "../fonts.css";
+import { clearDisclaimerAck, mountFirstVisitNotice } from "../disclaimerAck";
 import { applySectionActivation, pruneInactiveFieldState } from "../model/activation";
 import { runModel } from "../model/index";
 import { createEmptyFieldState, getDefaultFieldValue, FIELD_VALIDATION_RULES } from "../model/inputSchema";
@@ -136,9 +137,15 @@ buildLayout();
 mountCurrencySelector();
 wireNavJump();
 wireEscapeKey();
+mountAcknowledgementStrip();
 advanceToFirstUnanswered();
 render();
 syncRestartVisibility();
+
+function mountAcknowledgementStrip(): void {
+  const host = document.getElementById("ob-prelayout");
+  if (host) mountFirstVisitNotice(host);
+}
 
 function wireEscapeKey(): void {
   document.addEventListener("keydown", (ev) => {
@@ -210,6 +217,7 @@ function wireNavJump(): void {
       clearOnboardingState();
       clearQuickEstimateSeed();
       clearLandingInputs();
+      clearDisclaimerAck();
       window.location.assign("onboarding.html");
     });
   }

@@ -218,6 +218,13 @@
     grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
     gap: 88px;
   }
+  .ob-prelayout {
+    position: relative; z-index: 1;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px 40px 0;
+  }
+  .ob-prelayout:empty { display: none; }
 
   /* Left column */
   .ob-conversation {
@@ -1114,6 +1121,7 @@
     </div>
   </div>
 </nav>
+<div class="ob-prelayout" id="ob-prelayout"></div>
 <main id="app"></main>
 <aside class="ob-page-disclaimer" aria-label="Disclaimer">
   <span>Estimate, not advice. Result depends on the assumptions you choose.</span>

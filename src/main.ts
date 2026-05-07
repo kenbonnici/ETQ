@@ -85,6 +85,7 @@ import {
   sumLivingExpenseCategoryValues
 } from "./ui/livingExpenses";
 import { readOnboardingState } from "./onboarding/handoff";
+import { mountFirstVisitNotice } from "./disclaimerAck";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
@@ -415,6 +416,8 @@ app.innerHTML = `
     </section>
   </main>
 `;
+
+mountFirstVisitNotice(app);
 
 const inputsPanel = document.getElementById("inputs-panel") as HTMLDivElement;
 const spinner = document.getElementById("early-ret-age") as HTMLInputElement;
