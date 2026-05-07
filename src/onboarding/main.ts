@@ -1190,7 +1190,10 @@ function renderHandoffCard(): HTMLElement {
   card.innerHTML = `
     ${hero}
     <p class="ob-helper ob-handoff-helper">
-      A starting estimate, not advice. The figures come from your answers and ETQ's default assumptions for inflation, returns, pensions, and longevity; real-life outcomes will differ. The full calculator sharpens this with your own growth and inflation rates, planned sales, and major future events. Speak to a qualified professional before acting on the result.
+      A starting estimate, not advice, based on your answers and ETQ's default assumptions for inflation, returns, pensions, and longevity. In the full calculator you can review and adjust all assumptions, plan for major events, schedule liquidations and more.
+    </p>
+    <p class="ob-helper ob-handoff-helper">
+      Real-life outcomes will differ. <span class="ob-handoff-emphasis">Speak to a qualified professional before acting on the result.</span>
     </p>
     <details class="ob-estimate-assumptions ob-handoff-details">
       <summary class="ob-estimate-assumptions-summary">
