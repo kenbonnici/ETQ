@@ -86,6 +86,12 @@ import {
 } from "./ui/livingExpenses";
 import { readOnboardingState } from "./onboarding/handoff";
 import { mountFirstVisitNotice } from "./disclaimerAck";
+import {
+  buildSaveInfoNoticeHtml,
+  hasSaveInfoSeen,
+  showRestoreToast,
+  wireSaveInfoNoticeDismiss
+} from "./storageDisclosures";
 
 const app = document.querySelector<HTMLDivElement>("#app");
 if (!app) throw new Error("Missing #app root.");
@@ -1500,9 +1506,12 @@ function renderScenarioManager(): string {
       </div>
     `
     : "";
+  const showStorageNotice = hasSavedScenarios && !hasSaveInfoSeen();
+  const storageNoticeHtml = showStorageNotice ? buildSaveInfoNoticeHtml() : "";
 
   return `
     <div class="scenario-manager">
+      ${storageNoticeHtml}
       <div class="scenario-manager-layout">
         <div class="scenario-manager-row">
           <div class="scenario-row-main">
@@ -4551,6 +4560,8 @@ function renderInputs(): void {
     });
   }
 
+  wireSaveInfoNoticeDismiss(inputsPanel);
+
   const scenarioNameInput = inputsPanel.querySelector<HTMLInputElement>("#scenario-name-input");
   if (scenarioNameInput) {
     scenarioNameInput.addEventListener("input", () => {
@@ -5962,5 +5973,12 @@ persistActiveView();
 if (!restoreDraftScenarioIfAvailable()) {
   renderInputs();
   recalc();
+} else {
+  showRestoreToast({
+    onForget: () => {
+      try { window.localStorage.removeItem(SCENARIO_DRAFT_STORAGE_KEY); } catch { /* ignore */ }
+      window.location.reload();
+    }
+  });
 }
 

@@ -1,5 +1,6 @@
 import "../fonts.css";
 import { clearDisclaimerAck, mountFirstVisitNotice } from "../disclaimerAck";
+import { showRestoreToast } from "../storageDisclosures";
 import { applySectionActivation, pruneInactiveFieldState } from "../model/activation";
 import { runModel } from "../model/index";
 import { createEmptyFieldState, getDefaultFieldValue, FIELD_VALIDATION_RULES } from "../model/inputSchema";
@@ -141,10 +142,26 @@ mountAcknowledgementStrip();
 advanceToFirstUnanswered();
 render();
 syncRestartVisibility();
+showRestoreToastIfRestored();
 
 function mountAcknowledgementStrip(): void {
   const host = document.getElementById("ob-prelayout");
   if (host) mountFirstVisitNotice(host);
+}
+
+function showRestoreToastIfRestored(): void {
+  if (!restored) return;
+  if (uiState.answered.size === 0) return;
+  showRestoreToast({
+    onForget: () => {
+      try { window.localStorage.removeItem(SCENARIO_DRAFT_KEY); } catch { /* ignore */ }
+      clearOnboardingState();
+      clearQuickEstimateSeed();
+      clearLandingInputs();
+      clearDisclaimerAck();
+      window.location.assign("onboarding.html");
+    }
+  });
 }
 
 function wireEscapeKey(): void {

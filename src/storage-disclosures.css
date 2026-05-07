@@ -1,0 +1,120 @@
+/* First-save inline notice rendered inside the scenario manager. */
+
+.scenario-storage-notice {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 16px;
+  margin: 0 0 12px;
+  background: var(--cream-soft, #fbf6ec);
+  border: 1px solid var(--rule, #e3d9c4);
+  border-left: 3px solid var(--accent, #0f766e);
+  border-radius: 4px;
+  color: var(--ink-soft, #415058);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.scenario-storage-notice-text {
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.scenario-storage-notice-text strong {
+  font-weight: 600;
+  color: var(--forest, #1f3a35);
+}
+
+.scenario-storage-notice-dismiss {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 4px 12px;
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--cream-soft, #fbf6ec);
+  background: var(--forest, #1f3a35);
+  border: 1px solid var(--forest, #1f3a35);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.scenario-storage-notice-dismiss:hover {
+  background: var(--forest-deep, #12231f);
+  border-color: var(--forest-deep, #12231f);
+}
+
+/* Restore toast — fixed bottom-right while visible. */
+
+.restore-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  max-width: min(420px, calc(100vw - 48px));
+  padding: 12px 16px;
+  background: var(--cream-soft, #fbf6ec);
+  border: 1px solid var(--rule, #e3d9c4);
+  border-left: 3px solid var(--accent, #0f766e);
+  border-radius: 4px;
+  color: var(--ink-soft, #415058);
+  font-size: 13px;
+  line-height: 1.4;
+  box-shadow: 0 18px 36px -18px rgba(15, 23, 42, 0.25);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.restore-toast.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.restore-toast.is-dismissing {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.restore-toast-text {
+  flex: 1 1 auto;
+}
+
+.restore-toast-action {
+  flex: 0 0 auto;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: var(--accent, #0f766e);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.restore-toast-action:hover {
+  color: var(--forest, #1f3a35);
+}
+
+.restore-toast-close {
+  flex: 0 0 auto;
+  background: none;
+  border: 0;
+  padding: 0 4px;
+  margin: 0;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1;
+  color: var(--muted, #7d8a90);
+  cursor: pointer;
+}
+
+.restore-toast-close:hover {
+  color: var(--forest, #1f3a35);
+}
