@@ -1,3 +1,4 @@
+import "../fonts.css";
 import { applySectionActivation, pruneInactiveFieldState } from "../model/activation";
 import { runModel } from "../model/index";
 import { createEmptyFieldState, getDefaultFieldValue, FIELD_VALIDATION_RULES } from "../model/inputSchema";

@@ -4,9 +4,8 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>ETQ — Disclaimer, Privacy, About</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<!-- Self-hosted variable fonts loaded by /src/disclaimer.ts -->
+<script type="module" src="/src/disclaimer.ts"></script>
 <style>
   :root {
     --cream: #f8f2e6;
@@ -82,6 +81,16 @@
     color: var(--forest-deep);
     margin: 0 0 16px;
   }
+  section.legal h3 {
+    font-family: "Inter", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--forest);
+    margin: 24px 0 8px;
+  }
+  section.legal h3:first-child { margin-top: 0; }
   section.legal p { margin: 0 0 14px; font-size: 16px; color: var(--ink-soft); }
   section.legal ul { margin: 0 0 14px 22px; padding: 0; color: var(--ink-soft); font-size: 16px; }
   section.legal li { margin-bottom: 6px; }
@@ -137,53 +146,155 @@
     <p class="page-meta">Last updated: 2026-05-07</p>
 
     <p class="interim">
-      The fuller, lawyer-reviewed wording is being prepared. The notices on this page are
-      a plain-English interim version intended to be readable, accurate, and sufficient
-      for everyday use of ETQ.
+      This page sets out ETQ's terms of use, the assumptions and limitations behind the
+      tool, the risks you should consider before acting on a projection, and how data is
+      handled. The wording is pending review by a Malta-qualified lawyer; the content is
+      intended to be readable, accurate, and sufficient for everyday use of ETQ in the
+      meantime.
     </p>
 
     <nav class="anchor-jumps" aria-label="On this page">
       <a href="#disclaimer">Disclaimer</a>
       <a href="#assumptions">Assumptions</a>
+      <a href="#risks">Risks</a>
       <a href="#privacy">Privacy</a>
       <a href="#about">About</a>
     </nav>
 
     <section class="legal" id="disclaimer">
       <h2>Disclaimer</h2>
+
+      <h3>1. Nature of the tool</h3>
       <p>
-        ETQ ("Enough to Quit") is a deterministic retirement-projection tool for educational
-        and informational use only. It produces year-by-year projections of cash and net worth
-        based on the inputs you provide and the assumptions configured in the tool.
+        Enough to Quit ("ETQ") is a deterministic retirement-projection tool made available
+        without charge for educational and informational use only. ETQ produces year-by-year
+        projections of cash and net worth based on the inputs you provide and the
+        assumptions configured in the tool. ETQ presents an "earliest viable retirement
+        age" and comparable outputs that are the result of a model, not opinions,
+        predictions, or recommendations.
       </p>
+
+      <h3>2. Not financial advice; no personal recommendation</h3>
       <p>
-        ETQ is not financial, investment, tax, legal, accounting, or pension advice, and does
-        not constitute a personal recommendation. ETQ is not authorised by the Malta Financial
-        Services Authority (MFSA), the UK Financial Conduct Authority (FCA), or any other
-        competent authority to provide regulated investment services or investment advice.
+        ETQ is not financial, investment, tax, legal, accounting, pension, estate-planning,
+        insurance, or any other form of regulated advice. Nothing in ETQ constitutes a
+        personal recommendation within the meaning of the Maltese Investment Services Act,
+        MiFID II, or equivalent legislation in any other jurisdiction. ETQ is not authorised
+        by the Malta Financial Services Authority (MFSA), the UK Financial Conduct
+        Authority (FCA), or any other competent authority to provide investment services or
+        investment advice. ETQ does not recommend, endorse, or solicit the purchase, sale,
+        or holding of any specific security, fund, pension product, insurance product, real
+        estate, or other financial product.
       </p>
+
+      <h3>3. No suitability assessment</h3>
       <p>
-        ETQ does not assess your personal circumstances, objectives, or risk tolerance, and
-        does not recommend any product, transaction, or strategy. You are responsible for
-        the inputs you enter, the assumptions you select, and any decision you take. Speak
-        to a qualified professional regulated in your jurisdiction before acting on any
-        projection.
+        ETQ does not know you. It has not assessed your knowledge or experience, financial
+        situation, investment objectives, time horizon, risk tolerance, capacity for loss,
+        or wider personal circumstances. ETQ does not perform a suitability or
+        appropriateness assessment.
       </p>
+
+      <h3>4. Assumptions, limitations, and model risk</h3>
       <p>
-        ETQ is provided "as is" and without warranty of any kind. To the maximum extent
-        permitted by applicable law, ETQ and its operator accept no liability for any loss
-        or damage arising from your use of, or reliance on, the tool.
+        ETQ is a deterministic single-path model. It does not run probability simulations
+        and does not produce confidence intervals or probability-based outcomes. Default
+        assumptions are general averages chosen for broad illustration; small changes can
+        produce materially different results. The default equity-return assumption is a
+        long-run nominal estimate, not a forecast. ETQ does not localise pension rules or
+        tax rules to any jurisdiction. The full list of assumptions and limitations is set
+        out under <a href="#assumptions">Assumptions</a> below.
+      </p>
+
+      <h3>5. Past performance; no forecast</h3>
+      <p>
+        Where ETQ uses long-run averages for investment returns, property appreciation,
+        inflation, or growth rates, those averages are based on generalised market history.
+        Past performance is not a reliable indicator of future performance. ETQ does not
+        forecast markets, property prices, inflation, exchange rates, taxation, or
+        government policy.
+      </p>
+
+      <h3>6. User responsibility</h3>
+      <p>
+        You are responsible for the accuracy and completeness of the inputs you enter, for
+        the assumptions you select or accept, for the way you interpret the output, and for
+        any decision you take or refrain from taking based on ETQ. Before making any
+        retirement, investment, pension, tax, property, debt, insurance, or estate-planning
+        decision, you should consult a qualified professional regulated in your jurisdiction.
+      </p>
+
+      <h3>7. No warranty</h3>
+      <p>
+        ETQ is provided "as is" and "as available". To the maximum extent permitted by
+        applicable law, ETQ disclaims all warranties, express or implied, including without
+        limitation warranties of accuracy, completeness, merchantability, fitness for a
+        particular purpose, and non-infringement. ETQ does not warrant that the model is
+        free of errors, that it will be available without interruption, or that it will
+        produce results suitable for any specific purpose.
+      </p>
+
+      <h3>8. Limitation of liability</h3>
+      <p>
+        To the maximum extent permitted by applicable law, ETQ, its operator, its
+        contributors, and its licensors shall not be liable for any direct, indirect,
+        incidental, special, consequential, or exemplary damages, including but not limited
+        to lost profits, lost savings, lost opportunities, or lost data, arising out of or
+        in connection with your use of ETQ, your reliance on its output, or your inability
+        to use ETQ. Nothing in this disclaimer excludes or limits liability that cannot be
+        excluded or limited under applicable law (including liability for death or personal
+        injury caused by negligence, or for fraud).
+      </p>
+
+      <h3>9. Intellectual property</h3>
+      <p>
+        The ETQ model, source code, copy, and design are © Enough to Quit. All rights
+        reserved unless otherwise stated in the project repository.
+      </p>
+
+      <h3>10. Changes</h3>
+      <p>
+        ETQ may update its model, default assumptions, or this page without notice. The
+        version date at the top of this page indicates when this content was last revised.
+      </p>
+
+      <h3>11. Jurisdiction</h3>
+      <p>
+        These terms and your use of ETQ are governed by the laws of Malta. Any dispute
+        arising from your use of ETQ shall be subject to the exclusive jurisdiction of the
+        courts of Malta. Nothing in this clause restricts the consumer protection rights
+        you have under the mandatory law of your country of residence.
+      </p>
+
+      <h3>12. Not a substitute for professional advice</h3>
+      <p>
+        If in doubt, do not act on ETQ. Consult a regulated financial adviser, tax adviser,
+        pension specialist, or solicitor before making a decision that materially affects
+        your financial future.
       </p>
     </section>
 
     <section class="legal" id="assumptions">
       <h2>Assumptions and limitations</h2>
+
+      <h3>What ETQ does</h3>
       <p>
-        ETQ is a single-path deterministic model. It does not run probability simulations
-        and does not produce confidence intervals. Small changes in assumptions can produce
-        materially different results.
+        Projects cash and net worth year-by-year for one household to a chosen life
+        expectancy age, under one set of assumptions. Reports the earliest age at which the
+        scenario satisfies your cash buffer and legacy constraints (if any). Lets you
+        compare against a chosen comparison age, and lets you schedule planned asset sales,
+        market crashes, and major future income or spending events.
       </p>
-      <p>Default assumptions used by the model:</p>
+
+      <h3>What ETQ does not do</h3>
+      <p>
+        Stress-test outcomes statistically (no Monte Carlo, no probability bands). Model
+        tax in detail. Model regulated pensions in detail. Recommend products or
+        strategies. Replace a qualified professional. Forecast markets, property prices,
+        inflation, exchange rates, taxation, or government policy.
+      </p>
+
+      <h3>Default assumptions used by the model</h3>
       <ul>
         <li>General inflation: 2.0% per year</li>
         <li>Cash interest rate: 2.0% per year</li>
@@ -194,17 +305,88 @@
         <li>Stock selling cost: 5.0% of proceeds</li>
         <li>Property disposal cost: 15.0% of proceeds</li>
         <li>Other-asset disposal cost: 5.0% of proceeds</li>
-        <li>Default life expectancy: 90; default early-pension reduction: 500 / year of early retirement</li>
+        <li>Default statutory retirement age: 65</li>
+        <li>Default life expectancy: 90</li>
+        <li>Default early-pension reduction: 500 currency units per year of early retirement</li>
       </ul>
+
+      <h3>What is not modelled</h3>
       <p>
-        ETQ does not model income tax, capital gains tax, social security or national insurance
-        contributions, jurisdiction-specific pension or tax wrappers, healthcare or long-term
-        care costs, currency risk on multi-currency portfolios, sequence-of-returns risk, or
-        regulatory or legislative change. Income and pension figures should be entered net of tax.
+        ETQ does not model income tax, capital gains tax, social-security or national
+        insurance contributions, withholding tax, dividend tax, jurisdiction-specific
+        pension or tax wrappers (for example UK State Pension, Maltese Two-Thirds Pension,
+        defined-benefit accrual, lifetime or annual allowances, employer matching, salary
+        sacrifice, lump sums, survivor benefits), healthcare and long-term care costs,
+        currency risk on multi-currency portfolios, sequence-of-returns risk on investment
+        returns, regulatory or legislative change, divorce or separation events beyond
+        inputs you supply, and political risk.
       </p>
       <p>
-        Detailed methodology, assumption sensitivity, and the full risk warnings for investment,
-        tax, pension, inflation, property, and market risk are being prepared.
+        You must enter income and pension figures NET of tax. ETQ does not localise pension
+        rules or tax rules to any jurisdiction; numbers are plain currency in, currency out.
+      </p>
+
+      <h3>Sensitivity</h3>
+      <p>
+        A 1 percentage-point change in equity return or inflation can move the earliest
+        viable retirement age by several years. Always test outcomes against alternative
+        assumptions before relying on a single result.
+      </p>
+    </section>
+
+    <section class="legal" id="risks">
+      <h2>Risk warnings</h2>
+
+      <h3>Investment risk</h3>
+      <p>
+        The value of investments goes up and down. Past performance is not a guide to
+        future performance. ETQ uses a single average annual rate (default 6.5% for
+        equities) and does not stress-test against market crashes unless you schedule them.
+        Real portfolios experience volatility that can permanently change retirement
+        outcomes through sequence-of-returns risk.
+      </p>
+
+      <h3>Tax</h3>
+      <p>
+        ETQ does not model income tax, capital gains tax, social security or national
+        insurance contributions, dividend tax, withholding tax, VAT, property transfer tax,
+        or any jurisdiction-specific allowance or relief. You must enter income and pension
+        figures NET of tax. Tax laws change.
+      </p>
+
+      <h3>Pension</h3>
+      <p>
+        ETQ models a single statutory-age pension as an annual amount with a flat
+        early-retirement reduction. It does not represent UK State Pension, Maltese
+        Two-Thirds Pension, contributions-based accrual, defined-benefit schemes,
+        defined-contribution drawdown rules, lifetime allowance or annual allowance limits,
+        employer matching, salary sacrifice, lump sums, survivor benefits, or transfer
+        values. Speak to a qualified pension specialist for any decision involving a
+        pension.
+      </p>
+
+      <h3>Inflation</h3>
+      <p>
+        ETQ uses a single general-inflation rate (default 2.0%) applied uniformly to
+        spending and most other figures. Real inflation is uneven across categories
+        (energy, healthcare, housing) and can spike well above the default. Inflation risk
+        on a long retirement is significant.
+      </p>
+
+      <h3>Property</h3>
+      <p>
+        Property values can rise and fall. ETQ uses a single average growth rate (default
+        3.0%) and a single percentage disposal cost (default 15%). It does not model
+        jurisdiction-specific property taxes, capital gains, stamp duty, illiquidity,
+        vacancy risk, regulatory caps on rents, or the time it can take to sell. Property
+        is illiquid and a forced sale can realise materially less than the model assumes.
+      </p>
+
+      <h3>Market risk and timing</h3>
+      <p>
+        ETQ is deterministic. It produces one projection path per scenario. The real world
+        is not deterministic. Two retirees with the same starting position can have very
+        different outcomes depending on the sequence of returns in early retirement.
       </p>
     </section>
 
@@ -220,13 +402,9 @@
       <p>
         Clearing your browser data, switching browser, switching device, or using private or
         incognito mode will lose any data ETQ has stored. There is no cloud backup and no
-        recovery process.
-      </p>
-      <p>
-        ETQ does not use cookies, analytics, or third-party trackers. The site currently loads
-        web fonts from Google Fonts, which transmits your IP address to Google solely so the
-        fonts can be delivered. ETQ does not receive that data. (Self-hosting these fonts is
-        on the roadmap.)
+        recovery process. ETQ does not use cookies, analytics, or third-party trackers, and
+        does not load any third-party assets at runtime: the fonts and all other assets are
+        served from the same origin as ETQ itself.
       </p>
     </section>
 

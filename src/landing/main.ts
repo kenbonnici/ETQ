@@ -1,3 +1,4 @@
+import "../fonts.css";
 import { createEmptyFieldState } from "../model/inputSchema";
 import { ModelUiState } from "../model/types";
 import { applySeedToFields, LANDING_INPUTS_KEY, QuickEstimateSeed, writeDraftFromOnboarding } from "../onboarding/handoff";
